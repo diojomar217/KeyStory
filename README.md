@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Couple QR Website Generator MVP
 
-## Getting Started
+A full-stack web application for generating personalized couple websites with QR codes.
 
-First, run the development server:
+## Tech Stack
+- Next.js (App Router)
+- TypeScript
+- Tailwind CSS
+- Supabase (database)
+- Cloudinary (image storage)
+- Node `qrcode` library (QR code generation)
+- Hosted on Vercel (free tier)
+- QR code generation using the `qrcode` package
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Features
+- Customer form to create a couple website
+- QR codes generated and stored per order
+- Dynamic couple page with gallery, timer, and music
+- Admin dashboard for order management
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup
+1. Install dependencies:
+   ```bash
+   npm install
+   # also add required libs
+   npm install @supabase/supabase-js uuid qrcode cloudinary
+   npm install -D @types/uuid
+   ```
+2. Configure environment variables for Supabase and Cloudinary (including `NEXT_PUBLIC_BASE_URL`).
+3. Create the `orders` table in Supabase using `supabase-orders-table.sql`.
+4. Ensure Cloudinary credentials are set and images will be uploaded server-side using the provided utility.
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Folder Structure
+- `/app` - Next.js App Router pages
+- `/components` - React components
+- `/lib` - Utility functions (Supabase, Cloudinary, QR code)
+- `/api` - API routes
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## To Do
+- Integrate Supabase and Cloudinary
+- Implement all required features
+- Polish UI/UX
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This MVP is mobile-friendly and designed for a simple, romantic experience.
