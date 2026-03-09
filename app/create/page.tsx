@@ -3,8 +3,17 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { SiteConfig, CreateOrderPayload } from '@/lib/types';
+import ThemeSelector from '@/components/ThemeSelector';
+import SectionSelector from '@/components/SectionSelector';
+import TemplateSelector from '@/components/TemplateSelector';
+import TimelineEditor from '@/components/TimelineEditor';
+
 export default function CreatePage() {
-  const [form, setForm] = useState({
+  // core order fields (photos are handled locally as File objects)
+  type LocalForm = Omit<CreateOrderPayload, 'config' | 'photos'> & { photos: File[] };
+  const [form, setForm] = useState<LocalForm>({
+    website_name: '',
     customer_name: '',
     partner_name: '',
     anniversary_date: '',
@@ -12,13 +21,28 @@ export default function CreatePage() {
     song_link: '',
     photos: [] as File[],
   });
+
+  // configuration state
+  const [config, setConfig] = useState<SiteConfig>({
+    theme: 'romantic_classic',
+    sections: ['home'],
+    home_template: undefined,
+    gallery_template: undefined,
+    timeline_template: undefined,
+    timeline_events: [],
+  });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{ slug: string; coupleUrl: string; qrCodeUrl: string } | null>(null);
+  const [result, setResult] = useState<{ slug: string; website_name: string; qr_code_url: string } | null>(null);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleConfigChange = (newConfig: Partial<SiteConfig>) => {
+    setConfig({ ...config, ...newConfig });
   };
 
   const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,12 +86,15 @@ export default function CreatePage() {
         body: JSON.stringify({
           ...form,
           photos: photosBase64,
+          config,
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to create');
-      setResult(data);
-      // optionally redirect after a delay or user action
+      if (!res.ok || !data.success) throw new Error(data.message || 'Failed to create');
+      if (!data.slug) throw new Error('Missing slug from server');
+      if (!data.website_name) throw new Error('Missing website name from server');
+      if (!data.qr_code_url) throw new Error('Missing QR code from server');
+      setResult({ slug: data.slug, website_name: data.website_name, qr_code_url: data.qr_code_url });
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Failed to save order. Please try again.');
@@ -77,28 +104,134 @@ export default function CreatePage() {
   };
 
   return (
-    <div className="max-w-xl mx-auto p-4 animate-fade-in">
-      <h1 className="text-2xl font-bold text-center mb-4 text-pink-600">Create Your Love Website</h1>
-      {error && <div className="text-red-600 mb-4">{error}</div>}
-      {!result && <form className="space-y-4" onSubmit={handleSubmit}>
-        <input name="customer_name" required placeholder="Your Name" className="input input-bordered w-full" onChange={handleChange} />
-        <input name="partner_name" required placeholder="Partner's Name" className="input input-bordered w-full" onChange={handleChange} />
-        <input name="anniversary_date" required type="date" className="input input-bordered w-full" onChange={handleChange} />
-        <textarea name="message" required placeholder="Your Love Message" className="textarea textarea-bordered w-full" onChange={handleChange} />
-        <input name="song_link" placeholder="Optional Song Link (Spotify/YouTube)" className="input input-bordered w-full" onChange={handleChange} />
-        <input name="photos" type="file" accept="image/*" multiple max={5} className="file-input w-full" onChange={handlePhotos} />
-        <button type="submit" className="btn btn-primary w-full" disabled={loading}>{loading ? 'Creating...' : 'Create Website'}</button>
-      </form>}
-      {result && (
-        <div className="mt-6 text-center animate-fade-in">
-          <p className="mb-2">Your website is ready!</p>
-          <a href={result.coupleUrl} className="text-pink-600 underline mb-2 block">View Couple Page</a>
-          <div className="mt-2">
-            <img src={result.qrCodeUrl} alt="QR Code" className="mx-auto w-32 h-32" />
+    <div className="bg-[#FFF7FB] min-h-screen">
+      <div className="max-w-4xl mx-auto px-6 py-10 animate-fade-in">
+        <h1 className="text-2xl font-bold text-center mb-4 text-pink-600">Create Your Love Website</h1>
+        {error && <div className="text-red-600 mb-4">{error}</div>}
+        {!result && (
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6 space-y-6">
+              <h2 className="text-xl font-semibold text-slate-800 mb-4">Basic Information</h2>
+              <input
+                name="website_name"
+                required
+                placeholder="Website Name (used in URL)"
+                className="border border-slate-300 rounded-md px-3 py-2 w-full text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
+                onChange={handleChange}
+              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  name="customer_name"
+                  required
+                  placeholder="Your Name"
+                  className="border border-slate-300 rounded-md px-3 py-2 w-full text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
+                  onChange={handleChange}
+                />
+                <input
+                  name="partner_name"
+                  required
+                  placeholder="Partner's Name"
+                  className="border border-slate-300 rounded-md px-3 py-2 w-full text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
+                  onChange={handleChange}
+                />
+              </div>
+              <input
+                name="anniversary_date"
+                required
+                type="date"
+                className="border border-slate-300 rounded-md px-3 py-2 w-full text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
+                onChange={handleChange}
+              />
+              <textarea
+                name="message"
+                required
+                placeholder="Your Love Message"
+                className="border border-slate-300 rounded-md px-3 py-2 w-full text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
+                onChange={handleChange}
+              />
+              <input
+                name="song_link"
+                placeholder="Optional Song Link (Spotify/YouTube)"
+                className="border border-slate-300 rounded-md px-3 py-2 w-full text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
+                onChange={handleChange}
+              />
+              <input
+                name="photos"
+                type="file"
+                accept="image/*"
+                multiple
+                max={5}
+                className="w-full"
+                onChange={handlePhotos}
+              />
+            </div>
+
+            {/* configuration section */}
+            <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6 space-y-6">
+              <h2 className="text-xl font-semibold text-slate-800 mb-4">Customize Your Site</h2>
+              <ThemeSelector value={config.theme} onChange={(theme) => handleConfigChange({ theme })} />
+              <SectionSelector value={config.sections} onChange={(sections) => handleConfigChange({ sections })} />
+
+            {/* template selectors conditionally shown based on sections */}
+            {config.sections.includes('home') && (
+              <TemplateSelector
+                section="home"
+                value={config.home_template}
+                onChange={(home_template) => handleConfigChange({ home_template: home_template as any })}
+              />
+            )}
+            {config.sections.includes('gallery') && (
+              <TemplateSelector
+                section="gallery"
+                value={config.gallery_template}
+                onChange={(gallery_template) => handleConfigChange({ gallery_template: gallery_template as any })}
+              />
+            )}
+            {config.sections.includes('timeline') && (
+              <TemplateSelector
+                section="timeline"
+                value={config.timeline_template}
+                onChange={(timeline_template) => handleConfigChange({ timeline_template: timeline_template as any })}
+              />
+            )}
+
+            {config.sections.includes('timeline') && (
+              <div className="space-y-2">
+                <label className="font-medium">Timeline events</label>
+                <TimelineEditor
+                  events={config.timeline_events || []}
+                  onChange={(timeline_events) => handleConfigChange({ timeline_events })}
+                />
+              </div>
+            )}
           </div>
-          <a href={result.qrCodeUrl} download className="btn btn-sm btn-outline mt-2">Download QR Code</a>
+
+          <button
+            type="submit"
+            className="w-full bg-rose-500 hover:bg-rose-600 text-white rounded-lg px-6 py-2 font-medium disabled:opacity-60"
+            disabled={loading}
+          >
+            {loading ? 'Creating...' : 'Create Website'}
+          </button>
+        </form>
+      )}
+      {result && (
+        <div className="mt-6 text-center animate-fade-in bg-white rounded-xl shadow-md border border-slate-200 p-6">
+          <p className="mb-2">Your website is ready!</p>
+          <a href={`/love/${result.website_name}`} className="text-pink-600 underline mb-2 block">View Couple Page</a>
+          <div className="mt-2">
+            <img src={result.qr_code_url} alt="QR Code" className="mx-auto w-32 h-32" />
+          </div>
+          <a
+            href={result.qr_code_url}
+            download
+            className="inline-block mt-2 bg-rose-500 hover:bg-rose-600 text-white rounded-lg px-4 py-2 font-medium"
+          >
+            Download QR Code
+          </a>
         </div>
       )}
+    </div>
     </div>
   );
 }

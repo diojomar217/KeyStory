@@ -13,9 +13,13 @@ A full-stack web application for generating personalized couple websites with QR
 - QR code generation using the `qrcode` package
 
 ## Features
-- Customer form to create a couple website
+- Customer form to create a couple website with full customization options:
+  - choose a color theme
+  - select which sections (home, gallery, timeline) to include
+  - pick layout templates for each section
+  - add timeline events to populate the timeline section
 - QR codes generated and stored per order
-- Dynamic couple page with gallery, timer, and music
+- Dynamic couple page that adapts to chosen sections, displays timer, gallery, timeline, and optional music
 - Admin dashboard for order management
 
 ## Setup

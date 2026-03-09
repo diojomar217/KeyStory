@@ -33,6 +33,8 @@ export default function AdminPage() {
           <tr>
             <th>Names</th>
             <th>Date</th>
+            <th>Theme</th>
+            <th>Sections</th>
             <th>Status</th>
             <th>QR</th>
             <th>Actions</th>
@@ -41,8 +43,11 @@ export default function AdminPage() {
         <tbody>
           {orders.map(order => (
             <tr key={order.id} className="hover:bg-pink-50">
+              <td>{order.website_name || order.slug}</td>
               <td>{order.customer_name} &amp; {order.partner_name}</td>
               <td>{order.anniversary_date}</td>
+              <td className="capitalize">{(order.config as any)?.theme || 'default'}</td>
+              <td>{((order.config as any)?.sections || []).join(', ')}</td>
               <td>{order.status}</td>
               <td><a href={order.qr_code_url} download target="_blank" rel="noopener noreferrer">Download</a></td>
               <td>

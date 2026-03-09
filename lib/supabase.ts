@@ -10,6 +10,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export type Order = {
   id?: string;
   slug: string;
+  website_name?: string; // human-readable identifier used in URL
   customer_name: string;
   partner_name: string;
   anniversary_date: string;
@@ -17,6 +18,16 @@ export type Order = {
   photos: string[];
   song_link?: string;
   qr_code_url?: string;
+
+  // individual config columns (optional)
+  theme?: string;
+  sections?: string[];
+  home_template?: string;
+  gallery_template?: string;
+  timeline_template?: string;
+  timeline_events?: any;
+
+  config?: any;
   status?: string;
   created_at?: string;
 };
