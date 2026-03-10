@@ -309,10 +309,8 @@ export default function CreatePage() {
     setHasUnsavedChanges(false);
   };
 
-  // Submit handler
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  // Core publish logic - reusable for both form submit and publish button
+  const publishWebsite = async (): Promise<void> => {
     const validation = validateStep(5, form, config, sectionToggles);
     if (!validation.valid) {
       setError(validation.error || 'Please complete all required content');
@@ -365,6 +363,12 @@ export default function CreatePage() {
     } finally {
       setPublishing(false);
     }
+  };
+
+  // Form submit handler - calls publishWebsite after preventing default
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await publishWebsite();
   };
 
   // Render step content
@@ -726,7 +730,7 @@ export default function CreatePage() {
             form={form}
             config={{ ...config, section_toggles: sectionToggles }}
             onSaveDraft={handleSaveDraft}
-            onPublish={handleSubmit}
+            onPublish={publishWebsite}
             isPublishing={publishing}
           />
         );
@@ -895,9 +899,9 @@ export default function CreatePage() {
                   customer_name: form.customer_name,
                   partner_name: form.partner_name,
                   anniversary_date: form.anniversary_date,
-                  tagline: form.tagline,
+                  tagline: form.tagline ?? "",
                   message: form.message,
-                  song_link: form.song_link,
+                  song_link: form.song_link ?? "",
                 }}
                 photoPreviews={photoPreviews}
                 device={previewDevice}

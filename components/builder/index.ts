@@ -1,7 +1,6 @@
 // Builder Components
 export { default as TaglineGenerator, ROMANTIC_TAGLINES } from './TaglineGenerator';
 export { default as TimelineTemplateSelector, TIMELINE_TEMPLATES } from './TimelineTemplateSelector';
-export type { TimelineTemplateType, TimelineTemplateOption } from './TimelineTemplateSelector';
 export { default as CoverPhotoUploader } from './CoverPhotoUploader';
 export { default as LivePreviewPanel } from './LivePreviewPanel';
 export { default as TimelineEditor } from '../TimelineEditor';

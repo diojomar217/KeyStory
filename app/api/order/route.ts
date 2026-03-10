@@ -47,7 +47,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const coupleUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/love/${website_name}`;
+    // Get base URL safely
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://your-domain.vercel.app';
+    const coupleUrl = `${baseUrl}/love/${website_name}`;
     const qrCodeUrl = await generateQRCode(coupleUrl);
 
     // Store the URL in config for styled QR generation

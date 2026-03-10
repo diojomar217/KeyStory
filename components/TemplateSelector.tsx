@@ -166,6 +166,94 @@ const templates: Record<Section, { key: string; label: string; description: stri
       )
     },
   ],
+  love_letter: [
+    { 
+      key: 'classic_letter', 
+      label: 'Classic Love Letter',
+      description: 'Elegant centered love message layout with romantic typography',
+      preview: (
+        <div className="w-full h-full bg-slate-100 rounded-lg p-2 flex flex-col items-center justify-center">
+          <div className="w-8 h-1 bg-rose-200 rounded mb-1"></div>
+          <div className="w-10 h-0.5 bg-rose-100 rounded mb-1"></div>
+          <div className="w-6 h-0.5 bg-rose-100 rounded"></div>
+        </div>
+      )
+    },
+    { 
+      key: 'floral_border', 
+      label: 'Floral Border',
+      description: 'Love letter with decorative floral border framing your message',
+      preview: (
+        <div className="w-full h-full bg-rose-50 rounded-lg p-2 flex items-center justify-center">
+          <div className="w-10 h-6 bg-white rounded shadow-sm border border-rose-100"></div>
+        </div>
+      )
+    },
+    { 
+      key: 'handwritten', 
+      label: 'Handwritten Style',
+      description: 'Personal handwritten-style font for an intimate feel',
+      preview: (
+        <div className="w-full h-full bg-slate-100 rounded-lg p-2 flex items-center justify-center">
+          <div className="w-10 h-6 bg-white rounded shadow-sm transform -rotate-1"></div>
+        </div>
+      )
+    },
+  ],
+  qr_keepsake: [
+    { 
+      key: 'qr_card', 
+      label: 'QR Keepsake Card',
+      description: 'QR card with caption and couple names for printing',
+      preview: (
+        <div className="w-full h-full bg-slate-100 rounded-lg p-2 flex items-center justify-center">
+          <div className="w-8 h-8 bg-white rounded shadow-sm grid grid-cols-3 gap-0.5 p-1">
+            <div className="bg-rose-300 rounded-sm"></div>
+            <div className="bg-rose-100 rounded-sm"></div>
+            <div className="bg-rose-300 rounded-sm"></div>
+            <div className="bg-rose-100 rounded-sm"></div>
+            <div className="bg-rose-300 rounded-sm"></div>
+            <div className="bg-rose-100 rounded-sm"></div>
+            <div className="bg-rose-300 rounded-sm"></div>
+            <div className="bg-rose-100 rounded-sm"></div>
+            <div className="bg-rose-300 rounded-sm"></div>
+          </div>
+        </div>
+      )
+    },
+    { 
+      key: 'qr_mini', 
+      label: 'Mini QR Tag',
+      description: 'Compact QR code tag perfect for keychains or small keepsakes',
+      preview: (
+        <div className="w-full h-full bg-slate-100 rounded-lg p-2 flex items-center justify-center">
+          <div className="w-6 h-6 bg-white rounded-full shadow-sm grid grid-cols-3 gap-0.5 p-1">
+            <div className="bg-rose-300 rounded-full"></div>
+            <div className="bg-rose-100 rounded-full"></div>
+            <div className="bg-rose-300 rounded-full"></div>
+            <div className="bg-rose-100 rounded-full"></div>
+            <div className="bg-rose-300 rounded-full"></div>
+            <div className="bg-rose-100 rounded-full"></div>
+            <div className="bg-rose-300 rounded-full"></div>
+            <div className="bg-rose-100 rounded-full"></div>
+            <div className="bg-rose-300 rounded-full"></div>
+          </div>
+        </div>
+      )
+    },
+    { 
+      key: 'qr_ornament', 
+      label: 'QR Ornament',
+      description: 'Decorative QR code design for holiday ornaments or framed displays',
+      preview: (
+        <div className="w-full h-full bg-slate-100 rounded-lg p-2 flex items-center justify-center">
+          <div className="w-8 h-10 bg-white rounded-full shadow-sm border-4 border-rose-200 flex items-center justify-center">
+            <div className="w-4 h-4 bg-rose-300 rounded-sm"></div>
+          </div>
+        </div>
+      )
+    },
+  ],
 };
 
 const sectionLabels: Record<Section, string> = {
@@ -173,6 +261,8 @@ const sectionLabels: Record<Section, string> = {
   gallery: 'Gallery Template',
   timeline: 'Timeline Template',
   song: 'Song Template',
+  love_letter: 'Love Letter Template',
+  qr_keepsake: 'QR Keepsake Template',
 };
 
 export default function TemplateSelector({ section, value, onChange }: Props) {
