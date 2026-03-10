@@ -184,5 +184,4 @@ export default function TimelineTemplateSelector({
 }
 
 export { TIMELINE_TEMPLATES };
-export type { TimelineTemplateType, TimelineTemplateOption };
 

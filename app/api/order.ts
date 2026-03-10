@@ -22,8 +22,9 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Generate QR code
-  const coupleUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/love/${slug}`;
+  // Generate QR code with safe fallback
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://your-domain.vercel.app';
+  const coupleUrl = `${baseUrl}/love/${slug}`;
   const qrCodeUrl = await generateQRCode(coupleUrl);
 
   // Save order to Supabase
