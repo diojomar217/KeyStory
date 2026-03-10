@@ -8,12 +8,13 @@ type Step = {
 };
 
 const steps: Step[] = [
-  { id: 1, title: 'Basic Info', subtitle: 'Your details' },
-  { id: 2, title: 'Theme', subtitle: 'Choose style' },
-  { id: 3, title: 'Sections', subtitle: 'Page layout' },
-  { id: 4, title: 'Templates', subtitle: 'Design picks' },
-  { id: 5, title: 'Content', subtitle: 'Add photos' },
-  { id: 6, title: 'Review', subtitle: 'Final check' },
+  { id: 1, title: 'Your Details', subtitle: 'Let\'s start' },
+  { id: 2, title: 'Hero & Message', subtitle: 'Your love story' },
+  { id: 3, title: 'Choose Style', subtitle: 'Pick the mood' },
+  { id: 4, title: 'Page Layout', subtitle: 'Select sections' },
+  { id: 5, title: 'Templates', subtitle: 'Design picks' },
+  { id: 6, title: 'Memories', subtitle: 'Add moments' },
+  { id: 7, title: 'Review', subtitle: 'Almost done!' },
 ];
 
 type Props = {

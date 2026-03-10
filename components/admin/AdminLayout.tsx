@@ -63,7 +63,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100">
+      <div className="h-screen flex items-center justify-center bg-slate-100">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600 mx-auto mb-4"></div>
           <p className="text-slate-600">Loading...</p>
@@ -73,20 +73,22 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-100">
-      <AdminSidebar
-        isCollapsed={isCollapsed}
-        onToggleCollapse={handleToggleCollapse}
-        isMobileOpen={isMobileOpen}
-        onToggleMobile={handleToggleMobile}
-      />
+    <div className="h-screen flex overflow-hidden bg-slate-100">
+      {/* Sidebar - Fixed position on desktop, hidden when printing */}
+      <div className="print:hidden flex-shrink-0">
+        <AdminSidebar
+          isCollapsed={isCollapsed}
+          onToggleCollapse={handleToggleCollapse}
+          isMobileOpen={isMobileOpen}
+          onToggleMobile={handleToggleMobile}
+        />
+      </div>
       
-      {/* Main Content Area */}
+      {/* Main Content Area - Scrollable */}
       <main 
         className={`
-          flex-1 min-h-screen p-4 lg:p-8 overflow-auto
+          flex-1 overflow-y-auto p-4 lg:p-8
           transition-all duration-300 ease-in-out
-          pt-16 lg:pt-8
         `}
       >
         <div className="max-w-7xl mx-auto">

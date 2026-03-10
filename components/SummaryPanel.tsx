@@ -19,6 +19,7 @@ const sectionLabels: Record<string, string> = {
   home: 'Home',
   gallery: 'Gallery',
   timeline: 'Timeline',
+  song: 'Song',
 };
 
 const templateLabels: Record<string, string> = {
@@ -31,6 +32,9 @@ const templateLabels: Record<string, string> = {
   vertical_timeline: 'Vertical Timeline',
   milestone_cards: 'Milestone Cards',
   story_chapters: 'Story Chapters',
+  minimal_player: 'Minimal Player',
+  visual_player: 'Visual Player',
+  lyrics_card: 'Lyrics Card',
 };
 
 type Props = {
@@ -90,6 +94,7 @@ export default function SummaryPanel({ config, form }: Props) {
                 {section === 'home' && config.home_template && templateLabels[config.home_template]}
                 {section === 'gallery' && config.gallery_template && templateLabels[config.gallery_template]}
                 {section === 'timeline' && config.timeline_template && templateLabels[config.timeline_template]}
+                {section === 'song' && config.song_template && templateLabels[config.song_template]}
               </span>
             </div>
           ))}

@@ -3,6 +3,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  
+  /* Smooth scrolling */
+  --scroll-behavior: smooth;
 }
 
 @theme inline {
@@ -19,10 +22,16 @@
   }
 }
 
+/* Enable smooth scrolling globally */
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  scroll-behavior: smooth;
 }
 
 @tailwind base;
@@ -99,6 +108,38 @@ body {
   .delay-450 { animation-delay: 450ms; }
   .delay-525 { animation-delay: 525ms; }
   .delay-600 { animation-delay: 600ms; }
+  
+  /* Scroll Reveal Animations */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+  }
+  
+  .reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .reveal-fade {
+    opacity: 0;
+    transition: opacity 0.8s ease-out;
+  }
+  
+  .reveal-fade.active {
+    opacity: 1;
+  }
+  
+  .reveal-scale {
+    opacity: 0;
+    transform: scale(0.95);
+    transition: all 0.6s ease-out;
+  }
+  
+  .reveal-scale.active {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* Keyframes */
@@ -194,8 +235,116 @@ body {
   .animate-float,
   .animate-float-delayed,
   .animate-pulse-slow,
-  .animate-gentle-pulse {
+  .animate-gentle-pulse,
+  .reveal,
+  .reveal-fade,
+  .reveal-scale {
     animation: none;
     transform: none;
+    opacity: 1;
+  }
+}
+
+/* ============================================
+   PRINT STYLES
+   For printable QR card and keychain inserts
+   ============================================ */
+
+@media print {
+  /* Hide all elements with print:hidden class */
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Show elements only when printing */
+  .print\:block {
+    display: block !important;
+  }
+
+  /* Print-friendly body */
+  body {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Reset margins for print */
+  .print\:m-0 {
+    margin: 0 !important;
+  }
+
+  .print\:p-0 {
+    padding: 0 !important;
+  }
+
+  /* Ensure card container takes full print area */
+  .printable-card-layout {
+    min-height: 100vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: white !important;
+  }
+
+  /* Page settings */
+  @page {
+    size: A4;
+    margin: 5mm;
+  }
+
+  /* Hide admin sidebar, header, and other UI elements */
+  aside,
+  nav.admin-sidebar,
+  header:not(.print-header),
+  .admin-sidebar,
+  [class*="sidebar"],
+  [class*="header"],
+  .no-print {
+    display: none !important;
+  }
+
+  /* Hide admin main content wrapper that adds extra spacing */
+  main[class*="flex-1"] {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Reset flex layout for print */
+  .flex.min-h-screen.bg-slate-100 {
+    display: block !important;
+    background: white !important;
+  }
+
+  /* Ensure QR code prints clearly */
+  img[alt*="QR"] {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Card print styling */
+  .print-card {
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+    break-inside: avoid !important;
+  }
+
+  /* Keychain print sheet - ensure proper page breaks */
+  .print-sheet {
+    page-break-after: always;
+  }
+
+  .print-insert {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Print grid for keychain inserts */
+  .print-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 5mm !important;
   }
 }

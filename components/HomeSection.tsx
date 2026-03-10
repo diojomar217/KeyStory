@@ -267,13 +267,13 @@ export default function HomeSection({
     );
   };
 
-  // Fullscreen Banner Template - Most premium
+  // Fullscreen Banner Template - Most premium with cinematic, elegant design
   const renderFullscreenBanner = () => {
     const isDark = theme === 'dark_elegant';
     
     return (
       <div className={`relative min-h-screen flex items-center justify-center ${styles.heroBg}`}>
-        {/* Background Image - Premium styling with enhanced overlays */}
+        {/* Background Image - Premium styling with enhanced cinematic overlays */}
         <div className="absolute inset-0">
           <Image
             src={heroImage}
@@ -283,71 +283,71 @@ export default function HomeSection({
             priority
           />
           {/* Enhanced gradient overlays for better text readability */}
-          {/* Lighter at top, darker at bottom - cinematic feel */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/10 to-black/60" />
+          {/* Layered: Top lighter, middle subtle, bottom strong dark */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/70" />
           {/* Additional overlay for depth */}
           <div className={`absolute inset-0 ${styles.overlay}`} />
           {/* Vignette effect for edges */}
           <div className="absolute inset-0" style={{ background: styles.heroVignette }} />
         </div>
 
-        {/* Decorative elements */}
+        {/* Decorative elements - subtle floating hearts */}
         <HeroDecorations theme={theme} />
 
-        {/* Content Overlay */}
-        <div className="relative z-10 text-center text-white px-4 max-w-5xl flex flex-col items-center justify-center min-h-screen pb-20">
+        {/* Content Overlay - Centered with improved layout */}
+        <div className="relative z-10 text-center text-white px-4 
+          flex flex-col items-center justify-center min-h-screen 
+          max-w-3xl mx-auto">
+          
           {/* Decorative element at top */}
-          <div className="mb-10">
-            <span className="text-6xl md:text-7xl animate-pulse inline-block">💕</span>
+          <div className="mb-8">
+            <span className="text-5xl md:text-6xl animate-pulse inline-block">💕</span>
           </div>
 
-          {/* Couple Names - Large and dramatic */}
+          {/* Couple Names - Largest text, dramatic but elegant */}
           <h1 className={`
             ${styles.heading} 
-            text-5xl md:text-6xl lg:text-7xl 
-            font-bold 
-            mb-8 
+            text-4xl md:text-6xl 
+            font-semibold 
+            mb-6 
             drop-shadow-lg
             leading-tight
-            tracking-tight
+            tracking-wide
           `}>
             {customerName} 
-            <span className="block md:inline mx-0 md:mx-4 text-4xl md:text-5xl text-rose-300/80">&</span> 
+            <span className="block md:inline mx-0 md:mx-4 text-3xl md:text-4xl text-rose-300/80 font-light">&</span> 
             {partnerName}
           </h1>
 
-          {/* Anniversary Date */}
-          <p className="text-xl md:text-2xl mb-10 opacity-90 font-light tracking-wide">
+          {/* "Together since" Date - Clear hierarchy */}
+          <p className="text-lg md:text-xl mb-8 opacity-90 font-light tracking-wide drop-shadow-md">
             Together since <span className="font-medium">{anniversaryDate}</span>
           </p>
 
-          {/* Timer */}
-          <div className="mb-8">
+          {/* Relationship Timer Pill - Clean single container */}
+          <div className="mb-10">
             <RelationshipTimer anniversary={anniversaryDate} theme={theme} />
           </div>
 
-          {/* Tagline - Short romantic line instead of full message */}
+          {/* Tagline / Quote - Elegant italic styling */}
           {tagline && (
-            <div className="max-w-3xl mx-auto mb-16">
-              <p className={`
-                text-lg md:text-xl lg:text-2xl
+            <div className="max-w-2xl mx-auto mb-16 px-4">
+              <p className="
+                text-lg md:text-xl
                 leading-relaxed
-                px-4
-                text-white/90
+                text-white/95
                 font-light
                 italic
                 drop-shadow-md
-              `}>
+              ">
                 &ldquo;{tagline}&rdquo;
               </p>
             </div>
           )}
-          
-          {/* Scroll indicator - Fixed at bottom center */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
-            <ScrollIndicator />
-          </div>
         </div>
+        
+        {/* Scroll indicator - Fixed at bottom center, never overlaps content */}
+        <ScrollIndicator />
       </div>
     );
   };
