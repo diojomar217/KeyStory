@@ -899,9 +899,9 @@ export default function CreatePage() {
                   customer_name: form.customer_name,
                   partner_name: form.partner_name,
                   anniversary_date: form.anniversary_date,
-                  tagline: form.tagline,
+                  tagline: form.tagline ?? "",
                   message: form.message,
-                  song_link: form.song_link,
+                  song_link: form.song_link ?? "",
                 }}
                 photoPreviews={photoPreviews}
                 device={previewDevice}
