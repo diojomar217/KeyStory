@@ -8,6 +8,8 @@ import TimelineSection from './TimelineSection';
 import SongSection from './SongSection';
 import FooterSection from './FooterSection';
 import LoveLetterSection from './LoveLetterSection';
+import BackToTop from './BackToTop';
+import MemoryCardSection from './product/MemoryCardSection';
 
 type Props = {
   theme: Theme;
@@ -50,9 +52,6 @@ export default function LovePageClient({
   const hasGallery = sections.includes('gallery');
   const hasTimeline = sections.includes('timeline');
   const hasSong = !!songLink;
-  
-  // Track section order for alternating backgrounds
-  let sectionIndex = 0;
 
   return (
     <ThemeWrapper theme={theme}>
@@ -80,7 +79,25 @@ export default function LovePageClient({
           />
         )}
 
-        {/* Song Section - Full Width */}
+        {/* Timeline Section - Relationship story */}
+        {hasTimeline && (
+          <TimelineSection
+            theme={theme}
+            template={timelineTemplate}
+            events={timelineEvents}
+          />
+        )}
+
+        {/* Gallery Section - Memories together */}
+        {hasGallery && (
+          <GallerySection
+            theme={theme}
+            template={galleryTemplate}
+            photos={photos}
+          />
+        )}
+
+        {/* Song Section - Music that represents the relationship */}
         {hasSong && (
           <SongSection
             theme={theme}
@@ -88,31 +105,14 @@ export default function LovePageClient({
           />
         )}
 
-        {/* Gallery Section */}
-        {hasGallery && (
-          <section className={`py-16 md:py-20 ${sectionIndex++ % 2 === 0 ? theme === 'dark_elegant' ? 'bg-zinc-800/30' : 'bg-white' : theme === 'dark_elegant' ? 'bg-zinc-900/30' : 'bg-rose-50/50'}`}>
-            <div className="max-w-6xl mx-auto px-4 md:px-6">
-              <GallerySection
-                theme={theme}
-                template={galleryTemplate}
-                photos={photos}
-              />
-            </div>
-          </section>
-        )}
-
-        {/* Timeline Section */}
-        {hasTimeline && (
-          <section className={`py-16 md:py-20 ${sectionIndex++ % 2 === 0 ? theme === 'dark_elegant' ? 'bg-zinc-800/30' : 'bg-white' : theme === 'dark_elegant' ? 'bg-zinc-900/30' : 'bg-rose-50/50'}`}>
-            <div className="max-w-5xl mx-auto px-4 md:px-6">
-              <TimelineSection
-                theme={theme}
-                template={timelineTemplate}
-                events={timelineEvents}
-              />
-            </div>
-          </section>
-        )}
+        {/* Memory Card Section - Premium Keepsake */}
+        <MemoryCardSection
+          theme={theme}
+          customerName={customerName}
+          partnerName={partnerName}
+          qrCodeUrl={qrCodeUrl}
+          qrDataUrl={qrDataUrl}
+        />
 
         {/* Footer */}
         <FooterSection
@@ -122,6 +122,9 @@ export default function LovePageClient({
           qrCodeUrl={qrCodeUrl}
           qrDataUrl={qrDataUrl}
         />
+
+        {/* Back to Top Button */}
+        <BackToTop />
       </div>
     </ThemeWrapper>
   );

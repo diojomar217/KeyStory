@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import AdminLayout from '@/components/admin/AdminLayout';
 import ThemeSelector from '@/components/ThemeSelector';
 import SectionSelector from '@/components/SectionSelector';
 import TemplateSelector from '@/components/TemplateSelector';
@@ -235,7 +234,6 @@ export default function EditWebsitePage() {
 
     setLoading(true);
 
-    // Convert new photos to base64
     let allPhotos = [...form.existingPhotos];
     
     if (form.photos.length > 0) {
@@ -477,126 +475,120 @@ export default function EditWebsitePage() {
 
   if (fetching) {
     return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600"></div>
-        </div>
-      </AdminLayout>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600"></div>
+      </div>
     );
   }
 
   if (success) {
     return (
-      <AdminLayout>
-        <div className="max-w-2xl mx-auto text-center py-12">
-          <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">Website Updated!</h2>
-          <p className="text-slate-500 mb-6">Your changes have been saved successfully.</p>
-          
-          <div className="flex gap-4 justify-center">
-            <a
-              href={`/love/${form.website_name}`}
-              target="_blank"
-              className="px-6 py-3 bg-rose-600 text-white font-medium rounded-lg hover:bg-rose-700"
-            >
-              View Website
-            </a>
-            <button
-              onClick={() => router.push('/admin/websites')}
-              className="px-6 py-3 border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50"
-            >
-              Back to Websites
-            </button>
-          </div>
+      <div className="max-w-2xl mx-auto text-center py-12">
+        <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
         </div>
-      </AdminLayout>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">Website Updated!</h2>
+        <p className="text-slate-500 mb-6">Your changes have been saved successfully.</p>
+        
+        <div className="flex gap-4 justify-center">
+          <a
+            href={`/love/${form.website_name}`}
+            target="_blank"
+            className="px-6 py-3 bg-rose-600 text-white font-medium rounded-lg hover:bg-rose-700"
+          >
+            View Website
+          </a>
+          <button
+            onClick={() => router.push('/admin/websites')}
+            className="px-6 py-3 border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50"
+          >
+            Back to Websites
+          </button>
+        </div>
+      </div>
     );
   }
 
   return (
-    <AdminLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Edit Website</h1>
-            <p className="text-slate-500 mt-1">Update website configuration</p>
-          </div>
-          <a href="/admin/websites" className="text-rose-600 hover:text-rose-700 font-medium">
-            ← Back to Websites
-          </a>
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Edit Website</h1>
+          <p className="text-slate-500 mt-1">Update website configuration</p>
         </div>
-
-        {/* Step Indicator */}
-        <div className="flex items-center gap-2">
-          {[1, 2, 3, 4, 5].map((step) => (
-            <button
-              key={step}
-              onClick={() => {
-                if (step < currentStep || completedSteps.includes(step - 1)) {
-                  setCurrentStep(step);
-                  setError(null);
-                }
-              }}
-              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
-                step === currentStep
-                  ? 'bg-rose-600 text-white'
-                  : completedSteps.includes(step)
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : 'bg-slate-100 text-slate-600'
-              }`}
-            >
-              {step === 1 ? 'Info' : step === 2 ? 'Theme' : step === 3 ? 'Sections' : step === 4 ? 'Templates' : 'Content'}
-            </button>
-          ))}
-        </div>
-
-        {error && (
-          <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          {renderStepContent()}
-
-          <div className="flex justify-between mt-6">
-            {currentStep > 1 ? (
-              <button
-                type="button"
-                onClick={handleBack}
-                className="px-6 py-3 border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50"
-              >
-                Back
-              </button>
-            ) : (
-              <div></div>
-            )}
-
-            {currentStep < 5 ? (
-              <button
-                type="button"
-                onClick={handleNext}
-                className="px-6 py-3 bg-rose-600 text-white font-medium rounded-lg hover:bg-rose-700"
-              >
-                Continue
-              </button>
-            ) : (
-              <button
-                type="submit"
-                className="px-8 py-3 bg-rose-600 text-white font-medium rounded-lg hover:bg-rose-700 disabled:opacity-60"
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : 'Save Changes'}
-              </button>
-            )}
-          </div>
-        </form>
+        <a href="/admin/websites" className="text-rose-600 hover:text-rose-700 font-medium">
+          ← Back to Websites
+        </a>
       </div>
-    </AdminLayout>
+
+      {/* Step Indicator */}
+      <div className="flex items-center gap-2">
+        {[1, 2, 3, 4, 5].map((step) => (
+          <button
+            key={step}
+            onClick={() => {
+              if (step < currentStep || completedSteps.includes(step - 1)) {
+                setCurrentStep(step);
+                setError(null);
+              }
+            }}
+            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+              step === currentStep
+                ? 'bg-rose-600 text-white'
+                : completedSteps.includes(step)
+                ? 'bg-emerald-100 text-emerald-700'
+                : 'bg-slate-100 text-slate-600'
+            }`}
+          >
+            {step === 1 ? 'Info' : step === 2 ? 'Theme' : step === 3 ? 'Sections' : step === 4 ? 'Templates' : 'Content'}
+          </button>
+        ))}
+      </div>
+
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        {renderStepContent()}
+
+        <div className="flex justify-between mt-6">
+          {currentStep > 1 ? (
+            <button
+              type="button"
+              onClick={handleBack}
+              className="px-6 py-3 border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50"
+            >
+              Back
+            </button>
+          ) : (
+            <div></div>
+          )}
+
+          {currentStep < 5 ? (
+            <button
+              type="button"
+              onClick={handleNext}
+              className="px-6 py-3 bg-rose-600 text-white font-medium rounded-lg hover:bg-rose-700"
+            >
+              Continue
+            </button>
+          ) : (
+            <button
+              type="submit"
+              className="px-8 py-3 bg-rose-600 text-white font-medium rounded-lg hover:bg-rose-700 disabled:opacity-60"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save Changes'}
+            </button>
+          )}
+        </div>
+      </form>
+    </div>
   );
 }
 

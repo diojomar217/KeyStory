@@ -132,12 +132,47 @@ const templates: Record<Section, { key: string; label: string; description: stri
       )
     },
   ],
+  song: [
+    { 
+      key: 'minimal_player', 
+      label: 'Minimal Player',
+      description: 'Clean and simple music player that plays your song',
+      preview: (
+        <div className="w-full h-full bg-slate-100 rounded-lg p-2 flex items-center justify-center">
+          <div className="w-12 h-4 bg-rose-300 rounded-full"></div>
+        </div>
+      )
+    },
+    { 
+      key: 'visual_player', 
+      label: 'Visual Player',
+      description: 'Music player with animated visualizer and album art',
+      preview: (
+        <div className="w-full h-full bg-gradient-to-br from-rose-200 to-purple-200 rounded-lg p-2 flex items-center justify-center">
+          <div className="w-8 h-8 bg-white/50 rounded-full"></div>
+        </div>
+      )
+    },
+    { 
+      key: 'lyrics_card', 
+      label: 'Lyrics Card',
+      description: 'Beautiful card displaying your song lyrics with romantic styling',
+      preview: (
+        <div className="w-full h-full bg-slate-100 rounded-lg p-2 flex items-center justify-center">
+          <div className="w-10 h-6 bg-white rounded shadow-sm flex items-center justify-center">
+            <div className="w-8 h-0.5 bg-rose-200"></div>
+          </div>
+        </div>
+      )
+    },
+  ],
 };
 
 const sectionLabels: Record<Section, string> = {
   home: 'Home Template',
   gallery: 'Gallery Template',
   timeline: 'Timeline Template',
+  song: 'Song Template',
 };
 
 export default function TemplateSelector({ section, value, onChange }: Props) {

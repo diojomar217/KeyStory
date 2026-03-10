@@ -1,8 +1,10 @@
-'use client';
+   'use client';
 
 import { Theme } from '@/lib/types';
 import { useTheme } from './ThemeWrapper';
 import { getMusicEmbedInfo } from '@/lib/musicEmbed';
+import SectionHeader from './SectionHeader';
+import ScrollReveal from './ScrollReveal';
 
 type Props = {
   theme: Theme;
@@ -45,20 +47,17 @@ export default function SongSection({ theme, songLink }: Props) {
   // Don't render if invalid URL
   if (!isValid || !embedUrl) {
     return (
-      <section className={`${styles.sectionBgAlt} py-12 md:py-16 w-full`}>
-        <div className="max-w-4xl mx-auto px-4 md:px-6">
-          <div className="text-center mb-8">
-            <div className={`inline-flex items-center justify-center w-14 h-14 rounded-full ${accent.bg} ${accent.glow} shadow-lg mb-4`}>
-              <span className={`text-2xl ${accent.text}`}>🎵</span>
-            </div>
-            <h2 className={`${styles.heading} text-2xl md:text-3xl font-semibold ${styles.text} mb-2`}>
-              Our Song
-            </h2>
-            <p className={`text-sm md:text-base ${styles.textMuted} max-w-md mx-auto`}>
-              A song that reminds us of our favorite moments together
-            </p>
-          </div>
-          <div className={`${styles.card} ${styles.cardBorder} border rounded-2xl p-8 text-center shadow-xl`}>
+      <section className={`${styles.sectionBgAlt} py-16 md:py-24 w-full`}>
+        <div className="max-w-xl mx-auto px-4 md:px-6">
+          <ScrollReveal animation="fade-up">
+            <SectionHeader
+              icon="🎵"
+              title="Our Song"
+              subtitle="A song that reminds us of our favorite moments together"
+              theme={theme}
+            />
+          </ScrollReveal>
+          <div className={`${styles.card} ${styles.cardBorder} border rounded-2xl p-6 text-center shadow-xl`}>
             <p className={`${styles.textMuted}`}>Invalid song link. Please provide a valid YouTube or Spotify link.</p>
           </div>
         </div>
@@ -67,69 +66,63 @@ export default function SongSection({ theme, songLink }: Props) {
   }
 
   return (
-    <section className={`${styles.sectionBgAlt} py-12 md:py-16 w-full`}>
-      <div className="max-w-4xl mx-auto px-4 md:px-6">
-        {/* Section Header - Elegant & Balanced */}
-        <div className="text-center mb-8">
-          {/* Icon Container - Premium styling with glow effect */}
-          <div className={`inline-flex items-center justify-center w-14 h-14 rounded-full ${accent.bg} ${accent.glow} shadow-lg mb-4`}>
-            <span className={`text-2xl ${accent.text}`}>🎵</span>
-          </div>
-          
-          {/* Refined Heading */}
-          <h2 className={`${styles.heading} text-2xl md:text-3xl font-semibold ${styles.text} mb-2`}>
-            Our Song
-          </h2>
-          
-          {/* Elegant Subtitle */}
-          <p className={`text-sm md:text-base ${styles.textMuted} max-w-md mx-auto`}>
-            A song that reminds us of our favorite moments together
-          </p>
-        </div>
+    <section className={`${styles.sectionBgAlt} py-16 md:py-24 w-full`}>
+      <div className="max-w-xl mx-auto px-4 md:px-6">
+        {/* Section Header */}
+        <ScrollReveal animation="fade-up">
+          <SectionHeader
+            icon="🎵"
+            title="Our Song"
+            subtitle="A song that reminds us of our favorite moments together"
+            theme={theme}
+          />
+        </ScrollReveal>
 
-        {/* Premium Video Container - Polished Frame */}
-        <div className={`
-          relative overflow-hidden rounded-2xl
-          ${styles.card} ${styles.cardBorder} border
-          shadow-xl
-          ${theme === 'dark_elegant' ? 'shadow-amber-500/10' : 'shadow-rose-500/10'}
-        `}>
-          {/* Decorative top accent line */}
+        {/* Premium Video Container */}
+        <ScrollReveal animation="fade-up" delay={150}>
           <div className={`
-            absolute top-0 left-0 right-0 h-1
-            bg-gradient-to-r ${styles.gradient}
-          `} />
-          
-          {/* Responsive container - 16:9 for YouTube, auto height for Spotify */}
-          <div className={provider === 'spotify' ? 'relative w-full h-[152px] md:h-[352px]' : 'relative w-full aspect-video'}>
-            <iframe
-              src={embedUrl}
-              allow={provider === 'spotify' 
-                ? "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-                : "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              }
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              className="absolute top-0 left-0 w-full h-full rounded-t-xl"
-              title={`Our Song - ${provider === 'spotify' ? 'Spotify' : 'YouTube'} Player`}
-            />
-          </div>
-          
-          {/* Subtle bottom accent */}
-          <div className={`
-            px-4 py-3 flex items-center justify-center
-            ${styles.sectionBgAlt}
+            relative overflow-hidden rounded-2xl
+            ${styles.card} ${styles.cardBorder} border
+            shadow-xl
+            ${theme === 'dark_elegant' ? 'shadow-amber-500/10' : 'shadow-rose-500/10'}
           `}>
-            <span className={`text-xs ${styles.textMuted} flex items-center gap-2`}>
-              <span className="opacity-60">🎧</span>
-              Put on your headphones and enjoy the melody
-            </span>
+            {/* Decorative top accent line */}
+            <div className={`
+              absolute top-0 left-0 right-0 h-1
+              bg-gradient-to-r ${styles.gradient}
+            `} />
+            
+            {/* Responsive container - 16:9 for YouTube, auto height for Spotify */}
+            <div className={provider === 'spotify' ? 'relative w-full h-[152px] md:h-[352px]' : 'relative w-full aspect-video'}>
+              <iframe
+                src={embedUrl}
+                allow={provider === 'spotify' 
+                  ? "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+                  : "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                }
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="absolute top-0 left-0 w-full h-full rounded-t-xl"
+                title={`Our Song - ${provider === 'spotify' ? 'Spotify' : 'YouTube'} Player`}
+              />
+            </div>
+            
+            {/* Subtle bottom accent with helper text */}
+            <div className={`
+              px-4 py-4 flex items-center justify-center
+              ${styles.sectionBgAlt}
+            `}>
+              <span className={`text-sm ${styles.textMuted} flex items-center gap-2`}>
+                <span className="opacity-60">🎧</span>
+                Put on your headphones and enjoy the melody
+              </span>
+            </div>
           </div>
-        </div>
+        </ScrollReveal>
 
         {/* Decorative elements - Hearts */}
-        <div className="flex justify-center gap-2 mt-6">
+        <div className="flex justify-center gap-2 mt-8">
           <span className="text-rose-300/50 text-sm">💕</span>
           <span className="text-rose-300/30 text-xs">💕</span>
           <span className="text-rose-300/20 text-sm">💕</span>

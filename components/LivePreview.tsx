@@ -80,6 +80,12 @@ type Props = {
   config: SiteConfig;
   isMobileOpen: boolean;
   onMobileClose: () => void;
+  coupleNames?: {
+    customer_name: string;
+    partner_name: string;
+  };
+  tagline?: string;
+  coverPhotoUrl?: string;
 };
 
 export default function LivePreview({ config, isMobileOpen, onMobileClose }: Props) {
