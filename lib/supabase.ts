@@ -10,6 +10,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export type Order = {
   id?: string;
   slug: string;
+  website_name?: string; // human-readable identifier used in URL
   customer_name: string;
   partner_name: string;
   anniversary_date: string;
@@ -17,12 +18,57 @@ export type Order = {
   photos: string[];
   song_link?: string;
   qr_code_url?: string;
+
+  // individual config columns (optional)
+  theme?: string;
+  sections?: string[];
+  home_template?: string;
+  gallery_template?: string;
+  timeline_template?: string;
+  timeline_events?: any;
+
+  config?: any;
   status?: string;
   created_at?: string;
 };
 
 export async function insertOrder(order: Order) {
   const { data, error } = await supabase.from('orders').insert(order).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateOrder(id: string, updates: Partial<Order>) {
+  const { data, error } = await supabase
+    .from('orders')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteOrder(id: string) {
+  const { error } = await supabase.from('orders').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function getOrders() {
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function getOrderById(id: string) {
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*')
+    .eq('id', id)
+    .single();
   if (error) throw error;
   return data;
 }
