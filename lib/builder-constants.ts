@@ -9,7 +9,7 @@ import {
 } from './types';
 
 // ============================================
-// THEME PRESETS
+// THEME PRESETS - 16 Themes
 // ============================================
 
 export const THEME_PRESETS: Record<Theme, ThemePresetConfig> = {
@@ -125,6 +125,342 @@ export const THEME_PRESETS: Record<Theme, ThemePresetConfig> = {
     },
     preview: ['#18181B', '#27272A', '#D4AF37', '#FAFAFA'],
   },
+  soft_pastel: {
+    key: 'soft_pastel',
+    label: 'Soft Pastel',
+    description: 'Gentle and calming pastel tones',
+    colors: {
+      primary: '#F472B6',
+      secondary: '#FEF3C7',
+      accent: '#A78BFA',
+      background: '#FFFBEB',
+      text: '#831843',
+      card: '#FFFFFF',
+      border: '#FBCFE8',
+    },
+    typography: {
+      headingFont: 'sans-serif',
+      bodyFont: 'sans-serif',
+      headingWeight: 500,
+      bodyWeight: 400,
+    },
+    style: {
+      cardStyle: 'rounded',
+      sectionSpacing: 'spacious',
+      accentStyle: 'solid',
+      buttonStyle: 'rounded',
+      shadowIntensity: 'light',
+    },
+    preview: ['#F472B6', '#FEF3C7', '#A78BFA', '#FFFBEB'],
+  },
+  elegant_rose_gold: {
+    key: 'elegant_rose_gold',
+    label: 'Elegant Rose Gold',
+    description: 'Sophisticated rose gold with champagne tones',
+    colors: {
+      primary: '#B76E79',
+      secondary: '#FDF2F8',
+      accent: '#D4AF37',
+      background: '#FFF5F5',
+      text: '#831843',
+      card: '#FFFFFF',
+      border: '#FBCFE8',
+    },
+    typography: {
+      headingFont: 'serif',
+      bodyFont: 'sans-serif',
+      headingWeight: 600,
+      bodyWeight: 400,
+    },
+    style: {
+      cardStyle: 'rounded',
+      sectionSpacing: 'normal',
+      accentStyle: 'gradient',
+      buttonStyle: 'rounded',
+      shadowIntensity: 'medium',
+    },
+    preview: ['#B76E79', '#FDF2F8', '#D4AF37', '#FFF5F5'],
+  },
+  vintage_love_letter: {
+    key: 'vintage_love_letter',
+    label: 'Vintage Love Letter',
+    description: 'Nostalgic vintage paper aesthetic',
+    colors: {
+      primary: '#78350F',
+      secondary: '#FEF3C7',
+      accent: '#92400E',
+      background: '#FFFBEB',
+      text: '#451A03',
+      card: '#FFFCF0',
+      border: '#D6D3D1',
+    },
+    typography: {
+      headingFont: 'serif',
+      bodyFont: 'serif',
+      headingWeight: 700,
+      bodyWeight: 400,
+    },
+    style: {
+      cardStyle: 'rounded',
+      sectionSpacing: 'normal',
+      accentStyle: 'outline',
+      buttonStyle: 'rounded',
+      shadowIntensity: 'light',
+    },
+    preview: ['#78350F', '#FEF3C7', '#92400E', '#FFFCF0'],
+  },
+  scrapbook_memories: {
+    key: 'scrapbook_memories',
+    label: 'Scrapbook Memories',
+    description: 'Crafty scrapbook with decorative elements',
+    colors: {
+      primary: '#EA580C',
+      secondary: '#FED7AA',
+      accent: '#F59E0B',
+      background: '#FFFBEB',
+      text: '#7C2D12',
+      card: '#FFFCF0',
+      border: '#FDBA74',
+    },
+    typography: {
+      headingFont: 'cursive',
+      bodyFont: 'sans-serif',
+      headingWeight: 700,
+      bodyWeight: 400,
+    },
+    style: {
+      cardStyle: 'rounded',
+      sectionSpacing: 'spacious',
+      accentStyle: 'solid',
+      buttonStyle: 'pill',
+      shadowIntensity: 'medium',
+    },
+    preview: ['#EA580C', '#FED7AA', '#F59E0B', '#FFFBEB'],
+  },
+  wedding_style: {
+    key: 'wedding_style',
+    label: 'Wedding Style',
+    description: 'Elegant wedding invitation aesthetic',
+    colors: {
+      primary: '#1F2937',
+      secondary: '#F3F4F6',
+      accent: '#D4AF37',
+      background: '#FAFAF9',
+      text: '#1C1917',
+      card: '#FFFFFF',
+      border: '#E7E5E4',
+    },
+    typography: {
+      headingFont: 'serif',
+      bodyFont: 'serif',
+      headingWeight: 600,
+      bodyWeight: 400,
+    },
+    style: {
+      cardStyle: 'rounded',
+      sectionSpacing: 'normal',
+      accentStyle: 'gradient',
+      buttonStyle: 'rounded',
+      shadowIntensity: 'light',
+    },
+    preview: ['#1F2937', '#F3F4F6', '#D4AF37', '#FAFAF9'],
+  },
+  floral_romance: {
+    key: 'floral_romance',
+    label: 'Floral Romance',
+    description: 'Beautiful floral patterns and soft pinks',
+    colors: {
+      primary: '#BE185D',
+      secondary: '#FCE7F3',
+      accent: '#EC4899',
+      background: '#FFF1F2',
+      text: '#831843',
+      card: '#FFFFFF',
+      border: '#F9A8D4',
+    },
+    typography: {
+      headingFont: 'serif',
+      bodyFont: 'sans-serif',
+      headingWeight: 600,
+      bodyWeight: 400,
+    },
+    style: {
+      cardStyle: 'rounded',
+      sectionSpacing: 'normal',
+      accentStyle: 'gradient',
+      buttonStyle: 'rounded',
+      shadowIntensity: 'medium',
+    },
+    preview: ['#BE185D', '#FCE7F3', '#EC4899', '#FFF1F2'],
+  },
+  dreamy_pink: {
+    key: 'dreamy_pink',
+    label: 'Dreamy Pink',
+    description: 'Soft dreamy pink atmosphere',
+    colors: {
+      primary: '#DB2777',
+      secondary: '#FBCFE8',
+      accent: '#F472B6',
+      background: '#FDF2F8',
+      text: '#831843',
+      card: '#FFFFFF',
+      border: '#F9A8D4',
+    },
+    typography: {
+      headingFont: 'sans-serif',
+      bodyFont: 'sans-serif',
+      headingWeight: 500,
+      bodyWeight: 400,
+    },
+    style: {
+      cardStyle: 'pill',
+      sectionSpacing: 'spacious',
+      accentStyle: 'solid',
+      buttonStyle: 'soft',
+      shadowIntensity: 'light',
+    },
+    preview: ['#DB2777', '#FBCFE8', '#F472B6', '#FDF2F8'],
+  },
+  luxury_gold: {
+    key: 'luxury_gold',
+    label: 'Luxury Gold',
+    description: 'Premium gold and black aesthetic',
+    colors: {
+      primary: '#D4AF37',
+      secondary: '#1F2937',
+      accent: '#FBBF24',
+      background: '#111827',
+      text: '#F9FAFB',
+      card: '#1F2937',
+      border: '#374151',
+    },
+    typography: {
+      headingFont: 'serif',
+      bodyFont: 'sans-serif',
+      headingWeight: 700,
+      bodyWeight: 300,
+    },
+    style: {
+      cardStyle: 'square',
+      sectionSpacing: 'normal',
+      accentStyle: 'gradient',
+      buttonStyle: 'rounded',
+      shadowIntensity: 'heavy',
+    },
+    preview: ['#1F2937', '#D4AF37', '#FBBF24', '#111827'],
+  },
+  minimal_white: {
+    key: 'minimal_white',
+    label: 'Minimal White',
+    description: 'Clean white minimalist design',
+    colors: {
+      primary: '#1F2937',
+      secondary: '#F9FAFB',
+      accent: '#6B7280',
+      background: '#FFFFFF',
+      text: '#111827',
+      card: '#FFFFFF',
+      border: '#E5E7EB',
+    },
+    typography: {
+      headingFont: 'sans-serif',
+      bodyFont: 'sans-serif',
+      headingWeight: 600,
+      bodyWeight: 400,
+    },
+    style: {
+      cardStyle: 'square',
+      sectionSpacing: 'compact',
+      accentStyle: 'solid',
+      buttonStyle: 'square',
+      shadowIntensity: 'none',
+    },
+    preview: ['#1F2937', '#F9FAFB', '#6B7280', '#FFFFFF'],
+  },
+  cute_kawaii: {
+    key: 'cute_kawaii',
+    label: 'Cute Kawaii',
+    description: 'Playful kawaii style with cute icons',
+    colors: {
+      primary: '#F472B6',
+      secondary: '#FEF3C7',
+      accent: '#A855F7',
+      background: '#FDF4FF',
+      text: '#831843',
+      card: '#FFFFFF',
+      border: '#F9A8D4',
+    },
+    typography: {
+      headingFont: 'sans-serif',
+      bodyFont: 'sans-serif',
+      headingWeight: 700,
+      bodyWeight: 500,
+    },
+    style: {
+      cardStyle: 'pill',
+      sectionSpacing: 'spacious',
+      accentStyle: 'solid',
+      buttonStyle: 'pill',
+      shadowIntensity: 'light',
+    },
+    preview: ['#F472B6', '#FEF3C7', '#A855F7', '#FDF4FF'],
+  },
+  soft_lavender: {
+    key: 'soft_lavender',
+    label: 'Soft Lavender',
+    description: 'Calming lavender purple tones',
+    colors: {
+      primary: '#7C3AED',
+      secondary: '#EDE9FE',
+      accent: '#A78BFA',
+      background: '#FAF5FF',
+      text: '#5B21B6',
+      card: '#FFFFFF',
+      border: '#C4B5FD',
+    },
+    typography: {
+      headingFont: 'sans-serif',
+      bodyFont: 'sans-serif',
+      headingWeight: 600,
+      bodyWeight: 400,
+    },
+    style: {
+      cardStyle: 'rounded',
+      sectionSpacing: 'normal',
+      accentStyle: 'solid',
+      buttonStyle: 'rounded',
+      shadowIntensity: 'light',
+    },
+    preview: ['#7C3AED', '#EDE9FE', '#A78BFA', '#FAF5FF'],
+  },
+  photo_focus: {
+    key: 'photo_focus',
+    label: 'Photo Focus',
+    description: 'Minimal design to showcase photos',
+    colors: {
+      primary: '#374151',
+      secondary: '#F3F4F6',
+      accent: '#9CA3AF',
+      background: '#FFFFFF',
+      text: '#1F2937',
+      card: '#FFFFFF',
+      border: '#E5E7EB',
+    },
+    typography: {
+      headingFont: 'sans-serif',
+      bodyFont: 'sans-serif',
+      headingWeight: 500,
+      bodyWeight: 400,
+    },
+    style: {
+      cardStyle: 'square',
+      sectionSpacing: 'compact',
+      accentStyle: 'solid',
+      buttonStyle: 'square',
+      shadowIntensity: 'none',
+    },
+    preview: ['#374151', '#F3F4F6', '#9CA3AF', '#FFFFFF'],
+  },
 };
 
 // ============================================
@@ -175,10 +511,11 @@ export const LAYOUT_PRESETS: LayoutPresetConfig[] = [
 ];
 
 // ============================================
-// SECTION TOGGLES
+// SECTION TOGGLES - 24 Sections
 // ============================================
 
 export const SECTION_TOGGLES: SectionToggle[] = [
+  // Core Required Sections
   {
     id: 'home',
     label: 'Hero Section',
@@ -187,6 +524,7 @@ export const SECTION_TOGGLES: SectionToggle[] = [
     required: true,
     defaultEnabled: true,
   },
+  // Content Sections
   {
     id: 'love_letter',
     label: 'Love Letter',
@@ -196,6 +534,39 @@ export const SECTION_TOGGLES: SectionToggle[] = [
     defaultEnabled: true,
   },
   {
+    id: 'our_story',
+    label: 'Our Story',
+    description: 'Share your relationship story in detail',
+    icon: '📖',
+    required: false,
+    defaultEnabled: false,
+  },
+  {
+    id: 'first_date',
+    label: 'First Date',
+    description: 'Highlight your first date memory',
+    icon: '🌹',
+    required: false,
+    defaultEnabled: false,
+  },
+  {
+    id: 'special_moments',
+    label: 'Special Moments',
+    description: 'Highlight memorable experiences together',
+    icon: '⭐',
+    required: false,
+    defaultEnabled: false,
+  },
+  {
+    id: 'milestones',
+    label: 'Milestones',
+    description: 'Relationship achievements and accomplishments',
+    icon: '🏆',
+    required: false,
+    defaultEnabled: false,
+  },
+  // Timeline
+  {
     id: 'timeline',
     label: 'Timeline',
     description: 'Your journey of love through time',
@@ -203,6 +574,7 @@ export const SECTION_TOGGLES: SectionToggle[] = [
     required: false,
     defaultEnabled: true,
   },
+  // Photo Sections
   {
     id: 'gallery',
     label: 'Gallery',
@@ -212,6 +584,15 @@ export const SECTION_TOGGLES: SectionToggle[] = [
     defaultEnabled: true,
   },
   {
+    id: 'polaroid_gallery',
+    label: 'Polaroid Gallery',
+    description: 'Display photos in polaroid style frames',
+    icon: '🖼️',
+    required: false,
+    defaultEnabled: false,
+  },
+  // Music & Video
+  {
     id: 'song',
     label: 'Music',
     description: 'Your special song that defines your relationship',
@@ -219,6 +600,108 @@ export const SECTION_TOGGLES: SectionToggle[] = [
     required: false,
     defaultEnabled: false,
   },
+  {
+    id: 'playlist',
+    label: 'Playlist',
+    description: 'Share your relationship playlist',
+    icon: '🎶',
+    required: false,
+    defaultEnabled: false,
+  },
+  {
+    id: 'video_memories',
+    label: 'Video Memories',
+    description: 'Share embedded video memories',
+    icon: '🎬',
+    required: false,
+    defaultEnabled: false,
+  },
+  // Stats & Counters
+  {
+    id: 'relationship_stats',
+    label: 'Relationship Stats',
+    description: 'Show days, months, and hours together',
+    icon: '📊',
+    required: false,
+    defaultEnabled: false,
+  },
+  {
+    id: 'anniversary_countdown',
+    label: 'Anniversary Countdown',
+    description: 'Live countdown to your next anniversary',
+    icon: '⏰',
+    required: false,
+    defaultEnabled: false,
+  },
+  // Dreams & Future
+  {
+    id: 'future_dreams',
+    label: 'Future Dreams',
+    description: 'Share your plans and dreams together',
+    icon: '💭',
+    required: false,
+    defaultEnabled: false,
+  },
+  // Interactive Sections
+  {
+    id: 'quotes',
+    label: 'Love Quotes',
+    description: 'Display romantic love quotes',
+    icon: '💕',
+    required: false,
+    defaultEnabled: false,
+  },
+  {
+    id: 'reasons_love_you',
+    label: 'Reasons I Love You',
+    description: 'List all the reasons you love them',
+    icon: '💖',
+    required: false,
+    defaultEnabled: false,
+  },
+  {
+    id: 'memory_map',
+    label: 'Memory Map',
+    description: 'Show places you have visited together',
+    icon: '🗺️',
+    required: false,
+    defaultEnabled: false,
+  },
+  // Guest & Messages
+  {
+    id: 'guest_messages',
+    label: 'Guest Messages',
+    description: 'Let friends and family leave messages',
+    icon: '💬',
+    required: false,
+    defaultEnabled: false,
+  },
+  // Special Features
+  {
+    id: 'letter_future',
+    label: 'Letter to the Future',
+    description: 'Write a message to open later',
+    icon: '📮',
+    required: false,
+    defaultEnabled: false,
+  },
+  {
+    id: 'gift_section',
+    label: 'Gift Section',
+    description: 'Display digital love gifts',
+    icon: '🎁',
+    required: false,
+    defaultEnabled: false,
+  },
+  {
+    id: 'surprise_message',
+    label: 'Surprise Message',
+    description: 'Hidden message reveal feature',
+    icon: '🎉',
+    required: false,
+    defaultEnabled: false,
+  },
+  // Keepsake
   {
     id: 'qr_keepsake',
     label: 'QR Keepsake',
@@ -230,67 +713,62 @@ export const SECTION_TOGGLES: SectionToggle[] = [
 ];
 
 // ============================================
-// BUILDER STEPS
+// BUILDER STEPS - 7 Steps for Love Website Wizard
 // ============================================
 
 export const BUILDER_STEPS: BuilderStep[] = [
   { 
     id: 1, 
-    title: 'Couple Details', 
-    subtitle: 'Let\'s start with the basics',
-    section: 'couple_details',
+    title: 'Your Details', 
+    subtitle: "Let's start",
+    section: 'your_details',
     isRequired: true,
   },
   { 
     id: 2, 
-    title: 'Hero Section', 
-    subtitle: 'Your love story begins here',
-    section: 'hero_section',
+    title: 'Hero & Message', 
+    subtitle: 'Your love story',
+    section: 'hero_message',
     isRequired: true,
   },
   { 
     id: 3, 
-    title: 'Love Letter', 
-    subtitle: 'Write your heartfelt message',
-    section: 'love_letter',
-    isRequired: false,
+    title: 'Choose Style', 
+    subtitle: 'Pick the mood',
+    section: 'choose_style',
+    isRequired: true,
   },
   { 
     id: 4, 
-    title: 'Timeline', 
-    subtitle: 'Your journey together',
-    section: 'timeline',
-    isRequired: false,
+    title: 'Page Layout', 
+    subtitle: 'Select sections',
+    section: 'page_layout',
+    isRequired: true,
   },
   { 
     id: 5, 
-    title: 'Gallery', 
-    subtitle: 'Add your precious moments',
-    section: 'gallery',
-    isRequired: false,
+    title: 'Templates', 
+    subtitle: 'Design picks',
+    section: 'templates',
+    isRequired: true,
   },
   { 
     id: 6, 
-    title: 'Music', 
-    subtitle: 'Your special song',
-    section: 'music',
+    title: 'Memories', 
+    subtitle: 'Add moments',
+    section: 'memories',
     isRequired: false,
   },
   { 
     id: 7, 
-    title: 'Theme & Style', 
-    subtitle: 'Choose your look',
-    section: 'theme_style',
-    isRequired: true,
-  },
-  { 
-    id: 8, 
-    title: 'Review & Publish', 
-    subtitle: 'Almost there!',
-    section: 'review_publish',
+    title: 'Review', 
+    subtitle: 'Almost done!',
+    section: 'review',
     isRequired: true,
   },
 ];
+
+export const TOTAL_STEPS = 7;
 
 // ============================================
 // HELPER FUNCTIONS

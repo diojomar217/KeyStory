@@ -1,37 +1,6 @@
 'use client';
 import { Theme } from '@/lib/types';
-
-const themes: { 
-  key: Theme; 
-  label: string; 
-  description: string;
-  colors: string[];
-}[] = [
-  { 
-    key: 'romantic_classic', 
-    label: 'Romantic Classic', 
-    description: 'Timeless elegance with roses',
-    colors: ['#BE185D', '#FBCFE8', '#881337', '#FDF4FF']
-  },
-  { 
-    key: 'cute_pastel', 
-    label: 'Cute Pastel', 
-    description: 'Soft and dreamy vibes',
-    colors: ['#F9A8D4', '#FDE68A', '#A7F3D0', '#E0E7FF']
-  },
-  { 
-    key: 'minimal_modern', 
-    label: 'Minimal Modern', 
-    description: 'Clean and sophisticated',
-    colors: ['#1F2937', '#F3F4F6', '#9CA3AF', '#FFFFFF']
-  },
-  { 
-    key: 'dark_elegant', 
-    label: 'Dark Elegant', 
-    description: 'Bold and luxurious feel',
-    colors: ['#18181B', '#27272A', '#D4AF37', '#FAFAFA']
-  },
-];
+import { THEME_PRESETS } from '@/lib/builder-constants';
 
 type Props = {
   value?: Theme;
@@ -39,6 +8,8 @@ type Props = {
 };
 
 export default function ThemeSelector({ value, onChange }: Props) {
+  const themeKeys = Object.keys(THEME_PRESETS) as Theme[];
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
@@ -46,13 +17,14 @@ export default function ThemeSelector({ value, onChange }: Props) {
         <h3 className="text-lg font-semibold text-slate-800">Choose Theme</h3>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {themes.map((t, index) => {
-          const isSelected = value === t.key;
+        {themeKeys.map((themeKey, index) => {
+          const theme = THEME_PRESETS[themeKey];
+          const isSelected = value === themeKey;
           return (
             <button
-              key={t.key}
+              key={themeKey}
               type="button"
-              onClick={() => onChange(t.key)}
+              onClick={() => onChange(themeKey)}
               className={`
                 group relative flex flex-col p-4 rounded-2xl border-2 text-left
                 transition-all duration-300 ease-out
@@ -76,7 +48,7 @@ export default function ThemeSelector({ value, onChange }: Props) {
 
               {/* Color Palette Preview */}
               <div className="flex gap-1.5 mb-3">
-                {t.colors.map((color, idx) => (
+                {theme.preview.map((color, idx) => (
                   <div
                     key={idx}
                     className="w-6 h-6 rounded-full shadow-sm border border-slate-200/50 transform group-hover:scale-110 transition-transform duration-300"
@@ -87,12 +59,12 @@ export default function ThemeSelector({ value, onChange }: Props) {
 
               {/* Theme Name */}
               <h4 className={`font-semibold text-base mb-1 transition-colors duration-300 ${isSelected ? 'text-rose-600' : 'text-slate-800 group-hover:text-rose-600'}`}>
-                {t.label}
+                {theme.label}
               </h4>
               
               {/* Description */}
               <p className="text-sm text-slate-500 group-hover:text-slate-600 transition-colors duration-300">
-                {t.description}
+                {theme.description}
               </p>
             </button>
           );

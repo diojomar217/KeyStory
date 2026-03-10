@@ -11,6 +11,25 @@ import LoveLetterSection from './LoveLetterSection';
 import BackToTop from './BackToTop';
 import MemoryCardSection from './product/MemoryCardSection';
 
+// Import new section components
+import QuotesSection from './sections/QuotesSection';
+import OurStorySection from './sections/OurStorySection';
+import MilestonesSection from './sections/MilestonesSection';
+import FutureDreamsSection from './sections/FutureDreamsSection';
+import VideoMemoriesSection from './sections/VideoMemoriesSection';
+import RelationshipStatsSection from './sections/RelationshipStatsSection';
+import AnniversaryCountdownSection from './sections/AnniversaryCountdownSection';
+import PolaroidGallerySection from './sections/PolaroidGallerySection';
+import FirstDateSection from './sections/FirstDateSection';
+import SpecialMomentsSection from './sections/SpecialMomentsSection';
+import ReasonsILoveYouSection from './sections/ReasonsILoveYouSection';
+import MemoryMapSection from './sections/MemoryMapSection';
+import GuestMessagesSection from './sections/GuestMessagesSection';
+import LetterToFutureSection from './sections/LetterToFutureSection';
+import GiftSection from './sections/GiftSection';
+import SurpriseMessageSection from './sections/SurpriseMessageSection';
+import PlaylistSection from './sections/PlaylistSection';
+
 type Props = {
   theme: Theme;
   sections: string[];
@@ -79,6 +98,29 @@ export default function LovePageClient({
           />
         )}
 
+        {/* Our Story Section */}
+        {sections.includes('our_story') && (
+          <OurStorySection
+            theme={theme}
+            customerName={customerName}
+            partnerName={partnerName}
+          />
+        )}
+
+        {/* First Date Section */}
+        {sections.includes('first_date') && (
+          <FirstDateSection
+            theme={theme}
+            customerName={customerName}
+            partnerName={partnerName}
+          />
+        )}
+
+        {/* Special Moments Section */}
+        {sections.includes('special_moments') && (
+          <SpecialMomentsSection theme={theme} />
+        )}
+
         {/* Timeline Section - Relationship story */}
         {hasTimeline && (
           <TimelineSection
@@ -86,6 +128,11 @@ export default function LovePageClient({
             template={timelineTemplate}
             events={timelineEvents}
           />
+        )}
+
+        {/* Milestones Section */}
+        {sections.includes('milestones') && (
+          <MilestonesSection theme={theme} />
         )}
 
         {/* Gallery Section - Memories together */}
@@ -97,11 +144,102 @@ export default function LovePageClient({
           />
         )}
 
+        {/* Polaroid Gallery Section */}
+        {sections.includes('polaroid_gallery') && (
+          <PolaroidGallerySection
+            theme={theme}
+            photos={photos}
+          />
+        )}
+
         {/* Song Section - Music that represents the relationship */}
         {hasSong && (
           <SongSection
             theme={theme}
             songLink={songLink}
+          />
+        )}
+
+        {/* Playlist Section */}
+        {sections.includes('playlist') && songLink && (
+          <PlaylistSection
+            theme={theme}
+            songLink={songLink}
+          />
+        )}
+
+        {/* Video Memories Section */}
+        {sections.includes('video_memories') && (
+          <VideoMemoriesSection theme={theme} />
+        )}
+
+        {/* Relationship Stats Section */}
+        {sections.includes('relationship_stats') && (
+          <RelationshipStatsSection
+            theme={theme}
+            anniversaryDate={anniversaryDate}
+          />
+        )}
+
+        {/* Anniversary Countdown Section */}
+        {sections.includes('anniversary_countdown') && (
+          <AnniversaryCountdownSection
+            theme={theme}
+            anniversaryDate={anniversaryDate}
+          />
+        )}
+
+        {/* Future Dreams Section */}
+        {sections.includes('future_dreams') && (
+          <FutureDreamsSection theme={theme} />
+        )}
+
+        {/* Quotes Section */}
+        {sections.includes('quotes') && (
+          <QuotesSection theme={theme} />
+        )}
+
+        {/* Reasons I Love You Section */}
+        {sections.includes('reasons_love_you') && (
+          <ReasonsILoveYouSection
+            theme={theme}
+            partnerName={partnerName}
+          />
+        )}
+
+        {/* Memory Map Section */}
+        {sections.includes('memory_map') && (
+          <MemoryMapSection theme={theme} />
+        )}
+
+        {/* Guest Messages Section */}
+        {sections.includes('guest_messages') && (
+          <GuestMessagesSection theme={theme} />
+        )}
+
+        {/* Letter to Future Section */}
+        {sections.includes('letter_future') && (
+          <LetterToFutureSection
+            theme={theme}
+            customerName={customerName}
+            partnerName={partnerName}
+          />
+        )}
+
+        {/* Gift Section */}
+        {sections.includes('gift_section') && (
+          <GiftSection
+            theme={theme}
+            partnerName={partnerName}
+          />
+        )}
+
+        {/* Surprise Message Section */}
+        {sections.includes('surprise_message') && (
+          <SurpriseMessageSection
+            theme={theme}
+            customerName={customerName}
+            partnerName={partnerName}
           />
         )}
 

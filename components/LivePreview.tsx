@@ -1,5 +1,6 @@
 'use client';
 import { SiteConfig, Theme } from '@/lib/types';
+import { THEME_PRESETS } from '@/lib/builder-constants';
 
 const themeStyles: Record<Theme, { bg: string; text: string; accent: string; card: string }> = {
   romantic_classic: {
@@ -25,6 +26,78 @@ const themeStyles: Record<Theme, { bg: string; text: string; accent: string; car
     text: 'text-zinc-100',
     accent: 'text-amber-400',
     card: 'bg-zinc-800/80 border-zinc-700',
+  },
+  soft_pastel: {
+    bg: 'bg-gradient-to-b from-amber-50 to-yellow-50',
+    text: 'text-amber-900',
+    accent: 'text-amber-600',
+    card: 'bg-white/80 border-amber-200',
+  },
+  elegant_rose_gold: {
+    bg: 'bg-gradient-to-b from-rose-50 to-pink-50',
+    text: 'text-rose-900',
+    accent: 'text-rose-600',
+    card: 'bg-white/80 border-rose-200',
+  },
+  vintage_love_letter: {
+    bg: 'bg-gradient-to-b from-amber-50 to-orange-50',
+    text: 'text-amber-900',
+    accent: 'text-amber-700',
+    card: 'bg-amber-50/80 border-amber-200',
+  },
+  scrapbook_memories: {
+    bg: 'bg-gradient-to-b from-orange-50 to-amber-50',
+    text: 'text-orange-900',
+    accent: 'text-orange-600',
+    card: 'bg-white/80 border-orange-200',
+  },
+  wedding_style: {
+    bg: 'bg-gradient-to-b from-stone-50 to-slate-100',
+    text: 'text-stone-900',
+    accent: 'text-stone-600',
+    card: 'bg-white/90 border-stone-200',
+  },
+  floral_romance: {
+    bg: 'bg-gradient-to-b from-rose-50 to-pink-50',
+    text: 'text-rose-900',
+    accent: 'text-rose-600',
+    card: 'bg-white/80 border-rose-200',
+  },
+  dreamy_pink: {
+    bg: 'bg-gradient-to-b from-pink-50 to-fuchsia-50',
+    text: 'text-pink-900',
+    accent: 'text-pink-600',
+    card: 'bg-white/80 border-pink-200',
+  },
+  luxury_gold: {
+    bg: 'bg-gradient-to-b from-zinc-900 to-yellow-900',
+    text: 'text-yellow-100',
+    accent: 'text-yellow-400',
+    card: 'bg-zinc-800/80 border-zinc-700',
+  },
+  minimal_white: {
+    bg: 'bg-gradient-to-b from-white to-gray-50',
+    text: 'text-slate-900',
+    accent: 'text-slate-500',
+    card: 'bg-white border-slate-200',
+  },
+  cute_kawaii: {
+    bg: 'bg-gradient-to-b from-pink-50 to-purple-50',
+    text: 'text-pink-900',
+    accent: 'text-pink-600',
+    card: 'bg-white/80 border-pink-200',
+  },
+  soft_lavender: {
+    bg: 'bg-gradient-to-b from-violet-50 to-purple-50',
+    text: 'text-violet-900',
+    accent: 'text-violet-600',
+    card: 'bg-white/80 border-violet-200',
+  },
+  photo_focus: {
+    bg: 'bg-gradient-to-b from-gray-50 to-slate-100',
+    text: 'text-slate-900',
+    accent: 'text-slate-500',
+    card: 'bg-white border-slate-200',
   },
 };
 
@@ -89,13 +162,35 @@ type Props = {
 };
 
 export default function LivePreview({ config, isMobileOpen, onMobileClose }: Props) {
-  const theme = themeStyles[config.theme];
+  // Get theme styles with fallback to romantic_classic for unknown themes
+  const themeKey = config.theme || 'romantic_classic';
+  const theme = themeStyles[themeKey] || themeStyles.romantic_classic;
   const sections = config.sections;
   
   const sectionLabels: Record<string, string> = {
     home: 'Home',
     gallery: 'Gallery',
     timeline: 'Timeline',
+    song: 'Music',
+    love_letter: 'Love Letter',
+    qr_keepsake: 'QR Keepsake',
+    quotes: 'Quotes',
+    our_story: 'Our Story',
+    milestones: 'Milestones',
+    future_dreams: 'Future Dreams',
+    playlist: 'Playlist',
+    video_memories: 'Video Memories',
+    relationship_stats: 'Relationship Stats',
+    anniversary_countdown: 'Anniversary Countdown',
+    polaroid_gallery: 'Polaroid Gallery',
+    first_date: 'First Date',
+    special_moments: 'Special Moments',
+    reasons_love_you: 'Reasons I Love You',
+    memory_map: 'Memory Map',
+    guest_messages: 'Guest Messages',
+    letter_future: 'Letter to Future',
+    gift_section: 'Gift Section',
+    surprise_message: 'Surprise Message',
   };
 
   const templateLabels: Record<string, string> = {
@@ -126,17 +221,10 @@ export default function LivePreview({ config, isMobileOpen, onMobileClose }: Pro
       <div className={`${theme.card} rounded-lg p-3 mb-3 border`}>
         <span className={`text-xs font-medium ${theme.text} opacity-70 block mb-2`}>Theme</span>
         <div className="flex gap-1">
-          {config.theme === 'romantic_classic' && [ '#BE185D', '#FBCFE8', '#881337', '#FDF4FF'].map((c, i) => (
+          {THEME_PRESETS[config.theme]?.preview?.map((color: string, i: number) => (
+            <div key={i} className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: color }} />
+          )) || [ '#BE185D', '#FBCFE8', '#881337', '#FDF4FF'].map((c, i) => (
             <div key={i} className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: c }} />
-          ))}
-          {config.theme === 'cute_pastel' && [ '#F9A8D4', '#FDE68A', '#A7F3D0', '#E0E7FF'].map((c, i) => (
-            <div key={i} className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: c }} />
-          ))}
-          {config.theme === 'minimal_modern' && [ '#1F2937', '#F3F4F6', '#9CA3AF', '#FFFFFF'].map((c, i) => (
-            <div key={i} className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: c }} />
-          ))}
-          {config.theme === 'dark_elegant' && [ '#18181B', '#27272A', '#D4AF37', '#FAFAFA'].map((c, i) => (
-            <div key={i} className="w-4 h-4 rounded-full border border-black/20" style={{ backgroundColor: c }} />
           ))}
         </div>
       </div>

@@ -1,18 +1,13 @@
 'use client';
 import { SiteConfig, Theme } from '@/lib/types';
+import { THEME_PRESETS } from '@/lib/builder-constants';
 
-const themeLabels: Record<Theme, string> = {
-  romantic_classic: 'Romantic Classic',
-  cute_pastel: 'Cute Pastel',
-  minimal_modern: 'Minimal Modern',
-  dark_elegant: 'Dark Elegant',
+const getThemeLabel = (theme: Theme): string => {
+  return THEME_PRESETS[theme]?.label || theme;
 };
 
-const themeColors: Record<Theme, string[]> = {
-  romantic_classic: ['#BE185D', '#FBCFE8', '#881337', '#FDF4FF'],
-  cute_pastel: ['#F9A8D4', '#FDE68A', '#A7F3D0', '#E0E7FF'],
-  minimal_modern: ['#1F2937', '#F3F4F6', '#9CA3AF', '#FFFFFF'],
-  dark_elegant: ['#18181B', '#27272A', '#D4AF37', '#FAFAFA'],
+const getThemeColors = (theme: Theme): string[] => {
+  return THEME_PRESETS[theme]?.preview || ['#BE185D', '#FBCFE8', '#881337', '#FDF4FF'];
 };
 
 const sectionLabels: Record<string, string> = {
@@ -66,7 +61,7 @@ export default function SummaryPanel({ config, form }: Props) {
         </h4>
         <div className="flex items-center gap-3">
           <div className="flex gap-1">
-            {themeColors[config.theme].map((color, i) => (
+            {getThemeColors(config.theme).map((color: string, i: number) => (
               <div
                 key={i}
                 className="w-5 h-5 rounded-full border border-black/10"
@@ -74,8 +69,8 @@ export default function SummaryPanel({ config, form }: Props) {
               />
             ))}
           </div>
-          <span className="font-medium text-slate-700">{themeLabels[config.theme]}</span>
-        </div>
+          <span className="font-medium text-slate-700">{getThemeLabel(config.theme)}</span>
+        </div> REPLACE
       </div>
 
       {/* Sections Summary */}
