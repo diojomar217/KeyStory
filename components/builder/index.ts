@@ -13,7 +13,7 @@ export { default as SectionTogglePanel } from './SectionTogglePanel';
 export { default as ThemePresetCard, THEME_PRESETS } from './ThemePresetCard';
 export { default as LayoutPresetCard, LAYOUT_PRESETS } from './LayoutPresetCard';
 export { default as DraftAutosave, saveDraftToStorage, loadDraftFromStorage, clearDraftFromStorage } from './DraftAutosave';
-export { default as SmartContentHelpers, ROMANTIC_TAGLINES, LOVE_MESSAGE_TEMPLATES, TIMELINE_MILESTONES } from './SmartContentHelpers';
+export { default as SmartContentHelpers, LOVE_MESSAGE_TEMPLATES, TIMELINE_MILESTONES } from './SmartContentHelpers';
 export { default as ReviewPublishPanel } from './ReviewPublishPanel';
 export { default as BuilderPreview } from './BuilderPreview';
 export { default as ToastContainer, toast, useToast } from './Toast';
