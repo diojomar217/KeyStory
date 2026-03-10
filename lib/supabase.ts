@@ -37,3 +37,38 @@ export async function insertOrder(order: Order) {
   if (error) throw error;
   return data;
 }
+
+export async function updateOrder(id: string, updates: Partial<Order>) {
+  const { data, error } = await supabase
+    .from('orders')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteOrder(id: string) {
+  const { error } = await supabase.from('orders').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function getOrders() {
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function getOrderById(id: string) {
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error) throw error;
+  return data;
+}

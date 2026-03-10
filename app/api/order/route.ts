@@ -11,6 +11,7 @@ interface OrderRequest {
   partner_name: string;
   anniversary_date: string;
   message: string;
+  tagline?: string;
   song_link?: string;
   photos?: string[];
   config?: SiteConfig;
@@ -49,6 +50,13 @@ export async function POST(req: NextRequest) {
     const coupleUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/love/${website_name}`;
     const qrCodeUrl = await generateQRCode(coupleUrl);
 
+    // Store the URL in config for styled QR generation
+    const qrConfig = {
+      ...data.config,
+      qr_data_url: coupleUrl,
+      tagline: data.tagline,
+    };
+
     // prepare insert object
     const insertObj: Partial<Order> = {
       slug,
@@ -64,14 +72,14 @@ export async function POST(req: NextRequest) {
     };
 
     // configuration extracted from payload
-    if (data.config) {
-      insertObj.config = data.config;
-      insertObj.theme = data.config.theme;
-      insertObj.sections = data.config.sections || [];
-      insertObj.home_template = data.config.home_template;
-      insertObj.gallery_template = data.config.gallery_template;
-      insertObj.timeline_template = data.config.timeline_template;
-      insertObj.timeline_events = data.config.timeline_events || [];
+    if (qrConfig) {
+      insertObj.config = qrConfig;
+      insertObj.theme = qrConfig.theme;
+      insertObj.sections = qrConfig.sections || [];
+      insertObj.home_template = qrConfig.home_template;
+      insertObj.gallery_template = qrConfig.gallery_template;
+      insertObj.timeline_template = qrConfig.timeline_template;
+      insertObj.timeline_events = qrConfig.timeline_events || [];
     }
 
     const { data: order, error } = await supabase

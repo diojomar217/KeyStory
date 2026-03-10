@@ -25,6 +25,8 @@ export interface SiteConfig {
   gallery_template?: GalleryTemplate;
   timeline_template?: TimelineTemplate;
   timeline_events?: TimelineEvent[];
+  cover_photo_index?: number;
+  tagline?: string;
 }
 
 export interface CreateOrderPayload {
@@ -33,7 +35,20 @@ export interface CreateOrderPayload {
   partner_name: string;
   anniversary_date: string;
   message: string;
+  tagline?: string;
   song_link?: string;
   photos: string[]; // base64
   config: SiteConfig;
+}
+
+// Admin Sidebar Types
+export interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ReactNode;
+}
+
+export interface SidebarState {
+  isCollapsed: boolean;
+  isMobileOpen: boolean;
 }
