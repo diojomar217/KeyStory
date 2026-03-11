@@ -270,7 +270,7 @@ export default function DynamicSectionRenderer({ section, ...props }: DynamicSec
   }
 
   // Build props for this section
-  const sectionProps = buildProps(section, props);
+  const sectionProps = { section, ...props };
 
   // Don't render if _skip flag is set (e.g., missing required data)
   if (sectionProps && (sectionProps as any)._skip) {
