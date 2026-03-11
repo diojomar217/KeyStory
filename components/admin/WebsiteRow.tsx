@@ -84,8 +84,8 @@ export default function WebsiteRow({ order, onDelete }: WebsiteRowProps) {
 
       {/* Theme */}
       <td className="px-4 py-3">
-        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getThemeColor(order.config?.theme || order.theme)}`}>
-          {getThemeLabel(order.config?.theme || order.theme)}
+        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getThemeColor(typeof order.config?.theme === 'string' ? order.config.theme : (order.theme || 'romantic_classic'))}`}>
+          {getThemeColor(typeof order.config?.theme === 'string' ? order.config.theme : (order.theme || 'romantic_classic'))}
         </span>
       </td>
 

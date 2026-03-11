@@ -238,8 +238,8 @@ function MobileWebsiteCard({
                 {order.customer_name} ❤️ {order.partner_name}
               </p>
             </div>
-            <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${getThemeColor(order.config?.theme || order.theme)}`}>
-              {getThemeLabel(order.config?.theme || order.theme)}
+            <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${getThemeLabel(typeof order.config?.theme === 'string' ? order.config.theme : (order.theme || 'romantic_classic'))}`}>
+              {getThemeLabel(typeof order.config?.theme === 'string' ? order.config.theme : (order.theme || 'romantic_classic'))}
             </span>
           </div>
           
