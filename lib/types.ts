@@ -71,6 +71,10 @@ export interface TimelineEvent {
   title: string;
   date: string;
   description: string;
+  photo?: string; // Optional photo for timeline events
+  icon?: string; // Optional emoji/icon for chapter (e.g., 💍, 🌹, ✨)
+  isSpecial?: boolean; // Mark as special moment with premium styling
+  photoPosition?: 'top' | 'side'; // Photo layout preference
 }
 
 // Theme Preset Configuration
@@ -127,6 +131,7 @@ export interface SectionToggle {
   label: string;
   description: string;
   icon: string;
+  preview?: string;
   required: boolean;
   defaultEnabled: boolean;
 }
@@ -137,6 +142,9 @@ export interface SiteConfig {
   layout_preset?: LayoutPreset;
   sections: Section[];
   section_toggles?: Record<Section, boolean>; // Enable/disable individual sections
+  // New dynamic template format (recommended)
+  section_templates?: Record<Section, string>;
+  // Legacy template fields (for backward compatibility)
   home_template?: HomeTemplate;
   gallery_template?: GalleryTemplate;
   timeline_template?: TimelineTemplate;
@@ -144,6 +152,7 @@ export interface SiteConfig {
   timeline_events?: TimelineEvent[];
   cover_photo_index?: number;
   tagline?: string;
+  message?: string; // Love message for the website
 }
 
 // Builder State Types

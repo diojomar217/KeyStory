@@ -19,6 +19,7 @@ export type Order = {
   partner_name: string;
   anniversary_date: string;
   message: string;
+  tagline?: string; // Added - stored in config but exposed at top level
   photos: string[];
   song_link?: string;
   qr_code_url?: string;
@@ -29,9 +30,9 @@ export type Order = {
   home_template?: string;
   gallery_template?: string;
   timeline_template?: string;
-  timeline_events?: any;
+  timeline_events?: unknown;
 
-  config?: any;
+  config?: Record<string, unknown>;
   status?: string;
   created_at?: string;
 };

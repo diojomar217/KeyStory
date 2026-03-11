@@ -27,7 +27,7 @@ export default function LoveLetterSection({ message, theme }: Props) {
   const accentColor = getAccentColor();
 
   return (
-    <section className={`py-16 md:py-24 ${styles.sectionBg}`}>
+    <section className={`py-16 md:py-24 ${styles.sectionBg}`} id="love-letter">
       <div className="max-w-4xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <ScrollReveal animation="fade-up">

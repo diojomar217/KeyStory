@@ -47,6 +47,79 @@ const romanticTaglines: Record<Theme, string[]> = {
     "Scan to discover our tale.",
     "Forever begins with you.",
   ],
+  // Additional themes - reuse similar taglines
+  soft_pastel: [
+    "Every love story is beautiful, but ours is my favorite.",
+    "A little code that leads to a lot of memories.",
+    "Scan to view our story",
+    "Where it all began...",
+  ],
+  elegant_rose_gold: [
+    "A love worth preserving.",
+    "In the darkness, you are my light.",
+    "Scan to discover our tale.",
+    "Forever begins with you.",
+  ],
+  vintage_love_letter: [
+    "A little code that leads to a lot of memories.",
+    "Every love story is beautiful, but ours is my favorite.",
+    "Scan to view our story",
+    "Where it all began...",
+  ],
+  scrapbook_memories: [
+    "You + Me = ❤️",
+    "Our love in one scan!",
+    "Tap into our sweet memories ✨",
+    "Love is in the air!",
+  ],
+  wedding_style: [
+    "Forever begins with you.",
+    "A love worth preserving.",
+    "Scan to discover our tale.",
+    "Where it all began...",
+  ],
+  floral_romance: [
+    "Every love story is beautiful, but ours is my favorite.",
+    "A little code that leads to a lot of memories.",
+    "Scan to view our story",
+    "Where it all began...",
+  ],
+  dreamy_pink: [
+    "You + Me = ❤️",
+    "Our love in one scan!",
+    "Tap into our sweet memories ✨",
+    "Love is in the air!",
+  ],
+  luxury_gold: [
+    "A love worth preserving.",
+    "In the darkness, you are my light.",
+    "Scan to discover our tale.",
+    "Forever begins with you.",
+  ],
+  minimal_white: [
+    "Our story, one scan away.",
+    "A glimpse into us.",
+    "Scan to explore.",
+    "The beginning of forever.",
+  ],
+  cute_kawaii: [
+    "You + Me = ❤️",
+    "Our love in one scan!",
+    "Tap into our sweet memories ✨",
+    "Love is in the air!",
+  ],
+  soft_lavender: [
+    "Every love story is beautiful, but ours is my favorite.",
+    "A little code that leads to a lot of memories.",
+    "Scan to view our story",
+    "Where it all began...",
+  ],
+  photo_focus: [
+    "Our story, one scan away.",
+    "A glimpse into us.",
+    "Scan to explore.",
+    "The beginning of forever.",
+  ],
 };
 
 // Scan instructions

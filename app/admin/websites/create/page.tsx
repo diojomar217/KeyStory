@@ -4,7 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { SiteConfig, CreateOrderPayload } from '@/lib/types';
-import { BUILDER_STEPS, TOTAL_STEPS } from '@/lib/builder-constants';
+import { 
+  WIZARD_STEPS, 
+  TOTAL_STEPS, 
+  validateStep, 
+  validateAllSteps,
+  getStepConfig 
+} from '@/lib/builder-steps-config';
+import { getTemplateSections, getSectionMetadata, getSectionTemplates } from '@/lib/section-registry';
 import ThemeSelector from '@/components/ThemeSelector';
 import SectionSelector from '@/components/SectionSelector';
 import TemplateSelector from '@/components/TemplateSelector';
@@ -23,86 +30,6 @@ const sanitizeSlug = (value: string): string => {
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .trim();
-};
-
-const validateStep = (
-  step: number,
-  form: LocalForm,
-  config: SiteConfig
-): { valid: boolean; error?: string } => {
-  switch (step) {
-    case 1:
-      if (!form.website_name.trim()) {
-        return { valid: false, error: 'Website name is required' };
-      }
-      if (!/^[a-z0-9-]+$/.test(form.website_name)) {
-        return {
-          valid: false,
-          error: 'Website name can only contain letters, numbers, and hyphens',
-        };
-      }
-      if (!form.customer_name.trim()) {
-        return { valid: false, error: 'Your name is required' };
-      }
-      if (!form.partner_name.trim()) {
-        return { valid: false, error: "Partner's name is required" };
-      }
-      if (!form.anniversary_date) {
-        return { valid: false, error: 'Anniversary date is required' };
-      }
-      return { valid: true };
-
-    case 2:
-      if (!form.message.trim()) {
-        return { valid: false, error: 'Love message is required' };
-      }
-      return { valid: true };
-
-    case 3:
-      if (!config.theme) {
-        return { valid: false, error: 'Please select a theme' };
-      }
-      return { valid: true };
-
-    case 4:
-      if (config.sections.length === 0) {
-        return { valid: false, error: 'Please select at least one section' };
-      }
-      return { valid: true };
-
-    case 5:
-      if (config.sections.includes('home') && !config.home_template) {
-        return { valid: false, error: 'Please select a home template' };
-      }
-      if (config.sections.includes('gallery') && !config.gallery_template) {
-        return { valid: false, error: 'Please select a gallery template' };
-      }
-      if (config.sections.includes('timeline') && !config.timeline_template) {
-        return { valid: false, error: 'Please select a timeline template' };
-      }
-      if (config.sections.includes('song') && !config.song_template) {
-        return { valid: false, error: 'Please select a song template' };
-      }
-      return { valid: true };
-
-    case 6:
-      if (config.sections.includes('gallery') && form.photos.length === 0) {
-        return { valid: false, error: 'Gallery section requires at least one photo' };
-      }
-      if (
-        config.sections.includes('timeline') &&
-        (!config.timeline_events || config.timeline_events.length === 0)
-      ) {
-        return { valid: false, error: 'Timeline section requires at least one event' };
-      }
-      return { valid: true };
-
-    case 7:
-      return { valid: true };
-
-    default:
-      return { valid: true };
-  }
 };
 
 export default function CreateWebsitePage() {
@@ -313,7 +240,7 @@ export default function CreateWebsitePage() {
   };
 
   const renderStepContent = () => {
-    const stepInfo = BUILDER_STEPS.find((s) => s.id === currentStep);
+    const stepInfo = WIZARD_STEPS.find((s) => s.id === currentStep);
 
     switch (currentStep) {
       case 1:
@@ -523,7 +450,7 @@ export default function CreateWebsitePage() {
 
             <SectionSelector
               value={config.sections}
-              onChange={(sections) => handleConfigChange({ sections })}
+onChange={(sections: import('@/lib/types').Section[]) => handleConfigChange({ sections })}
             />
           </div>
         );
@@ -913,8 +840,13 @@ export default function CreateWebsitePage() {
               </form>
             </div>
 
-            <LivePreview
+<LivePreview
               config={config}
+              coupleNames={{
+                customer_name: form.customer_name,
+                partner_name: form.partner_name,
+              }}
+              tagline={form.tagline}
               isMobileOpen={mobilePreviewOpen}
               onMobileClose={() => setMobilePreviewOpen(false)}
             />

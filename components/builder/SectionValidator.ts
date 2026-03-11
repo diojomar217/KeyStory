@@ -158,6 +158,23 @@ export function getSectionValidationStatus(
     song: 'valid',
     love_letter: 'valid',
     qr_keepsake: 'valid',
+    quotes: 'valid',
+    our_story: 'valid',
+    milestones: 'valid',
+    future_dreams: 'valid',
+    playlist: 'valid',
+    video_memories: 'valid',
+    anniversary_countdown: 'valid',
+    relationship_stats: 'valid',
+    memory_map: 'valid',
+    polaroid_gallery: 'valid',
+    first_date: 'valid',
+    special_moments: 'valid',
+    reasons_love_you: 'valid',
+    guest_messages: 'valid',
+    letter_future: 'valid',
+    gift_section: 'valid',
+    surprise_message: 'valid',
   };
   
   // Check gallery

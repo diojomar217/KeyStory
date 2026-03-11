@@ -93,6 +93,7 @@ export default async function LovePage({ params }: PageProps) {
 
   return (
     <LovePageClient
+      slug={slug}
       theme={theme}
       sections={sections}
       homeTemplate={homeTemplate}

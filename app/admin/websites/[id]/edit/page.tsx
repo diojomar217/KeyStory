@@ -15,6 +15,7 @@ type LocalForm = {
   partner_name: string;
   anniversary_date: string;
   message: string;
+  tagline: string;
   song_link: string;
   photos: File[];
   existingPhotos: string[];
@@ -93,6 +94,7 @@ export default function EditWebsitePage() {
     partner_name: '',
     anniversary_date: '',
     message: '',
+    tagline: '',
     song_link: '',
     photos: [],
     existingPhotos: [],
@@ -130,12 +132,18 @@ export default function EditWebsitePage() {
 
       if (data.order) {
         const order: Order = data.order;
+        // Safely extract tagline - it could be in config or at top level
+        const taglineValue = typeof order.tagline === 'string' 
+          ? order.tagline 
+          : (typeof order.config?.tagline === 'string' ? order.config.tagline : '');
+          
         setForm({
           website_name: order.website_name || order.slug || '',
           customer_name: order.customer_name || '',
           partner_name: order.partner_name || '',
           anniversary_date: order.anniversary_date || '',
           message: order.message || '',
+          tagline: taglineValue,
           song_link: order.song_link || '',
           photos: [],
           existingPhotos: order.photos || [],
@@ -263,6 +271,7 @@ export default function EditWebsitePage() {
           partner_name: form.partner_name,
           anniversary_date: form.anniversary_date,
           message: form.message,
+          tagline: form.tagline,
           song_link: form.song_link,
           photos: allPhotos,
           config,
@@ -346,6 +355,20 @@ export default function EditWebsitePage() {
                   className="w-full px-4 py-3 rounded-lg border border-slate-300 text-slate-900 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
                   onChange={handleChange}
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Hero Tagline</label>
+                <input
+                  name="tagline"
+                  maxLength={120}
+                  placeholder="Every love story is beautiful, but ours is my favorite."
+                  value={form.tagline}
+                  className="w-full px-4 py-3 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
+                  onChange={handleChange}
+                />
+                <p className="text-xs text-slate-400 mt-1">
+                  A short romantic line shown in the hero section. (Max 120 characters)
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Song Link (Optional)</label>
