@@ -6,7 +6,7 @@ import ThemeSelector from '@/components/ThemeSelector';
 import SectionSelector from '@/components/SectionSelector';
 import TemplateSelector from '@/components/TemplateSelector';
 import TimelineEditor from '@/components/TimelineEditor';
-import { SiteConfig, Theme } from '@/lib/types';
+import { SiteConfig, Theme, Section } from '@/lib/types';
 import { Order } from '@/lib/supabase';
 
 type LocalForm = {
@@ -15,6 +15,7 @@ type LocalForm = {
   partner_name: string;
   anniversary_date: string;
   message: string;
+  tagline: string;
   song_link: string;
   photos: File[];
   existingPhotos: string[];
@@ -93,6 +94,7 @@ export default function EditWebsitePage() {
     partner_name: '',
     anniversary_date: '',
     message: '',
+    tagline: '',
     song_link: '',
     photos: [],
     existingPhotos: [],
@@ -130,12 +132,18 @@ export default function EditWebsitePage() {
 
       if (data.order) {
         const order: Order = data.order;
+        // Safely extract tagline - it could be in config or at top level
+        const taglineValue = typeof order.tagline === 'string' 
+          ? order.tagline 
+          : (typeof order.config?.tagline === 'string' ? order.config.tagline : '');
+          
         setForm({
           website_name: order.website_name || order.slug || '',
           customer_name: order.customer_name || '',
           partner_name: order.partner_name || '',
           anniversary_date: order.anniversary_date || '',
           message: order.message || '',
+          tagline: taglineValue,
           song_link: order.song_link || '',
           photos: [],
           existingPhotos: order.photos || [],
@@ -143,14 +151,35 @@ export default function EditWebsitePage() {
 
         setPhotoPreviews(order.photos || []);
 
+        // Safely extract sections - ensure it's an array and cast to Section[]
+        const rawSections = Array.isArray(order.config?.sections) 
+          ? order.config.sections 
+          : (Array.isArray(order.sections) ? order.sections : ['home']);
+        const sectionsValue: Section[] = rawSections as Section[];
+          
+        // Safely extract template values with proper type assertions
+        const homeTemplateValue = order.config?.home_template || order.home_template;
+        const galleryTemplateValue = order.config?.gallery_template || order.gallery_template;
+        const timelineTemplateValue = order.config?.timeline_template || order.timeline_template;
+        
+        // Safely extract timeline events
+        const timelineEventsValue = Array.isArray(order.config?.timeline_events) 
+          ? order.config.timeline_events 
+          : (Array.isArray(order.timeline_events) ? order.timeline_events : []);
+          
+        // Safely extract cover photo index (only from config)
+        const coverPhotoIndexValue = typeof order.config?.cover_photo_index === 'number' 
+          ? order.config.cover_photo_index 
+          : undefined;
+          
         setConfig({
           theme: (order.config?.theme || order.theme) as Theme || 'romantic_classic',
-          sections: order.config?.sections || order.sections || ['home'],
-          home_template: order.config?.home_template || order.home_template,
-          gallery_template: order.config?.gallery_template || order.gallery_template,
-          timeline_template: order.config?.timeline_template || order.timeline_template,
-          timeline_events: order.config?.timeline_events || order.timeline_events || [],
-          cover_photo_index: order.config?.cover_photo_index,
+          sections: sectionsValue,
+          home_template: homeTemplateValue as SiteConfig['home_template'],
+          gallery_template: galleryTemplateValue as SiteConfig['gallery_template'],
+          timeline_template: timelineTemplateValue as SiteConfig['timeline_template'],
+          timeline_events: timelineEventsValue as SiteConfig['timeline_events'],
+          cover_photo_index: coverPhotoIndexValue,
         });
 
         setCompletedSteps([1, 2, 3, 4, 5]);
@@ -263,6 +292,7 @@ export default function EditWebsitePage() {
           partner_name: form.partner_name,
           anniversary_date: form.anniversary_date,
           message: form.message,
+          tagline: form.tagline,
           song_link: form.song_link,
           photos: allPhotos,
           config,
@@ -346,6 +376,20 @@ export default function EditWebsitePage() {
                   className="w-full px-4 py-3 rounded-lg border border-slate-300 text-slate-900 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
                   onChange={handleChange}
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Hero Tagline</label>
+                <input
+                  name="tagline"
+                  maxLength={120}
+                  placeholder="Every love story is beautiful, but ours is my favorite."
+                  value={form.tagline}
+                  className="w-full px-4 py-3 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
+                  onChange={handleChange}
+                />
+                <p className="text-xs text-slate-400 mt-1">
+                  A short romantic line shown in the hero section. (Max 120 characters)
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Song Link (Optional)</label>

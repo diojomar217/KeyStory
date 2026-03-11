@@ -71,6 +71,10 @@ body {
     animation: slideInRight 0.5s ease-out forwards;
   }
 
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out forwards;
+  }
+
   /* Float animation for decorative elements */
   .animate-float {
     animation: float 3s ease-in-out infinite;
@@ -140,6 +144,196 @@ body {
     opacity: 1;
     transform: scale(1);
   }
+
+  /* ============================================
+     PREMIUM LOVE PAGE ANIMATIONS
+     ============================================ */
+
+  /* Name reveal animation */
+  .animate-name-reveal {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  
+  .animate-name-reveal.active {
+    animation: nameReveal 0.8s ease-out forwards;
+  }
+
+  /* Floating hearts animation */
+  .animate-float-heart {
+    animation: floatHeart 4s ease-in-out infinite;
+    opacity: 0;
+  }
+  
+  .animate-float-heart.active {
+    opacity: 1;
+  }
+
+  /* Scroll indicator bounce */
+  .animate-bounce-subtle {
+    animation: bounceSubtle 2s ease-in-out infinite;
+  }
+
+  .animate-bounce-slow {
+    animation: bounceSlow 3s ease-in-out infinite;
+  }
+
+  /* Flip card utilities */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  
+  .transform-style-3d {
+    transform-style: preserve-3d;
+  }
+  
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+  
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+
+  /* Equalizer bars animation */
+  .equalizer-bar {
+    animation: equalizer 0.8s ease-in-out infinite;
+  }
+  
+  .equalizer-bar:nth-child(1) { animation-delay: 0s; }
+  .equalizer-bar:nth-child(2) { animation-delay: 0.1s; }
+  .equalizer-bar:nth-child(3) { animation-delay: 0.2s; }
+  .equalizer-bar:nth-child(4) { animation-delay: 0.3s; }
+  .equalizer-bar:nth-child(5) { animation-delay: 0.4s; }
+
+  /* Waveform animation */
+  .animate-waveform {
+    animation: waveform 1.2s ease-in-out infinite;
+  }
+
+  /* Gallery hover zoom */
+  .gallery-zoom-hover {
+    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  .gallery-zoom-hover:hover {
+    transform: scale(1.08);
+  }
+
+  /* Premium section entrance */
+  .section-enter {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  
+  .section-enter.active {
+    animation: sectionEnter 0.8s ease-out forwards;
+  }
+
+  /* Heartbeat for premium elements */
+  .animate-heartbeat {
+    animation: heartbeat 1.5s ease-in-out infinite;
+  }
+
+  /* Gradient text */
+  .text-gradient {
+    background: linear-gradient(135deg, #f472b6, #db2777, #be185d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ============================================
+     PREMIUM HERO ENHANCEMENTS
+     Parallax, drift, and glow effects
+     ============================================ */
+
+  /* Parallax background effect */
+  .parallax-bg {
+    transform: translateZ(-1px) scale(2);
+    z-index: -1;
+  }
+
+  /* Subtle drift animation for background elements */
+  .animate-drift {
+    animation: drift 20s ease-in-out infinite;
+  }
+
+  .animate-drift-slow {
+    animation: drift 30s ease-in-out infinite;
+    animation-direction: reverse;
+  }
+
+  /* Premium glow effects */
+  .glow-rose {
+    box-shadow: 0 0 40px rgba(244, 114, 182, 0.3),
+                0 0 80px rgba(244, 114, 182, 0.1);
+  }
+
+  .glow-amber {
+    box-shadow: 0 0 40px rgba(251, 191, 36, 0.3),
+                0 0 80px rgba(251, 191, 36, 0.1);
+  }
+
+  /* Soft radial gradient overlay */
+  .hero-glow-overlay {
+    background: radial-gradient(ellipse at center, 
+      transparent 0%, 
+      rgba(0, 0, 0, 0.2) 50%, 
+      rgba(0, 0, 0, 0.4) 100%
+    );
+  }
+
+  /* Premium text shadow for readability */
+  .text-shadow-premium {
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3),
+                 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Elegant shimmer effect */
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.2) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s ease-in-out infinite;
+  }
+
+  /* Smooth fade in with blur */
+  .animate-fade-in-blur {
+    animation: fadeInBlur 0.8s ease-out forwards;
+  }
+
+  /* Premium CTA button styles */
+  .cta-button {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .cta-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    );
+    transition: left 0.5s ease;
+    pointer-events: none;
+  }
+
+  .cta-button:hover::before {
+    left: 100%;
+  }
 }
 
 /* Keyframes */
@@ -203,6 +397,15 @@ body {
   }
 }
 
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
@@ -224,6 +427,140 @@ body {
   }
 }
 
+/* Premium Love Page Keyframes */
+@keyframes nameReveal {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes floatHeart {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-30px) scale(1.1);
+    opacity: 0.4;
+  }
+  90% {
+    opacity: 0;
+  }
+}
+
+@keyframes bounceSubtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes bounceSlow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes equalizer {
+  0%, 100% {
+    height: 4px;
+  }
+  50% {
+    height: 20px;
+  }
+}
+
+@keyframes waveform {
+  0%, 100% {
+    transform: scaleY(0.5);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes sectionEnter {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.1);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.1);
+  }
+  70% {
+    transform: scale(1);
+  }
+}
+
+/* Premium Hero Enhancement Keyframes */
+@keyframes drift {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(10px, -15px) rotate(2deg);
+  }
+  50% {
+    transform: translate(-5px, 10px) rotate(-1deg);
+  }
+  75% {
+    transform: translate(15px, 5px) rotate(1deg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes fadeInBlur {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in,
@@ -232,6 +569,7 @@ body {
   .animate-fade-in-scale,
   .animate-slide-in-left,
   .animate-slide-in-right,
+  .animate-slide-up,
   .animate-float,
   .animate-float-delayed,
   .animate-pulse-slow,
@@ -242,6 +580,277 @@ body {
     animation: none;
     transform: none;
     opacity: 1;
+  }
+}
+
+/* ============================================
+   ROMANTIC OPENING EXPERIENCE
+   Full-screen romantic intro before main content
+   ============================================ */
+
+/* Opening Screen Base */
+.opening-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  transition: opacity 0.8s ease-out, visibility 0.8s ease-out;
+}
+
+.opening-screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Opening Screen Backgrounds */
+.opening-bg-gradient {
+  background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 50%, #f9a8d4 100%);
+}
+
+.opening-bg-gradient-dark {
+  background: linear-gradient(135deg, #1f1f1f 0%, #2d1f2d 50%, #1a1a2e 100%);
+}
+
+.opening-bg-gradient-pastel {
+  background: linear-gradient(135deg, #f3e8ff 0%, #ede9fe 50%, #e0e7ff 100%);
+}
+
+.opening-bg-gradient-minimal {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+}
+
+/* Opening Screen Content */
+.opening-content {
+  text-align: center;
+  max-width: 400px;
+  animation: openingContentIn 1s ease-out;
+}
+
+.opening-content.hiding {
+  animation: openingContentOut 0.5s ease-in forwards;
+}
+
+@keyframes openingContentIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes openingContentOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
+/* Opening Title */
+.opening-title {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: inherit;
+}
+
+.opening-title-rose {
+  color: #be185d;
+}
+
+.opening-title-purple {
+  color: #7c3aed;
+}
+
+.opening-title-slate {
+  color: #334155;
+}
+
+.opening-title-amber {
+  color: #d97706;
+}
+
+/* Opening Subtitle */
+.opening-subtitle {
+  font-size: 1rem;
+  opacity: 0.8;
+  margin-bottom: 2.5rem;
+  font-weight: 300;
+}
+
+.opening-subtitle-rose {
+  color: #9d174d;
+}
+
+.opening-subtitle-purple {
+  color: #5b21b6;
+}
+
+.opening-subtitle-slate {
+  color: #475569;
+}
+
+.opening-subtitle-amber {
+  color: #92400e;
+}
+
+/* Opening Button */
+.opening-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  outline: none;
+}
+
+.opening-button:hover {
+  transform: scale(1.05);
+}
+
+.opening-button:active {
+  transform: scale(0.98);
+}
+
+/* Button Variants */
+.opening-button-rose {
+  background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+  color: white;
+  box-shadow: 0 4px 20px rgba(236, 72, 153, 0.4);
+}
+
+.opening-button-rose:hover {
+  box-shadow: 0 6px 30px rgba(236, 72, 153, 0.5);
+}
+
+.opening-button-purple {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+}
+
+.opening-button-slate {
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+  color: white;
+  box-shadow: 0 4px 20px rgba(100, 116, 139, 0.4);
+}
+
+.opening-button-amber {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+}
+
+/* Heart Burst Animation Container */
+.heart-burst-container {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heart-burst {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  opacity: 0;
+}
+
+.heart-burst.animate {
+  animation: heartBurst 1.5s ease-out forwards;
+}
+
+@keyframes heartBurst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.5);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx), var(--ty)) scale(0);
+  }
+}
+
+/* Main Content Reveal */
+.main-content-wrapper {
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.main-content-wrapper.revealing {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.main-content-wrapper.hidden {
+  opacity: 0;
+  transform: scale(0.98);
+  position: fixed;
+  pointer-events: none;
+}
+
+/* Floating hearts for opening screen */
+.opening-floating-heart {
+  position: absolute;
+  font-size: 1.5rem;
+  opacity: 0.3;
+  animation: openingFloatHeart 6s ease-in-out infinite;
+}
+
+.opening-floating-heart:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+.opening-floating-heart:nth-child(2) { top: 20%; right: 15%; animation-delay: 1s; }
+.opening-floating-heart:nth-child(3) { bottom: 20%; left: 20%; animation-delay: 2s; }
+.opening-floating-heart:nth-child(4) { bottom: 30%; right: 10%; animation-delay: 3s; }
+.opening-floating-heart:nth-child(5) { top: 50%; left: 5%; animation-delay: 4s; }
+
+@keyframes openingFloatHeart {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(10deg);
+  }
+}
+
+/* Pulse animation for button heart */
+.opening-button-heart {
+  display: inline-block;
+  animation: heartBeat 1.5s ease-in-out infinite;
+}
+
+@keyframes heartBeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.2);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.2);
   }
 }
 

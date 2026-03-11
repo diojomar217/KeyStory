@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import QRCodeStyling from 'qr-code-styling';
+import { toPng } from 'html-to-image';
 import { Theme } from '@/lib/types';
 import { useTheme } from '../ThemeWrapper';
 import ScrollReveal from '../ScrollReveal';
@@ -12,6 +13,7 @@ type Props = {
   partnerName: string;
   qrCodeUrl?: string;
   qrDataUrl?: string;
+  slug?: string;
 };
 
 export default function MemoryCardSection({
@@ -20,15 +22,22 @@ export default function MemoryCardSection({
   partnerName,
   qrCodeUrl,
   qrDataUrl,
+  slug,
 }: Props) {
   const styles = useTheme(theme);
   const coupleNames = `${customerName} & ${partnerName}`;
   
   const qrRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const qrCodeInstanceRef = useRef<QRCodeStyling | null>(null);
   const [currentUrl, setCurrentUrl] = useState('');
   const [copied, setCopied] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  
+  // Save card state
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -75,12 +84,45 @@ export default function MemoryCardSection({
 
   }, [qrDataUrl]);
 
-  const handleDownload = () => {
-    if (qrCodeInstanceRef.current) {
-      qrCodeInstanceRef.current.download({
-        name: `love-story-qr-${customerName.replace(/\s+/g, '-').toLowerCase()}-${partnerName.replace(/\s+/g, '-').toLowerCase()}`,
-        extension: 'png',
+  // Handle save card - capture the full card and download as PNG
+  const handleSaveCard = async () => {
+    if (!cardRef.current || isSaving) return;
+
+    setIsSaving(true);
+    setSaveError(false);
+    setSaveSuccess(false);
+
+    try {
+      // Wait for QR code to be fully rendered
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Generate filename
+      const filename = slug 
+        ? `${slug}-card` 
+        : `love-story-card-${customerName.replace(/\s+/g, '-').toLowerCase()}-${partnerName.replace(/\s+/g, '-').toLowerCase()}`;
+
+      // Capture the card as PNG
+      const dataUrl = await toPng(cardRef.current, {
+        quality: 1,
+        pixelRatio: 2,
+        cacheBust: true,
+        backgroundColor: '#ffffff',
       });
+
+      // Create download link
+      const link = document.createElement('a');
+      link.download = `${filename}.png`;
+      link.href = dataUrl;
+      link.click();
+
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (error) {
+      console.error('Failed to save card:', error);
+      setSaveError(true);
+      setTimeout(() => setSaveError(false), 3000);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -146,7 +188,9 @@ export default function MemoryCardSection({
 
         {/* Premium Memory Card */}
         <ScrollReveal animation="fade-up" delay={150}>
-          <div className={`
+          <div 
+            ref={cardRef}
+            className={`
             relative 
             bg-gradient-to-br from-white to-rose-50
             dark:from-zinc-800 dark:to-zinc-900
@@ -228,10 +272,11 @@ export default function MemoryCardSection({
                   "Every memory with you is my favorite."
                 </p>
 
-                {/* Download Button */}
+                {/* Save This Card Button */}
                 {isClient && (
                   <button
-                    onClick={handleDownload}
+                    onClick={handleSaveCard}
+                    disabled={isSaving}
                     className={`
                       inline-flex items-center gap-2 px-4 py-2 
                       rounded-full font-medium text-sm
@@ -242,12 +287,39 @@ export default function MemoryCardSection({
                       hover:scale-105
                       shadow-md hover:shadow-lg
                       mb-6
+                      disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
                     `}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    Save This Card
+                    {isSaving ? (
+                      <>
+                        <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Saving...</span>
+                      </>
+                    ) : saveSuccess ? (
+                      <>
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Saved!</span>
+                      </>
+                    ) : saveError ? (
+                      <>
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        <span>Failed</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        <span>Save This Card</span>
+                      </>
+                    )}
                   </button>
                 )}
 
@@ -266,7 +338,7 @@ export default function MemoryCardSection({
                       transition-all duration-300
                       ${copied 
                         ? 'bg-green-500 text-white' 
-                        : `bg-zinc-100 dark:bg-zinc-700 ${styles.text} hover:bg-zinc-200 dark:hover:bg-zinc-600`
+                        : 'bg-zinc-100 dark:bg-zinc-600 text-zinc-800 dark:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-500'
                       }
                     `}
                   >

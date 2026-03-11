@@ -1,82 +1,161 @@
 'use client';
-import { SiteConfig, Theme } from '@/lib/types';
 
-const themeStyles: Record<Theme, { bg: string; text: string; accent: string; card: string }> = {
+import { useState, useEffect } from 'react';
+import { SiteConfig, Theme, Section } from '@/lib/types';
+import { THEME_PRESETS, SECTION_TOGGLES } from '@/lib/builder-constants';
+import { SectionRenderer } from '@/components/builder/SectionPreviews';
+
+// ============================================
+// THEME STYLES
+// ============================================
+
+type ThemeStyle = {
+  bg: string;
+  text: string;
+  accent: string;
+  card: string;
+  border: string;
+  muted: string;
+};
+
+const themeStyles: Record<Theme, ThemeStyle> = {
   romantic_classic: {
     bg: 'bg-gradient-to-b from-rose-50 to-pink-50',
     text: 'text-rose-900',
     accent: 'text-rose-600',
-    card: 'bg-white/80 border-rose-200',
+    card: 'bg-white',
+    border: 'border-rose-200',
+    muted: 'text-rose-600/70',
   },
   cute_pastel: {
     bg: 'bg-gradient-to-b from-purple-50 to-pink-50',
     text: 'text-purple-900',
     accent: 'text-purple-600',
-    card: 'bg-white/80 border-purple-200',
+    card: 'bg-white',
+    border: 'border-purple-200',
+    muted: 'text-purple-600/70',
   },
   minimal_modern: {
     bg: 'bg-gradient-to-b from-slate-50 to-gray-100',
     text: 'text-slate-900',
     accent: 'text-slate-600',
-    card: 'bg-white/90 border-slate-200',
+    card: 'bg-white',
+    border: 'border-slate-200',
+    muted: 'text-slate-600/70',
   },
   dark_elegant: {
     bg: 'bg-gradient-to-b from-zinc-900 to-slate-900',
     text: 'text-zinc-100',
     accent: 'text-amber-400',
-    card: 'bg-zinc-800/80 border-zinc-700',
+    card: 'bg-zinc-800',
+    border: 'border-zinc-700',
+    muted: 'text-zinc-400',
+  },
+  soft_pastel: {
+    bg: 'bg-gradient-to-b from-amber-50 to-yellow-50',
+    text: 'text-amber-900',
+    accent: 'text-amber-600',
+    card: 'bg-white',
+    border: 'border-amber-200',
+    muted: 'text-amber-600/70',
+  },
+  elegant_rose_gold: {
+    bg: 'bg-gradient-to-b from-rose-50 to-pink-50',
+    text: 'text-rose-900',
+    accent: 'text-rose-600',
+    card: 'bg-white',
+    border: 'border-rose-200',
+    muted: 'text-rose-600/70',
+  },
+  vintage_love_letter: {
+    bg: 'bg-gradient-to-b from-amber-50 to-orange-50',
+    text: 'text-amber-900',
+    accent: 'text-amber-700',
+    card: 'bg-amber-50',
+    border: 'border-amber-200',
+    muted: 'text-amber-700/70',
+  },
+  scrapbook_memories: {
+    bg: 'bg-gradient-to-b from-orange-50 to-amber-50',
+    text: 'text-orange-900',
+    accent: 'text-orange-600',
+    card: 'bg-amber-50',
+    border: 'border-orange-200',
+    muted: 'text-orange-600/70',
+  },
+  wedding_style: {
+    bg: 'bg-gradient-to-b from-stone-50 to-slate-100',
+    text: 'text-stone-900',
+    accent: 'text-stone-600',
+    card: 'bg-white',
+    border: 'border-stone-200',
+    muted: 'text-stone-600/70',
+  },
+  floral_romance: {
+    bg: 'bg-gradient-to-b from-rose-50 to-pink-50',
+    text: 'text-rose-900',
+    accent: 'text-rose-600',
+    card: 'bg-white',
+    border: 'border-rose-200',
+    muted: 'text-rose-600/70',
+  },
+  dreamy_pink: {
+    bg: 'bg-gradient-to-b from-pink-50 to-fuchsia-50',
+    text: 'text-pink-900',
+    accent: 'text-pink-600',
+    card: 'bg-white',
+    border: 'border-pink-200',
+    muted: 'text-pink-600/70',
+  },
+  luxury_gold: {
+    bg: 'bg-gradient-to-b from-zinc-900 to-yellow-900',
+    text: 'text-yellow-100',
+    accent: 'text-yellow-400',
+    card: 'bg-zinc-800',
+    border: 'border-zinc-700',
+    muted: 'text-yellow-400/70',
+  },
+  minimal_white: {
+    bg: 'bg-gradient-to-b from-white to-gray-50',
+    text: 'text-slate-900',
+    accent: 'text-slate-500',
+    card: 'bg-white',
+    border: 'border-slate-200',
+    muted: 'text-slate-500/70',
+  },
+  cute_kawaii: {
+    bg: 'bg-gradient-to-b from-pink-50 to-purple-50',
+    text: 'text-pink-900',
+    accent: 'text-pink-600',
+    card: 'bg-white',
+    border: 'border-pink-200',
+    muted: 'text-pink-600/70',
+  },
+  soft_lavender: {
+    bg: 'bg-gradient-to-b from-violet-50 to-purple-50',
+    text: 'text-violet-900',
+    accent: 'text-violet-600',
+    card: 'bg-white',
+    border: 'border-violet-200',
+    muted: 'text-violet-600/70',
+  },
+  photo_focus: {
+    bg: 'bg-gradient-to-b from-gray-50 to-slate-100',
+    text: 'text-slate-900',
+    accent: 'text-slate-500',
+    card: 'bg-white',
+    border: 'border-slate-200',
+    muted: 'text-slate-500/70',
   },
 };
 
-const templateIcons: Record<string, React.ReactNode> = {
-  hero_centered: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h12a2 2 0 012 2v2H4V6z" />
-    </svg>
-  ),
-  split_layout: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-    </svg>
-  ),
-  fullscreen_banner: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-    </svg>
-  ),
-  grid: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-    </svg>
-  ),
-  carousel: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-    </svg>
-  ),
-  polaroid: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-    </svg>
-  ),
-  vertical_timeline: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-    </svg>
-  ),
-  milestone_cards: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-    </svg>
-  ),
-  story_chapters: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-    </svg>
-  ),
-};
+// ============================================
+// DEVICE PREVIEW STYLES
+// ============================================
 
-type Props = {
+type DeviceType = 'desktop' | 'mobile';
+
+interface Props {
   config: SiteConfig;
   isMobileOpen: boolean;
   onMobileClose: () => void;
@@ -86,113 +165,213 @@ type Props = {
   };
   tagline?: string;
   coverPhotoUrl?: string;
-};
+}
 
-export default function LivePreview({ config, isMobileOpen, onMobileClose }: Props) {
-  const theme = themeStyles[config.theme];
-  const sections = config.sections;
+// ============================================
+// EMPTY STATE COMPONENT
+// ============================================
+
+function EmptyPreviewState({ theme }: { theme: ThemeStyle }) {
+  return (
+    <div className="flex flex-col items-center justify-center h-full py-12 px-4">
+      <div className="text-4xl mb-4">💕</div>
+      <h3 className={`text-lg font-semibold ${theme.text} mb-2`}>
+        Start Building Your Love Story
+      </h3>
+      <p className={`text-sm text-center ${theme.muted}`}>
+        Complete the wizard steps to see your website preview
+      </p>
+      
+      <div className="mt-6 flex flex-col gap-2 text-center">
+        <div className={`flex items-center gap-2 text-xs ${theme.muted}`}>
+          <span className="w-5 h-5 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-[10px] font-bold">1</span>
+          <span>Add your details</span>
+        </div>
+        <div className={`flex items-center gap-2 text-xs ${theme.muted}`}>
+          <span className="w-5 h-5 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-[10px] font-bold">2</span>
+          <span>Write your love message</span>
+        </div>
+        <div className={`flex items-center gap-2 text-xs ${theme.muted}`}>
+          <span className="w-5 h-5 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-[10px] font-bold">3</span>
+          <span>Choose a theme</span>
+        </div>
+        <div className={`flex items-center gap-2 text-xs ${theme.muted}`}>
+          <span className="w-5 h-5 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-[10px] font-bold">4</span>
+          <span>Select sections</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// DEVICE FRAME COMPONENT
+// ============================================
+
+function DeviceFrame({ 
+  children, 
+  device,
+  theme,
+  websiteName
+}: { 
+  children: React.ReactNode; 
+  device: DeviceType;
+  theme: ThemeStyle;
+  websiteName?: string;
+}) {
+  const isMobile = device === 'mobile';
   
-  const sectionLabels: Record<string, string> = {
-    home: 'Home',
-    gallery: 'Gallery',
-    timeline: 'Timeline',
-  };
-
-  const templateLabels: Record<string, string> = {
-    hero_centered: 'Hero Centered',
-    split_layout: 'Split Layout',
-    fullscreen_banner: 'Fullscreen Banner',
-    grid: 'Grid',
-    carousel: 'Carousel',
-    polaroid: 'Polaroid',
-    vertical_timeline: 'Vertical Timeline',
-    milestone_cards: 'Milestone Cards',
-    story_chapters: 'Story Chapters',
-  };
-
-  const content = (
-    <div className={`w-full h-full ${theme.bg} p-4 overflow-y-auto`}>
-      {/* Preview Header */}
-      <div className={`${theme.card} rounded-lg p-3 mb-3 border`}>
-        <div className="flex items-center gap-2 mb-2">
-          <div className={`w-2 h-2 rounded-full ${theme.accent.replace('text-', 'bg-')}`}></div>
-          <span className={`text-xs font-medium ${theme.text} opacity-70`}>Live Preview</span>
-        </div>
-        <h3 className={`font-bold text-sm ${theme.text}`}>Your Love Story</h3>
-        <p className={`text-xs ${theme.text} opacity-60`}>yoursite.com/love/...</p>
-      </div>
-
-      {/* Theme Colors Preview */}
-      <div className={`${theme.card} rounded-lg p-3 mb-3 border`}>
-        <span className={`text-xs font-medium ${theme.text} opacity-70 block mb-2`}>Theme</span>
-        <div className="flex gap-1">
-          {config.theme === 'romantic_classic' && [ '#BE185D', '#FBCFE8', '#881337', '#FDF4FF'].map((c, i) => (
-            <div key={i} className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: c }} />
-          ))}
-          {config.theme === 'cute_pastel' && [ '#F9A8D4', '#FDE68A', '#A7F3D0', '#E0E7FF'].map((c, i) => (
-            <div key={i} className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: c }} />
-          ))}
-          {config.theme === 'minimal_modern' && [ '#1F2937', '#F3F4F6', '#9CA3AF', '#FFFFFF'].map((c, i) => (
-            <div key={i} className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: c }} />
-          ))}
-          {config.theme === 'dark_elegant' && [ '#18181B', '#27272A', '#D4AF37', '#FAFAFA'].map((c, i) => (
-            <div key={i} className="w-4 h-4 rounded-full border border-black/20" style={{ backgroundColor: c }} />
-          ))}
+  return (
+    <div className={`relative ${isMobile ? 'max-w-[280px] mx-auto' : ''}`}>
+      {/* Device Frame */}
+      <div 
+        className={`
+          ${isMobile ? 'rounded-3xl' : 'rounded-xl'}
+          overflow-hidden border-4
+          ${isMobile ? 'border-slate-800' : 'border-slate-700'}
+          shadow-2xl bg-white
+        `}
+        style={{ 
+          height: isMobile ? '520px' : '100%'
+        }}
+      >
+        {/* Mobile notch or desktop header */}
+        {isMobile && (
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-5 bg-slate-800 rounded-b-xl z-10" />
+        )}
+        
+        {/* Browser/Phone chrome */}
+        {!isMobile && (
+          <div className="bg-slate-800 px-3 py-2 flex items-center gap-2">
+            <div className="flex gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+              <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+              <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+            </div>
+            <div className="flex-1 bg-slate-700 rounded-md px-3 py-1 text-[10px] text-slate-400 text-center">
+              {websiteName ? `yoursite.com/love/${websiteName}` : 'yoursite.com/love/...'}
+            </div>
+          </div>
+        )}
+        
+        {/* Website Content */}
+        <div 
+          className={`h-full overflow-y-auto ${theme.bg}`}
+          style={{ 
+            paddingTop: isMobile ? '1.5rem' : '0',
+            paddingBottom: '1rem'
+          }}
+        >
+          {children}
         </div>
       </div>
+    </div>
+  );
+}
 
-      {/* Sections Preview */}
-      <div className={`${theme.card} rounded-lg p-3 mb-3 border`}>
-        <span className={`text-xs font-medium ${theme.text} opacity-70 block mb-2`}>Sections</span>
-        <div className="space-y-1.5">
-          {sections.length === 0 ? (
-            <p className={`text-xs ${theme.text} opacity-50 italic`}>No sections selected</p>
-          ) : (
-            sections.map((section) => (
-              <div key={section} className={`text-xs ${theme.text} flex items-center gap-2 bg-black/5 rounded px-2 py-1`}>
-                <span className={theme.accent}>{sectionLabels[section]}</span>
-                {section === 'home' && config.home_template && (
-                  <span className="opacity-60">• {templateLabels[config.home_template]}</span>
-                )}
-                {section === 'gallery' && config.gallery_template && (
-                  <span className="opacity-60">• {templateLabels[config.gallery_template]}</span>
-                )}
-                {section === 'timeline' && config.timeline_template && (
-                  <span className="opacity-60">• {templateLabels[config.timeline_template]}</span>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      </div>
+// ============================================
+// LIVE PREVIEW COMPONENT
+// ============================================
 
-      {/* Section Icons Preview */}
-      {sections.length > 0 && (
-        <div className={`${theme.card} rounded-lg p-3 border`}>
-          <span className={`text-xs font-medium ${theme.text} opacity-70 block mb-2`}>Page Layouts</span>
-          <div className="flex flex-wrap gap-2">
-            {sections.includes('home') && config.home_template && (
-              <div className={`w-8 h-8 ${theme.bg.replace('bg-gradient-to-b', 'bg')} rounded border border-black/10 flex items-center justify-center ${theme.accent}`}>
-                {templateIcons[config.home_template]}
-              </div>
-            )}
-            {sections.includes('gallery') && config.gallery_template && (
-              <div className={`w-8 h-8 ${theme.bg.replace('bg-gradient-to-b', 'bg')} rounded border border-black/10 flex items-center justify-center ${theme.accent}`}>
-                {templateIcons[config.gallery_template]}
-              </div>
-            )}
-            {sections.includes('timeline') && config.timeline_template && (
-              <div className={`w-8 h-8 ${theme.bg.replace('bg-gradient-to-b', 'bg')} rounded border border-black/10 flex items-center justify-center ${theme.accent}`}>
-                {templateIcons[config.timeline_template]}
-              </div>
-            )}
+export default function LivePreview({ config, isMobileOpen, onMobileClose, coupleNames, tagline }: Props) {
+  const [device, setDevice] = useState<DeviceType>('desktop');
+  const [mounted, setMounted] = useState(false);
+
+  // Get theme styles with fallback
+  const themeKey = config.theme || 'romantic_classic';
+  const theme = themeStyles[themeKey] || themeStyles.romantic_classic;
+  const sections = config.sections || [];
+  
+  // Get theme colors for previews
+  const themePreset = THEME_PRESETS[themeKey] || THEME_PRESETS.romantic_classic;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="hidden lg:block w-80 flex-shrink-0">
+        <div className="sticky top-4">
+          <div className="bg-white rounded-2xl shadow-xl border overflow-hidden">
+            <div className="px-4 py-3 border-b border-slate-200">
+              <h3 className="font-semibold text-slate-800">Live Preview</h3>
+            </div>
+            <div className="h-[500px] bg-slate-100 animate-pulse" />
           </div>
         </div>
-      )}
+      </div>
+    );
+  }
 
-      {/* Mobile Tip */}
-      <div className="mt-4 text-center">
-        <p className={`text-xs ${theme.text} opacity-50`}>📱 Preview updates in real-time</p>
+  const content = (
+    <div className="h-full flex flex-col">
+      {/* Device Toggle */}
+      <div className="flex items-center justify-center gap-2 px-3 py-2 border-b border-slate-200/50 bg-white/50 backdrop-blur-sm">
+        <button
+          onClick={() => setDevice('desktop')}
+          className={`p-2 rounded-lg transition-all ${
+            device === 'desktop' 
+              ? 'bg-rose-100 text-rose-600' 
+              : 'text-slate-400 hover:bg-slate-100'
+          }`}
+          title="Desktop view"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+        </button>
+        <button
+          onClick={() => setDevice('mobile')}
+          className={`p-2 rounded-lg transition-all ${
+            device === 'mobile' 
+              ? 'bg-rose-100 text-rose-600' 
+              : 'text-slate-400 hover:bg-slate-100'
+          }`}
+          title="Mobile view"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Preview Content */}
+      <div className="flex-1 overflow-y-auto p-3">
+        {sections.length === 0 ? (
+          <EmptyPreviewState theme={theme} />
+        ) : (
+          <DeviceFrame device={device} theme={theme}>
+            <div className="space-y-3 px-2 sm:px-3">
+              {sections.map((section, index) => (
+                <div 
+                  key={`${section}-${index}`}
+                  className="transform transition-all duration-300 animate-fade-in-up"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+<SectionRenderer sectionId={section} config={config} coupleNames={coupleNames} tagline={tagline} />
+                </div>
+              ))}
+            </div>
+          </DeviceFrame>
+        )}
+      </div>
+
+      {/* Theme Color Bar */}
+      <div className="px-3 py-2 border-t border-slate-200/50 bg-white/50 backdrop-blur-sm">
+        <div className="flex items-center gap-1">
+          {themePreset.preview?.map((color: string, i: number) => (
+            <div 
+              key={i} 
+              className="w-4 h-4 rounded-full border border-black/10 shadow-sm"
+              style={{ backgroundColor: color }}
+              title={color}
+            />
+          ))}
+          <span className="ml-auto text-[10px] text-slate-400">
+            {themePreset.label}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -202,13 +381,37 @@ export default function LivePreview({ config, isMobileOpen, onMobileClose }: Pro
       {/* Desktop Sidebar */}
       <div className="hidden lg:block w-80 flex-shrink-0">
         <div className="sticky top-4">
-          <div className={`${theme.card} rounded-2xl shadow-xl border overflow-hidden`}>
-            <div className="px-4 py-3 border-b border-black/5">
-              <h3 className={`font-semibold ${theme.text}`}>Live Preview</h3>
+          <div className="bg-white rounded-2xl shadow-xl border overflow-hidden">
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <h3 className="font-semibold text-slate-800">Live Preview</h3>
+              </div>
+              <span className="text-xs text-slate-400">
+                {sections.length} section{sections.length !== 1 ? 's' : ''}
+              </span>
             </div>
-            <div className="h-[500px]">
+            
+            {/* Preview Area */}
+            <div className="h-[520px]">
               {content}
             </div>
+          </div>
+
+          {/* Quick Tips */}
+          <div className="mt-4 p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-slate-200/50">
+            <h4 className="text-xs font-semibold text-slate-700 mb-2 flex items-center gap-1">
+              <svg className="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Preview Tips
+            </h4>
+            <ul className="text-xs text-slate-500 space-y-1">
+              <li>• Toggle between desktop and mobile views</li>
+              <li>• Your changes update in real-time</li>
+              <li>• Add photos in the Memories step</li>
+            </ul>
           </div>
         </div>
       </div>
@@ -216,17 +419,31 @@ export default function LivePreview({ config, isMobileOpen, onMobileClose }: Pro
       {/* Mobile Bottom Sheet */}
       {isMobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/50" onClick={onMobileClose}></div>
-          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[70vh] overflow-hidden animate-slide-up">
-            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-              <h3 className="font-semibold text-slate-800">Live Preview</h3>
-              <button onClick={onMobileClose} className="p-1 rounded-full hover:bg-slate-100">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="absolute inset-0 bg-black/50" onClick={onMobileClose} />
+          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[85vh] overflow-hidden animate-slide-up">
+            {/* Handle */}
+            <div className="w-full flex justify-center py-3">
+              <div className="w-10 h-1 bg-slate-300 rounded-full" />
+            </div>
+            
+            {/* Header */}
+            <div className="px-4 pb-2 flex items-center justify-between border-b border-slate-200">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <h3 className="font-semibold text-slate-800">Live Preview</h3>
+              </div>
+              <button 
+                onClick={onMobileClose} 
+                className="p-1.5 rounded-full hover:bg-slate-100"
+              >
+                <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            <div className="h-[50vh]">
+            
+            {/* Content */}
+            <div className="h-[calc(85vh-60px)]">
               {content}
             </div>
           </div>

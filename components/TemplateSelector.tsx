@@ -1,259 +1,16 @@
 'use client';
-import {
-  HomeTemplate,
-  GalleryTemplate,
-  TimelineTemplate,
-  Section,
-} from '@/lib/types';
+import { Section } from '@/lib/types';
+import { 
+  getSectionTemplates, 
+  getSectionTemplateLabel,
+  getSectionMetadata 
+} from '@/lib/section-registry';
 import React from 'react';
 
 type Props = {
   section: Section;
   value?: string;
   onChange: (template: string) => void;
-};
-
-const templates: Record<Section, { key: string; label: string; description: string; preview: React.ReactNode }[]> = {
-  home: [
-    { 
-      key: 'hero_centered', 
-      label: 'Hero Centered',
-      description: 'Centered content with large title and elegant spacing',
-      preview: (
-        <div className="w-full h-full bg-gradient-to-b from-rose-100 to-white rounded-lg p-2 flex items-center justify-center">
-          <div className="w-8 h-8 rounded-full bg-rose-300 mb-1"></div>
-          <div className="w-10 h-1 bg-rose-200 rounded"></div>
-        </div>
-      )
-    },
-    { 
-      key: 'split_layout', 
-      label: 'Split Layout',
-      description: 'Photo on one side, text on the other for a modern look',
-      preview: (
-        <div className="w-full h-full bg-gradient-to-r from-rose-100 to-pink-100 rounded-lg p-2 flex gap-1">
-          <div className="flex-1 rounded bg-rose-200/50"></div>
-          <div className="flex-1 rounded bg-rose-300/50"></div>
-        </div>
-      )
-    },
-    { 
-      key: 'fullscreen_banner', 
-      label: 'Fullscreen Banner',
-      description: 'Immersive full-width hero with background image support',
-      preview: (
-        <div className="w-full h-full bg-rose-200 rounded-lg p-2 flex items-end justify-center">
-          <div className="w-12 h-6 bg-white/70 rounded"></div>
-        </div>
-      )
-    },
-  ],
-  gallery: [
-    { 
-      key: 'grid', 
-      label: 'Grid',
-      description: 'Classic masonry grid layout for displaying multiple photos',
-      preview: (
-        <div className="w-full h-full bg-slate-100 rounded-lg p-1.5 grid grid-cols-2 gap-1">
-          <div className="rounded bg-rose-200"></div>
-          <div className="rounded bg-pink-200"></div>
-          <div className="rounded bg-rose-300"></div>
-          <div className="rounded bg-pink-300"></div>
-        </div>
-      )
-    },
-    { 
-      key: 'carousel', 
-      label: 'Carousel',
-      description: 'Swipeable carousel for an interactive photo experience',
-      preview: (
-        <div className="w-full h-full bg-slate-100 rounded-lg p-2 flex items-center justify-center">
-          <div className="w-10 h-8 bg-rose-300 rounded-lg shadow-md"></div>
-        </div>
-      )
-    },
-    { 
-      key: 'polaroid', 
-      label: 'Polaroid',
-      description: 'Vintage-style polaroid frames for a nostalgic feel',
-      preview: (
-        <div className="w-full h-full bg-slate-100 rounded-lg p-2 flex items-center justify-center">
-          <div className="w-8 h-10 bg-white rounded-sm shadow-md flex items-center justify-center">
-            <div className="w-6 h-5 bg-rose-200 rounded-sm"></div>
-          </div>
-        </div>
-      )
-    },
-  ],
-  timeline: [
-    { 
-      key: 'vertical_timeline', 
-      label: 'Vertical Timeline',
-      description: 'Chronological vertical timeline with connecting lines',
-      preview: (
-        <div className="w-full h-full bg-slate-100 rounded-lg p-2 flex flex-col justify-center gap-1.5">
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-rose-400"></div>
-            <div className="flex-1 h-1.5 bg-rose-200 rounded"></div>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-rose-400"></div>
-            <div className="flex-1 h-1.5 bg-rose-200 rounded"></div>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-rose-400"></div>
-            <div className="flex-1 h-1.5 bg-rose-200 rounded"></div>
-          </div>
-        </div>
-      )
-    },
-    { 
-      key: 'milestone_cards', 
-      label: 'Milestone Cards',
-      description: 'Card-based design highlighting key moments',
-      preview: (
-        <div className="w-full h-full bg-slate-100 rounded-lg p-2 flex flex-col gap-1">
-          <div className="h-2 bg-rose-200 rounded"></div>
-          <div className="h-3 bg-white rounded shadow-sm"></div>
-          <div className="h-2 bg-pink-200 rounded"></div>
-          <div className="h-3 bg-white rounded shadow-sm"></div>
-        </div>
-      )
-    },
-    { 
-      key: 'story_chapters', 
-      label: 'Story Chapters',
-      description: 'Chapter-based narrative layout for your love story',
-      preview: (
-        <div className="w-full h-full bg-gradient-to-b from-rose-50 to-pink-50 rounded-lg p-2 flex flex-col gap-1">
-          <div className="h-2 w-2/3 bg-rose-300 rounded mx-auto"></div>
-          <div className="flex-1 bg-white/60 rounded shadow-sm"></div>
-        </div>
-      )
-    },
-  ],
-  song: [
-    { 
-      key: 'minimal_player', 
-      label: 'Minimal Player',
-      description: 'Clean and simple music player that plays your song',
-      preview: (
-        <div className="w-full h-full bg-slate-100 rounded-lg p-2 flex items-center justify-center">
-          <div className="w-12 h-4 bg-rose-300 rounded-full"></div>
-        </div>
-      )
-    },
-    { 
-      key: 'visual_player', 
-      label: 'Visual Player',
-      description: 'Music player with animated visualizer and album art',
-      preview: (
-        <div className="w-full h-full bg-gradient-to-br from-rose-200 to-purple-200 rounded-lg p-2 flex items-center justify-center">
-          <div className="w-8 h-8 bg-white/50 rounded-full"></div>
-        </div>
-      )
-    },
-    { 
-      key: 'lyrics_card', 
-      label: 'Lyrics Card',
-      description: 'Beautiful card displaying your song lyrics with romantic styling',
-      preview: (
-        <div className="w-full h-full bg-slate-100 rounded-lg p-2 flex items-center justify-center">
-          <div className="w-10 h-6 bg-white rounded shadow-sm flex items-center justify-center">
-            <div className="w-8 h-0.5 bg-rose-200"></div>
-          </div>
-        </div>
-      )
-    },
-  ],
-  love_letter: [
-    { 
-      key: 'classic_letter', 
-      label: 'Classic Love Letter',
-      description: 'Elegant centered love message layout with romantic typography',
-      preview: (
-        <div className="w-full h-full bg-slate-100 rounded-lg p-2 flex flex-col items-center justify-center">
-          <div className="w-8 h-1 bg-rose-200 rounded mb-1"></div>
-          <div className="w-10 h-0.5 bg-rose-100 rounded mb-1"></div>
-          <div className="w-6 h-0.5 bg-rose-100 rounded"></div>
-        </div>
-      )
-    },
-    { 
-      key: 'floral_border', 
-      label: 'Floral Border',
-      description: 'Love letter with decorative floral border framing your message',
-      preview: (
-        <div className="w-full h-full bg-rose-50 rounded-lg p-2 flex items-center justify-center">
-          <div className="w-10 h-6 bg-white rounded shadow-sm border border-rose-100"></div>
-        </div>
-      )
-    },
-    { 
-      key: 'handwritten', 
-      label: 'Handwritten Style',
-      description: 'Personal handwritten-style font for an intimate feel',
-      preview: (
-        <div className="w-full h-full bg-slate-100 rounded-lg p-2 flex items-center justify-center">
-          <div className="w-10 h-6 bg-white rounded shadow-sm transform -rotate-1"></div>
-        </div>
-      )
-    },
-  ],
-  qr_keepsake: [
-    { 
-      key: 'qr_card', 
-      label: 'QR Keepsake Card',
-      description: 'QR card with caption and couple names for printing',
-      preview: (
-        <div className="w-full h-full bg-slate-100 rounded-lg p-2 flex items-center justify-center">
-          <div className="w-8 h-8 bg-white rounded shadow-sm grid grid-cols-3 gap-0.5 p-1">
-            <div className="bg-rose-300 rounded-sm"></div>
-            <div className="bg-rose-100 rounded-sm"></div>
-            <div className="bg-rose-300 rounded-sm"></div>
-            <div className="bg-rose-100 rounded-sm"></div>
-            <div className="bg-rose-300 rounded-sm"></div>
-            <div className="bg-rose-100 rounded-sm"></div>
-            <div className="bg-rose-300 rounded-sm"></div>
-            <div className="bg-rose-100 rounded-sm"></div>
-            <div className="bg-rose-300 rounded-sm"></div>
-          </div>
-        </div>
-      )
-    },
-    { 
-      key: 'qr_mini', 
-      label: 'Mini QR Tag',
-      description: 'Compact QR code tag perfect for keychains or small keepsakes',
-      preview: (
-        <div className="w-full h-full bg-slate-100 rounded-lg p-2 flex items-center justify-center">
-          <div className="w-6 h-6 bg-white rounded-full shadow-sm grid grid-cols-3 gap-0.5 p-1">
-            <div className="bg-rose-300 rounded-full"></div>
-            <div className="bg-rose-100 rounded-full"></div>
-            <div className="bg-rose-300 rounded-full"></div>
-            <div className="bg-rose-100 rounded-full"></div>
-            <div className="bg-rose-300 rounded-full"></div>
-            <div className="bg-rose-100 rounded-full"></div>
-            <div className="bg-rose-300 rounded-full"></div>
-            <div className="bg-rose-100 rounded-full"></div>
-            <div className="bg-rose-300 rounded-full"></div>
-          </div>
-        </div>
-      )
-    },
-    { 
-      key: 'qr_ornament', 
-      label: 'QR Ornament',
-      description: 'Decorative QR code design for holiday ornaments or framed displays',
-      preview: (
-        <div className="w-full h-full bg-slate-100 rounded-lg p-2 flex items-center justify-center">
-          <div className="w-8 h-10 bg-white rounded-full shadow-sm border-4 border-rose-200 flex items-center justify-center">
-            <div className="w-4 h-4 bg-rose-300 rounded-sm"></div>
-          </div>
-        </div>
-      )
-    },
-  ],
 };
 
 const sectionLabels: Record<Section, string> = {
@@ -263,19 +20,56 @@ const sectionLabels: Record<Section, string> = {
   song: 'Song Template',
   love_letter: 'Love Letter Template',
   qr_keepsake: 'QR Keepsake Template',
+  our_story: 'Our Story Template',
+  first_date: 'First Date Template',
+  special_moments: 'Special Moments Template',
+  milestones: 'Milestones Template',
+  polaroid_gallery: 'Polaroid Gallery Template',
+  playlist: 'Playlist Template',
+  video_memories: 'Video Memories Template',
+  relationship_stats: 'Relationship Stats Template',
+  anniversary_countdown: 'Anniversary Countdown Template',
+  future_dreams: 'Future Dreams Template',
+  quotes: 'Love Quotes Template',
+  reasons_love_you: 'Reasons I Love You Template',
+  memory_map: 'Memory Map Template',
+  guest_messages: 'Guest Messages Template',
+  letter_future: 'Letter to Future Template',
+  gift_section: 'Gift Section Template',
+  surprise_message: 'Surprise Message Template',
 };
 
 export default function TemplateSelector({ section, value, onChange }: Props) {
-  const list = templates[section] || [];
+  // Get templates from registry
+  const templates = getSectionTemplates(section);
+  const label = getSectionTemplateLabel(section);
+  const metadata = getSectionMetadata(section);
+  
+  // If no templates available for this section, show a message
+  if (templates.length === 0) {
+    return (
+      <div className="space-y-4 animate-fade-in">
+        <div className="flex items-center gap-2">
+          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-rose-500 text-white text-sm font-semibold">5</span>
+          <h3 className="text-lg font-semibold text-slate-800">{sectionLabels[section] || section}</h3>
+        </div>
+        <div className="bg-slate-50 rounded-xl p-4 text-center">
+          <p className="text-sm text-slate-500">
+            This section uses default styling. No template selection needed.
+          </p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-4 animate-fade-in">
       <div className="flex items-center gap-2">
-        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-rose-500 text-white text-sm font-semibold">3</span>
-        <h3 className="text-lg font-semibold text-slate-800">{sectionLabels[section]}</h3>
+        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-rose-500 text-white text-sm font-semibold">5</span>
+        <h3 className="text-lg font-semibold text-slate-800">{label}</h3>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {list.map((t, index) => {
+        {templates.map((t, index) => {
           const isSelected = value === t.key;
           return (
             <button

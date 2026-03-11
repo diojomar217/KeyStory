@@ -1,12 +1,55 @@
 // lib/types.ts
 
+// ============================================
+// THEME TYPES - 16 Theme Presets
+// ============================================
+
 export type Theme =
   | 'romantic_classic'
   | 'cute_pastel'
   | 'minimal_modern'
-  | 'dark_elegant';
+  | 'dark_elegant'
+  | 'soft_pastel'
+  | 'elegant_rose_gold'
+  | 'vintage_love_letter'
+  | 'scrapbook_memories'
+  | 'wedding_style'
+  | 'floral_romance'
+  | 'dreamy_pink'
+  | 'luxury_gold'
+  | 'minimal_white'
+  | 'cute_kawaii'
+  | 'soft_lavender'
+  | 'photo_focus';
 
-export type Section = 'home' | 'gallery' | 'timeline' | 'song' | 'love_letter' | 'qr_keepsake';
+// ============================================
+// SECTION TYPES - 20+ Sections
+// ============================================
+
+export type Section = 
+  | 'home'
+  | 'love_letter'
+  | 'gallery'
+  | 'timeline'
+  | 'song'
+  | 'quotes'
+  | 'our_story'
+  | 'milestones'
+  | 'future_dreams'
+  | 'playlist'
+  | 'video_memories'
+  | 'qr_keepsake'
+  | 'anniversary_countdown'
+  | 'relationship_stats'
+  | 'memory_map'
+  | 'polaroid_gallery'
+  | 'first_date'
+  | 'special_moments'
+  | 'reasons_love_you'
+  | 'guest_messages'
+  | 'letter_future'
+  | 'gift_section'
+  | 'surprise_message';
 
 export type HomeTemplate = 'hero_centered' | 'split_layout' | 'fullscreen_banner';
 export type GalleryTemplate = 'grid' | 'carousel' | 'polaroid';
@@ -28,6 +71,10 @@ export interface TimelineEvent {
   title: string;
   date: string;
   description: string;
+  photo?: string; // Optional photo for timeline events
+  icon?: string; // Optional emoji/icon for chapter (e.g., 💍, 🌹, ✨)
+  isSpecial?: boolean; // Mark as special moment with premium styling
+  photoPosition?: 'top' | 'side'; // Photo layout preference
 }
 
 // Theme Preset Configuration
@@ -84,6 +131,7 @@ export interface SectionToggle {
   label: string;
   description: string;
   icon: string;
+  preview?: string;
   required: boolean;
   defaultEnabled: boolean;
 }
@@ -94,6 +142,9 @@ export interface SiteConfig {
   layout_preset?: LayoutPreset;
   sections: Section[];
   section_toggles?: Record<Section, boolean>; // Enable/disable individual sections
+  // New dynamic template format (recommended)
+  section_templates?: Record<Section, string>;
+  // Legacy template fields (for backward compatibility)
   home_template?: HomeTemplate;
   gallery_template?: GalleryTemplate;
   timeline_template?: TimelineTemplate;
@@ -101,6 +152,7 @@ export interface SiteConfig {
   timeline_events?: TimelineEvent[];
   cover_photo_index?: number;
   tagline?: string;
+  message?: string; // Love message for the website
 }
 
 // Builder State Types
@@ -173,4 +225,91 @@ export interface NavItem {
 export interface SidebarState {
   isCollapsed: boolean;
   isMobileOpen: boolean;
+}
+
+// ============================================
+// NEW SECTION DATA TYPES
+// ============================================
+
+// Milestone - Relationship achievement
+export interface Milestone {
+  id: string;
+  title: string;
+  date: string;
+  description: string;
+  icon?: string;
+}
+
+// Quote - Love quote
+export interface LoveQuote {
+  id: string;
+  text: string;
+  author?: string;
+}
+
+// Future Dream - Plans together
+export interface FutureDream {
+  id: string;
+  title: string;
+  description: string;
+  targetYear?: string;
+}
+
+// Video Memory
+export interface VideoMemory {
+  id: string;
+  title: string;
+  url: string;
+  thumbnail?: string;
+  description?: string;
+}
+
+// Guest Message
+export interface GuestMessage {
+  id: string;
+  name: string;
+  message: string;
+  date: string;
+}
+
+// Reason I Love You
+export interface ReasonILoveYou {
+  id: string;
+  number: number;
+  text: string;
+}
+
+// Special Moment
+export interface SpecialMoment {
+  id: string;
+  title: string;
+  date: string;
+  description: string;
+  photo?: string;
+}
+
+// Memory Map Location
+export interface MemoryMapLocation {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  description?: string;
+  date?: string;
+}
+
+// Gift Item
+export interface GiftItem {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl?: string;
+}
+
+// Relationship Stats
+export interface RelationshipStats {
+  daysTogether: number;
+  monthsTogether: number;
+  yearsTogether: number;
+  hoursTogether: number;
 }

@@ -162,7 +162,7 @@ export default function RelationshipTimer({
             whitespace-nowrap
           `}
         >
-          {duration ? `Together for ${durationText}` : 'Calculating...'}
+          {duration ? `${durationText} together` : 'Calculating...'}
         </span>
         
         {/* Live seconds for very new relationships */}

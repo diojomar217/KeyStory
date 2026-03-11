@@ -12,9 +12,10 @@ type Props = {
   theme: Theme;
   template: GalleryTemplate;
   photos: string[];
+  coverPhotoIndex?: number;
 };
 
-export default function GallerySection({ theme, template, photos }: Props) {
+export default function GallerySection({ theme, template, photos, coverPhotoIndex }: Props) {
   const styles = useTheme(theme);
   const [currentIndex, setCurrentIndex] = useState(0);
   
@@ -25,6 +26,11 @@ export default function GallerySection({ theme, template, photos }: Props) {
   if (!photos || photos.length === 0) {
     return null;
   }
+
+  // Sort photos to put cover photo first
+  const sortedPhotos = coverPhotoIndex !== undefined && coverPhotoIndex > 0
+    ? [photos[coverPhotoIndex], ...photos.filter((_, i) => i !== coverPhotoIndex)]
+    : photos;
 
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev + 1) % photos.length);
@@ -44,24 +50,37 @@ export default function GallerySection({ theme, template, photos }: Props) {
     setLightboxOpen(false);
   };
 
+  // Grid layout with masonry-style
   const renderGrid = () => (
     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 px-4">
-      {photos.map((photo, idx) => (
+      {sortedPhotos.map((photo, idx) => (
         <ScrollReveal key={idx} animation="fade-up" delay={idx * 50}>
           <div
             onClick={() => openLightbox(idx)}
-            className={`relative aspect-square rounded-xl overflow-hidden shadow-lg ${styles.cardBorder} border-2 cursor-pointer group`}
+            className={`
+              relative aspect-square rounded-xl overflow-hidden shadow-lg 
+              ${styles.cardBorder} border-2 cursor-pointer group
+              gallery-zoom-hover
+              ${idx === 0 && coverPhotoIndex !== undefined && coverPhotoIndex > 0 ? 'ring-4 ring-rose-400/30 md:col-span-2 md:aspect-[2/1]' : ''}
+            `}
           >
+            {/* Cover Photo Badge */}
+            {idx === 0 && coverPhotoIndex !== undefined && coverPhotoIndex > 0 && (
+              <div className="absolute top-3 left-3 z-10 px-3 py-1 bg-rose-500/90 text-white text-xs font-medium rounded-full flex items-center gap-1 shadow-lg">
+                <span>📸</span> Cover Photo
+              </div>
+            )}
             <Image
               src={photo}
               alt={`Photo ${idx + 1}`}
               fill
-              className="object-cover group-hover:scale-110 transition-transform duration-500"
+              className="object-cover"
               sizes="(max-width: 768px) 50vw, 33vw"
+              priority={idx < 4}
             />
             {/* Overlay on hover */}
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-              <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
               </svg>
             </div>
@@ -71,6 +90,7 @@ export default function GallerySection({ theme, template, photos }: Props) {
     </div>
   );
 
+  // Carousel layout
   const renderCarousel = () => (
     <div className="relative px-4">
       <ScrollReveal animation="fade-up">
@@ -83,7 +103,7 @@ export default function GallerySection({ theme, template, photos }: Props) {
               src={photos[currentIndex]}
               alt={`Photo ${currentIndex + 1}`}
               fill
-              className="object-cover hover:scale-105 transition-transform duration-500"
+              className="object-cover gallery-zoom-hover"
               priority
             />
           </div>
@@ -132,24 +152,36 @@ export default function GallerySection({ theme, template, photos }: Props) {
     </div>
   );
 
+  // Polaroid layout with enhanced styling
   const renderPolaroid = () => (
     <div className="flex flex-wrap justify-center gap-6 md:gap-8 px-4">
-      {photos.map((photo, idx) => (
+      {sortedPhotos.map((photo, idx) => (
         <ScrollReveal key={idx} animation="fade-up" delay={idx * 50}>
           <div
             onClick={() => openLightbox(idx)}
-            className={`${styles.card} p-3 pb-8 rounded-sm shadow-xl transform hover:-translate-y-2 hover:rotate-1 transition-all duration-300 cursor-pointer group`}
+            className={`
+              ${styles.card} p-3 pb-8 rounded-sm shadow-xl 
+              transform hover:-translate-y-2 hover:rotate-1 
+              transition-all duration-300 cursor-pointer group
+              ${idx === 0 && coverPhotoIndex !== undefined && coverPhotoIndex > 0 ? 'ring-4 ring-rose-400/30 scale-110 z-10' : ''}
+            `}
             style={{
               backgroundColor: '#fff',
               transform: `rotate(${(idx % 5 - 2) * 2}deg)`,
             }}
           >
+            {/* Cover Badge */}
+            {idx === 0 && coverPhotoIndex !== undefined && coverPhotoIndex > 0 && (
+              <div className="absolute -top-2 -right-2 px-2 py-1 bg-rose-500 text-white text-xs font-medium rounded-full">
+                Cover
+              </div>
+            )}
             <div className="relative w-32 h-32 md:w-40 md:h-40 overflow-hidden rounded-sm">
               <Image
                 src={photo}
                 alt={`Photo ${idx + 1}`}
                 fill
-                className="object-cover group-hover:scale-110 transition-transform duration-500"
+                className="object-cover gallery-zoom-hover"
                 sizes="160px"
               />
             </div>
@@ -163,8 +195,8 @@ export default function GallerySection({ theme, template, photos }: Props) {
   );
 
   return (
-    <section className={`py-16 md:py-24 ${styles.sectionBg}`}>
-      <div className="max-w-4xl mx-auto px-4 md:px-6">
+    <section className={`py-16 md:py-24 ${styles.sectionBg}`} id="gallery">
+      <div className="max-w-6xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <ScrollReveal animation="fade-up">
           <SectionHeader
@@ -182,7 +214,7 @@ export default function GallerySection({ theme, template, photos }: Props) {
 
         {/* Lightbox */}
         <Lightbox
-          photos={photos}
+          photos={sortedPhotos}
           initialIndex={lightboxIndex}
           isOpen={lightboxOpen}
           onClose={closeLightbox}

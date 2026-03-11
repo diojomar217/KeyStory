@@ -235,6 +235,19 @@ export const themeStyles: Record<Theme, ThemeStyles> = {
     heroVignette: 'radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.5) 100%)',
     heroGradient: 'from-black/60 via-zinc-900/40 to-black/60',
   },
+  // Additional 12 themes - using fallback styles
+  soft_pastel: {} as ThemeStyles,
+  elegant_rose_gold: {} as ThemeStyles,
+  vintage_love_letter: {} as ThemeStyles,
+  scrapbook_memories: {} as ThemeStyles,
+  wedding_style: {} as ThemeStyles,
+  floral_romance: {} as ThemeStyles,
+  dreamy_pink: {} as ThemeStyles,
+  luxury_gold: {} as ThemeStyles,
+  minimal_white: {} as ThemeStyles,
+  cute_kawaii: {} as ThemeStyles,
+  soft_lavender: {} as ThemeStyles,
+  photo_focus: {} as ThemeStyles,
 };
 
 type Props = {

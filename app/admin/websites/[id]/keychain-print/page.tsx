@@ -63,11 +63,13 @@ export default function KeychainPrintPage({ params }: PageProps) {
 
   const config = order?.config || {};
   const coupleNames = order ? `${order.customer_name} & ${order.partner_name}` : '';
-  const qrDataUrl = config.qr_data_url;
+  // Safely extract qr_data_url - ensure it's a string
+  const qrDataUrl = typeof config.qr_data_url === 'string' ? config.qr_data_url : undefined;
   const qrCodeUrl = order?.qr_code_url;
   
   const photos = order?.photos || [];
-  const coverPhotoIndex = config.cover_photo_index ?? 0;
+  // Safely extract cover photo index - ensure it's a number
+  const coverPhotoIndex = typeof config.cover_photo_index === 'number' ? config.cover_photo_index : 0;
   const coverPhotoUrl = photos[coverPhotoIndex] || photos[0] || '';
   
   const websiteUrl = order?.website_name 

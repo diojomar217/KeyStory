@@ -1,21 +1,7 @@
 'use client';
+
 import React from 'react';
-
-type Step = {
-  id: number;
-  title: string;
-  subtitle: string;
-};
-
-const steps: Step[] = [
-  { id: 1, title: 'Your Details', subtitle: 'Let\'s start' },
-  { id: 2, title: 'Hero & Message', subtitle: 'Your love story' },
-  { id: 3, title: 'Choose Style', subtitle: 'Pick the mood' },
-  { id: 4, title: 'Page Layout', subtitle: 'Select sections' },
-  { id: 5, title: 'Templates', subtitle: 'Design picks' },
-  { id: 6, title: 'Memories', subtitle: 'Add moments' },
-  { id: 7, title: 'Review', subtitle: 'Almost done!' },
-];
+import { WIZARD_STEPS } from '@/lib/builder-steps-config';
 
 type Props = {
   currentStep: number;
@@ -24,6 +10,13 @@ type Props = {
 };
 
 export default function StepNavigator({ currentStep, completedSteps, onStepClick }: Props) {
+  // Use centralized wizard steps from config
+  const steps = WIZARD_STEPS.map(step => ({
+    id: step.id,
+    title: step.title,
+    subtitle: step.subtitle,
+  }));
+
   return (
     <div className="w-full mb-8">
       {/* Mobile: Horizontal scrollable */}
@@ -129,6 +122,4 @@ export default function StepNavigator({ currentStep, completedSteps, onStepClick
     </div>
   );
 }
-
-export { steps };
 

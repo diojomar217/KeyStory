@@ -41,6 +41,7 @@ export async function PUT(req: NextRequest) {
     }
 
     // Build update object with config fields flattened
+    // Note: tagline is stored in config.jsonb column, not as a direct column
     const updateObj: Partial<Order> = {
       website_name: updates.website_name,
       customer_name: updates.customer_name,
@@ -49,7 +50,10 @@ export async function PUT(req: NextRequest) {
       message: updates.message,
       song_link: updates.song_link,
       photos: updates.photos,
-      config: updates.config,
+      config: {
+        ...updates.config,
+        tagline: updates.tagline,
+      },
     };
 
     // Also update individual config columns

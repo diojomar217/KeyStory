@@ -56,7 +56,7 @@ export default function WebsiteRow({ order, onDelete }: WebsiteRowProps) {
         <div className="w-12 h-12 rounded-md overflow-hidden bg-slate-100 flex-shrink-0">
           {coverPhoto ? (
             <img
-              src={coverPhoto}
+              src={typeof coverPhoto === 'string' ? coverPhoto : ''}
               alt={websiteName}
               className="w-full h-full object-cover"
             />
@@ -84,8 +84,8 @@ export default function WebsiteRow({ order, onDelete }: WebsiteRowProps) {
 
       {/* Theme */}
       <td className="px-4 py-3">
-        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getThemeColor(order.config?.theme || order.theme)}`}>
-          {getThemeLabel(order.config?.theme || order.theme)}
+        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getThemeColor(typeof order.config?.theme === 'string' ? order.config.theme : (order.theme || 'romantic_classic'))}`}>
+          {getThemeColor(typeof order.config?.theme === 'string' ? order.config.theme : (order.theme || 'romantic_classic'))}
         </span>
       </td>
 

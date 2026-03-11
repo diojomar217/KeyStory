@@ -214,7 +214,7 @@ function MobileWebsiteCard({
         <div className="w-12 h-12 rounded-md overflow-hidden bg-slate-100 flex-shrink-0">
           {coverPhoto ? (
             <img
-              src={coverPhoto}
+              src={typeof coverPhoto === 'string' ? coverPhoto : ''}
               alt={websiteName}
               className="w-full h-full object-cover"
             />
@@ -238,8 +238,8 @@ function MobileWebsiteCard({
                 {order.customer_name} ❤️ {order.partner_name}
               </p>
             </div>
-            <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${getThemeColor(order.config?.theme || order.theme)}`}>
-              {getThemeLabel(order.config?.theme || order.theme)}
+            <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${getThemeLabel(typeof order.config?.theme === 'string' ? order.config.theme : (order.theme || 'romantic_classic'))}`}>
+              {getThemeLabel(typeof order.config?.theme === 'string' ? order.config.theme : (order.theme || 'romantic_classic'))}
             </span>
           </div>
           
