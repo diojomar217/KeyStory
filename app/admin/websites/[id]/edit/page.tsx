@@ -6,7 +6,7 @@ import ThemeSelector from '@/components/ThemeSelector';
 import SectionSelector from '@/components/SectionSelector';
 import TemplateSelector from '@/components/TemplateSelector';
 import TimelineEditor from '@/components/TimelineEditor';
-import { SiteConfig, Theme } from '@/lib/types';
+import { SiteConfig, Theme, Section } from '@/lib/types';
 import { Order } from '@/lib/supabase';
 
 type LocalForm = {
@@ -151,14 +151,35 @@ export default function EditWebsitePage() {
 
         setPhotoPreviews(order.photos || []);
 
+        // Safely extract sections - ensure it's an array and cast to Section[]
+        const rawSections = Array.isArray(order.config?.sections) 
+          ? order.config.sections 
+          : (Array.isArray(order.sections) ? order.sections : ['home']);
+        const sectionsValue: Section[] = rawSections as Section[];
+          
+        // Safely extract template values with proper type assertions
+        const homeTemplateValue = order.config?.home_template || order.home_template;
+        const galleryTemplateValue = order.config?.gallery_template || order.gallery_template;
+        const timelineTemplateValue = order.config?.timeline_template || order.timeline_template;
+        
+        // Safely extract timeline events
+        const timelineEventsValue = Array.isArray(order.config?.timeline_events) 
+          ? order.config.timeline_events 
+          : (Array.isArray(order.timeline_events) ? order.timeline_events : []);
+          
+        // Safely extract cover photo index (only from config)
+        const coverPhotoIndexValue = typeof order.config?.cover_photo_index === 'number' 
+          ? order.config.cover_photo_index 
+          : undefined;
+          
         setConfig({
           theme: (order.config?.theme || order.theme) as Theme || 'romantic_classic',
-          sections: order.config?.sections || order.sections || ['home'],
-          home_template: order.config?.home_template || order.home_template,
-          gallery_template: order.config?.gallery_template || order.gallery_template,
-          timeline_template: order.config?.timeline_template || order.timeline_template,
-          timeline_events: order.config?.timeline_events || order.timeline_events || [],
-          cover_photo_index: order.config?.cover_photo_index,
+          sections: sectionsValue,
+          home_template: homeTemplateValue as SiteConfig['home_template'],
+          gallery_template: galleryTemplateValue as SiteConfig['gallery_template'],
+          timeline_template: timelineTemplateValue as SiteConfig['timeline_template'],
+          timeline_events: timelineEventsValue as SiteConfig['timeline_events'],
+          cover_photo_index: coverPhotoIndexValue,
         });
 
         setCompletedSteps([1, 2, 3, 4, 5]);
