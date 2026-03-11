@@ -56,7 +56,7 @@ export default function WebsiteRow({ order, onDelete }: WebsiteRowProps) {
         <div className="w-12 h-12 rounded-md overflow-hidden bg-slate-100 flex-shrink-0">
           {coverPhoto ? (
             <img
-              src={coverPhoto}
+              src={typeof coverPhoto === 'string' ? coverPhoto : ''}
               alt={websiteName}
               className="w-full h-full object-cover"
             />
