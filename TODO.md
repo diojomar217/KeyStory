@@ -1,10 +1,15 @@
-# TODO - Wizard Step Flow Fix
+# Memory Map Interactive Implementation
 
-## Steps to completed:
-- [x] 1. Fix form submission - Remove onSubmit from form tag
-- [x] 2. Move Cover Photo upload from Step 6 to Step 2
-- [x] 3. Update button text logic for all steps
-- [x] 4. Add Create Website button on Step 7
+## Steps
 
-All wizard fixes have been completed!
+1. Install leaflet and react-leaflet dependencies.
+2. Update MemoryMapSection.tsx to use the existing MemoryMap component.
+3. Ensure leaflet CSS is properly imported.
+4. Test the integration.
 
+## Progress
+
+- [x] Step 1: Install dependencies
+- [x] Step 2: Update MemoryMapSection.tsx
+- [x] Step 3: Verify SSR safety
+- [ ] Step 4: Test builder and love page

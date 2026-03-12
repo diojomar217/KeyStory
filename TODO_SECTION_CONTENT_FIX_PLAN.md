@@ -1,88 +1,51 @@
-# Section Content Fix Plan - Edit Website Flow
+# Section Content Fix Plan
 
-## Problem Summary
-The Edit Website page is missing Step 6 "Content" where users can input dynamic content for sections like Love Letter, Our Story, Future Dreams, etc.
+## Summary of the Issue
+Content entered in Step 6 (Content) of the builder is not appearing on /love/[slug] pages. The builder correctly stores section_content in config, and the API correctly saves it to the database, but the LovePageClient components are not receiving or using this content.
 
-## Issues Identified
+## Root Causes Identified
 
-1. **Edit has only 5 steps** (Create has 7 steps)
-2. **No `section_content` in config state** 
-3. **No `handleSectionContentChange` handler**
-4. **No dynamic content inputs rendered**
-5. **Step indicator shows only 5 steps**
-6. **API doesn't save section_content** properly (needs to be in config)
+### 1. LovePageClient doesn't pass sectionContent to most section components
+The following sections receive sectionContent but don't pass it:
+- `SurpriseMessageSection` - doesn't accept message prop
+- `GiftSection` - doesn't accept gifts prop  
+- `LetterToFutureSection` - doesn't accept letter prop
+- `MemoryMapSection` - doesn't accept locations prop
+- `GuestMessagesSection` - doesn't accept messages prop
+- `QuotesSection` - accepts quotes prop but not passed from LovePageClient
+- `ReasonsILoveYouSection` - accepts reasons prop but not passed from LovePageClient
 
-## Fix Plan
-
-### Step 1: Update Config State (Line ~100)
-- Add `section_content: {}` to initial SiteConfig state
-
-### Step 2: Add handleSectionContentChange Handler
-```typescript
-const handleSectionContentChange = (section: string, content: any) => {
-  setConfig((prev) => ({
-    ...prev,
-    section_content: {
-      ...prev.section_content,
-      [section]: content,
-    },
-  }));
-};
-```
-
-### Step 3: Fetch section_content from Database (fetchOrder function)
-- Extract section_content from order.config when loading
-- Safely handle missing section_content (backward compatibility)
-
-### Step 4: Add Step 6 & 7 Content
-- Update step indicator to show 7 steps
-- Update navigation logic (handleNext, validateStep)
-- Add Step 6 content rendering with all dynamic section inputs
-- Add Step 7 review step
-
-### Step 5: Import Required Components
-- Import ContentInputComponents from @/components/builder/ContentInputComponents
-- Import WIZARD_STEPS, TOTAL_STEPS, validateStep from @/lib/builder-steps-config
-
-### Step 6: Update API Route (if needed)
-- Ensure section_content is saved in config JSONB column
-
-### Step 7: Backward Compatibility
-- Handle missing section_content gracefully
-- Default to empty {} if not present in database
+### 2. RelationshipStats calculation can produce negative values
+When anniversary date is in the future, the stats will be negative.
 
 ## Files to Edit
 
-1. **app/admin/websites/[id]/edit/page.tsx** - Main edit page (all changes here)
-2. **app/api/admin/route.ts** - Verify section_content is saved (may already work)
+### 1. components/LovePageClient.tsx
+- Pass sectionContent props to all section components
 
-## Components to Import
+### 2. components/sections/SurpriseMessageSection.tsx
+- Accept and display message from sectionContent
 
-```typescript
-import {
-  TextContentInput,
-  UrlContentInput,
-  ReasonsILoveYouInput,
-  FutureDreamsInput,
-  VideoMemoriesInput,
-  SpecialMomentsInput,
-  MilestonesInput,
-  PlaylistInput,
-  FirstDateInput,
-  LetterToFutureInput,
-  SurpriseMessageInput,
-  GiftSectionInput,
-  QuotesInput,
-  MemoryMapInput,
-  GuestMessagesInput,
-} from '@/components/builder/ContentInputComponents';
-```
+### 3. components/sections/GiftSection.tsx
+- Accept and display gifts from sectionContent
 
-## Expected Result After Fix
+### 4. components/sections/LetterToFutureSection.tsx
+- Accept and display letter from sectionContent
 
-- Edit page has 7 steps (matching Create)
-- Step 6 shows dynamic content inputs for selected sections
-- Saved values are prefilled from database
-- Edits can be saved and persist correctly
-- Backward compatible with older websites
+### 5. components/sections/MemoryMapSection.tsx
+- Accept and display locations from sectionContent
+
+### 6. components/sections/GuestMessagesSection.tsx
+- Accept messages prop (currently has defaultMessages)
+
+### 7. components/sections/RelationshipStatsSection.tsx
+- Fix negative value calculation
+
+## Implementation Steps
+
+1. Update LovePageClient to pass all sectionContent props
+2. Update each section component to:
+   - Accept the prop from sectionContent
+   - Use fallback defaults ONLY when prop is missing/empty
+3. Fix RelationshipStatsSection to ensure non-negative values
 

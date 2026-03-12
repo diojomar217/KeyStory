@@ -18,6 +18,7 @@ interface GuestMessagesSectionProps {
   variant?: 'default' | 'alt';
 }
 
+// Default messages as fallback
 const defaultMessages: GuestMessage[] = [
   { id: '1', name: 'Friend 1', message: 'Wishing you both a lifetime of happiness!', date: '' },
   { id: '2', name: 'Family Member', message: 'So happy to see you both together!', date: '' },
@@ -25,9 +26,11 @@ const defaultMessages: GuestMessage[] = [
 
 export default function GuestMessagesSection({ 
   theme, 
-  messages = defaultMessages,
+  messages,
   variant = 'default'
 }: GuestMessagesSectionProps) {
+  // Use provided messages or fallback to defaults
+  const displayMessages = messages && messages.length > 0 ? messages : defaultMessages;
   const styles = useTheme(theme);
 
   return (
@@ -40,7 +43,7 @@ export default function GuestMessagesSection({
       id="guest-messages"
     >
       <div className="grid gap-6">
-        {messages.map((msg, index) => (
+        {displayMessages.map((msg, index) => (
           <ScrollReveal key={msg.id} animation="fade-up" delay={index * 100}>
             <div
               className={`${styles.card} rounded-2xl ${styles.cardBorder} border p-6`}

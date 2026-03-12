@@ -8,13 +8,22 @@ interface SurpriseMessageSectionProps {
   theme: Theme;
   customerName: string;
   partnerName: string;
+  message?: string;
+  hint?: string;
 }
+
+// Default fallback values
+const defaultMessage = 'I love you more than words can say! 💖';
 
 export default function SurpriseMessageSection({ 
   theme, 
   customerName,
-  partnerName 
+  partnerName,
+  message,
+  hint
 }: SurpriseMessageSectionProps) {
+  // Use provided message or fallback to default
+  const displayMessage = message || defaultMessage;
   const themeConfig = THEME_PRESETS[theme];
   const { colors, typography } = themeConfig;
   const [isRevealed, setIsRevealed] = useState(false);
@@ -63,7 +72,7 @@ export default function SurpriseMessageSection({
               className="mt-6 text-lg"
               style={{ color: colors.text }}
             >
-              Click the gift to reveal your surprise! 💕
+              {hint ? hint : 'Click the gift to reveal your surprise! 💕'}
             </p>
           </div>
         ) : (
@@ -98,7 +107,7 @@ export default function SurpriseMessageSection({
                 fontFamily: typography.headingFont
               }}
             >
-              I love you more than words can say! 💖
+              {displayMessage}
             </p>
             <button
               onClick={() => setIsRevealed(false)}

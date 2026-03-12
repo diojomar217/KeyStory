@@ -6,7 +6,8 @@ import ThemeSelector from '@/components/ThemeSelector';
 import SectionSelector from '@/components/SectionSelector';
 import TemplateSelector from '@/components/TemplateSelector';
 import TimelineEditor from '@/components/TimelineEditor';
-import { SiteConfig, Theme, Section } from '@/lib/types';
+import SectionContentInputs from '@/components/builder/SectionContentInputs';
+import { SiteConfig, Theme, Section, SectionContentMap } from '@/lib/types';
 import { Order } from '@/lib/supabase';
 
 type LocalForm = {
@@ -70,12 +71,71 @@ const validateStep = (
       return { valid: true };
 
     case 5:
-      if (config.sections.includes('gallery') && form.photos.length === 0 && form.existingPhotos.length === 0) {
+      const sections = config.sections || [];
+      const sectionContent = config.section_content || {};
+
+      // Gallery requires photos (existing or new)
+      if (sections.includes('gallery') && form.photos.length === 0 && form.existingPhotos.length === 0) {
         return { valid: false, error: 'Please upload at least one photo for the gallery section' };
       }
-      if (config.sections.includes('timeline') && (!config.timeline_events || config.timeline_events.length === 0)) {
+
+      // Timeline requires events
+      if (sections.includes('timeline') && (!config.timeline_events || config.timeline_events.length === 0)) {
         return { valid: false, error: 'Please add at least one event for the timeline section' };
       }
+
+      // Love Letter requires text content (if section content exists)
+      if (sections.includes('love_letter') && sectionContent.love_letter) {
+        const loveLetterContent = sectionContent.love_letter.content || '';
+        if (!loveLetterContent.trim()) {
+          return { valid: false, error: 'Love Letter section requires content' };
+        }
+      }
+
+      // Our Story requires text content (if section content exists)
+      if (sections.includes('our_story') && sectionContent.our_story) {
+        const storyContent = sectionContent.our_story.content || '';
+        if (!storyContent.trim()) {
+          return { valid: false, error: 'Our Story section requires content' };
+        }
+      }
+
+      // Reasons I Love You requires at least one reason (if section content exists)
+      if (sections.includes('reasons_love_you') && sectionContent.reasons_love_you) {
+        const reasons = sectionContent.reasons_love_you.reasons || [];
+        if (reasons.length === 0) {
+          return { valid: false, error: 'Reasons I Love You requires at least one reason' };
+        }
+      }
+
+      // Future Dreams requires at least one dream (if section content exists)
+      if (sections.includes('future_dreams') && sectionContent.future_dreams) {
+        const dreams = sectionContent.future_dreams.dreams || [];
+        if (dreams.length === 0) {
+          return { valid: false, error: 'Future Dreams requires at least one dream' };
+        }
+      }
+
+      // Song requires song link (from form)
+      if (sections.includes('song') && !form.song_link?.trim()) {
+        return { valid: false, error: 'Song section requires a song link' };
+      }
+
+      // Playlist requires playlist URL (if section content exists)
+      if (sections.includes('playlist') && sectionContent.playlist) {
+        if (!sectionContent.playlist.playlistUrl?.trim()) {
+          return { valid: false, error: 'Playlist section requires a playlist link' };
+        }
+      }
+
+      // Video Memories requires at least one video (if section content exists)
+      if (sections.includes('video_memories') && sectionContent.video_memories) {
+        const videos = sectionContent.video_memories.videos || [];
+        if (videos.length === 0) {
+          return { valid: false, error: 'Video Memories requires at least one video' };
+        }
+      }
+
       return { valid: true };
 
     default:
@@ -230,6 +290,19 @@ export default function EditWebsitePage() {
 
   const handleCoverPhotoSelect = (index: number) => {
     setConfig({ ...config, cover_photo_index: index });
+  };
+
+  const handleSectionContentChange = <K extends keyof SectionContentMap>(
+    section: K,
+    content: SectionContentMap[K]
+  ) => {
+    setConfig((prev) => ({
+      ...prev,
+      section_content: {
+        ...prev.section_content,
+        [section]: content,
+      },
+    }));
   };
 
   const handleNext = () => {
@@ -514,6 +587,12 @@ export default function EditWebsitePage() {
                 />
               </div>
             )}
+
+            {/* Dynamic Section Content Inputs */}
+            <SectionContentInputs
+              config={config}
+              onSectionContentChange={handleSectionContentChange}
+            />
           </div>
         );
 

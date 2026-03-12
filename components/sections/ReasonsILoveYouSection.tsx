@@ -35,9 +35,11 @@ const defaultReasons: Reason[] = [
 export default function ReasonsILoveYouSection({ 
   theme, 
   partnerName,
-  reasons = defaultReasons,
+  reasons,
   variant = 'default'
 }: ReasonsILoveYouSectionProps) {
+  // Use provided reasons or fallback to defaults
+  const displayReasons = reasons && reasons.length > 0 ? reasons : defaultReasons;
   const styles = useTheme(theme);
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
 
@@ -63,7 +65,7 @@ export default function ReasonsILoveYouSection({
       id="reasons"
     >
       <div className="grid gap-4 md:grid-cols-2">
-        {reasons.map((reason, idx) => (
+        {displayReasons.map((reason, idx) => (
           <ScrollReveal key={reason.id} animation="fade-up" delay={idx * 50}>
             {/* Flip Card Container */}
             <div 

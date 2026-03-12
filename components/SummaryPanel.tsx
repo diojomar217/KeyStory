@@ -367,16 +367,148 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
 
   const templatesStatus: 'completed' | 'attention' = templatesComplete ? 'completed' : 'attention';
 
-  const contentComplete = form.photos.length > 0;
+  // ============================================
+  // ENHANCED CONTENT CHECK - Check dynamic section content
+  // ============================================
+  
+  // Check if any content sections are enabled
+  const hasContentSections = config.sections?.some(section => 
+    ['love_letter', 'our_story', 'first_date', 'special_moments', 'milestones', 
+     'playlist', 'video_memories', 'future_dreams', 'quotes', 'reasons_love_you',
+     'memory_map', 'letter_future', 'gift_section', 'surprise_message'].includes(section)
+  );
+
+  // Check if gallery section is enabled
+  const hasGallerySection = config.sections?.includes('gallery');
+  const hasTimelineSection = config.sections?.includes('timeline');
+  
+  // Check photos (only required if gallery is enabled)
+  const photosComplete = !hasGallerySection || form.photos.length > 0;
+  
+  // Check timeline events (only required if timeline is enabled)
+  const timelineComplete = !hasTimelineSection || (config.timeline_events && config.timeline_events.length > 0);
+  
+  // Check dynamic section content
+  const sectionContent = config.section_content;
+  
+  const checkSectionContentComplete = (sectionId: string): boolean => {
+    const content = sectionContent?.[sectionId as keyof typeof sectionContent];
+    if (!content) return false;
+    
+    switch (sectionId) {
+      case 'love_letter':
+      case 'our_story':
+        return !!(content as { content: string }).content;
+      case 'first_date':
+        return !!(content as { title?: string }).title;
+      case 'special_moments':
+        return ((content as { moments?: unknown[] })?.moments?.length ?? 0) > 0;
+      case 'milestones':
+        return ((content as { milestones?: unknown[] })?.milestones?.length ?? 0) > 0;
+      case 'playlist':
+        return !!(content as { playlistUrl?: string }).playlistUrl;
+      case 'video_memories':
+        return ((content as { videos?: unknown[] })?.videos?.length ?? 0) > 0;
+      case 'future_dreams':
+        return ((content as { dreams?: unknown[] })?.dreams?.length ?? 0) > 0;
+      case 'quotes':
+        return ((content as { quotes?: unknown[] })?.quotes?.length ?? 0) > 0;
+      case 'reasons_love_you':
+        return ((content as { reasons?: unknown[] })?.reasons?.length ?? 0) > 0;
+      case 'memory_map':
+        return ((content as { locations?: unknown[] })?.locations?.length ?? 0) > 0;
+      case 'letter_future':
+        return !!(content as { letter?: string }).letter;
+      case 'gift_section':
+        return ((content as { gifts?: unknown[] })?.gifts?.length ?? 0) > 0;
+      case 'surprise_message':
+        return !!(content as { message?: string }).message;
+      case 'guest_messages':
+        return true; // Guest messages is informational only
+      default:
+        return true;
+    }
+  };
+  
+  // Check each enabled content section
+  const contentSectionsToCheck = config.sections?.filter(section =>
+    ['love_letter', 'our_story', 'first_date', 'special_moments', 'milestones', 
+     'playlist', 'video_memories', 'future_dreams', 'quotes', 'reasons_love_you',
+     'memory_map', 'letter_future', 'gift_section', 'surprise_message'].includes(section)
+  ) || [];
+  
+  const allContentSectionsComplete = contentSectionsToCheck.length === 0 || 
+    contentSectionsToCheck.every(section => checkSectionContentComplete(section));
+  
+  // Overall content status
+  const contentComplete = photosComplete && timelineComplete && allContentSectionsComplete;
   const contentStatus: 'completed' | 'attention' = contentComplete ? 'completed' : 'attention';
 
+  // Content warnings
   const contentWarnings: string[] = [];
-  if (form.photos.length === 0) {
+  
+  if (!photosComplete) {
     contentWarnings.push('No photos uploaded yet');
   }
-  if (config.sections?.includes('timeline') && (!config.timeline_events || config.timeline_events.length === 0)) {
+  if (!timelineComplete) {
     contentWarnings.push('Timeline enabled but no events added');
   }
+  
+  // Check each dynamic section for missing content
+  contentSectionsToCheck.forEach(section => {
+    const isComplete = checkSectionContentComplete(section);
+    if (!isComplete) {
+      const sectionInfo = SECTION_TOGGLES.find(t => t.id === section);
+      const sectionName = sectionInfo?.label || section;
+      
+      switch (section) {
+        case 'love_letter':
+          contentWarnings.push(`${sectionName} section selected but no letter written`);
+          break;
+        case 'our_story':
+          contentWarnings.push(`${sectionName} section selected but no story added`);
+          break;
+        case 'first_date':
+          contentWarnings.push(`${sectionName} section selected but not configured`);
+          break;
+        case 'special_moments':
+          contentWarnings.push(`${sectionName} section selected but no moments added`);
+          break;
+        case 'milestones':
+          contentWarnings.push(`${sectionName} section selected but no milestones added`);
+          break;
+        case 'playlist':
+          contentWarnings.push(`${sectionName} section selected but no playlist link added`);
+          break;
+        case 'video_memories':
+          contentWarnings.push(`${sectionName} section selected but no videos added`);
+          break;
+        case 'future_dreams':
+          contentWarnings.push(`${sectionName} section selected but no dreams added`);
+          break;
+        case 'quotes':
+          contentWarnings.push(`${sectionName} section selected but no quotes added`);
+          break;
+        case 'reasons_love_you':
+          contentWarnings.push(`${sectionName} section selected but no reasons added`);
+          break;
+        case 'memory_map':
+          contentWarnings.push(`${sectionName} section selected but no locations added`);
+          break;
+        case 'letter_future':
+          contentWarnings.push(`${sectionName} section selected but no letter written`);
+          break;
+        case 'gift_section':
+          contentWarnings.push(`${sectionName} section selected but no gifts added`);
+          break;
+        case 'surprise_message':
+          contentWarnings.push(`${sectionName} section selected but no message written`);
+          break;
+        default:
+          contentWarnings.push(`${sectionName} section selected but not configured`);
+      }
+    }
+  });
 
   return (
     <div className="space-y-4">

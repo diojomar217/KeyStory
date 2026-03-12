@@ -16,6 +16,7 @@ interface GiftSectionProps {
   gifts?: Gift[];
 }
 
+// Use provided gifts or fallback to defaults - but only when gifts is undefined/empty
 const defaultGifts: Gift[] = [
   { id: '1', title: 'Digital Love Letter', description: 'A personalized love letter just for you' },
   { id: '2', title: 'Memory Collage', description: 'Our best moments together in one place' },
@@ -25,8 +26,10 @@ const defaultGifts: Gift[] = [
 export default function GiftSection({ 
   theme, 
   partnerName,
-  gifts = defaultGifts 
+  gifts
 }: GiftSectionProps) {
+  // Use provided gifts or fallback to defaults
+  const displayGifts = gifts && gifts.length > 0 ? gifts : defaultGifts;
   const themeConfig = THEME_PRESETS[theme];
   const { colors, typography } = themeConfig;
 
@@ -55,7 +58,7 @@ export default function GiftSection({
         </p>
         
         <div className="grid gap-6 sm:grid-cols-2">
-          {gifts.map((gift) => (
+          {displayGifts.map((gift) => (
             <div
               key={gift.id}
               className="p-6 rounded-2xl text-center hover:scale-105 transition-transform"

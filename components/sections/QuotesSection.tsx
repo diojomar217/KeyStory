@@ -21,9 +21,11 @@ const defaultQuotes = [
 
 export default function QuotesSection({ 
   theme, 
-  quotes = defaultQuotes,
+  quotes,
   variant = 'default'
 }: QuotesSectionProps) {
+  // Use provided quotes or fallback to defaults
+  const displayQuotes = quotes && quotes.length > 0 ? quotes : defaultQuotes;
   const styles = useTheme(theme);
 
   return (
@@ -36,7 +38,7 @@ export default function QuotesSection({
       id="quotes"
     >
       <div className="grid gap-6">
-        {quotes.map((quote, index) => (
+        {displayQuotes.map((quote, index) => (
           <ScrollReveal key={quote.id} animation="fade-up" delay={index * 100}>
             <div
               className={`${styles.card} rounded-2xl ${styles.cardBorder} border p-8 text-center hover:shadow-lg transition-all`}

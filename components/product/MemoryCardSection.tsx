@@ -34,6 +34,9 @@ export default function MemoryCardSection({
   const [copied, setCopied] = useState(false);
   const [isClient, setIsClient] = useState(false);
   
+  // Generate the love page URL from slug
+  const lovePageUrl = slug ? `/love/${slug}` : currentUrl;
+  
   // Save card state
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -218,20 +221,28 @@ export default function MemoryCardSection({
             {/* Card Content */}
             <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
               
-              {/* QR Code Card */}
+              {/* QR Code Card - Clickable link to love page */}
               <div className="flex-shrink-0">
-                <div className={`
-                  relative 
-                  bg-white 
-                  rounded-2xl 
-                  shadow-lg 
-                  p-4
-                  border-2 
-                  ${accentColor === 'amber' ? 'border-amber-200' : accentColor === 'purple' ? 'border-purple-200' : accentColor === 'slate' ? 'border-slate-200' : 'border-rose-200'}
-                  hover:shadow-xl 
-                  transition-shadow 
-                  duration-300
-                `}>
+                <a 
+                  href={lovePageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block group"
+                  title={`Visit ${lovePageUrl}`}
+                >
+                  <div className={`
+                    relative 
+                    bg-white 
+                    rounded-2xl 
+                    shadow-lg 
+                    p-4
+                    border-2 
+                    ${accentColor === 'amber' ? 'border-amber-200' : accentColor === 'purple' ? 'border-purple-200' : accentColor === 'slate' ? 'border-slate-200' : 'border-rose-200'}
+                    group-hover:shadow-xl 
+                    transition-all 
+                    duration-300
+                    group-hover:scale-105
+                  `}>
                   {/* Decorative frame effect */}
                   <div className={`
                     absolute -inset-2 
@@ -257,7 +268,8 @@ export default function MemoryCardSection({
                   <div className="text-center mt-2">
                     <span className="text-2xl">💕</span>
                   </div>
-                </div>
+                  </div>
+                </a>
               </div>
 
               {/* Card Details */}

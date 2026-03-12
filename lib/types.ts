@@ -306,6 +306,7 @@ export interface MemoryMapLocation {
   lng: number;
   description?: string;
   date?: string;
+  address?: string; // Optional formatted address from search
 }
 
 // Gift Item
@@ -379,5 +380,6 @@ export interface SectionContentMap {
   };
   guest_messages?: {
     enabled: boolean;
+    messages?: GuestMessage[];
   };
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { 
   SectionContentMap, 
   ReasonILoveYou, 
@@ -12,6 +12,7 @@ import {
   GiftItem,
   MemoryMapLocation
 } from '@/lib/types';
+import { searchPlaces, SearchResult, isValidCoordinates } from '@/lib/geocoding';
 
 // ============================================
 // TEXT INPUT COMPONENT
@@ -631,31 +632,224 @@ export function QuotesInput({ value, onChange }: QuotesInputProps) {
   );
 }
 
-// Memory Map (Locations with coordinates)
+// Memory Map Location Input - Enhanced with search and manual modes
 interface MemoryMapInputProps {
   value?: SectionContentMap['memory_map'];
   onChange: (value: SectionContentMap['memory_map']) => void;
 }
 
-// Helper to parse coordinates from comma-separated string
-function parseCoordinates(input: string): { lat: number; lng: number } {
-  const parts = input.split(',').map(s => s.trim());
-  if (parts.length >= 2) {
-    const lat = parseFloat(parts[0]);
-    const lng = parseFloat(parts[1]);
-    if (!isNaN(lat) && !isNaN(lng)) {
-      return { lat, lng };
+interface MemoryMapLocationCardProps {
+  item: MemoryMapLocation;
+  onUpdate: (updates: Partial<MemoryMapLocation>) => void;
+}
+
+// Individual location card with search/manual toggle
+function MemoryMapLocationCard({ item, onUpdate }: MemoryMapLocationCardProps) {
+  const [inputMode, setInputMode] = useState<'search' | 'manual'>(
+    // Default to search if no coordinates set yet, manual otherwise
+    (item.lat && item.lng) ? 'manual' : 'search'
+  );
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  
+  // Debounced search
+  useEffect(() => {
+    if (!searchQuery || searchQuery.length < 2) {
+      setSearchResults([]);
+      return;
     }
-  }
-  return { lat: 0, lng: 0 };
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const results = await searchPlaces(searchQuery);
+        setSearchResults(results);
+        setShowResults(true);
+      } catch (error) {
+        console.error('Search error:', error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const handleSelectResult = (result: SearchResult) => {
+    onUpdate({
+      name: result.name,
+      lat: result.lat,
+      lng: result.lng,
+      address: result.address,
+    });
+    setSearchQuery(result.name);
+    setShowResults(false);
+  };
+
+  const hasValidCoords = isValidCoordinates(item.lat || 0, item.lng || 0);
+
+  return (
+    <div className="space-y-3">
+      {/* Location Name */}
+      <input
+        type="text"
+        value={item.name || ''}
+        onChange={(e) => onUpdate({ name: e.target.value })}
+        placeholder="Location name (e.g., Paris, Eiffel Tower)"
+        className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 text-sm"
+      />
+
+      {/* Input Mode Toggle */}
+      <div className="flex rounded-lg border border-slate-200 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setInputMode('search')}
+          className={`flex-1 py-2 px-3 text-sm font-medium transition-colors ${
+            inputMode === 'search'
+              ? 'bg-rose-500 text-white'
+              : 'bg-white text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          🔍 Search Place
+        </button>
+        <button
+          type="button"
+          onClick={() => setInputMode('manual')}
+          className={`flex-1 py-2 px-3 text-sm font-medium transition-colors ${
+            inputMode === 'manual'
+              ? 'bg-rose-500 text-white'
+              : 'bg-white text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          📍 Enter Coordinates
+        </button>
+      </div>
+
+      {/* Search Mode */}
+      {inputMode === 'search' && (
+        <div className="relative">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setShowResults(true);
+            }}
+            onFocus={() => setShowResults(true)}
+            placeholder="Search for a city, landmark, or address..."
+            className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 text-sm"
+          />
+          
+          {/* Search Status */}
+          {isSearching && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <div className="w-4 h-4 border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+
+          {/* Search Results Dropdown */}
+          {showResults && searchResults.length > 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+              {searchResults.map((result) => (
+                <button
+                  key={result.placeId}
+                  type="button"
+                  onClick={() => handleSelectResult(result)}
+                  className="w-full text-left px-3 py-2 hover:bg-rose-50 border-b border-slate-100 last:border-b-0 transition-colors"
+                >
+                  <p className="text-sm font-medium text-slate-700">{result.name}</p>
+                  <p className="text-xs text-slate-500 truncate">{result.displayName}</p>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* No Results */}
+          {showResults && searchQuery.length >= 2 && !isSearching && searchResults.length === 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-3">
+              <p className="text-sm text-slate-500">No places found. Try a different search.</p>
+            </div>
+          )}
+
+          {/* Helper Text */}
+          {hasValidCoords && (
+            <p className="text-xs text-green-600 mt-1">
+              ✓ Location selected: {item.lat?.toFixed(4)}, {item.lng?.toFixed(4)}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Manual Mode */}
+      {inputMode === 'manual' && (
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Latitude</label>
+              <input
+                type="number"
+                step="any"
+                value={item.lat || ''}
+                onChange={(e) => {
+                  const lat = parseFloat(e.target.value);
+                  onUpdate({ lat: isNaN(lat) ? 0 : lat });
+                }}
+                placeholder="e.g., 48.8566"
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Longitude</label>
+              <input
+                type="number"
+                step="any"
+                value={item.lng || ''}
+                onChange={(e) => {
+                  const lng = parseFloat(e.target.value);
+                  onUpdate({ lng: isNaN(lng) ? 0 : lng });
+                }}
+                placeholder="e.g., 2.3522"
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 text-sm"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-slate-400">
+            💡 Tip: On Google Maps, right-click a location and copy the coordinates
+          </p>
+        </div>
+      )}
+
+      {/* Selected Address Display */}
+      {item.address && (
+        <p className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">
+          📍 {item.address}
+        </p>
+      )}
+
+      {/* Description */}
+      <textarea
+        value={item.description || ''}
+        onChange={(e) => onUpdate({ description: e.target.value })}
+        placeholder="Memory at this place..."
+        rows={2}
+        className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 text-sm resize-none"
+      />
+
+      {/* Date */}
+      <input
+        type="date"
+        value={item.date || ''}
+        onChange={(e) => onUpdate({ date: e.target.value })}
+        className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 text-sm"
+      />
+    </div>
+  );
 }
 
-// Helper to format coordinates to string
-function formatCoordinates(lat: number, lng: number): string {
-  if (lat === 0 && lng === 0) return '';
-  return `${lat}, ${lng}`;
-}
-
+// Memory Map Input - Main Component
 export function MemoryMapInput({ value, onChange }: MemoryMapInputProps) {
   const locations = value?.locations || [];
 
@@ -668,44 +862,10 @@ export function MemoryMapInput({ value, onChange }: MemoryMapInputProps) {
       addButtonText="Add Location"
       emptyText="Add places you've visited together with coordinates"
       renderItem={(item, _, onUpdate) => (
-        <div className="space-y-3 pr-6">
-          <input
-            type="text"
-            value={item.name || ''}
-            onChange={(e) => onUpdate({ name: e.target.value })}
-            placeholder="Location name (e.g., Paris, Eiffel Tower)"
-            className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 text-sm"
-          />
-          <div>
-            <label className="block text-xs text-slate-500 mb-1">Coordinates</label>
-            <input
-              type="text"
-              value={formatCoordinates(item.lat || 0, item.lng || 0)}
-              onChange={(e) => {
-                const { lat, lng } = parseCoordinates(e.target.value);
-                onUpdate({ lat, lng });
-              }}
-              placeholder="e.g., 48.8566, 2.3522"
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 text-sm"
-            />
-            <p className="text-xs text-slate-400 mt-1">
-              💡 Tip: On Google Maps, right-click a location and copy the coordinates
-            </p>
-          </div>
-          <textarea
-            value={item.description || ''}
-            onChange={(e) => onUpdate({ description: e.target.value })}
-            placeholder="Memory at this place..."
-            rows={2}
-            className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 text-sm resize-none"
-          />
-          <input
-            type="date"
-            value={item.date || ''}
-            onChange={(e) => onUpdate({ date: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 text-sm"
-          />
-        </div>
+        <MemoryMapLocationCard 
+          item={item as MemoryMapLocation} 
+          onUpdate={onUpdate as (updates: Partial<MemoryMapLocation>) => void} 
+        />
       )}
     />
   );

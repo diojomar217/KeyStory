@@ -30,9 +30,11 @@ const defaultDreams: FutureDream[] = [
 
 export default function FutureDreamsSection({ 
   theme, 
-  dreams = defaultDreams,
+  dreams,
   variant = 'default'
 }: FutureDreamsSectionProps) {
+  // Use provided dreams or fallback to defaults
+  const displayDreams = dreams && dreams.length > 0 ? dreams : defaultDreams;
   const styles = useTheme(theme);
 
   return (
@@ -45,7 +47,7 @@ export default function FutureDreamsSection({
       id="future-dreams"
     >
       <div className="grid gap-6">
-        {dreams.map((dream, index) => (
+        {displayDreams.map((dream, index) => (
           <ScrollReveal key={dream.id} animation="fade-up" delay={index * 100}>
             <div
               className={`${styles.card} rounded-2xl ${styles.cardBorder} border p-6 hover:shadow-lg transition-all duration-300`}

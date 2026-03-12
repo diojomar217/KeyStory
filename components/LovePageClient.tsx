@@ -262,6 +262,7 @@ export default function LovePageClient({
             <ReasonsILoveYouSection
               theme={theme}
               partnerName={partnerName}
+              reasons={sectionContent?.reasons_love_you?.reasons}
               variant={sectionIndex++ % 2 === 1 ? 'alt' : 'default'}
             />
           )}
@@ -270,6 +271,7 @@ export default function LovePageClient({
           {sections.includes('quotes') && (
             <QuotesSection 
               theme={theme} 
+              quotes={sectionContent?.quotes?.quotes}
               variant={sectionIndex++ % 2 === 1 ? 'alt' : 'default'}
             />
           )}
@@ -278,13 +280,17 @@ export default function LovePageClient({
           {sections.includes('guest_messages') && (
             <GuestMessagesSection 
               theme={theme} 
+              messages={sectionContent?.guest_messages?.messages}
               variant={sectionIndex++ % 2 === 1 ? 'alt' : 'default'}
             />
           )}
 
           {/* 12. Memory Map Section */}
           {sections.includes('memory_map') && (
-            <MemoryMapSection theme={theme} />
+            <MemoryMapSection 
+              theme={theme} 
+              locations={sectionContent?.memory_map?.locations}
+            />
           )}
 
           {/* 13. Letter to Future Section */}
@@ -293,6 +299,8 @@ export default function LovePageClient({
               theme={theme}
               customerName={customerName}
               partnerName={partnerName}
+              letter={sectionContent?.letter_future?.letter}
+              openDate={sectionContent?.letter_future?.openDate}
             />
           )}
 
@@ -301,6 +309,7 @@ export default function LovePageClient({
             <GiftSection
               theme={theme}
               partnerName={partnerName}
+              gifts={sectionContent?.gift_section?.gifts}
             />
           )}
 
@@ -310,18 +319,33 @@ export default function LovePageClient({
               theme={theme}
               customerName={customerName}
               partnerName={partnerName}
+              message={sectionContent?.surprise_message?.message}
+              hint={sectionContent?.surprise_message?.hint}
             />
           )}
 
-          {/* 16. Memory Card Section - Premium Keepsake */}
-          <MemoryCardSection
-            theme={theme}
-            customerName={customerName}
-            partnerName={partnerName}
-            qrCodeUrl={qrCodeUrl}
-            qrDataUrl={qrDataUrl}
-            slug={slug}
-          />
+          {/* 16. Memory Card Section - Premium Keepsake - Only render if qr_keepsake is enabled */}
+          {/* Backward compatibility: if sections array is missing, check for qrCodeUrl */}
+          {(() => {
+            const isQrKeepsakeEnabled = Array.isArray(sections) && sections.includes('qr_keepsake');
+            const hasQrCode = !!qrCodeUrl;
+            const isLegacyWebsite = !Array.isArray(sections);
+            
+            // Show if: (qr_keepsake section is enabled) OR (legacy website with qrCodeUrl)
+            if (isQrKeepsakeEnabled || (isLegacyWebsite && hasQrCode)) {
+              return (
+                <MemoryCardSection
+                  theme={theme}
+                  customerName={customerName}
+                  partnerName={partnerName}
+                  qrCodeUrl={qrCodeUrl}
+                  qrDataUrl={qrDataUrl}
+                  slug={slug}
+                />
+              );
+            }
+            return null;
+          })()}
 
           {/* 17. Footer */}
           <FooterSection
