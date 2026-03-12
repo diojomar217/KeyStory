@@ -146,7 +146,7 @@ export function GallerySectionPreview({
           Your gallery photos will appear here
         </p>
         <p className="text-[10px] mt-1" style={{ color: colors.muted }}>
-          Add photos in the Memories step
+          Add photos in the Content step
         </p>
       </div>
     );
@@ -215,7 +215,7 @@ export function TimelineSectionPreview({
           Your love story timeline will appear here
         </p>
         <p className="text-[10px] mt-1" style={{ color: colors.muted }}>
-          Add events in the Memories step
+          Add events in the Content step
         </p>
       </div>
     );
@@ -793,7 +793,7 @@ export function DefaultSectionPreview({
         <span>{emoji}</span> {label}
       </h3>
       <p className="text-[10px] mt-1" style={{ color: colors.muted }}>
-        Configure this section in the Memories step
+        Configure this section in the Content step
       </p>
     </div>
   );

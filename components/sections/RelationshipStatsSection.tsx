@@ -35,11 +35,12 @@ export default function RelationshipStatsSection({ theme, anniversaryDate }: Rel
       const now = new Date();
       const diff = now.getTime() - start.getTime();
       
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const months = Math.floor(days / 30);
-      const years = Math.floor(days / 365);
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor(diff / (1000 * 60));
+      // Ensure non-negative values
+      const days = Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
+      const months = Math.max(0, Math.floor(days / 30));
+      const years = Math.max(0, Math.floor(days / 365));
+      const hours = Math.max(0, Math.floor(diff / (1000 * 60 * 60)));
+      const minutes = Math.max(0, Math.floor(diff / (1000 * 60)));
       
       setStats({ days, months, years, hours, minutes });
     };

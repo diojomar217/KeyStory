@@ -1,7 +1,9 @@
 'use client';
 
 import { Theme } from '@/lib/types';
-import { THEME_PRESETS } from '@/lib/builder-constants';
+import Section from '../Section';
+import ScrollReveal from '../ScrollReveal';
+import { useTheme } from '../ThemeWrapper';
 
 interface GuestMessage {
   id: string;
@@ -13,84 +15,65 @@ interface GuestMessage {
 interface GuestMessagesSectionProps {
   theme: Theme;
   messages?: GuestMessage[];
+  variant?: 'default' | 'alt';
 }
 
+// Default messages as fallback
 const defaultMessages: GuestMessage[] = [
   { id: '1', name: 'Friend 1', message: 'Wishing you both a lifetime of happiness!', date: '' },
   { id: '2', name: 'Family Member', message: 'So happy to see you both together!', date: '' },
 ];
 
-export default function GuestMessagesSection({ theme, messages = defaultMessages }: GuestMessagesSectionProps) {
-  const themeConfig = THEME_PRESETS[theme];
-  const { colors, typography } = themeConfig;
+export default function GuestMessagesSection({ 
+  theme, 
+  messages,
+  variant = 'default'
+}: GuestMessagesSectionProps) {
+  // Use provided messages or fallback to defaults
+  const displayMessages = messages && messages.length > 0 ? messages : defaultMessages;
+  const styles = useTheme(theme);
 
   return (
-    <section 
-      className="py-16 px-4"
-      style={{ backgroundColor: colors.background }}
+    <Section
+      title="Guest Messages"
+      subtitle="Messages from friends and family"
+      icon="💬"
+      theme={theme}
+      variant={variant}
+      id="guest-messages"
     >
-      <div className="max-w-4xl mx-auto">
-        <h2 
-          className="text-4xl font-bold text-center mb-8"
-          style={{ 
-            color: colors.primary,
-            fontFamily: typography.headingFont,
-            fontWeight: typography.headingWeight 
-          }}
-        >
-          💬 Guest Messages
-        </h2>
-        
-        <p 
-          className="text-center mb-8"
-          style={{ color: colors.text }}
-        >
-          Messages from friends and family
-        </p>
-        
-        <div className="grid gap-6">
-          {messages.map((msg) => (
+      <div className="grid gap-6">
+        {displayMessages.map((msg, index) => (
+          <ScrollReveal key={msg.id} animation="fade-up" delay={index * 100}>
             <div
-              key={msg.id}
-              className="p-6 rounded-2xl"
-              style={{ 
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-                borderWidth: '1px'
-              }}
+              className={`${styles.card} rounded-2xl ${styles.cardBorder} border p-6`}
             >
               <div className="flex items-start gap-4">
                 <div 
                   className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: colors.secondary }}
+                  style={{ backgroundColor: styles.accentLight.split(' ')[0].replace('bg-', '') ? styles.accentLight : '#fce7f3' }}
                 >
-                  <span style={{ color: colors.primary }}>{msg.name.charAt(0)}</span>
+                  <span style={{ color: styles.text.split(' ')[0] || '#be185d' }} className="font-bold">{msg.name.charAt(0)}</span>
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <span 
-                      className="font-bold"
-                      style={{ 
-                        color: colors.primary,
-                        fontFamily: typography.headingFont
-                      }}
-                    >
+                    <span className={`font-bold ${styles.text}`}>
                       {msg.name}
                     </span>
                     {msg.date && (
-                      <span className="text-sm" style={{ color: colors.accent }}>
+                      <span className={`text-sm ${styles.textMuted}`}>
                         • {msg.date}
                       </span>
                     )}
                   </div>
-                  <p style={{ color: colors.text }}>{msg.message}</p>
+                  <p className={styles.textMuted}>{msg.message}</p>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+          </ScrollReveal>
+        ))}
       </div>
-    </section>
+    </Section>
   );
 }
 

@@ -20,6 +20,49 @@ interface BuilderPreviewProps {
   onMobileClose: () => void;
 }
 
+// Helper to get display names with proper empty state
+const getDisplayNames = (form: { customer_name: string; partner_name: string }): { hasContent: boolean; primary: string } => {
+  const hasCustomer = form.customer_name?.trim();
+  const hasPartner = form.partner_name?.trim();
+  
+  if (hasCustomer && hasPartner) {
+    return { 
+      hasContent: true, 
+      primary: `${form.customer_name} & ${form.partner_name}` 
+    };
+  }
+  if (hasCustomer) {
+    return { 
+      hasContent: true, 
+      primary: `${form.customer_name}'s Love Story` 
+    };
+  }
+  return { 
+    hasContent: false, 
+    primary: 'Add your names' 
+  };
+};
+
+// Helper to get tagline with proper empty state
+const getDisplayTagline = (form: { tagline: string }): { hasContent: boolean; text: string } => {
+  if (form.tagline?.trim()) {
+    return { hasContent: true, text: form.tagline };
+  }
+  return { hasContent: false, text: 'Your tagline will appear here' };
+};
+
+// Helper to get anniversary with proper empty state
+const getDisplayAnniversary = (form: { anniversary_date: string }): { hasContent: boolean; text: string } => {
+  if (form.anniversary_date) {
+    const date = new Date(form.anniversary_date);
+    return { 
+      hasContent: true, 
+      text: date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) 
+    };
+  }
+  return { hasContent: false, text: 'Add anniversary date' };
+};
+
 export default function BuilderPreview({
   config,
   form,
@@ -52,18 +95,12 @@ export default function BuilderPreview({
     return null;
   }, [photoPreviews, config.cover_photo_index]);
 
-  // Get couple names
-  const coupleNames = useMemo(() => {
-    if (form.customer_name && form.partner_name) {
-      return `${form.customer_name} & ${form.partner_name}`;
-    }
-    if (form.customer_name) {
-      return `${form.customer_name}'s Love Story`;
-    }
-    return 'Your Love Story';
-  }, [form.customer_name, form.partner_name]);
+  // Use helper functions for proper empty state handling
+  const nameData = useMemo(() => getDisplayNames(form), [form.customer_name, form.partner_name]);
+  const taglineData = useMemo(() => getDisplayTagline(form), [form.tagline]);
+  const anniversaryData = useMemo(() => getDisplayAnniversary(form), [form.anniversary_date]);
 
-  // Format date
+  // Format date for display
   const formattedDate = useMemo(() => {
     if (form.anniversary_date) {
       return new Date(form.anniversary_date).toLocaleDateString('en-US', { 
@@ -94,12 +131,12 @@ export default function BuilderPreview({
 
   const previewContent = (
     <div 
-      className={`h-full overflow-y-auto ${device === 'mobile' ? 'px-2' : 'p-4'}`}
+      className={`h-full overflow-y-auto ${device === 'mobile' ? 'px-2' : 'p-3'}`}
       style={{ backgroundColor: themePreset.colors.background }}
     >
-      {/* Website Header */}
+      {/* Website Header - Compact */}
       <div 
-        className="rounded-lg p-3 mb-3 shadow-sm"
+        className="rounded-lg p-2.5 mb-2 shadow-sm"
         style={{ 
           backgroundColor: themePreset.colors.card,
           borderColor: themePreset.colors.border,
@@ -120,85 +157,143 @@ export default function BuilderPreview({
             <div className="w-2 h-2 rounded-full bg-slate-300" />
           </div>
         </div>
-        <h3 className="font-bold text-sm" style={{ color: themePreset.colors.text }}>
-          {coupleNames}
+        <h3 className="font-bold text-sm truncate" style={{ color: nameData.hasContent ? themePreset.colors.text : themePreset.colors.text, opacity: nameData.hasContent ? 1 : 0.4 }}>
+          {nameData.primary}
         </h3>
-        <p className="text-xs" style={{ color: themePreset.colors.text, opacity: 0.6 }}>
+        <p className="text-xs truncate" style={{ color: themePreset.colors.text, opacity: 0.5 }}>
           yoursite.com/love/...
         </p>
       </div>
 
-      {/* Cover Photo Preview */}
+      {/* Cover Photo Preview - More compact */}
       <div 
-        className="rounded-lg overflow-hidden mb-3 shadow-sm"
+        className="rounded-lg overflow-hidden mb-2 shadow-sm"
         style={{ 
           backgroundColor: themePreset.colors.card,
           borderColor: themePreset.colors.border,
           borderWidth: '1px'
         }}
       >
-        <div className="relative aspect-video">
+        <div className="relative aspect-[16/10]">
           {coverPhotoUrl ? (
             <img src={coverPhotoUrl} alt="Cover" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-rose-100 to-pink-100">
-              <span className="text-4xl">💕</span>
+            <div className="w-full h-full flex flex-col items-center justify-center" style={{ backgroundColor: themePreset.colors.background, opacity: 0.8 }}>
+              <span className="text-2xl mb-1" style={{ opacity: 0.3 }}>📷</span>
+              <span className="text-xs italic" style={{ color: themePreset.colors.text, opacity: 0.4 }}>Add a cover photo</span>
             </div>
           )}
           {coverPhotoUrl && (
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           )}
-          {/* Hero overlay content */}
-          <div className="absolute bottom-3 left-3 right-3">
-            <h2 className="font-bold text-white text-lg drop-shadow-md">{coupleNames}</h2>
-            {form.tagline && (
-              <p className="text-white/90 text-sm drop-shadow-sm">"{form.tagline}"</p>
-            )}
-          </div>
+          {/* Hero overlay - matches actual hero structure from HomeSection */}
+          {coverPhotoUrl && (nameData.hasContent || taglineData.hasContent) && (
+            <div className="absolute bottom-2 left-2 right-2">
+              {nameData.hasContent && (
+                <h2 className="font-bold text-white text-sm truncate drop-shadow-md">
+                  {form.customer_name && form.partner_name ? `${form.customer_name} & ${form.partner_name}` : nameData.primary}
+                </h2>
+              )}
+              {taglineData.hasContent && (
+                <p className="text-white/90 text-xs truncate drop-shadow-sm">&ldquo;{form.tagline}&rdquo;</p>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Relationship Info */}
-      {formattedDate && (
-        <div 
-          className="rounded-lg p-3 mb-3 shadow-sm"
-          style={{ 
-            backgroundColor: themePreset.colors.card,
-            borderColor: themePreset.colors.border,
-            borderWidth: '1px'
-          }}
-        >
+      {/* Names & Tagline Section - Combined for better layout */}
+      <div 
+        className="rounded-lg p-2.5 mb-2 shadow-sm"
+        style={{ 
+          backgroundColor: themePreset.colors.card,
+          borderColor: themePreset.colors.border,
+          borderWidth: '1px'
+        }}
+      >
+        {/* Names */}
+        <div className="mb-2">
           <span className="text-xs font-medium block mb-1" style={{ color: themePreset.colors.text, opacity: 0.7 }}>
-            Together Since
+            Names
           </span>
-          <p className="font-semibold text-sm" style={{ color: themePreset.colors.text }}>
-            {formattedDate}
+          <p 
+            className={`text-sm font-medium truncate ${!nameData.hasContent ? 'italic' : ''}`}
+            style={{ 
+              color: themePreset.colors.text,
+              opacity: nameData.hasContent ? 1 : 0.4
+            }}
+          >
+            {nameData.primary}
           </p>
         </div>
-      )}
+        
+        {/* Tagline */}
+        <div>
+          <span className="text-xs font-medium block mb-1" style={{ color: themePreset.colors.text, opacity: 0.7 }}>
+            Tagline
+          </span>
+          <p 
+            className={`text-sm truncate ${!taglineData.hasContent ? 'italic' : ''}`}
+            style={{ 
+              color: themePreset.colors.text,
+              opacity: taglineData.hasContent ? 1 : 0.4
+            }}
+          >
+            {taglineData.hasContent ? `"${form.tagline}"` : taglineData.text}
+          </p>
+        </div>
+      </div>
 
-      {/* Love Message Preview */}
-      {form.message && enabledSections.includes('love_letter') && (
-        <div 
-          className="rounded-lg p-3 mb-3 shadow-sm"
+      {/* Anniversary Section - Always visible with placeholder */}
+      <div 
+        className="rounded-lg p-2.5 mb-2 shadow-sm"
+        style={{ 
+          backgroundColor: themePreset.colors.card,
+          borderColor: themePreset.colors.border,
+          borderWidth: '1px'
+        }}
+      >
+        <span className="text-xs font-medium block mb-1" style={{ color: themePreset.colors.text, opacity: 0.7 }}>
+          Together Since
+        </span>
+        <p 
+          className={`text-sm truncate ${!anniversaryData.hasContent ? 'italic' : ''}`}
           style={{ 
-            backgroundColor: themePreset.colors.card,
-            borderColor: themePreset.colors.border,
-            borderWidth: '1px'
+            color: themePreset.colors.text,
+            opacity: anniversaryData.hasContent ? 1 : 0.4,
+            fontWeight: anniversaryData.hasContent ? 600 : 400
           }}
         >
-          <span className="text-xs font-medium block mb-1" style={{ color: themePreset.colors.text, opacity: 0.7 }}>
-            💌 Love Letter
-          </span>
-          <p className="text-sm" style={{ color: themePreset.colors.text }}>
-            {form.message.length > 100 ? form.message.substring(0, 100) + '...' : form.message}
+          {anniversaryData.text}
+        </p>
+      </div>
+
+      {/* Love Message Section - Always visible with placeholder when empty */}
+      <div 
+        className="rounded-lg p-2.5 mb-2 shadow-sm"
+        style={{ 
+          backgroundColor: themePreset.colors.card,
+          borderColor: themePreset.colors.border,
+          borderWidth: '1px'
+        }}
+      >
+        <span className="text-xs font-medium block mb-1" style={{ color: themePreset.colors.text, opacity: 0.7 }}>
+          💌 Love Message
+        </span>
+        {form.message?.trim() ? (
+          <p className="text-sm line-clamp-3" style={{ color: themePreset.colors.text }}>
+            {form.message.length > 80 ? form.message.substring(0, 80) + '...' : form.message}
           </p>
-        </div>
-      )}
+        ) : (
+          <p className="text-sm italic" style={{ color: themePreset.colors.text, opacity: 0.4 }}>
+            Your love message will appear here
+          </p>
+        )}
+      </div>
 
       {/* Sections Preview */}
       <div 
-        className="rounded-lg p-3 mb-3 shadow-sm"
+        className="rounded-lg p-2.5 mb-2 shadow-sm"
         style={{ 
           backgroundColor: themePreset.colors.card,
           borderColor: themePreset.colors.border,
@@ -208,7 +303,7 @@ export default function BuilderPreview({
         <span className="text-xs font-medium block mb-2" style={{ color: themePreset.colors.text, opacity: 0.7 }}>
           📄 Sections
         </span>
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {enabledSections.length === 0 ? (
             <p className="text-xs italic" style={{ color: themePreset.colors.text, opacity: 0.5 }}>
               No sections enabled
@@ -226,7 +321,7 @@ export default function BuilderPreview({
                   }}
                 >
                   <span>{toggle?.icon}</span>
-                  <span className="font-medium" style={{ color: themePreset.colors.text }}>
+                  <span className="font-medium truncate" style={{ color: themePreset.colors.text }}>
                     {toggle?.label || section}
                   </span>
                   {section === 'gallery' && (
@@ -251,39 +346,40 @@ export default function BuilderPreview({
         </div>
       </div>
 
-      {/* Theme Colors */}
+      {/* Theme Colors - Compact */}
       <div 
-        className="rounded-lg p-3 shadow-sm"
+        className="rounded-lg p-2.5 shadow-sm"
         style={{ 
           backgroundColor: themePreset.colors.card,
           borderColor: themePreset.colors.border,
           borderWidth: '1px'
         }}
       >
-        <span className="text-xs font-medium block mb-2" style={{ color: themePreset.colors.text, opacity: 0.7 }}>
-          🎨 Theme: {themePreset.label}
-        </span>
-        <div className="flex gap-1">
-          {themePreset.preview.map((color, i) => (
-            <div
-              key={i}
-              className="w-5 h-5 rounded-full border border-black/10"
-              style={{ backgroundColor: color }}
-            />
-          ))}
-        </div>
-        {layoutPreset && (
-          <div className="mt-2 flex items-center gap-1 text-xs" style={{ color: themePreset.colors.text, opacity: 0.7 }}>
-            <span>{layoutPreset.previewEmoji}</span>
-            <span>{layoutPreset.label} Layout</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium" style={{ color: themePreset.colors.text, opacity: 0.7 }}>
+            🎨 {themePreset.label}
+          </span>
+          <div className="flex gap-1">
+            {themePreset.preview.map((color, i) => (
+              <div
+                key={i}
+                className="w-4 h-4 rounded-full border border-black/10"
+                style={{ backgroundColor: color }}
+              />
+            ))}
           </div>
-        )}
+          {layoutPreset && (
+            <span className="text-xs" style={{ color: themePreset.colors.text, opacity: 0.6 }}>
+              {layoutPreset.previewEmoji} {layoutPreset.label}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Mobile Tip */}
-      <div className="mt-4 text-center">
-        <p className="text-xs" style={{ color: themePreset.colors.text, opacity: 0.5 }}>
-          📱 {device === 'mobile' ? 'Mobile' : 'Desktop'} Preview • Updates in real-time
+      <div className="mt-3 text-center">
+        <p className="text-xs" style={{ color: themePreset.colors.text, opacity: 0.4 }}>
+          📱 {device === 'mobile' ? 'Mobile' : 'Desktop'} • Updates as you type
         </p>
       </div>
     </div>
@@ -304,13 +400,13 @@ export default function BuilderPreview({
           >
             {/* Preview Header */}
             <div 
-              className="px-4 py-3 border-b flex items-center justify-between"
+              className="px-3 py-2.5 border-b flex items-center justify-between"
               style={{ 
                 borderColor: themePreset.colors.border,
                 backgroundColor: themePreset.colors.card
               }}
             >
-              <h3 className="font-semibold" style={{ color: themePreset.colors.text }}>
+              <h3 className="font-semibold text-sm" style={{ color: themePreset.colors.text }}>
                 Live Preview
               </h3>
               <div className="flex items-center gap-2">
@@ -324,7 +420,7 @@ export default function BuilderPreview({
             {/* Preview Content */}
             <div 
               className={`${previewDimensions} transition-all duration-300`}
-              style={{ height: '600px' }}
+              style={{ height: '550px' }}
             >
               {previewContent}
             </div>

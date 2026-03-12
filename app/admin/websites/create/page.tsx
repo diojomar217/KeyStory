@@ -20,6 +20,24 @@ import TimelineEditor from '@/components/TimelineEditor';
 import LivePreview from '@/components/LivePreview';
 import StepNavigator from '@/components/StepNavigator';
 import SummaryPanel from '@/components/SummaryPanel';
+import {
+  TextContentInput,
+  UrlContentInput,
+  ReasonsILoveYouInput,
+  FutureDreamsInput,
+  VideoMemoriesInput,
+  SpecialMomentsInput,
+  MilestonesInput,
+  PlaylistInput,
+  FirstDateInput,
+  LetterToFutureInput,
+  SurpriseMessageInput,
+  GiftSectionInput,
+  QuotesInput,
+  MemoryMapInput,
+  GuestMessagesInput,
+} from '@/components/builder/ContentInputComponents';
+import { SectionContentMap, Section } from '@/lib/types';
 
 type LocalForm = Omit<CreateOrderPayload, 'config' | 'photos'> & { photos: File[] };
 
@@ -53,6 +71,7 @@ export default function CreateWebsitePage() {
     song_template: undefined,
     timeline_events: [],
     cover_photo_index: undefined,
+    section_content: {},
   });
 
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
@@ -134,6 +153,20 @@ export default function CreateWebsitePage() {
     setConfig((prev) => ({ ...prev, cover_photo_index: index }));
   };
 
+  // Handle section content changes for dynamic content step
+  const handleSectionContentChange = <K extends keyof SectionContentMap>(
+    section: K,
+    content: SectionContentMap[K]
+  ) => {
+    setConfig((prev) => ({
+      ...prev,
+      section_content: {
+        ...prev.section_content,
+        [section]: content,
+      },
+    }));
+  };
+
   const handleNext = () => {
     const validation = validateStep(currentStep, form, config);
     if (!validation.valid) {
@@ -164,6 +197,12 @@ export default function CreateWebsitePage() {
       setError(null);
       setCurrentStep(step);
     }
+  };
+
+  // Handler for Edit buttons in SummaryPanel (Review step)
+  const handleEditSection = (step: number) => {
+    setError(null);
+    setCurrentStep(step);
   };
 
   const handleSubmit = async () => {
@@ -539,116 +578,97 @@ onChange={(sections: import('@/lib/types').Section[]) => handleConfigChange({ se
                 </svg>
               </div>
               <h2 className="text-xl font-bold text-slate-800">
-                {stepInfo?.title || 'Memories'}
+                {stepInfo?.title || 'Content'}
               </h2>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                Photos {config.sections.includes('gallery') && <span className="text-rose-500">*</span>}
-              </label>
-
-              <input
-                name="photos"
-                type="file"
-                accept="image/*"
-                multiple
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-rose-50 file:text-rose-600 hover:file:bg-rose-100 transition-all cursor-pointer"
-                onChange={handlePhotos}
-              />
-
-              {form.photos.length > 0 && (
-                <p className="text-sm text-emerald-600 mt-2">
-                  {form.photos.length} photo(s) selected
-                </p>
-              )}
-
-              {config.sections.includes('gallery') && form.photos.length === 0 && (
-                <p className="text-xs text-amber-600 mt-1">
-                  Gallery section requires at least one photo
-                </p>
-              )}
-            </div>
-
-            {form.photos.length > 0 && (
-              <div className="bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl p-5 border border-rose-200">
+            {/* Media Content Section - Photos */}
+            {(config.sections.includes('gallery') || config.sections.includes('polaroid_gallery')) && (
+              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
                 <div className="flex items-center gap-2 mb-4">
-                  <svg className="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                  <label className="block font-semibold text-slate-700">
-                    Select Cover Photo
+                  <span className="text-xl">📸</span>
+                  <h3 className="font-semibold text-slate-700">Photos</h3>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                    Upload Photos {(config.sections.includes('gallery') || config.sections.includes('polaroid_gallery')) && <span className="text-rose-500">*</span>}
                   </label>
+
+                  <input
+                    name="photos"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-800 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-rose-50 file:text-rose-600 hover:file:bg-rose-100 transition-all cursor-pointer"
+                    onChange={handlePhotos}
+                  />
+
+                  {form.photos.length > 0 && (
+                    <p className="text-sm text-emerald-600 mt-2">
+                      {form.photos.length} photo(s) selected
+                    </p>
+                  )}
+
+                  {(config.sections.includes('gallery') || config.sections.includes('polaroid_gallery')) && form.photos.length === 0 && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      Gallery section requires at least one photo
+                    </p>
+                  )}
                 </div>
 
-                <p className="text-sm text-slate-500 mb-4">
-                  Choose which photo to display in the hero section of your website.
-                </p>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                  {photoPreviews.map((preview, index) => (
-                    <div
-                      key={index}
-                      className={`relative group cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-                        config.cover_photo_index === index
-                          ? 'border-rose-500 ring-2 ring-rose-200 shadow-md'
-                          : 'border-slate-200 hover:border-rose-300'
-                      }`}
-                      onClick={() => handleCoverPhotoSelect(index)}
-                    >
-                      <div className="aspect-square relative">
-                        <img
-                          src={preview}
-                          alt={`Photo ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-
-                        {config.cover_photo_index === index && (
-                          <div className="absolute top-2 right-2 bg-rose-500 text-white rounded-full p-1 shadow-md">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                              <path
-                                fillRule="evenodd"
-                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </div>
-                        )}
-
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                          <span
-                            className={`text-xs font-medium px-2 py-1 rounded-full ${
-                              config.cover_photo_index === index
-                                ? 'bg-rose-500 text-white'
-                                : 'bg-white/90 text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity'
-                            }`}
-                          >
-                            {config.cover_photo_index === index ? 'Cover Photo' : 'Set as Cover'}
-                          </span>
-                        </div>
-                      </div>
+                {form.photos.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-slate-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg className="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <label className="block font-semibold text-slate-700">
+                        Select Cover Photo
+                      </label>
                     </div>
-                  ))}
-                </div>
 
-                {config.cover_photo_index === undefined && (
-                  <p className="text-xs text-slate-400 mt-3">
-                    First photo will be used as cover by default
-                  </p>
+                    <p className="text-sm text-slate-500 mb-4">
+                      Choose which photo to display in the hero section of your website.
+                    </p>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                      {photoPreviews.map((preview, index) => (
+                        <div
+                          key={index}
+                          className={`relative group cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                            config.cover_photo_index === index
+                              ? 'border-rose-500 ring-2 ring-rose-200 shadow-md'
+                              : 'border-slate-200 hover:border-rose-300'
+                          }`}
+                          onClick={() => handleCoverPhotoSelect(index)}
+                        >
+                          <div className="aspect-square relative">
+                            <img src={preview} alt={`Photo ${index + 1}`} className="w-full h-full object-cover" />
+                            {config.cover_photo_index === index && (
+                              <div className="absolute top-2 right-2 bg-rose-500 text-white rounded-full p-1 shadow-md">
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             )}
 
+            {/* Timeline Events */}
             {config.sections.includes('timeline') && (
               <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                <label className="block font-semibold text-slate-700 mb-3">
-                  Timeline Events <span className="text-rose-500">*</span>
-                </label>
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">📅</span>
+                  <h3 className="font-semibold text-slate-700">Timeline Events</h3>
+                  <span className="text-rose-500">*</span>
+                </div>
 
                 <TimelineEditor
                   events={config.timeline_events || []}
@@ -660,6 +680,214 @@ onChange={(sections: import('@/lib/types').Section[]) => handleConfigChange({ se
                     Timeline section requires at least one event
                   </p>
                 )}
+              </div>
+            )}
+
+            {/* Text Content Sections */}
+            {config.sections.includes('love_letter') && (
+              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">💌</span>
+                  <h3 className="font-semibold text-slate-700">Love Letter</h3>
+                </div>
+                <TextContentInput
+                  label="Your Love Letter"
+                  value={config.section_content?.love_letter?.content || ''}
+                  onChange={(content) => handleSectionContentChange('love_letter', { content })}
+                  placeholder="Write your heartfelt love letter here..."
+                  rows={6}
+                />
+              </div>
+            )}
+
+            {config.sections.includes('our_story') && (
+              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">📖</span>
+                  <h3 className="font-semibold text-slate-700">Our Story</h3>
+                </div>
+                <TextContentInput
+                  label="Your Love Story"
+                  value={config.section_content?.our_story?.content || ''}
+                  onChange={(content) => handleSectionContentChange('our_story', { content })}
+                  placeholder="Share your relationship story..."
+                  rows={6}
+                />
+              </div>
+            )}
+
+            {config.sections.includes('first_date') && (
+              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">🌹</span>
+                  <h3 className="font-semibold text-slate-700">First Date</h3>
+                </div>
+                <FirstDateInput
+                  value={config.section_content?.first_date}
+                  onChange={(content) => handleSectionContentChange('first_date', content)}
+                />
+              </div>
+            )}
+
+            {/* List/Repeater Sections */}
+            {config.sections.includes('reasons_love_you') && (
+              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">💖</span>
+                  <h3 className="font-semibold text-slate-700">Reasons I Love You</h3>
+                  <span className="text-rose-500">*</span>
+                </div>
+                <ReasonsILoveYouInput
+                  value={config.section_content?.reasons_love_you}
+                  onChange={(content) => handleSectionContentChange('reasons_love_you', content)}
+                />
+              </div>
+            )}
+
+            {config.sections.includes('future_dreams') && (
+              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">💭</span>
+                  <h3 className="font-semibold text-slate-700">Future Dreams</h3>
+                  <span className="text-rose-500">*</span>
+                </div>
+                <FutureDreamsInput
+                  value={config.section_content?.future_dreams}
+                  onChange={(content) => handleSectionContentChange('future_dreams', content)}
+                />
+              </div>
+            )}
+
+            {config.sections.includes('special_moments') && (
+              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">⭐</span>
+                  <h3 className="font-semibold text-slate-700">Special Moments</h3>
+                </div>
+                <SpecialMomentsInput
+                  value={config.section_content?.special_moments}
+                  onChange={(content) => handleSectionContentChange('special_moments', content)}
+                />
+              </div>
+            )}
+
+            {config.sections.includes('milestones') && (
+              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">🏆</span>
+                  <h3 className="font-semibold text-slate-700">Milestones</h3>
+                </div>
+                <MilestonesInput
+                  value={config.section_content?.milestones}
+                  onChange={(content) => handleSectionContentChange('milestones', content)}
+                />
+              </div>
+            )}
+
+            {config.sections.includes('video_memories') && (
+              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">🎬</span>
+                  <h3 className="font-semibold text-slate-700">Video Memories</h3>
+                  <span className="text-rose-500">*</span>
+                </div>
+                <VideoMemoriesInput
+                  value={config.section_content?.video_memories}
+                  onChange={(content) => handleSectionContentChange('video_memories', content)}
+                />
+              </div>
+            )}
+
+            {/* Media Links */}
+            {config.sections.includes('playlist') && (
+              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">🎶</span>
+                  <h3 className="font-semibold text-slate-700">Playlist</h3>
+                  <span className="text-rose-500">*</span>
+                </div>
+                <PlaylistInput
+                  value={config.section_content?.playlist}
+                  onChange={(content) => handleSectionContentChange('playlist', content)}
+                />
+              </div>
+            )}
+
+            {/* Interactive Sections */}
+            {config.sections.includes('quotes') && (
+              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">💕</span>
+                  <h3 className="font-semibold text-slate-700">Love Quotes</h3>
+                </div>
+                <QuotesInput
+                  value={config.section_content?.quotes}
+                  onChange={(content) => handleSectionContentChange('quotes', content)}
+                />
+              </div>
+            )}
+
+            {config.sections.includes('memory_map') && (
+              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">🗺️</span>
+                  <h3 className="font-semibold text-slate-700">Memory Map</h3>
+                </div>
+                <MemoryMapInput
+                  value={config.section_content?.memory_map}
+                  onChange={(content) => handleSectionContentChange('memory_map', content)}
+                />
+              </div>
+            )}
+
+            {config.sections.includes('letter_future') && (
+              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">📮</span>
+                  <h3 className="font-semibold text-slate-700">Letter to the Future</h3>
+                </div>
+                <LetterToFutureInput
+                  value={config.section_content?.letter_future}
+                  onChange={(content) => handleSectionContentChange('letter_future', content)}
+                />
+              </div>
+            )}
+
+            {config.sections.includes('surprise_message') && (
+              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">🎉</span>
+                  <h3 className="font-semibold text-slate-700">Surprise Message</h3>
+                </div>
+                <SurpriseMessageInput
+                  value={config.section_content?.surprise_message}
+                  onChange={(content) => handleSectionContentChange('surprise_message', content)}
+                />
+              </div>
+            )}
+
+            {config.sections.includes('gift_section') && (
+              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">🎁</span>
+                  <h3 className="font-semibold text-slate-700">Gift Section</h3>
+                </div>
+                <GiftSectionInput
+                  value={config.section_content?.gift_section}
+                  onChange={(content) => handleSectionContentChange('gift_section', content)}
+                />
+              </div>
+            )}
+
+            {config.sections.includes('guest_messages') && (
+              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">💬</span>
+                  <h3 className="font-semibold text-slate-700">Guest Messages</h3>
+                </div>
+                <GuestMessagesInput
+                  value={config.section_content?.guest_messages}
+                />
               </div>
             )}
           </div>
@@ -684,7 +912,7 @@ onChange={(sections: import('@/lib/types').Section[]) => handleConfigChange({ se
               </h2>
             </div>
 
-            <SummaryPanel config={config} form={form} />
+            <SummaryPanel config={config} form={form} onEditSection={handleEditSection} />
 
             <div className="bg-rose-50 rounded-xl p-4 border border-rose-200">
               <p className="text-sm text-rose-700">

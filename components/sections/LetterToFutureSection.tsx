@@ -8,13 +8,29 @@ interface LetterToFutureSectionProps {
   theme: Theme;
   customerName: string;
   partnerName: string;
+  letter?: string;
+  openDate?: string;
 }
+
+// Default fallback letter
+const defaultLetter = `My love,
+
+By the time you read this, I hope we've created even more beautiful memories together. I want you to know that every moment we've shared has been precious to me.
+
+{customerName} loves {partnerName} more than words can express. Here's to our forever and beyond! 💕
+
+With all my love,
+Your {partnerName}`;
 
 export default function LetterToFutureSection({ 
   theme, 
   customerName,
-  partnerName 
+  partnerName,
+  letter,
+  openDate
 }: LetterToFutureSectionProps) {
+  // Use provided letter or build default with names
+  const displayLetter = letter || defaultLetter.replace(/{customerName}/g, customerName).replace(/{partnerName}/g, partnerName);
   const themeConfig = THEME_PRESETS[theme];
   const { colors, typography } = themeConfig;
   const [isRevealed, setIsRevealed] = useState(false);
@@ -85,24 +101,10 @@ export default function LetterToFutureSection({
                 Dear Future Us,
               </h3>
               <div 
-                className="prose max-w-none text-left"
+                className="prose max-w-none text-left whitespace-pre-wrap"
                 style={{ color: colors.text, fontFamily: typography.bodyFont }}
               >
-                <p className="mb-4">
-                  My love,
-                </p>
-                <p className="mb-4">
-                  By the time you read this, I hope we've created even more beautiful memories together. 
-                  I want you to know that every moment we've shared has been precious to me.
-                </p>
-                <p className="mb-4">
-                  {customerName} loves {partnerName} more than words can express. 
-                  Here's to our forever and beyond! 💕
-                </p>
-                <p className="mb-4">
-                  With all my love,<br/>
-                  Your {partnerName}
-                </p>
+                {displayLetter}
               </div>
               <button
                 onClick={() => setIsRevealed(false)}
