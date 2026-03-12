@@ -139,23 +139,78 @@ export const validateTemplateStep = (
 };
 
 /**
- * Step 6: Memories - Validates photos and timeline events
+ * Step 6: Content - Validates content based on selected sections
  */
-export const validateMemoriesStep = (
+export const validateContentStep = (
   form: WizardFormData,
   config: SiteConfig
 ): ValidationResult => {
   const sections = config.sections || [];
+  const sectionContent = config.section_content || {};
   
+  // Gallery requires photos
   if (sections.includes('gallery') && (!form.photos || form.photos.length === 0)) {
     return { valid: false, error: 'Gallery section requires at least one photo' };
   }
   
+  // Timeline requires events
   if (
     sections.includes('timeline') &&
     (!config.timeline_events || config.timeline_events.length === 0)
   ) {
     return { valid: false, error: 'Timeline section requires at least one event' };
+  }
+  
+  // Love Letter requires text content
+  if (sections.includes('love_letter') && sectionContent.love_letter) {
+    const loveLetterContent = sectionContent.love_letter.content || '';
+    if (!loveLetterContent.trim()) {
+      return { valid: false, error: 'Love Letter section requires content' };
+    }
+  }
+  
+  // Our Story requires text content
+  if (sections.includes('our_story') && sectionContent.our_story) {
+    const storyContent = sectionContent.our_story.content || '';
+    if (!storyContent.trim()) {
+      return { valid: false, error: 'Our Story section requires content' };
+    }
+  }
+  
+  // Reasons I Love You requires at least one reason
+  if (sections.includes('reasons_love_you') && sectionContent.reasons_love_you) {
+    const reasons = sectionContent.reasons_love_you.reasons || [];
+    if (reasons.length === 0) {
+      return { valid: false, error: 'Reasons I Love You requires at least one reason' };
+    }
+  }
+  
+  // Future Dreams requires at least one dream
+  if (sections.includes('future_dreams') && sectionContent.future_dreams) {
+    const dreams = sectionContent.future_dreams.dreams || [];
+    if (dreams.length === 0) {
+      return { valid: false, error: 'Future Dreams requires at least one dream' };
+    }
+  }
+  
+  // Song requires song link (from form)
+  if (sections.includes('song') && !form.song_link?.trim()) {
+    return { valid: false, error: 'Song section requires a song link' };
+  }
+  
+  // Playlist requires playlist URL
+  if (sections.includes('playlist') && sectionContent.playlist) {
+    if (!sectionContent.playlist.playlistUrl?.trim()) {
+      return { valid: false, error: 'Playlist section requires a playlist link' };
+    }
+  }
+  
+  // Video Memories requires at least one video
+  if (sections.includes('video_memories') && sectionContent.video_memories) {
+    const videos = sectionContent.video_memories.videos || [];
+    if (videos.length === 0) {
+      return { valid: false, error: 'Video Memories requires at least one video' };
+    }
   }
   
   return { valid: true };
@@ -242,10 +297,10 @@ export const WIZARD_STEPS: WizardStepConfig[] = [
   },
   {
     id: 6,
-    key: 'memories',
-    title: 'Memories',
-    subtitle: 'Add moments',
-    validate: validateMemoriesStep,
+    key: 'content',
+    title: 'Content',
+    subtitle: 'Fill in your sections',
+    validate: validateContentStep,
   },
   {
     id: 7,

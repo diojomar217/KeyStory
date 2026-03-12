@@ -2,7 +2,6 @@
 
 import { SiteConfig, CreateOrderPayload } from '@/lib/types';
 import { THEME_PRESETS, LAYOUT_PRESETS, SECTION_TOGGLES } from '@/lib/builder-constants';
-import { SECTION_REGISTRY, getSectionMetadata } from '@/lib/section-registry';
 
 type LocalForm = Omit<CreateOrderPayload, 'config' | 'photos'> & { photos: File[] };
 
@@ -32,7 +31,7 @@ function ReviewBlock({ title, icon, status, onEdit, children, warnings }: Review
       border: 'border-emerald-200',
       icon: 'text-emerald-600',
       badge: 'bg-emerald-100 text-emerald-700',
-      badgeText: 'Completed',
+      badgeText: ' Completed',
     },
     missing: {
       bg: 'bg-red-50',
@@ -95,6 +94,229 @@ function ReviewBlock({ title, icon, status, onEdit, children, warnings }: Review
       )}
     </div>
   );
+}
+
+// ============================================
+// SECTION CONTENT SUMMARY HELPERS
+// ============================================
+
+interface SectionContentSummary {
+  label: string;
+  icon: string;
+  status: 'completed' | 'missing' | 'attention';
+  content: string;
+}
+
+// Truncate text to a specified length
+function truncateText(text: string, maxLength: number): string {
+  if (!text) return '';
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength).trim() + '...';
+}
+
+// Get section content summary for each enabled section
+function getSectionContentSummary(
+  sectionId: string,
+  sectionContent: Record<string, unknown> | undefined
+): SectionContentSummary | null {
+  const sectionInfo = SECTION_TOGGLES.find((t) => t.id === sectionId);
+  const content = sectionContent?.[sectionId as keyof Record<string, unknown>] as Record<string, unknown> | undefined;
+  
+  // Sections handled elsewhere (photos, song link, timeline events)
+  if (sectionId === 'gallery' || sectionId === 'song' || sectionId === 'timeline') {
+    return null;
+  }
+
+  switch (sectionId) {
+    // Text content sections
+    case 'love_letter': {
+      const text = (content?.content as string) || '';
+      return {
+        label: sectionInfo?.label || 'Love Letter',
+        icon: '💌',
+        status: text.length > 0 ? 'completed' : 'missing',
+        content: text.length > 0 ? truncateText(text, 100) : 'No letter added',
+      };
+    }
+
+    case 'our_story': {
+      const text = (content?.content as string) || '';
+      return {
+        label: sectionInfo?.label || 'Our Story',
+        icon: '📖',
+        status: text.length > 0 ? 'completed' : 'missing',
+        content: text.length > 0 ? truncateText(text, 100) : 'No story added',
+      };
+    }
+
+    case 'first_date': {
+      const hasContent = !!(content?.title || content?.date || content?.location || content?.description);
+      return {
+        label: sectionInfo?.label || 'First Date',
+        icon: '💕',
+        status: hasContent ? 'completed' : 'missing',
+        content: hasContent 
+          ? `${content?.title || 'First Date'}${content?.date ? ` • ${content.date}` : ''}`
+          : 'Not configured',
+      };
+    }
+
+    // List content sections
+    case 'special_moments': {
+      const items = (content?.moments as unknown[]) || [];
+      return {
+        label: sectionInfo?.label || 'Special Moments',
+        icon: '⭐',
+        status: items.length > 0 ? 'completed' : 'missing',
+        content: items.length > 0 ? `${items.length} moment${items.length !== 1 ? 's' : ''} added` : 'No moments added',
+      };
+    }
+
+    case 'milestones': {
+      const items = (content?.milestones as unknown[]) || [];
+      return {
+        label: sectionInfo?.label || 'Milestones',
+        icon: '🏆',
+        status: items.length > 0 ? 'completed' : 'missing',
+        content: items.length > 0 ? `${items.length} milestone${items.length !== 1 ? 's' : ''} added` : 'No milestones added',
+      };
+    }
+
+    // Media sections
+    case 'playlist': {
+      const hasContent = !!content?.playlistUrl;
+      return {
+        label: sectionInfo?.label || 'Playlist',
+        icon: '🎶',
+        status: hasContent ? 'completed' : 'missing',
+        content: hasContent ? 'Playlist link added' : 'No playlist link',
+      };
+    }
+
+    case 'video_memories': {
+      const items = (content?.videos as unknown[]) || [];
+      return {
+        label: sectionInfo?.label || 'Video Memories',
+        icon: '🎬',
+        status: items.length > 0 ? 'completed' : 'missing',
+        content: items.length > 0 ? `${items.length} video${items.length !== 1 ? 's' : ''} added` : 'No videos added',
+      };
+    }
+
+    // Stats & counters (auto-generated, no content needed)
+    case 'relationship_stats':
+    case 'anniversary_countdown': {
+      return {
+        label: sectionInfo?.label || sectionId,
+        icon: sectionId === 'relationship_stats' ? '📊' : '⏰',
+        status: 'completed',
+        content: 'Auto-generated',
+      };
+    }
+
+    // Interactive sections
+    case 'future_dreams': {
+      const items = (content?.dreams as unknown[]) || [];
+      return {
+        label: sectionInfo?.label || 'Future Dreams',
+        icon: '💭',
+        status: items.length > 0 ? 'completed' : 'missing',
+        content: items.length > 0 ? `${items.length} dream${items.length !== 1 ? 's' : ''} added` : 'No dreams added',
+      };
+    }
+
+    case 'quotes': {
+      const items = (content?.quotes as unknown[]) || [];
+      return {
+        label: sectionInfo?.label || 'Love Quotes',
+        icon: '💕',
+        status: items.length > 0 ? 'completed' : 'missing',
+        content: items.length > 0 ? `${items.length} quote${items.length !== 1 ? 's' : ''} added` : 'No quotes added',
+      };
+    }
+
+    case 'reasons_love_you': {
+      const items = (content?.reasons as unknown[]) || [];
+      return {
+        label: sectionInfo?.label || 'Reasons I Love You',
+        icon: '💖',
+        status: items.length > 0 ? 'completed' : 'missing',
+        content: items.length > 0 ? `${items.length} reason${items.length !== 1 ? 's' : ''} added` : 'No reasons added',
+      };
+    }
+
+    case 'memory_map': {
+      const items = (content?.locations as unknown[]) || [];
+      return {
+        label: sectionInfo?.label || 'Memory Map',
+        icon: '🗺️',
+        status: items.length > 0 ? 'completed' : 'missing',
+        content: items.length > 0 ? `${items.length} location${items.length !== 1 ? 's' : ''} added` : 'No locations added',
+      };
+    }
+
+    case 'guest_messages': {
+      return {
+        label: sectionInfo?.label || 'Guest Messages',
+        icon: '💬',
+        status: 'completed',
+        content: 'Enabled',
+      };
+    }
+
+    case 'letter_future': {
+      const text = (content?.letter as string) || '';
+      return {
+        label: sectionInfo?.label || 'Letter to the Future',
+        icon: '📮',
+        status: text.length > 0 ? 'completed' : 'missing',
+        content: text.length > 0 
+          ? truncateText(text, 80) 
+          : 'No letter written',
+      };
+    }
+
+    case 'gift_section': {
+      const items = (content?.gifts as unknown[]) || [];
+      return {
+        label: sectionInfo?.label || 'Gift Section',
+        icon: '🎁',
+        status: items.length > 0 ? 'completed' : 'missing',
+        content: items.length > 0 ? `${items.length} gift${items.length !== 1 ? 's' : ''} added` : 'No gifts added',
+      };
+    }
+
+    case 'surprise_message': {
+      const hasContent = !!content?.message;
+      return {
+        label: sectionInfo?.label || 'Surprise Message',
+        icon: '🎉',
+        status: hasContent ? 'completed' : 'missing',
+        content: hasContent ? 'Configured' : 'Not configured',
+      };
+    }
+
+    case 'qr_keepsake': {
+      return {
+        label: sectionInfo?.label || 'QR Keepsake',
+        icon: '🎴',
+        status: 'completed',
+        content: 'QR code enabled',
+      };
+    }
+
+    // Home section - no additional content to review
+    case 'home':
+      return null;
+
+    default:
+      return {
+        label: sectionInfo?.label || sectionId,
+        icon: sectionInfo?.icon || '📄',
+        status: 'attention',
+        content: 'Unknown section type',
+      };
+  }
 }
 
 // ============================================
@@ -374,9 +596,9 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
         </div>
       </ReviewBlock>
 
-      {/* F. Memories */}
+      {/* F. Content - Enhanced with Dynamic Section Content */}
       <ReviewBlock
-        title="Memories"
+        title="Content"
         icon={
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -391,7 +613,8 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
         onEdit={() => onEditSection?.(6)}
         warnings={memoriesWarnings}
       >
-        <div className="grid grid-cols-3 gap-3 text-sm">
+        {/* Legacy content - Photos, Cover, Timeline Events */}
+        <div className="grid grid-cols-3 gap-3 text-sm mb-4">
           <div>
             <p className="text-slate-500 text-xs">Photos</p>
             <p className="font-medium text-slate-800">{form.photos.length} uploaded</p>
@@ -411,6 +634,44 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
             </p>
           </div>
         </div>
+
+        {/* Dynamic Section Content Summaries */}
+        {config.sections && config.sections.length > 0 && (
+          <div className="border-t border-slate-200 pt-4">
+            <p className="text-xs font-semibold text-slate-500 mb-3 uppercase tracking-wider">
+              Section Content
+            </p>
+            <div className="space-y-2">
+              {config.sections.map((sectionId) => {
+                const summary = getSectionContentSummary(sectionId, config.section_content as Record<string, unknown> | undefined);
+                if (!summary) return null;
+                
+                const statusColors = {
+                  completed: 'text-emerald-600 bg-emerald-50',
+                  missing: 'text-red-600 bg-red-50',
+                  attention: 'text-amber-600 bg-amber-50',
+                };
+                
+                return (
+                  <div 
+                    key={sectionId}
+                    className="flex items-center justify-between text-sm p-2 rounded-lg bg-slate-50"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">{summary.icon}</span>
+                      <span className="font-medium text-slate-700">{summary.label}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${statusColors[summary.status]}`}>
+                        {summary.content}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </ReviewBlock>
 
       {/* Overall Warnings */}

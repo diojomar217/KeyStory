@@ -777,9 +777,9 @@ export const BUILDER_STEPS: BuilderStep[] = [
   },
   { 
     id: 6, 
-    title: 'Memories', 
-    subtitle: 'Add moments',
-    section: 'memories',
+    title: 'Content', 
+    subtitle: 'Fill in your sections',
+    section: 'content', 
     isRequired: false,
   },
   { 

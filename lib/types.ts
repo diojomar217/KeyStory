@@ -153,6 +153,8 @@ export interface SiteConfig {
   cover_photo_index?: number;
   tagline?: string;
   message?: string; // Love message for the website
+  // Dynamic section content for each enabled section
+  section_content?: SectionContentMap;
 }
 
 // Builder State Types
@@ -312,4 +314,62 @@ export interface RelationshipStats {
   monthsTogether: number;
   yearsTogether: number;
   hoursTogether: number;
+}
+
+// ============================================
+// SECTION CONTENT MAP - Dynamic Content for Each Section
+// ============================================
+
+export interface SectionContentMap {
+  love_letter?: {
+    content: string;
+  };
+  our_story?: {
+    content: string;
+  };
+  first_date?: {
+    title: string;
+    date: string;
+    location: string;
+    description: string;
+  };
+  special_moments?: {
+    moments: SpecialMoment[];
+  };
+  milestones?: {
+    milestones: Milestone[];
+  };
+  playlist?: {
+    playlistUrl: string;
+    title: string;
+  };
+  video_memories?: {
+    videos: VideoMemory[];
+  };
+  future_dreams?: {
+    dreams: FutureDream[];
+  };
+  quotes?: {
+    quotes: LoveQuote[];
+  };
+  reasons_love_you?: {
+    reasons: ReasonILoveYou[];
+  };
+  memory_map?: {
+    locations: MemoryMapLocation[];
+  };
+  letter_future?: {
+    letter: string;
+    openDate: string;
+  };
+  surprise_message?: {
+    message: string;
+    hint: string;
+  };
+  gift_section?: {
+    gifts: GiftItem[];
+  };
+  guest_messages?: {
+    enabled: boolean;
+  };
 }
