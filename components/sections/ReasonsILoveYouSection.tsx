@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import { Theme } from '@/lib/types';
-import Section from '../Section';
+import { GridSectionLayout } from '../love/SectionLayouts';
 import ScrollReveal from '../ScrollReveal';
-import { useTheme } from '../ThemeWrapper';
 
 interface Reason {
   id: string;
@@ -40,7 +39,6 @@ export default function ReasonsILoveYouSection({
 }: ReasonsILoveYouSectionProps) {
   // Use provided reasons or fallback to defaults
   const displayReasons = reasons && reasons.length > 0 ? reasons : defaultReasons;
-  const styles = useTheme(theme);
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
 
   const toggleFlip = (id: string) => {
@@ -56,71 +54,57 @@ export default function ReasonsILoveYouSection({
   };
 
   return (
-    <Section
+    <GridSectionLayout
       title={`10 Things I Love About You`}
       subtitle={`${partnerName}, here are all the reasons I love you:`}
       icon="💖"
       theme={theme}
       variant={variant}
       id="reasons"
+      gridCols="grid-cols-1 md:grid-cols-2"
+      gap="gap-4"
     >
-      <div className="grid gap-4 md:grid-cols-2">
-        {displayReasons.map((reason, idx) => (
-          <ScrollReveal key={reason.id} animation="fade-up" delay={idx * 50}>
-            {/* Flip Card Container */}
+      {displayReasons.map((reason, idx) => (
+        <ScrollReveal key={reason.id} animation="fade-up" delay={idx * 50}>
+          {/* Flip Card Container */}
+          <div 
+            className="relative h-32 perspective-1000 cursor-pointer"
+            onClick={() => toggleFlip(reason.id)}
+          >
+            {/* Flip Card Inner */}
             <div 
-              className="relative h-32 perspective-1000 cursor-pointer"
-              onClick={() => toggleFlip(reason.id)}
+              className={`
+                relative w-full h-full
+                transform-style-3d
+                transition-transform duration-500
+                ${flippedCards.has(reason.id) ? 'rotate-y-180' : ''}
+              `}
             >
-              {/* Flip Card Inner */}
+              {/* Front Face */}
               <div 
-                className={`
-                  relative w-full h-full
-                  transform-style-3d
-                  transition-transform duration-500
-                  ${flippedCards.has(reason.id) ? 'rotate-y-180' : ''}
-                `}
+                className="absolute inset-0 backface-hidden rounded-2xl flex items-center justify-center p-6 bg-white dark:bg-zinc-800 border border-rose-100 dark:border-zinc-700"
               >
-                {/* Front Face */}
-                <div 
-                  className="absolute inset-0 backface-hidden rounded-2xl flex items-center justify-center p-6"
-                  style={{ 
-                    backgroundColor: '#fff',
-                    borderColor: '#fce7f3',
-                    borderWidth: '1px'
-                  }}
-                >
-                  <div className="flex items-center gap-4">
-                    <div 
-                      className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0 bg-rose-500 text-white"
-                    >
-                      {reason.number}
-                    </div>
-                    <p className="text-sm font-medium text-gray-500">
-                      Click to reveal
-                    </p>
+                <div className="flex items-center gap-4">
+                  <div className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0 bg-rose-500 text-white">
+                    {reason.number}
                   </div>
-                </div>
-                
-                {/* Back Face */}
-                <div 
-                  className="absolute inset-0 backface-hidden rotate-y-180 rounded-2xl flex items-center justify-center p-4"
-                  style={{ 
-                    backgroundColor: '#f43f5e',
-                    borderColor: '#fce7f3',
-                    borderWidth: '1px'
-                  }}
-                >
-                  <p className="text-center text-base text-white">
-                    {reason.text}
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    Click to reveal
                   </p>
                 </div>
               </div>
+              
+              {/* Back Face */}
+              <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-2xl flex items-center justify-center p-4 bg-rose-500 border border-rose-100">
+                <p className="text-center text-base text-white">
+                  {reason.text}
+                </p>
+              </div>
             </div>
-          </ScrollReveal>
-        ))}
-      </div>
-    </Section>
+          </div>
+        </ScrollReveal>
+      ))}
+    </GridSectionLayout>
   );
 }
 

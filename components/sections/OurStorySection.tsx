@@ -1,7 +1,7 @@
 'use client';
 
 import { Theme } from '@/lib/types';
-import Section from '../Section';
+import { CardSectionLayout } from '../love/SectionLayouts';
 import ScrollReveal from '../ScrollReveal';
 
 interface OurStorySectionProps {
@@ -28,7 +28,7 @@ export default function OurStorySection({
   This is just the beginning of their forever.`;
 
   return (
-    <Section
+    <CardSectionLayout
       title="Our Story"
       subtitle="The beautiful journey of us"
       icon="📖"
@@ -37,15 +37,15 @@ export default function OurStorySection({
       id="our-story"
     >
       <ScrollReveal animation="fade-up">
-        <div className="prose prose-lg max-w-none">
+        <div className="prose prose-lg max-w-3xl mx-auto">
           {(story || defaultStory).split('\n\n').map((paragraph, index) => (
-            <p key={index} className="mb-4 leading-relaxed">
+            <p key={index} className="mb-4 leading-relaxed text-rose-700 dark:text-zinc-300">
               {paragraph}
             </p>
           ))}
         </div>
       </ScrollReveal>
-    </Section>
+    </CardSectionLayout>
   );
 }
 

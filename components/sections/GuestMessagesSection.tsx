@@ -1,9 +1,8 @@
 'use client';
 
 import { Theme } from '@/lib/types';
-import Section from '../Section';
+import { GridSectionLayout } from '../love/SectionLayouts';
 import ScrollReveal from '../ScrollReveal';
-import { useTheme } from '../ThemeWrapper';
 
 interface GuestMessage {
   id: string;
@@ -31,49 +30,47 @@ export default function GuestMessagesSection({
 }: GuestMessagesSectionProps) {
   // Use provided messages or fallback to defaults
   const displayMessages = messages && messages.length > 0 ? messages : defaultMessages;
-  const styles = useTheme(theme);
 
   return (
-    <Section
+    <GridSectionLayout
       title="Guest Messages"
       subtitle="Messages from friends and family"
       icon="💬"
       theme={theme}
       variant={variant}
       id="guest-messages"
+      gridCols="grid-cols-1 md:grid-cols-2"
+      gap="gap-6"
     >
-      <div className="grid gap-6">
-        {displayMessages.map((msg, index) => (
-          <ScrollReveal key={msg.id} animation="fade-up" delay={index * 100}>
-            <div
-              className={`${styles.card} rounded-2xl ${styles.cardBorder} border p-6`}
-            >
-              <div className="flex items-start gap-4">
-                <div 
-                  className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: styles.accentLight.split(' ')[0].replace('bg-', '') ? styles.accentLight : '#fce7f3' }}
-                >
-                  <span style={{ color: styles.text.split(' ')[0] || '#be185d' }} className="font-bold">{msg.name.charAt(0)}</span>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={`font-bold ${styles.text}`}>
-                      {msg.name}
+      {displayMessages.map((msg, index) => (
+        <ScrollReveal key={msg.id} animation="fade-up" delay={index * 100}>
+          <div
+            className="bg-white dark:bg-zinc-800 rounded-2xl border border-rose-100 dark:border-zinc-700 p-6 h-full"
+          >
+            <div className="flex items-start gap-4">
+              <div 
+                className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-rose-100 dark:bg-zinc-700"
+              >
+                <span className="font-bold text-rose-700 dark:text-rose-300">{msg.name.charAt(0)}</span>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="font-bold text-rose-900 dark:text-zinc-100">
+                    {msg.name}
+                  </span>
+                  {msg.date && (
+                    <span className="text-sm text-rose-500 dark:text-zinc-400">
+                      • {msg.date}
                     </span>
-                    {msg.date && (
-                      <span className={`text-sm ${styles.textMuted}`}>
-                        • {msg.date}
-                      </span>
-                    )}
-                  </div>
-                  <p className={styles.textMuted}>{msg.message}</p>
+                  )}
                 </div>
+                <p className="text-rose-600 dark:text-zinc-400">{msg.message}</p>
               </div>
             </div>
-          </ScrollReveal>
-        ))}
-      </div>
-    </Section>
+          </div>
+        </ScrollReveal>
+      ))}
+    </GridSectionLayout>
   );
 }
 

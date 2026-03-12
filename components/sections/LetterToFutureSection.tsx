@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Theme } from '@/lib/types';
-import { THEME_PRESETS } from '@/lib/builder-constants';
+import { CardSectionLayout } from '../love/SectionLayouts';
 
 interface LetterToFutureSectionProps {
   theme: Theme;
@@ -31,85 +31,48 @@ export default function LetterToFutureSection({
 }: LetterToFutureSectionProps) {
   // Use provided letter or build default with names
   const displayLetter = letter || defaultLetter.replace(/{customerName}/g, customerName).replace(/{partnerName}/g, partnerName);
-  const themeConfig = THEME_PRESETS[theme];
-  const { colors, typography } = themeConfig;
   const [isRevealed, setIsRevealed] = useState(false);
 
   return (
-    <section 
-      className="py-16 px-4"
-      style={{ backgroundColor: colors.background }}
+    <CardSectionLayout
+      title="Letter to Our Future"
+      subtitle="A message for the future us"
+      icon="📮"
+      theme={theme}
+      variant="default"
+      id="letter-future"
     >
       <div className="max-w-3xl mx-auto">
-        <h2 
-          className="text-4xl font-bold text-center mb-8"
-          style={{ 
-            color: colors.primary,
-            fontFamily: typography.headingFont,
-            fontWeight: typography.headingWeight 
-          }}
-        >
-          📮 Letter to Our Future
-        </h2>
-        
         <div 
-          className="p-8 rounded-2xl text-center"
-          style={{ 
-            backgroundColor: colors.card,
-            borderColor: colors.border,
-            borderWidth: '1px'
-          }}
+          className="p-8 rounded-2xl text-center bg-white dark:bg-zinc-800 border border-rose-100 dark:border-zinc-700"
         >
           {!isRevealed ? (
             <div>
               <div className="text-6xl mb-6">💌</div>
-              <h3 
-                className="text-2xl font-bold mb-4"
-                style={{ 
-                  color: colors.primary,
-                  fontFamily: typography.headingFont
-                }}
-              >
+              <h3 className="text-2xl font-bold mb-4 text-rose-900 dark:text-zinc-100">
                 A Message for the Future
               </h3>
-              <p 
-                className="mb-6"
-                style={{ color: colors.text }}
-              >
+              <p className="mb-6 text-rose-600 dark:text-zinc-400">
                 Click below to reveal your letter to each other
               </p>
               <button
                 onClick={() => setIsRevealed(true)}
-                className="px-8 py-3 rounded-full font-medium transition-all hover:scale-105"
-                style={{ 
-                  backgroundColor: colors.primary,
-                  color: colors.card
-                }}
+                className="px-8 py-3 rounded-full font-medium transition-all hover:scale-105 bg-rose-500 text-white hover:bg-rose-600"
               >
                 Open Letter 💕
               </button>
             </div>
           ) : (
             <div>
-              <h3 
-                className="text-2xl font-bold mb-6"
-                style={{ 
-                  color: colors.primary,
-                  fontFamily: typography.headingFont
-                }}
-              >
+              <h3 className="text-2xl font-bold mb-6 text-rose-900 dark:text-zinc-100">
                 Dear Future Us,
               </h3>
-              <div 
-                className="prose max-w-none text-left whitespace-pre-wrap"
-                style={{ color: colors.text, fontFamily: typography.bodyFont }}
-              >
+              <div className="prose max-w-none text-left whitespace-pre-wrap text-rose-700 dark:text-zinc-300">
                 {displayLetter}
               </div>
               <button
                 onClick={() => setIsRevealed(false)}
-                className="mt-6 text-sm underline"
-                style={{ color: colors.accent }}
+                className="mt-6 text-sm text-rose-500 hover:text-rose-600 underline"
               >
                 Close letter
               </button>
@@ -117,7 +80,7 @@ export default function LetterToFutureSection({
           )}
         </div>
       </div>
-    </section>
+    </CardSectionLayout>
   );
 }
 

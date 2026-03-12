@@ -1,9 +1,8 @@
 'use client';
 
 import { Theme } from '@/lib/types';
-import Section from '../Section';
+import { CardSectionLayout } from '../love/SectionLayouts';
 import ScrollReveal from '../ScrollReveal';
-import { useTheme } from '../ThemeWrapper';
 
 interface FutureDream {
   id: string;
@@ -35,10 +34,9 @@ export default function FutureDreamsSection({
 }: FutureDreamsSectionProps) {
   // Use provided dreams or fallback to defaults
   const displayDreams = dreams && dreams.length > 0 ? dreams : defaultDreams;
-  const styles = useTheme(theme);
 
   return (
-    <Section
+    <CardSectionLayout
       title="Future Dreams"
       subtitle="Our hopes and dreams together"
       icon="💭"
@@ -46,23 +44,23 @@ export default function FutureDreamsSection({
       variant={variant}
       id="future-dreams"
     >
-      <div className="grid gap-6">
+      <div className="grid gap-6 max-w-4xl mx-auto">
         {displayDreams.map((dream, index) => (
           <ScrollReveal key={dream.id} animation="fade-up" delay={index * 100}>
             <div
-              className={`${styles.card} rounded-2xl ${styles.cardBorder} border p-6 hover:shadow-lg transition-all duration-300`}
+              className="bg-white dark:bg-zinc-800 rounded-2xl border border-rose-100 dark:border-zinc-700 p-6 hover:shadow-lg transition-all duration-300"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className={`text-xl font-bold mb-2 ${styles.text}`}>
+                  <h3 className="text-xl font-bold mb-2 text-rose-900 dark:text-zinc-100">
                     {dream.title}
                   </h3>
-                  <p className={styles.textMuted}>
+                  <p className="text-rose-600 dark:text-zinc-400">
                     {dream.description}
                   </p>
                 </div>
                 {dream.targetYear && (
-                  <span className={`${styles.accentLight} ${styles.accent} px-3 py-1 rounded-full text-sm font-medium ml-4 flex-shrink-0`}>
+                  <span className="bg-rose-100 dark:bg-zinc-700 text-rose-700 dark:text-rose-300 px-3 py-1 rounded-full text-sm font-medium ml-4 flex-shrink-0">
                     {dream.targetYear}
                   </span>
                 )}
@@ -71,7 +69,7 @@ export default function FutureDreamsSection({
           </ScrollReveal>
         ))}
       </div>
-    </Section>
+    </CardSectionLayout>
   );
 }
 

@@ -39,6 +39,9 @@ import {
   sortSectionsByDisplayOrder 
 } from '@/lib/section-migration';
 
+// Import section layouts and separators
+import { SectionSeparator } from './love/SectionLayouts';
+
 type Props = {
   theme: Theme;
   sections: string[];
@@ -211,6 +214,9 @@ export default function LovePageClient({
             />
           )}
 
+          {/* Separator after Gallery */}
+          {(shouldShowGallery || shouldShowTimeline) && <SectionSeparator theme={theme} />}
+
           {/* 6. Song Section - Music that represents the relationship */}
           {hasSong && (
             <SongSection
@@ -246,6 +252,11 @@ export default function LovePageClient({
               theme={theme}
               anniversaryDate={anniversaryDate}
             />
+          )}
+
+          {/* Separator after Stats sections */}
+          {(sections.includes('relationship_stats') || sections.includes('anniversary_countdown')) && (
+            <SectionSeparator theme={theme} />
           )}
 
           {/* 8. Future Dreams Section - Alternating background */}

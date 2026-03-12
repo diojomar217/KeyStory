@@ -1,9 +1,8 @@
 'use client';
 
 import { Theme } from '@/lib/types';
-import Section from '../Section';
+import { CardSectionLayout } from '../love/SectionLayouts';
 import ScrollReveal from '../ScrollReveal';
-import { useTheme } from '../ThemeWrapper';
 
 interface QuotesSectionProps {
   theme: Theme;
@@ -26,10 +25,9 @@ export default function QuotesSection({
 }: QuotesSectionProps) {
   // Use provided quotes or fallback to defaults
   const displayQuotes = quotes && quotes.length > 0 ? quotes : defaultQuotes;
-  const styles = useTheme(theme);
 
   return (
-    <Section
+    <CardSectionLayout
       title="Love Quotes"
       subtitle="Words that capture our feelings"
       icon="💕"
@@ -37,11 +35,11 @@ export default function QuotesSection({
       variant={variant}
       id="quotes"
     >
-      <div className="grid gap-6">
+      <div className="grid gap-6 max-w-4xl mx-auto">
         {displayQuotes.map((quote, index) => (
           <ScrollReveal key={quote.id} animation="fade-up" delay={index * 100}>
             <div
-              className={`${styles.card} rounded-2xl ${styles.cardBorder} border p-8 text-center hover:shadow-lg transition-all`}
+              className="bg-white dark:bg-zinc-800 rounded-2xl border border-rose-100 dark:border-zinc-700 p-8 text-center hover:shadow-lg transition-all"
             >
               <blockquote className="text-xl mb-4 italic text-gray-700 dark:text-gray-300">
                 "{quote.text}"
@@ -55,7 +53,7 @@ export default function QuotesSection({
           </ScrollReveal>
         ))}
       </div>
-    </Section>
+    </CardSectionLayout>
   );
 }
 

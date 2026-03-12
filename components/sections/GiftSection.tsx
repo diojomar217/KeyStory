@@ -1,7 +1,8 @@
 'use client';
 
 import { Theme } from '@/lib/types';
-import { THEME_PRESETS } from '@/lib/builder-constants';
+import { CardSectionLayout, GridSectionLayout } from '../love/SectionLayouts';
+import ScrollReveal from '../ScrollReveal';
 
 interface Gift {
   id: string;
@@ -30,66 +31,34 @@ export default function GiftSection({
 }: GiftSectionProps) {
   // Use provided gifts or fallback to defaults
   const displayGifts = gifts && gifts.length > 0 ? gifts : defaultGifts;
-  const themeConfig = THEME_PRESETS[theme];
-  const { colors, typography } = themeConfig;
 
   return (
-    <section 
-      className="py-16 px-4"
-      style={{ backgroundColor: colors.background }}
+    <CardSectionLayout
+      title="Digital Gifts for You"
+      subtitle={`${partnerName}, these are just for you 💕`}
+      icon="🎁"
+      theme={theme}
+      variant="default"
+      id="gifts"
     >
-      <div className="max-w-4xl mx-auto">
-        <h2 
-          className="text-4xl font-bold text-center mb-4"
-          style={{ 
-            color: colors.primary,
-            fontFamily: typography.headingFont,
-            fontWeight: typography.headingWeight 
-          }}
-        >
-          🎁 Digital Gifts for You
-        </h2>
-        
-        <p 
-          className="text-center mb-12"
-          style={{ color: colors.text }}
-        >
-          {partnerName}, these are just for you 💕
-        </p>
-        
-        <div className="grid gap-6 sm:grid-cols-2">
-          {displayGifts.map((gift) => (
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
+        {displayGifts.map((gift, index) => (
+          <ScrollReveal key={gift.id} animation="fade-up" delay={index * 100}>
             <div
-              key={gift.id}
-              className="p-6 rounded-2xl text-center hover:scale-105 transition-transform"
-              style={{ 
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-                borderWidth: '1px',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-              }}
+              className="bg-white dark:bg-zinc-800 rounded-2xl border border-rose-100 dark:border-zinc-700 p-6 text-center hover:scale-105 hover:shadow-lg transition-all duration-300 h-full flex flex-col items-center"
             >
-              <div 
-                className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center text-3xl"
-                style={{ backgroundColor: colors.secondary }}
-              >
+              <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl bg-rose-100 dark:bg-zinc-700 mb-4">
                 🎁
               </div>
-              <h3 
-                className="text-xl font-bold mb-2"
-                style={{ 
-                  color: colors.primary,
-                  fontFamily: typography.headingFont
-                }}
-              >
+              <h3 className="text-xl font-bold mb-2 text-rose-900 dark:text-zinc-100">
                 {gift.title}
               </h3>
-              <p style={{ color: colors.text }}>{gift.description}</p>
+              <p className="text-rose-600 dark:text-zinc-400">{gift.description}</p>
             </div>
-          ))}
-        </div>
+          </ScrollReveal>
+        ))}
       </div>
-    </section>
+    </CardSectionLayout>
   );
 }
 
