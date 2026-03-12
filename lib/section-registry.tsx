@@ -41,6 +41,9 @@ export interface SectionMetadata {
   // Default settings
   defaultEnabled: boolean;
   required: boolean; // Cannot be disabled
+  // Deprecation info
+  deprecated?: boolean;
+  deprecatedMessage?: string; // Message shown to users with this section
   // Preview
   previewEmoji: string;
 }
@@ -153,10 +156,12 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     requiresTimeline: false,
     requiresSong: false,
     hasTemplates: false,
-    hasLayoutOption: true,
+    hasLayoutOption: false, // Hidden from new builder
     hasMemoriesOption: false,
     defaultEnabled: false,
     required: false,
+    deprecated: true,
+    deprecatedMessage: 'Use Timeline section instead - your first date will appear as a timeline event.',
     previewEmoji: '🌹',
   },
   special_moments: {
@@ -168,10 +173,12 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     requiresTimeline: false,
     requiresSong: false,
     hasTemplates: false,
-    hasLayoutOption: true,
+    hasLayoutOption: false, // Hidden from new builder
     hasMemoriesOption: false,
     defaultEnabled: false,
     required: false,
+    deprecated: true,
+    deprecatedMessage: 'Use Timeline section instead - special moments will appear as timeline events.',
     previewEmoji: '⭐',
   },
   milestones: {
@@ -183,10 +190,12 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     requiresTimeline: false,
     requiresSong: false,
     hasTemplates: false,
-    hasLayoutOption: true,
+    hasLayoutOption: false, // Hidden from new builder
     hasMemoriesOption: false,
     defaultEnabled: false,
     required: false,
+    deprecated: true,
+    deprecatedMessage: 'Use Timeline section instead - milestones will appear as timeline events.',
     previewEmoji: '🏆',
   },
   

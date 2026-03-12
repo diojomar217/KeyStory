@@ -57,6 +57,7 @@ export async function PUT(req: NextRequest) {
     };
 
     // Also update individual config columns
+    // Note: section_content is already included in the config object
     if (updates.config) {
       updateObj.theme = updates.config.theme;
       updateObj.sections = updates.config.sections;

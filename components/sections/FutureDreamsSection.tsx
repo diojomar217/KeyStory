@@ -1,7 +1,9 @@
 'use client';
 
 import { Theme } from '@/lib/types';
-import { THEME_PRESETS } from '@/lib/builder-constants';
+import Section from '../Section';
+import ScrollReveal from '../ScrollReveal';
+import { useTheme } from '../ThemeWrapper';
 
 interface FutureDream {
   id: string;
@@ -13,6 +15,10 @@ interface FutureDream {
 interface FutureDreamsSectionProps {
   theme: Theme;
   dreams?: FutureDream[];
+  sectionContent?: {
+    dreams: FutureDream[];
+  };
+  variant?: 'default' | 'alt';
 }
 
 const defaultDreams: FutureDream[] = [
@@ -22,73 +28,48 @@ const defaultDreams: FutureDream[] = [
   { id: '4', title: 'Grow Old Together', description: 'Living a lifetime of adventures', targetYear: 'Forever' },
 ];
 
-export default function FutureDreamsSection({ theme, dreams = defaultDreams }: FutureDreamsSectionProps) {
-  const themeConfig = THEME_PRESETS[theme];
-  const { colors, typography } = themeConfig;
+export default function FutureDreamsSection({ 
+  theme, 
+  dreams = defaultDreams,
+  variant = 'default'
+}: FutureDreamsSectionProps) {
+  const styles = useTheme(theme);
 
   return (
-    <section 
-      className="py-16 px-4"
-      style={{ backgroundColor: colors.background }}
+    <Section
+      title="Future Dreams"
+      subtitle="Our hopes and dreams together"
+      icon="💭"
+      theme={theme}
+      variant={variant}
+      id="future-dreams"
     >
-      <div className="max-w-4xl mx-auto">
-        <h2 
-          className="text-4xl font-bold text-center mb-12"
-          style={{ 
-            color: colors.primary,
-            fontFamily: typography.headingFont,
-            fontWeight: typography.headingWeight 
-          }}
-        >
-          💭 Our Future Dreams
-        </h2>
-        
-        <div className="grid gap-6">
-          {dreams.map((dream) => (
+      <div className="grid gap-6">
+        {dreams.map((dream, index) => (
+          <ScrollReveal key={dream.id} animation="fade-up" delay={index * 100}>
             <div
-              key={dream.id}
-              className="p-6 rounded-2xl"
-              style={{ 
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-                borderWidth: '1px'
-              }}
+              className={`${styles.card} rounded-2xl ${styles.cardBorder} border p-6 hover:shadow-lg transition-all duration-300`}
             >
               <div className="flex items-start justify-between">
-                <div>
-                  <h3 
-                    className="text-xl font-bold mb-2"
-                    style={{ 
-                      color: colors.primary,
-                      fontFamily: typography.headingFont
-                    }}
-                  >
+                <div className="flex-1">
+                  <h3 className={`text-xl font-bold mb-2 ${styles.text}`}>
                     {dream.title}
                   </h3>
-                  <p 
-                    className="mb-2"
-                    style={{ color: colors.text }}
-                  >
+                  <p className={styles.textMuted}>
                     {dream.description}
                   </p>
                 </div>
                 {dream.targetYear && (
-                  <span 
-                    className="px-3 py-1 rounded-full text-sm font-medium"
-                    style={{ 
-                      backgroundColor: colors.secondary,
-                      color: colors.primary
-                    }}
-                  >
+                  <span className={`${styles.accentLight} ${styles.accent} px-3 py-1 rounded-full text-sm font-medium ml-4 flex-shrink-0`}>
                     {dream.targetYear}
                   </span>
                 )}
               </div>
             </div>
-          ))}
-        </div>
+          </ScrollReveal>
+        ))}
       </div>
-    </section>
+    </Section>
   );
 }
 

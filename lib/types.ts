@@ -23,9 +23,11 @@ export type Theme =
   | 'photo_focus';
 
 // ============================================
-// SECTION TYPES - 20+ Sections
+// SECTION TYPES - Refactored to Remove Redundancy
 // ============================================
 
+// Core sections (after refactoring - removed redundant ones)
+// Deprecated sections are kept for backward compatibility but marked deprecated
 export type Section = 
   | 'home'
   | 'love_letter'
@@ -34,7 +36,7 @@ export type Section =
   | 'song'
   | 'quotes'
   | 'our_story'
-  | 'milestones'
+  | 'milestones'              // DEPRECATED - use timeline instead
   | 'future_dreams'
   | 'playlist'
   | 'video_memories'
@@ -42,14 +44,30 @@ export type Section =
   | 'anniversary_countdown'
   | 'relationship_stats'
   | 'memory_map'
-  | 'polaroid_gallery'
-  | 'first_date'
-  | 'special_moments'
+  | 'polaroid_gallery'        // DEPRECATED - use gallery with layout="polaroid"
+  | 'first_date'             // DEPRECATED - use timeline instead
+  | 'special_moments'        // DEPRECATED - use timeline instead
   | 'reasons_love_you'
   | 'guest_messages'
   | 'letter_future'
   | 'gift_section'
   | 'surprise_message';
+
+// Gallery layout options - replaces separate gallery sections
+export type GalleryLayout = 'grid' | 'polaroid' | 'carousel';
+
+// Timeline event type - expanded to handle all story moments
+export interface TimelineEvent {
+  title: string;
+  date: string;
+  description: string;
+  photo?: string; // Optional photo for timeline events
+  icon?: string; // Optional emoji/icon for chapter (e.g., 💍, 🌹, ✈️)
+  isSpecial?: boolean; // Mark as special moment with premium styling
+  photoPosition?: 'top' | 'side'; // Photo layout preference
+  // Event type for categorization (new field for backward compat)
+  eventType?: 'meeting' | 'date' | 'milestone' | 'trip' | 'anniversary' | 'special';
+}
 
 export type HomeTemplate = 'hero_centered' | 'split_layout' | 'fullscreen_banner';
 export type GalleryTemplate = 'grid' | 'carousel' | 'polaroid';
@@ -65,17 +83,6 @@ export type LayoutPreset =
 
 // Preview Device Types
 export type PreviewDevice = 'desktop' | 'mobile';
-
-// Timeline Event
-export interface TimelineEvent {
-  title: string;
-  date: string;
-  description: string;
-  photo?: string; // Optional photo for timeline events
-  icon?: string; // Optional emoji/icon for chapter (e.g., 💍, 🌹, ✨)
-  isSpecial?: boolean; // Mark as special moment with premium styling
-  photoPosition?: 'top' | 'side'; // Photo layout preference
-}
 
 // Theme Preset Configuration
 export interface ThemePresetColors {
@@ -147,6 +154,7 @@ export interface SiteConfig {
   // Legacy template fields (for backward compatibility)
   home_template?: HomeTemplate;
   gallery_template?: GalleryTemplate;
+  gallery_layout?: GalleryLayout; // New: grid | polaroid | carousel
   timeline_template?: TimelineTemplate;
   song_template?: SongTemplate;
   timeline_events?: TimelineEvent[];

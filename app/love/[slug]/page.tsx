@@ -75,6 +75,12 @@ export default async function LovePage({ params }: PageProps) {
     ? config.timeline_events 
     : [];
 
+  // Get section content (new feature for dynamic content)
+  // Backward compatibility: handle undefined or missing section_content
+  const sectionContent = config.section_content 
+    ? (config.section_content as Record<string, unknown>) 
+    : undefined;
+
   // Get photos - could be in config or directly on data
   const photos = Array.isArray(data.photos) 
     ? data.photos 
@@ -110,6 +116,7 @@ export default async function LovePage({ params }: PageProps) {
       qrCodeUrl={data.qr_code_url}
       qrDataUrl={qrDataUrl}
       timelineEvents={timelineEvents}
+      sectionContent={sectionContent}
     />
   );
 }

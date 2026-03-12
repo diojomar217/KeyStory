@@ -511,7 +511,7 @@ export const LAYOUT_PRESETS: LayoutPresetConfig[] = [
 ];
 
 // ============================================
-// SECTION TOG24 Sections -GLES -  Enhanced UX
+// SECTION TOGGLES - Refactored UX (Reduced from 24 to ~16)
 // ============================================
 
 export const SECTION_TOGGLES: SectionToggle[] = [
@@ -544,61 +544,25 @@ export const SECTION_TOGGLES: SectionToggle[] = [
     required: false,
     defaultEnabled: false,
   },
-  {
-    id: 'first_date',
-    label: 'First Date',
-    description: 'Highlight your first date memory',
-    icon: '🌹',
-    preview: 'date-preview',
-    required: false,
-    defaultEnabled: false,
-  },
-  {
-    id: 'special_moments',
-    label: 'Special Moments',
-    description: 'Highlight memorable experiences together',
-    icon: '⭐',
-    preview: 'moments-preview',
-    required: false,
-    defaultEnabled: false,
-  },
-  {
-    id: 'milestones',
-    label: 'Milestones',
-    description: 'Relationship achievements and accomplishments',
-    icon: '🏆',
-    preview: 'milestone-preview',
-    required: false,
-    defaultEnabled: false,
-  },
-  // Timeline
+  // Timeline - Now handles first date, milestones, special moments
   {
     id: 'timeline',
     label: 'Timeline',
-    description: 'Show the important moments of your love story.',
+    description: 'Show the important moments of your love story (includes first date, milestones, special moments)',
     icon: '📅',
     preview: 'timeline-preview',
     required: false,
     defaultEnabled: true,
   },
-  // Photo Sections
+  // Photo Sections - Gallery now supports grid, polaroid, carousel layouts
   {
     id: 'gallery',
     label: 'Gallery',
-    description: 'Display photos from your relationship journey.',
+    description: 'Display photos from your relationship journey (grid, polaroid, or carousel)',
     icon: '📸',
     preview: 'gallery-preview',
     required: false,
     defaultEnabled: true,
-  },
-  {
-    id: 'polaroid_gallery',
-    label: 'Polaroid Gallery',
-    description: 'Display photos in polaroid style frames',
-    icon: '🖼️',
-    preview: 'polaroid-preview',
-    required: false,
-    defaultEnabled: false,
   },
   // Music & Video
   {
@@ -676,15 +640,6 @@ export const SECTION_TOGGLES: SectionToggle[] = [
     required: false,
     defaultEnabled: false,
   },
-  {
-    id: 'memory_map',
-    label: 'Memory Map',
-    description: 'Show places you have visited together',
-    icon: '🗺️',
-    preview: 'map-preview',
-    required: false,
-    defaultEnabled: false,
-  },
   // Guest & Messages
   {
     id: 'guest_messages',
@@ -730,6 +685,16 @@ export const SECTION_TOGGLES: SectionToggle[] = [
     description: 'A printable QR code card for physical keepsake',
     icon: '🎴',
     preview: 'qr-preview',
+    required: false,
+    defaultEnabled: false,
+  },
+  // Optional: Memory Map
+  {
+    id: 'memory_map',
+    label: 'Memory Map',
+    description: 'Show places you have visited together',
+    icon: '🗺️',
+    preview: 'map-preview',
     required: false,
     defaultEnabled: false,
   },

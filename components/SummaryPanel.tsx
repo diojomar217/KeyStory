@@ -367,15 +367,15 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
 
   const templatesStatus: 'completed' | 'attention' = templatesComplete ? 'completed' : 'attention';
 
-  const memoriesComplete = form.photos.length > 0;
-  const memoriesStatus: 'completed' | 'attention' = memoriesComplete ? 'completed' : 'attention';
+  const contentComplete = form.photos.length > 0;
+  const contentStatus: 'completed' | 'attention' = contentComplete ? 'completed' : 'attention';
 
-  const memoriesWarnings: string[] = [];
+  const contentWarnings: string[] = [];
   if (form.photos.length === 0) {
-    memoriesWarnings.push('No photos uploaded yet');
+    contentWarnings.push('No photos uploaded yet');
   }
   if (config.sections?.includes('timeline') && (!config.timeline_events || config.timeline_events.length === 0)) {
-    memoriesWarnings.push('Timeline enabled but no events added');
+    contentWarnings.push('Timeline enabled but no events added');
   }
 
   return (
@@ -609,9 +609,9 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
             />
           </svg>
         }
-        status={memoriesStatus}
+        status={contentStatus}
         onEdit={() => onEditSection?.(6)}
-        warnings={memoriesWarnings}
+        warnings={contentWarnings}
       >
         {/* Legacy content - Photos, Cover, Timeline Events */}
         <div className="grid grid-cols-3 gap-3 text-sm mb-4">

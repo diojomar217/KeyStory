@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   const coupleUrl = `${baseUrl}/love/${slug}`;
   const qrCodeUrl = await generateQRCode(coupleUrl);
 
-  // Save order to Supabase
+  // Save order to Supabase - save entire config including section_content
   const { data: order, error } = await supabase.from('orders').insert([
     {
       slug,
@@ -39,6 +39,8 @@ export async function POST(req: NextRequest) {
       song_link: data.song_link,
       qr_code_url: qrCodeUrl,
       status: 'pending',
+      // Save config with all settings including section_content
+      config: data.config || {},
     },
   ]).select().single();
 

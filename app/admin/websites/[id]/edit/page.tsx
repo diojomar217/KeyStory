@@ -108,6 +108,7 @@ export default function EditWebsitePage() {
     timeline_template: undefined,
     timeline_events: [],
     cover_photo_index: undefined,
+    section_content: {},
   });
 
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
@@ -172,6 +173,9 @@ export default function EditWebsitePage() {
           ? order.config.cover_photo_index 
           : undefined;
           
+        // Safely extract section_content (new feature)
+        const sectionContentValue = order.config?.section_content || {};
+          
         setConfig({
           theme: (order.config?.theme || order.theme) as Theme || 'romantic_classic',
           sections: sectionsValue,
@@ -180,6 +184,7 @@ export default function EditWebsitePage() {
           timeline_template: timelineTemplateValue as SiteConfig['timeline_template'],
           timeline_events: timelineEventsValue as SiteConfig['timeline_events'],
           cover_photo_index: coverPhotoIndexValue,
+          section_content: sectionContentValue,
         });
 
         setCompletedSteps([1, 2, 3, 4, 5]);

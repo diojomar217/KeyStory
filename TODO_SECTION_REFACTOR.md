@@ -1,175 +1,181 @@
-# Section Architecture Refactor Plan
+# Section Refactoring Plan
 
-## Information Gathered
-
-### Current State Analysis
-
-**Current Sections (23 total):**
-1. `home` - Hero section (required)
-2. `love_letter` - Love letter
-3. `gallery` - Photo gallery
-4. `timeline` - Timeline with events
-5. `song` - Song embed
-6. `our_story` - Story text
-7. `first_date` - First date details
-8. `special_moments` - Special moments
-9. `milestones` - Milestones
-10. `polaroid_gallery` - Polaroid style photos
-11. `playlist` - Playlist embed
-12. `video_memories` - Video memories
-13. `relationship_stats` - Stats counter
-14. `anniversary_countdown` - Countdown
-15. `future_dreams` - Future dreams
-16. `quotes` - Love quotes
-17. `reasons_love_you` - Reasons list
-18. `memory_map` - Map of places
-19. `guest_messages` - Guest messages
-20. `letter_future` - Letter to future
-21. `gift_section` - Gift section
-22. `surprise_message` - Surprise message
-23. `qr_keepsake` - QR keepsake
-
-**Redundancy Identified:**
-- STORY: `our_story`, `first_date`, `special_moments`, `milestones`, `timeline` - all represent relationship journey
-- PHOTO: `gallery`, `polaroid_gallery` - both display photos
+## Overview
+Refactor the Love Story Website Builder to remove redundant sections and create a cleaner, scalable architecture for the /love/[slug] page.
 
 ---
 
-## Plan: Part 1 - Update Types (lib/types.ts)
+## Current State Analysis
 
-### Changes:
-1. Keep `Section` type but add deprecation markers in comments
-2. Add `GalleryLayout` type: `'grid' | 'polaroid' | 'carousel'`
-3. Add backward compatibility mapping type
+### Redundant Sections Identified:
+
+**Story Related (6 sections → 1):**
+- `our_story` - Share relationship story
+- `first_date` - First date memory
+- `special_moments` - Memorable experiences
+- `milestones` - Relationship achievements
+- `timeline` - Relationship journey (KEEP)
+- (no `our_love_story` currently exists in code)
+
+**Photo Related (3 sections → 1):**
+- `gallery` - Standard photo grid (KEEP, enhance)
+- `polaroid_gallery` - Polaroid style
+- (no `memories` currently exists in code)
+
+**Media Related (3 sections → 1-2):**
+- `song` - Single song
+- `playlist` - Playlist
+- `video_memories` - Videos
 
 ---
 
-## Plan: Part 2 - Update Section Registry (lib/section-registry.tsx)
+## Implementation Plan
 
-### Changes:
+### Phase 1: Update Type Definitions (lib/types.ts)
+
+1. Keep Section type but document deprecated sections
+2. Add `gallery_layout` to SiteConfig: `'grid' | 'polaroid' | 'carousel'`
+3. Keep all types for backward compatibility
+
+### Phase 2: Update Builder Constants (lib/builder-constants.ts)
+
+Reduce from 24 to ~14 core sections:
+
+**Keep (14 sections):**
+1. home (required)
+2. love_letter
+3. our_story (rename concept to "Story" but keep id)
+4. timeline (enhanced - absorbs first_date, special_moments, milestones)
+5. gallery (enhanced - absorbs polaroid_gallery with layout option)
+6. song
+7. playlist
+8. video_memories
+9. relationship_stats
+10. anniversary_countdown
+11. future_dreams
+12. reasons_love_you
+13. quotes
+14. guest_messages
+15. surprise_message
+16. qr_keepsake
+
+**Remove from UI (but handle in backward compat):**
+- first_date → convert to timeline event
+- special_moments → convert to timeline event  
+- milestones → convert to timeline event
+- polaroid_gallery → convert to gallery with layout="polaroid"
+- memory_map (optional - keep if useful)
+- letter_future (optional - keep if useful)
+- gift_section (optional - keep if useful)
+
+### Phase 3: Update Section Registry (lib/section-registry.tsx)
+
 1. Mark deprecated sections with `deprecated: true` flag
-2. Add `gallery_layout` to gallery section metadata
-3. Add `mergeTo` property to map deprecated sections to new ones:
-   - `first_date` → `timeline` (convert to timeline event)
-   - `special_moments` → `timeline` (convert to timeline events)
-   - `milestones` → `timeline` (convert to timeline events)
-   - `polaroid_gallery` → `gallery` (use layout="polaroid")
+2. Add gallery_layout options to gallery section
+3. Update hasLayoutOption for new structure
 
----
+### Phase 4: Update Section Renderer Registry (lib/section-renderer-registry.ts)
 
-## Plan: Part 3 - Update Builder Constants (lib/builder-constants.ts)
+1. Update gallery renderer to support layout prop
+2. Add backward compatibility mapping for deprecated sections
 
-### Changes:
-1. Remove deprecated sections from main toggles or mark as hidden
-2. Create `DEPRECATED_SECTIONS` constant
-3. Update `getDefaultSections()` to exclude deprecated
-4. Add gallery layout selector to section toggles
+### Phase 5: Update LovePageClient (components/LovePageClient.tsx)
 
----
-
-## Plan: Part 4 - Update LovePageClient (components/LovePageClient.tsx)
-
-### Changes:
-1. Add backward compatibility handler for old sections
-2. Merge timeline events from deprecated sections into main timeline
-3. Handle polaroid_gallery → gallery with polaroid layout
-4. Update rendering order to match target structure
+**New Section Order:**
+1. Hero (home)
+2. Love Letter (love_letter)
+3. Our Story (our_story)
+4. Timeline (timeline) - now handles first_date, special_moments, milestones data
+5. Gallery (gallery) - now handles polaroid_gallery layout
+6. Media (song/playlist/video)
+7. Love Stats (relationship_stats, anniversary_countdown)
+8. Future Dreams (future_dreams)
+9. Reasons I Love You (reasons_love_you)
+10. Love Quotes (quotes)
+11. Guest Messages (guest_messages)
+12. Surprise Message (surprise_message)
+13. QR Keepsake (qr_keepsake)
+14. Footer
 
 **Backward Compatibility Logic:**
+- If `first_date` in sections → add to timeline events
+- If `special_moments` in sections → add to timeline events
+- If `milestones` in sections → add to timeline events
+- If `polaroid_gallery` in sections → use gallery with layout="polaroid"
+
+### Phase 6: Update Gallery Components
+
+1. Update GallerySection to accept `layout` prop
+2. Support: grid, polaroid, carousel layouts
+3. PolaroidGallerySection can be deprecated but still work
+
+### Phase 7: Update Timeline Component
+
+1. TimelineSection should accept additional events from:
+   - sectionContent.first_date
+   - sectionContent.special_moments
+   - sectionContent.milestones
+
+---
+
+## Backward Compatibility Strategy
+
+### Migration Mapping:
+
 ```typescript
-// Convert old sections to new format
-const normalizeSections = (sections: string[], config: any) => {
-  let normalized = [...sections];
-  let timelineEvents = [...(config.timeline_events || [])];
-  let galleryLayout = config.gallery_template || 'grid';
+// Deprecated sections that should be converted
+const DEPRECATED_SECTION_MAPPING: Record<string, Section> = {
+  'first_date': 'timeline',
+  'special_moments': 'timeline', 
+  'milestones': 'timeline',
+  'polaroid_gallery': 'gallery',
+};
 
-  // If first_date exists, add to timeline events
-  if (normalized.includes('first_date') && config.section_content?.first_date) {
-    timelineEvents.push({
-      title: config.section_content.first_date.title || 'First Date',
-      date: config.section_content.first_date.date || config.anniversary_date,
-      description: config.section_content.first_date.description || '',
-      isSpecial: true
-    });
-    normalized = normalized.filter(s => s !== 'first_date');
-  }
-
-  // If polaroid_gallery exists, switch gallery to polaroid layout
-  if (normalized.includes('polaroid_gallery')) {
-    galleryLayout = 'polaroid';
-    normalized = normalized.filter(s => s !== 'polaroid_gallery');
-  }
-
-  return { normalized, timelineEvents, galleryLayout };
+// Gallery layout mapping
+const GALLERY_LAYOUT_MAPPING: Record<string, string> = {
+  'polaroid_gallery': 'polaroid',
+  'gallery': 'grid',
 };
 ```
 
----
+### Data Migration:
 
-## Plan: Part 5 - Update Gallery Section (components/GallerySection.tsx)
-
-### Changes:
-1. Gallery already supports `grid`, `carousel`, `polaroid` layouts ✓
-2. No changes needed - just ensure backward compatibility passes correct layout
-
----
-
-## Plan: Part 6 - Update Section Selector UI (components/SectionSelector.tsx)
-
-### Changes:
-1. Hide deprecated sections from main UI
-2. Show deprecation notice when user has deprecated sections enabled
-3. Auto-migrate deprecated sections on load
-
----
-
-## Plan: Part 7 - Update Page Rendering Order (components/LovePageClient.tsx)
-
-### Target Order:
-1. Hero (home)
-2. Love Letter
-3. Our Story
-4. Timeline (handles first_date, milestones, special_moments)
-5. Gallery (handles polaroid_gallery)
-6. Media (Song/Playlist/Video)
-7. Love Stats (Relationship Stats / Anniversary Countdown)
-8. Future Dreams
-9. Reasons I Love You
-10. Love Quotes
-11. Guest Messages
-12. Surprise Message
-13. QR Keepsake
-14. Footer
-
----
-
-## Implementation Steps
-
-### Step 1: Update lib/types.ts
-- Add GalleryLayout type
-
-### Step 2: Update lib/section-registry.tsx
-- Add deprecation flags
-- Add merge mappings
-
-### Step 3: Update lib/builder-constants.ts
-- Create deprecated sections list
-- Update default sections
-
-### Step 4: Update components/LovePageClient.tsx
-- Add backward compatibility logic
-- Update section rendering order
-
-### Step 5: Test backward compatibility
-- Verify old websites still work
+1. On page load, check for deprecated sections
+2. Convert old data to new format
+3. Render normally without showing deprecated sections in UI
 
 ---
 
 ## Expected Result
 
-- Reduced from 23 to ~14 meaningful sections in builder UI
+- Reduced from 24 to ~16 visible sections in builder
+- Cleaner /love/[slug] page with logical story flow
 - Timeline becomes the main relationship journey component
-- Gallery supports multiple layouts (no separate polaroid section)
-- Cleaner, story-driven page flow
-- Backward compatibility maintained for existing websites
+- Gallery supports multiple layouts (grid, polaroid, carousel)
+- Existing websites continue to work without breaking
+- Builder UI is simpler and less overwhelming
+
+---
+
+## Files to Modify
+
+1. `lib/types.ts` - Update Section type, add gallery_layout
+2. `lib/builder-constants.ts` - Update SECTION_TOGGLES
+3. `lib/section-registry.tsx` - Update registry, add deprecation markers
+4. `lib/section-renderer-registry.ts` - Update renderers, add backward compat
+5. `components/LovePageClient.tsx` - Update rendering logic with backward compat
+6. `components/GallerySection.tsx` - Add layout support
+7. `components/TimelineSection.tsx` - Accept additional events
+8. `app/love/[slug]/page.tsx` - Add backward compat data transformation
+
+---
+
+## Testing Checklist
+
+- [ ] New websites can use all new sections
+- [ ] Gallery displays in grid, polaroid, carousel modes
+- [ ] Timeline displays correctly events from multiple sources
+- [ ] Old websites with deprecated sections still render correctly
+- [ ] Builder UI shows reduced section list (~14-16)
+- [ ] Page flow is logical and story-driven
 

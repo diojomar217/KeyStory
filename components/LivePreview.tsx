@@ -410,7 +410,7 @@ export default function LivePreview({ config, isMobileOpen, onMobileClose, coupl
             <ul className="text-xs text-slate-500 space-y-1">
               <li>• Toggle between desktop and mobile views</li>
               <li>• Your changes update in real-time</li>
-              <li>• Add photos in the Memories step</li>
+              <li>• Add photos in the Content step</li>
             </ul>
           </div>
         </div>

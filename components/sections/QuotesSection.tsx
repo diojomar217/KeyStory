@@ -1,11 +1,14 @@
 'use client';
 
 import { Theme } from '@/lib/types';
-import { THEME_PRESETS } from '@/lib/builder-constants';
+import Section from '../Section';
+import ScrollReveal from '../ScrollReveal';
+import { useTheme } from '../ThemeWrapper';
 
 interface QuotesSectionProps {
   theme: Theme;
   quotes?: { id: string; text: string; author?: string }[];
+  variant?: 'default' | 'alt';
 }
 
 // Default romantic quotes
@@ -16,61 +19,41 @@ const defaultQuotes = [
   { id: '4', text: 'Love is not about how many days, months, or years you have been together. Love is about how much you love each other every single day.', author: 'Unknown' },
 ];
 
-export default function QuotesSection({ theme, quotes = defaultQuotes }: QuotesSectionProps) {
-  const themeConfig = THEME_PRESETS[theme];
-  const { colors, typography } = themeConfig;
+export default function QuotesSection({ 
+  theme, 
+  quotes = defaultQuotes,
+  variant = 'default'
+}: QuotesSectionProps) {
+  const styles = useTheme(theme);
 
   return (
-    <section 
-      className="py-16 px-4"
-      style={{ backgroundColor: colors.background }}
+    <Section
+      title="Love Quotes"
+      subtitle="Words that capture our feelings"
+      icon="💕"
+      theme={theme}
+      variant={variant}
+      id="quotes"
     >
-      <div className="max-w-4xl mx-auto">
-        <h2 
-          className="text-4xl font-bold text-center mb-12"
-          style={{ 
-            color: colors.primary,
-            fontFamily: typography.headingFont,
-            fontWeight: typography.headingWeight 
-          }}
-        >
-          💕 Love Quotes
-        </h2>
-        
-        <div className="grid gap-6">
-          {quotes.map((quote, index) => (
+      <div className="grid gap-6">
+        {quotes.map((quote, index) => (
+          <ScrollReveal key={quote.id} animation="fade-up" delay={index * 100}>
             <div
-              key={quote.id}
-              className="p-8 rounded-2xl text-center"
-              style={{ 
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-                borderWidth: '1px',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-              }}
+              className={`${styles.card} rounded-2xl ${styles.cardBorder} border p-8 text-center hover:shadow-lg transition-all`}
             >
-              <blockquote 
-                className="text-xl mb-4 italic"
-                style={{ 
-                  color: colors.text,
-                  fontFamily: typography.bodyFont
-                }}
-              >
+              <blockquote className="text-xl mb-4 italic text-gray-700 dark:text-gray-300">
                 "{quote.text}"
               </blockquote>
               {quote.author && (
-                <cite 
-                  className="text-sm not-italic"
-                  style={{ color: colors.accent }}
-                >
+                <cite className="text-sm not-italic text-gray-500 dark:text-gray-400">
                   — {quote.author}
                 </cite>
               )}
             </div>
-          ))}
-        </div>
+          </ScrollReveal>
+        ))}
       </div>
-    </section>
+    </Section>
   );
 }
 
