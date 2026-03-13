@@ -12,7 +12,8 @@ import HomeSection from '@/components/page/HomeSection';
 import GallerySection from '@/components/sections/shared/GallerySection';
 import TimelineSection from '@/components/sections/shared/TimelineSection';
 import SongSection from '@/components/sections/shared/SongSection';
-import AnniversaryCountdownSection from '@/components/sections/couple/AnniversaryCountdownSection';
+import AnniversaryCountdownSection from '@/components/sections/shared/AnniversaryCountdownSection';
+import PolaroidGallerySection from '@/components/sections/shared/PolaroidGallerySection';
 import MemoryMapSection from '@/components/sections/shared/MemoryMapSection';
 import GuestMessagesSection from '@/components/sections/shared/GuestMessagesSection';
 import VideoMemoriesSection from '@/components/sections/shared/VideoMemoriesSection';
@@ -88,13 +89,14 @@ export const SECTION_RENDERERS: Record<Section, {
   component: React.ComponentType<any>;
   getProps: (config: Record<string, any>) => Record<string, any>;
 }> = {
-  home: {
+home: {
     component: HomeSection,
     getProps: (config) => ({
       theme: config.theme,
       template: config.section_templates?.home || config.home_template || 'hero_centered',
-      participants: config.participants || [{name: config.customerName || ''}, {name: config.partnerName || '', role: 'partner'}],
-      specialDate: config.specialDate || config.anniversaryDate || '',
+      customerName: config.customerName || config.participants?.[0]?.name || '',
+      partnerName: config.partnerName || config.participants?.[1]?.name || '',
+      anniversaryDate: config.anniversaryDate || config.specialDate || '',
       message: config.message,
       tagline: config.tagline,
       photos: config.photos || [],

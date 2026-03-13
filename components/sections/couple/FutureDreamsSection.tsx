@@ -1,6 +1,5 @@
 'use client';
 
-import { Theme } from '@/lib/types';
 import type { Theme } from '@/lib/types';
 import SectionHeader from '../../page/SectionHeader';
 import ScrollReveal from '../../ui/ScrollReveal';

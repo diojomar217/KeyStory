@@ -136,12 +136,13 @@ export default function BuilderPreview({
     >
       {/* Website Header - Compact */}
       <div 
-        className="rounded-lg p-2.5 mb-2 shadow-sm"
+className={`rounded-xl p-4 mb-4 shadow-md border-dashed ${nameData.hasContent ? '' : 'border-gray-200/50 opacity-80'}`}
         style={{ 
           backgroundColor: themePreset.colors.card,
           borderColor: themePreset.colors.border,
-          borderWidth: '1px'
+          borderWidth: nameData.hasContent ? '1px' : '2px'
         }}
+
       >
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
@@ -187,15 +188,15 @@ export default function BuilderPreview({
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           )}
           {/* Hero overlay - matches actual hero structure from HomeSection */}
-          {coverPhotoUrl && (nameData.hasContent || taglineData.hasContent) && (
-            <div className="absolute bottom-2 left-2 right-2">
+{coverPhotoUrl && (nameData.hasContent || taglineData.hasContent) && (
+            <div className="absolute bottom-6 left-3 right-3 p-3 bg-black/60 backdrop-blur-sm rounded-t-xl">
               {nameData.hasContent && (
-                <h2 className="font-bold text-white text-sm truncate drop-shadow-md">
+                <h2 className="font-bold text-white text-base leading-tight line-clamp-1 drop-shadow-lg mb-1">
                   {form.customer_name && form.partner_name ? `${form.customer_name} & ${form.partner_name}` : nameData.primary}
                 </h2>
               )}
               {taglineData.hasContent && (
-                <p className="text-white/90 text-xs truncate drop-shadow-sm">&ldquo;{form.tagline}&rdquo;</p>
+                <p className="text-white/95 text-sm leading-tight line-clamp-1 drop-shadow-lg">&ldquo;{form.tagline}&rdquo;</p>
               )}
             </div>
           )}

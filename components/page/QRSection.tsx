@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import QRCodeStyling from 'qr-code-styling';
 import Image from 'next/image';
 import { Theme } from '@/lib/types';
-import { useTheme } from './ThemeWrapper';
+import { useTheme } from '../builder/ThemeWrapper';
 
 type Props = {
   theme: Theme;

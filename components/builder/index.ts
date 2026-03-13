@@ -3,7 +3,7 @@ export { default as TaglineGenerator, ROMANTIC_TAGLINES } from './TaglineGenerat
 export { default as TimelineTemplateSelector, TIMELINE_TEMPLATES } from './TimelineTemplateSelector';
 export { default as CoverPhotoUploader } from './CoverPhotoUploader';
 export { default as LivePreviewPanel } from './LivePreviewPanel';
-export { default as TimelineEditor } from '../TimelineEditor';
+export { default as TimelineEditor } from './TimelineEditor';
 
 // New Builder Components
 export { default as DevicePreviewToggle } from './DevicePreviewToggle';

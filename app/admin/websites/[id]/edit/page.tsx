@@ -238,6 +238,7 @@ const [config, setConfig] = useState<SiteConfig>({
         const sectionContentValue = order.config?.section_content || {};
           
         setConfig({
+          occasion: 'couple' as const,
           theme: (order.config?.theme || order.theme) as Theme || 'romantic_classic',
           sections: sectionsValue,
           home_template: homeTemplateValue as SiteConfig['home_template'],

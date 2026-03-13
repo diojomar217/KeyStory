@@ -3,8 +3,7 @@
 import { SiteConfig, CreateOrderPayload, OccasionType } from './types';
 import { 
   getSectionsRequiringPhotos, 
-  getSectionsRequiringTimeline,
-  getOccasionMetadata 
+  getSectionsRequiringTimeline
 } from './section-registry';
 import { getOccasionMetadata as getOccasionMetadataFromOccasion } from './occasion-registry';
 

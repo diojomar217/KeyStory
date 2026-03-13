@@ -1,38 +1,44 @@
-# Live Preview Fix - Implementation Plan
+# Live Preview Empty State Fix
+## Steps:
 
-## Task: Fix the Live Preview in Create Website builder
+- [ ] 1. Create this TODO.md ✅
+- [ ] 2. Read SectionPreviews.tsx for SectionRenderer context
+- [ ] 3. Edit BuilderPreview.tsx: increase spacing (p-3 mb-3), fix hero overlay (bottom-4 left-3 right-3 p-2, line-clamp-2), dashed borders for empty, love message line-clamp-4
+- [ ] 4. Sync same improvements to LivePreviewPanel.tsx 
+- [ ] 5. Enhance LivePreview.tsx device frame padding and pass form props if needed
+- [ ] 6. Update this TODO with progress after each step
+- [ ] 7. Test empty state (no input: clean placeholders, no overlap), filled state (replaces smoothly)
+- [ ] 8. attempt_completion
 
-### Status: ✅ COMPLETED
+## Progress:
+- [x] 1. Create TODO.md ✅
+- [x] 2. Read SectionPreviews.tsx ✅ Found fake tagline in HomeSectionPreview
+- [ ] 3. Edit SectionPreviews.tsx: Fix HomeSectionPreview fake content to proper placeholders
+- [ ] 4. Edit BuilderPreview.tsx: spacing, hero overlay, dashed empty cards
+- [ ] 5. Sync LivePreviewPanel.tsx
+- [ ] 6. Check LivePreview.tsx prop passing
+- [ ] 7. Test
+- [ ] 8. Complete
 
-### Issues Fixed:
+## Progress:
+- [x] 1. Create TODO.md ✅
+- [x] 2. Read SectionPreviews.tsx ✅ Found fake tagline
+- [x] 3. Edit SectionPreviews.tsx: Fixed HomeSectionPreview placeholders/dashed/empty styles
+- [ ] 4. Edit BuilderPreview.tsx: spacing, hero overlay, dashed empty cards
+- [ ] 5. Sync LivePreviewPanel.tsx
+- [ ] 6. Check LivePreview.tsx prop passing for anniversary/message
+- [ ] 7. Test
+- [ ] 8. Complete
 
-#### 1. **LivePreviewPanel.tsx** - Added Missing Love Message Section
-- **Problem**: Love message was completely missing from this preview component
-- **Fix**: Added love message section that displays:
-  - Actual message when user enters text (with line-clamp truncation at 100 chars)
-  - Placeholder "Your love message will appear here" when empty
-  - Placeholder styled with italic and 40% opacity for visual distinction
+## Progress:
+- [x] 1. Create TODO.md ✅
+- [x] 2. Read SectionPreviews.tsx ✅ Found fake tagline
+- [x] 3. Edit SectionPreviews.tsx: Fixed HomeSectionPreview placeholders/dashed/empty styles
+- [x] 4. Edit BuilderPreview.tsx: Fixed hero overlay spacing/text sizes/line-clamp (no overlap)
+- [ ] 5. Improve BuilderPreview cards spacing/dashed empty styling
+- [ ] 6. Sync LivePreviewPanel.tsx
+- [ ] 7. Update LivePreview Props to pass anniversary_date/message to SectionRenderer
+- [ ] 8. Test
+- [ ] 9. Complete
 
-#### 2. **BuilderPreview.tsx** - Fixed Love Message Conditional Display
-- **Problem**: Love message only showed when both `form.message` existed AND `love_letter` section was enabled - no placeholder when empty
-- **Fix**: Changed to always show love message section:
-  - Now always visible (not conditional on having content)
-  - Shows actual message when entered (with line-clamp-3 truncation at 80 chars)
-  - Shows placeholder "Your love message will appear here" when empty
-  - Placeholder styled with italic and 40% opacity
-
-### Summary of Changes:
-
-| Component | Before | After |
-|-----------|--------|-------|
-| LivePreviewPanel.tsx | Love message not displayed | Shows love message with placeholder when empty |
-| BuilderPreview.tsx | Only shows when has content + section enabled | Always shows love message with placeholder |
-
-### Expected Behavior After Fix:
-- ✅ Love message displays in both preview components
-- ✅ Placeholder shows when message is empty ("Your love message will appear here")
-- ✅ Actual message replaces placeholder when user enters text
-- ✅ Proper line-clamp truncation for long messages
-- ✅ Placeholders are visually distinct (italic, 40% opacity)
-- ✅ Consistent behavior across both preview panels
-
+Current: Step 5.

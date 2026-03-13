@@ -1,9 +1,9 @@
 'use client';
 
 import { Theme } from '@/lib/types';
-import { useTheme } from './ThemeWrapper';
+import { useTheme } from '../builder/ThemeWrapper';
 import SectionHeader from './SectionHeader';
-import ScrollReveal from './ScrollReveal';
+import ScrollReveal from '../ui/ScrollReveal';
 
 interface SectionProps {
   /** Section title */

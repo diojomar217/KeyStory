@@ -98,28 +98,26 @@ export default async function LovePage({ params }: PageProps) {
   const qrDataUrl = config.qr_data_url;
 
   return (
-    <LovePageClient
-      slug={slug}
-      theme={theme}
-      sections={sections}
-      homeTemplate={homeTemplate}
-      galleryTemplate={galleryTemplate}
-      timelineTemplate={timelineTemplate}
-      participants={data.customer_name && data.partner_name ? [
-        {name: data.customer_name},
-        {name: data.partner_name, role: 'partner'}
-      ] : []}
-      specialDate={data.anniversary_date}
-      message={data.message}
-      tagline={tagline}
-      photos={photos}
-      coverPhotoIndex={coverPhotoIndex}
-      songLink={data.song_link}
-      qrCodeUrl={data.qr_code_url}
-      qrDataUrl={qrDataUrl}
-      timelineEvents={timelineEvents}
-      sectionContent={sectionContent}
-    />
+      <LovePageClient
+        slug={slug}
+        theme={theme}
+        sections={sections}
+        homeTemplate={homeTemplate}
+        galleryTemplate={galleryTemplate}
+        timelineTemplate={timelineTemplate}
+        customerName={data.customer_name || ''}
+        partnerName={data.partner_name || ''}
+        anniversaryDate={data.anniversary_date || ''}
+        message={data.message || ''}
+        tagline={tagline}
+        photos={photos}
+        coverPhotoIndex={coverPhotoIndex}
+        songLink={data.song_link || ''}
+        qrCodeUrl={data.qr_code_url}
+        qrDataUrl={qrDataUrl}
+        timelineEvents={timelineEvents}
+        sectionContent={sectionContent}
+      />
   );
 }
 

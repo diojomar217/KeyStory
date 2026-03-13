@@ -143,8 +143,8 @@ export interface SectionToggle {
   defaultEnabled: boolean;
 }
 
-// Site Configuration
-export type { OccasionType } from './occasion-registry';
+import type { OccasionType } from './occasion-registry';
+export type { OccasionType };
 
 export interface Participant {
   id: string;

@@ -33,7 +33,12 @@ export default function AnniversaryCountdownSection({
   });
 
   useEffect(() => {
-    const calculateCountdown = () => {
+  const calculateCountdown = () => {
+      if (!anniversaryDate || isNaN(new Date(anniversaryDate).getTime())) {
+        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+      
       const anniversary = new Date(anniversaryDate);
       const now = new Date();
       
