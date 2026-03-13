@@ -12,14 +12,14 @@ import {
   getStepConfig 
 } from '@/lib/builder-steps-config';
 import { getTemplateSections, getSectionMetadata, getSectionTemplates } from '@/lib/section-registry';
-import ThemeSelector from '@/components/ThemeSelector';
-import SectionSelector from '@/components/SectionSelector';
-import TemplateSelector from '@/components/TemplateSelector';
-import LayoutPresetSelector from '@/components/LayoutPresetSelector';
-import TimelineEditor from '@/components/TimelineEditor';
-import LivePreview from '@/components/LivePreview';
-import StepNavigator from '@/components/StepNavigator';
-import SummaryPanel from '@/components/SummaryPanel';
+import ThemeSelector from '@/components/builder/ThemeSelector';
+import SectionSelector from '@/components/builder/SectionSelector';
+import TemplateSelector from '@/components/builder/TemplateSelector';
+import LayoutPresetSelector from '@/components/builder/LayoutPresetSelector';
+import TimelineEditor from '@/components/builder/TimelineEditor';
+import LivePreview from '@/components/builder/LivePreview';
+import StepNavigator from '@/components/builder/StepNavigator';
+import SummaryPanel from '@/components/builder/SummaryPanel';
 import {
   TextContentInput,
   UrlContentInput,
@@ -51,11 +51,14 @@ const sanitizeSlug = (value: string): string => {
 };
 
 export default function CreateWebsitePage() {
-  const [form, setForm] = useState<LocalForm>({
+const [form, setForm] = useState<LocalForm>({
     website_name: '',
-    customer_name: '',
-    partner_name: '',
-    anniversary_date: '',
+    occasion: 'couple',
+    participants: [
+      { id: 'customer', name: '' },
+      { id: 'partner', name: '' }
+    ],
+    specialDate: '',
     message: '',
     tagline: '',
     song_link: '',
@@ -63,6 +66,7 @@ export default function CreateWebsitePage() {
   });
 
   const [config, setConfig] = useState<SiteConfig>({
+    occasion: 'couple' as const,
     theme: 'romantic_classic',
     sections: ['home'],
     home_template: undefined,
@@ -107,9 +111,15 @@ export default function CreateWebsitePage() {
   }, [photoPreviews]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    if (e.target.name === 'website_name') {
-      setSlugSanitized(false);
+    const name = e.target.name as keyof LocalForm;
+    if (name === 'website_name') {
+      const sanitized = sanitizeSlug(e.target.value);
+      setForm((prev) => ({ ...prev, [name]: sanitized }));
+      setSlugSanitized(true);
+    } else if (name === 'specialDate') {
+      setForm((prev) => ({ ...prev, specialDate: e.target.value }));
+    } else {
+      setForm((prev) => ({ ...prev, [name]: e.target.value }));
     }
   };
 
@@ -1071,8 +1081,8 @@ onChange={(sections: import('@/lib/types').Section[]) => handleConfigChange({ se
 <LivePreview
               config={config}
               coupleNames={{
-                customer_name: form.customer_name,
-                partner_name: form.partner_name,
+                customer_name: form.customer_name ?? form.participants?.[0]?.name ?? '',
+                partner_name: form.partner_name ?? form.participants?.[1]?.name ?? '',
               }}
               tagline={form.tagline}
               isMobileOpen={mobilePreviewOpen}

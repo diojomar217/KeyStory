@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import ThemeSelector from '@/components/ThemeSelector';
-import SectionSelector from '@/components/SectionSelector';
-import TemplateSelector from '@/components/TemplateSelector';
-import TimelineEditor from '@/components/TimelineEditor';
+import ThemeSelector from '@/components/builder/ThemeSelector';
+import SectionSelector from '@/components/builder/SectionSelector';
+import TemplateSelector from '@/components/builder/TemplateSelector';
+import TimelineEditor from '@/components/builder/TimelineEditor';
 import SectionContentInputs from '@/components/builder/SectionContentInputs';
 import { SiteConfig, Theme, Section, SectionContentMap } from '@/lib/types';
 import { Order } from '@/lib/supabase';
@@ -160,7 +160,8 @@ export default function EditWebsitePage() {
     existingPhotos: [],
   });
 
-  const [config, setConfig] = useState<SiteConfig>({
+const [config, setConfig] = useState<SiteConfig>({
+    occasion: 'couple' as const,
     theme: 'romantic_classic',
     sections: ['home'],
     home_template: undefined,
@@ -237,6 +238,7 @@ export default function EditWebsitePage() {
         const sectionContentValue = order.config?.section_content || {};
           
         setConfig({
+          occasion: 'couple' as const,
           theme: (order.config?.theme || order.theme) as Theme || 'romantic_classic',
           sections: sectionsValue,
           home_template: homeTemplateValue as SiteConfig['home_template'],

@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 export async function POST(req: NextRequest) {
   const data = await req.json();
   const slug = uuidv4();
-  let photoUrls: string[] = [];
+  const photoUrls: string[] = [];
 
   // Upload images to Cloudinary (server-side)
   if (Array.isArray(data.photos) && data.photos.length > 0) {

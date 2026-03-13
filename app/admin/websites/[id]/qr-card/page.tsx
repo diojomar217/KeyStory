@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
-import QRCard from '@/components/product/QRCard';
+import QRCard from '@/components/ui/QRCard';
 import PrintableCardLayout from '@/components/product/PrintableCardLayout';
 import PrintActions from '@/components/product/PrintActions';
 import { Order } from '@/lib/supabase';
@@ -18,6 +18,7 @@ export default function QRCardPage({ params }: PageProps) {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Restore original: no cardConfigs
 
   useEffect(() => {
     if (id) {
@@ -70,13 +71,18 @@ export default function QRCardPage({ params }: PageProps) {
   const config = order.config || {};
   const theme: Theme = (config.theme as Theme) || 'romantic_classic';
   // Safely extract qr_data_url - ensure it's a string
-  const qrDataUrl = typeof config.qr_data_url === 'string' ? config.qr_data_url : undefined;
-  const qrCodeUrl = order.qr_code_url;
+  
   
   // Get website URL
   const websiteUrl = order.website_name 
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/love/${order.website_name}`
     : undefined;
+
+    const qrDataUrl =
+  typeof config.qr_data_url === 'string' && config.qr_data_url.trim() !== ''
+    ? config.qr_data_url
+    : websiteUrl;
+  const qrCodeUrl = order.qr_code_url;
 
   return (
     <>
@@ -98,7 +104,10 @@ export default function QRCardPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* QR Card Display */}
+      {/* Card size/quantity selection UI - Hidden when printing */}
+      // ...existing code...
+
+      {/* QR Card Display - Print grid of selected sizes */}
       <div className="print:p-0">
         <PrintableCardLayout>
           <QRCard
@@ -151,8 +160,8 @@ export default function QRCardPage({ params }: PageProps) {
 
       {/* Help text - Hidden when printing */}
       <div className="print:hidden text-center mt-6 text-sm text-slate-500">
-        <p>Tip: Use Ctrl+P (or Cmd+P on Mac) to print this card.</p>
-        <p className="mt-1">The card is optimized for standard paper sizes.</p>
+        <p>Tip: Use Ctrl+P (or Cmd+P on Mac) to print these cards.</p>
+        <p className="mt-1">Cards are optimized for standard paper sizes.</p>
       </div>
     </>
   );

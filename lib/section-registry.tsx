@@ -6,7 +6,8 @@
 // templates, and requirements. Add new sections here to make them
 // available throughout the builder without hardcoding.
 
-import { Section } from './types';
+import { Section, OccasionType } from './types';
+import { OCCASION_REGISTRY } from './occasion-registry';
 import React from 'react';
 
 // ============================================
@@ -29,21 +30,23 @@ export interface SectionMetadata {
   title: string;
   description: string;
   icon: string;
+  // NEW: Occasion compatibility
+  supportedOccasions?: OccasionType[]; 
   // Requirements
   requiresPhotos: boolean;
   requiresTimeline: boolean;
   requiresSong: boolean;
-  requiresEvents?: boolean; // For sections like timeline that need events
+  requiresEvents?: boolean;
   // Configuration options
   hasTemplates: boolean;
-  hasLayoutOption: boolean; // Whether section appears in layout selection
-  hasMemoriesOption: boolean; // Whether section appears in memories step
+  hasLayoutOption: boolean;
+  hasMemoriesOption: boolean;
   // Default settings
   defaultEnabled: boolean;
-  required: boolean; // Cannot be disabled
+  required: boolean;
   // Deprecation info
   deprecated?: boolean;
-  deprecatedMessage?: string; // Message shown to users with this section
+  deprecatedMessage?: string;
   // Preview
   previewEmoji: string;
 }
@@ -57,8 +60,9 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
   home: {
     key: 'home',
     title: 'Home',
-    description: 'Hero section with names, anniversary, and love message',
+    description: 'Hero section with names, special date, and message',
     icon: '🏠',
+    supportedOccasions: ['couple', 'wedding', 'anniversary', 'birthday', 'proposal'],
     requiresPhotos: false,
     requiresTimeline: false,
     requiresSong: false,

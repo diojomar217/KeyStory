@@ -11,6 +11,15 @@ interface KeychainInsertPreviewProps {
   coverPhotoUrl?: string;
   coupleNames: string;
   caption?: string;
+    qrDesign?: {
+    dotsColor: string;
+    backgroundColor: string;
+    cornersColor: string;
+    dotsType: 'rounded' | 'dots' | 'classy' | 'classy-rounded' | 'square' | 'extra-rounded';
+    cornersType: 'square' | 'dot' | 'extra-rounded';
+    cornersDotType: 'dot' | 'square';
+    logoUrl?: string;
+  };
 }
 
 export default function KeychainInsertPreview({
@@ -21,6 +30,7 @@ export default function KeychainInsertPreview({
   coverPhotoUrl,
   coupleNames,
   caption = 'Scan our love story',
+  qrDesign,
 }: KeychainInsertPreviewProps) {
   return (
     <div className="bg-slate-100 rounded-xl p-6 border border-slate-200">
@@ -63,6 +73,7 @@ export default function KeychainInsertPreview({
               qrCodeUrl={qrCodeUrl}
               caption={caption}
               scale={2}
+              qrDesign={qrDesign}
             />
           </div>
         </div>

@@ -143,24 +143,35 @@ export interface SectionToggle {
   defaultEnabled: boolean;
 }
 
-// Site Configuration
+import type { OccasionType } from './occasion-registry';
+export type { OccasionType };
+
+export interface Participant {
+  id: string;
+  name: string;
+  role?: string; // 'primary', 'partner', 'bride', 'groom', etc.
+}
+
 export interface SiteConfig {
+  occasion: OccasionType; // NEW: Core occasion type
   theme: Theme;
   layout_preset?: LayoutPreset;
   sections: Section[];
   section_toggles?: Record<Section, boolean>; // Enable/disable individual sections
-  // New dynamic template format (recommended)
   section_templates?: Record<Section, string>;
   // Legacy template fields (for backward compatibility)
   home_template?: HomeTemplate;
   gallery_template?: GalleryTemplate;
-  gallery_layout?: GalleryLayout; // New: grid | polaroid | carousel
+  gallery_layout?: GalleryLayout;
   timeline_template?: TimelineTemplate;
   song_template?: SongTemplate;
   timeline_events?: TimelineEvent[];
   cover_photo_index?: number;
   tagline?: string;
-  message?: string; // Love message for the website
+  message?: string;
+  // NEW: Generalized fields (backward compat - populate from legacy)
+  participants?: Participant[];
+  specialDate?: string;
   // Dynamic section content for each enabled section
   section_content?: SectionContentMap;
 }
@@ -197,13 +208,17 @@ export interface DraftState {
 // Form Data for Builder
 export interface BuilderFormData {
   website_name: string;
-  customer_name: string;
-  partner_name: string;
-  anniversary_date: string;
+  occasion: OccasionType;
+  participants: Participant[]; // Replaces customer_name/partner_name
+  specialDate: string;         // Replaces anniversary_date
   message: string;
   tagline?: string;
   song_link?: string;
   photos: File[];
+  // Legacy for migration
+  customer_name?: string;
+  partner_name?: string;
+  anniversary_date?: string;
 }
 
 // Preview State
@@ -215,14 +230,18 @@ export interface PreviewState {
 // Create Order Payload
 export interface CreateOrderPayload {
   website_name: string;
-  customer_name: string;
-  partner_name: string;
-  anniversary_date: string;
+  occasion: OccasionType;
+  participants: Participant[];
+  specialDate: string;
   message: string;
   tagline?: string;
   song_link?: string;
   photos: string[]; // base64
   config: SiteConfig;
+  // Legacy for migration
+  customer_name?: string;
+  partner_name?: string;
+  anniversary_date?: string;
 }
 
 // Admin Sidebar Types

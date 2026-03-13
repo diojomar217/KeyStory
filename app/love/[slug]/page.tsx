@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
 import { Theme, HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent } from '@/lib/types';
-import LovePageClient from '@/components/LovePageClient';
+import LovePageClient from '@/components/page/LovePageClient';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -40,8 +40,8 @@ export default async function LovePage({ params }: PageProps) {
   if (error) {
     console.error('Supabase fetch error:', error);
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-rose-50 to-pink-50">
-        <div className="text-center p-8">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-rose-50 to-pink-50 px-4">
+        <div className="text-center p-6 rounded-lg shadow-md bg-white/80">
           <h1 className="text-3xl font-serif text-rose-900 mb-4">Oops!</h1>
           <p className="text-rose-700">Something went wrong. Please try again later.</p>
         </div>
@@ -51,8 +51,8 @@ export default async function LovePage({ params }: PageProps) {
 
   if (!data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-rose-50 to-pink-50">
-        <div className="text-center p-8">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-rose-50 to-pink-50 px-4">
+        <div className="text-center p-6 rounded-lg shadow-md bg-white/80">
           <h1 className="text-3xl font-serif text-rose-900 mb-4">Page Not Found</h1>
           <p className="text-rose-700">This love story doesn&apos;t exist or the link is invalid.</p>
         </div>
@@ -98,26 +98,26 @@ export default async function LovePage({ params }: PageProps) {
   const qrDataUrl = config.qr_data_url;
 
   return (
-    <LovePageClient
-      slug={slug}
-      theme={theme}
-      sections={sections}
-      homeTemplate={homeTemplate}
-      galleryTemplate={galleryTemplate}
-      timelineTemplate={timelineTemplate}
-      customerName={data.customer_name}
-      partnerName={data.partner_name}
-      anniversaryDate={data.anniversary_date}
-      message={data.message}
-      tagline={tagline}
-      photos={photos}
-      coverPhotoIndex={coverPhotoIndex}
-      songLink={data.song_link}
-      qrCodeUrl={data.qr_code_url}
-      qrDataUrl={qrDataUrl}
-      timelineEvents={timelineEvents}
-      sectionContent={sectionContent}
-    />
+      <LovePageClient
+        slug={slug}
+        theme={theme}
+        sections={sections}
+        homeTemplate={homeTemplate}
+        galleryTemplate={galleryTemplate}
+        timelineTemplate={timelineTemplate}
+        customerName={data.customer_name || ''}
+        partnerName={data.partner_name || ''}
+        anniversaryDate={data.anniversary_date || ''}
+        message={data.message || ''}
+        tagline={tagline}
+        photos={photos}
+        coverPhotoIndex={coverPhotoIndex}
+        songLink={data.song_link || ''}
+        qrCodeUrl={data.qr_code_url}
+        qrDataUrl={qrDataUrl}
+        timelineEvents={timelineEvents}
+        sectionContent={sectionContent}
+      />
   );
 }
 

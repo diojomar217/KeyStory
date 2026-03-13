@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import QRCodeStyling from 'qr-code-styling';
 import { toPng } from 'html-to-image';
 import { Theme } from '@/lib/types';
-import { useTheme } from '../ThemeWrapper';
-import ScrollReveal from '../ScrollReveal';
+import { useTheme } from '../builder/ThemeWrapper';
+import ScrollReveal from '../ui/ScrollReveal';
 
 type Props = {
   theme: Theme;

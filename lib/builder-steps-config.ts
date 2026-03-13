@@ -1,10 +1,11 @@
 'use client';
 
-import { SiteConfig, CreateOrderPayload } from './types';
+import { SiteConfig, CreateOrderPayload, OccasionType } from './types';
 import { 
   getSectionsRequiringPhotos, 
-  getSectionsRequiringTimeline 
+  getSectionsRequiringTimeline
 } from './section-registry';
+import { getOccasionMetadata as getOccasionMetadataFromOccasion } from './occasion-registry';
 
 // ============================================
 // TYPE DEFINITIONS
@@ -53,16 +54,16 @@ export const validateDetailsStep = (
     };
   }
   
-  if (!form.customer_name?.trim()) {
-    return { valid: false, error: 'Your name is required' };
+if (!form.participants || form.participants.length === 0) {
+    return { valid: false, error: 'At least one participant name is required' };
   }
   
-  if (!form.partner_name?.trim()) {
-    return { valid: false, error: "Partner's name is required" };
+  if (form.participants.length < 2 && form.occasion === 'couple') {
+    return { valid: false, error: 'Couple occasion requires two participant names' };
   }
   
-  if (!form.anniversary_date) {
-    return { valid: false, error: 'Anniversary date is required' };
+  if (!form.specialDate) {
+    return { valid: false, error: 'Special date is required' };
   }
   
   return { valid: true };
@@ -262,16 +263,16 @@ export const validateAllSteps = (
 export const WIZARD_STEPS: WizardStepConfig[] = [
   {
     id: 1,
-    key: 'details',
-    title: 'Your Details',
-    subtitle: "Let's start",
+    key: 'occasion-participants',
+    title: 'Occasion & Participants',
+    subtitle: 'Choose occasion and names',
     validate: validateDetailsStep,
   },
   {
     id: 2,
     key: 'hero',
     title: 'Hero & Message',
-    subtitle: 'Your love story',
+    subtitle: 'Your special message',
     validate: validateHeroStep,
   },
   {

@@ -11,6 +11,15 @@ interface KeychainInsertQRProps {
   qrCodeUrl?: string;
   caption?: string;
   scale?: number;
+  qrDesign?: {
+    dotsColor: string;
+    backgroundColor: string;
+    cornersColor: string;
+    dotsType: 'rounded' | 'dots' | 'classy' | 'classy-rounded' | 'square' | 'extra-rounded';
+    cornersType: 'square' | 'dot' | 'extra-rounded';
+    cornersDotType: 'dot' | 'square';
+    logoUrl?: string;
+  };
 }
 
 export default function KeychainInsertQR({
@@ -20,6 +29,7 @@ export default function KeychainInsertQR({
   qrCodeUrl,
   caption = 'Scan our love story',
   scale = 1,
+  qrDesign,
 }: KeychainInsertQRProps) {
   const qrRef = useRef<HTMLDivElement>(null);
   const qrCodeInstanceRef = useRef<QRCodeStyling | null>(null);
@@ -38,41 +48,54 @@ export default function KeychainInsertQR({
     Number(dimensions.height.replace('px', '')) * 0.5
   );
 
+    const shouldUseStyledQr = isClient && !!qrDataUrl;
+
   // Generate QR code
-  useEffect(() => {
-    if (!qrRef.current || !qrDataUrl || !isClient) return;
+    useEffect(() => {
+    if (!shouldUseStyledQr || !qrRef.current) return;
+
+    const defaultDesign = {
+      dotsColor: '#e11d48',
+      backgroundColor: '#ffffff',
+      cornersColor: '#e11d48',
+      dotsType: 'rounded' as const,
+      cornersType: 'extra-rounded' as const,
+      cornersDotType: 'dot' as const,
+      logoUrl: '/heart-icon.svg',
+    };
+    const design = qrDesign || defaultDesign;
 
     const qrCode = new QRCodeStyling({
       width: qrSize,
       height: qrSize,
       type: 'canvas',
-      data: qrDataUrl,
+            data: qrDataUrl!,
       imageOptions: {
         crossOrigin: 'anonymous',
         margin: 4,
       },
       dotsOptions: {
-        color: '#e11d48', // rose-600
-        type: 'rounded',
+        color: design.dotsColor,
+        type: design.dotsType,
       },
       backgroundOptions: {
-        color: '#ffffff',
+        color: design.backgroundColor,
       },
       cornersSquareOptions: {
-        color: '#e11d48',
-        type: 'extra-rounded',
+        color: design.cornersColor,
+        type: design.cornersType,
       },
       cornersDotOptions: {
-        color: '#e11d48',
-        type: 'dot',
+        color: design.cornersColor,
+        type: design.cornersDotType,
       },
-      image: '/heart-icon.svg',
+      image: design.logoUrl,
       qrOptions: {
         errorCorrectionLevel: 'H',
       },
     });
 
-    qrCodeInstanceRef.current = qrCode;
+    // Clear the container and append the new QR code
     qrRef.current.innerHTML = '';
     qrCode.append(qrRef.current);
 
@@ -81,7 +104,7 @@ export default function KeychainInsertQR({
         qrRef.current.innerHTML = '';
       }
     };
-  }, [qrDataUrl, qrSize, isClient]);
+    }, [shouldUseStyledQr, qrDataUrl, qrSize, qrDesign]);
 
   return (
     <div
@@ -94,8 +117,9 @@ export default function KeychainInsertQR({
     >
       {/* QR Code */}
       <div className="flex-shrink-0">
-        {qrDataUrl && isClient ? (
+                {shouldUseStyledQr ? (
           <div
+            key={`${qrDataUrl}-${qrDesign?.dotsColor}-${qrDesign?.backgroundColor}-${qrDesign?.cornersColor}-${qrDesign?.dotsType}-${qrDesign?.cornersType}-${qrDesign?.cornersDotType}-${qrDesign?.logoUrl}`}
             ref={qrRef}
             className="mx-auto"
             style={{ width: qrSize, height: qrSize }}

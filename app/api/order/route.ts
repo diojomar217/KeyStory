@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     const website_name = data.website_name || slug; // use provided name, fallback to slug
 
     // upload pictures
-    let photoUrls: string[] = [];
+    const photoUrls: string[] = [];
     if (Array.isArray(data.photos) && data.photos.length > 0) {
       for (const photo of data.photos) {
         try {

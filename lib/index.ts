@@ -8,6 +8,7 @@
 export * from './types';
 
 // Section Registry
+export * from './occasion-registry';
 export * from './section-registry';
 
 // Section Renderer (explicit re-exports to avoid conflicts)

@@ -40,8 +40,9 @@ interface HomeSectionPreviewProps {
   theme: Theme;
   customerName: string;
   partnerName: string;
-  tagline: string;
-  message: string;
+  tagline?: string;
+  message?: string;
+  anniversary_date?: string;
   hasCoverPhoto: boolean;
 }
 
@@ -51,69 +52,107 @@ export function HomeSectionPreview({
   partnerName,
   tagline,
   message,
+  anniversary_date,
   hasCoverPhoto,
 }: HomeSectionPreviewProps) {
   const colors = getThemeColors(theme);
-  const displayNames = customerName && partnerName 
-    ? `${customerName} & ${partnerName}` 
-    : 'Your Names';
-  const displayTagline = tagline || 'Every love story is beautiful, but ours is my favorite.';
-  const displayMessage = message || 'Your love message will appear here...';
+
+  // Proper empty state helpers matching BuilderPreview
+  const nameData = customerName?.trim() && partnerName?.trim() 
+    ? { hasContent: true, primary: `${customerName} & ${partnerName}` }
+    : { hasContent: false, primary: 'Add your names' };
+
+  const taglineData = tagline?.trim() 
+    ? { hasContent: true, text: tagline } 
+    : { hasContent: false, text: 'Your tagline will appear here' };
+
+  const anniversaryData = anniversary_date 
+    ? { hasContent: true, text: new Date(anniversary_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }
+    : { hasContent: false, text: 'Add your special date' };
+
+  const messageData = message?.trim() 
+    ? { hasContent: true, text: message }
+    : { hasContent: false, text: 'Your love message will appear here' };
 
   return (
     <div 
-      className="relative rounded-xl overflow-hidden"
-      style={{ backgroundColor: colors.background }}
+      className="relative rounded-xl overflow-hidden border border-dashed"
+      style={{ 
+        backgroundColor: colors.background,
+        borderColor: colors.muted.replace('99', '50'),
+        opacity: nameData.hasContent || taglineData.hasContent ? 1 : 0.7
+      }}
     >
       {/* Hero Area */}
       <div 
-        className="h-24 flex flex-col items-center justify-center text-center px-4"
+        className="h-24 flex flex-col items-center justify-center text-center px-4 py-2"
         style={{ 
           background: hasCoverPhoto 
             ? `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.4)), url('/placeholder-cover.jpg')`
-            : `linear-gradient(135deg, ${colors.primary}20, ${colors.secondary})`
+            : `linear-gradient(135deg, ${colors.primary}20, ${colors.secondary}20)`
         }}
       >
-        {/* Hearts decoration */}
-        <div className="flex gap-2 mb-2">
-          <span style={{ color: colors.primary }}>💕</span>
+        <div className="flex gap-2 mb-2 opacity-80">
+          <span style={{ color: colors.primary, opacity: 0.8 }}>💕</span>
         </div>
         
         <h2 
-          className="text-sm font-bold mb-1"
-          style={{ color: colors.text }}
+          className={`text-sm font-bold leading-tight line-clamp-1 mb-1 transition-opacity ${nameData.hasContent ? '' : 'italic'}`}
+          style={{ 
+            color: colors.text,
+            opacity: nameData.hasContent ? 1 : 0.5
+          }}
         >
-          {displayNames}
+          {nameData.primary}
         </h2>
         
         <p 
-          className="text-xs italic px-4"
-          style={{ color: colors.muted }}
+          className={`text-xs leading-tight line-clamp-1 px-1 transition-all ${taglineData.hasContent ? 'font-normal' : 'italic'}`}
+          style={{ 
+            color: colors.muted,
+            opacity: taglineData.hasContent ? 1 : 0.6,
+            fontStyle: taglineData.hasContent ? 'normal' : 'italic'
+          }}
         >
-          "{displayTagline}"
+          "{taglineData.text}"
         </p>
       </div>
 
       {/* Message Card */}
       <div 
-        className="mx-3 -mt-8 p-3 rounded-lg shadow-md"
-        style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        className="mx-3 -mt-6 p-3 rounded-xl shadow-sm border"
+        style={{ 
+          backgroundColor: colors.card, 
+          borderColor: colors.border,
+          borderWidth: messageData.hasContent ? '1px' : '2px',
+          borderStyle: messageData.hasContent ? 'solid' : 'dashed'
+        }}
       >
         <p 
-          className="text-xs leading-relaxed line-clamp-3"
-          style={{ color: colors.text }}
+          className="text-xs leading-relaxed line-clamp-3 transition-opacity"
+          style={{ 
+            color: colors.text,
+            opacity: messageData.hasContent ? 1 : 0.5,
+            fontStyle: messageData.hasContent ? 'normal' : 'italic'
+          }}
         >
-          {displayMessage}
+          {messageData.text}
         </p>
       </div>
 
       {/* Anniversary Badge */}
-      <div className="flex justify-center py-3">
+      <div className="flex justify-center py-2 px-4">
         <span 
-          className="text-[10px] px-3 py-1 rounded-full"
-          style={{ backgroundColor: colors.secondary, color: colors.primary }}
+          className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all ${anniversaryData.hasContent ? '' : 'opacity-60 italic'}`}
+          style={{ 
+            backgroundColor: colors.secondary + (anniversaryData.hasContent ? '' : '66'),
+            color: colors.primary,
+            borderWidth: anniversaryData.hasContent ? 0 : '1px',
+            borderStyle: 'dashed',
+            borderColor: colors.muted.replace('99', '50')
+          }}
         >
-          💍 Since [Your Date]
+          💍 Since {anniversaryData.text}
         </span>
       </div>
     </div>
