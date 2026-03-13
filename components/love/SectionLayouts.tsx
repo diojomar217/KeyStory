@@ -1,43 +1,26 @@
 'use client';
 
-import { Theme } from '@/lib/types';
+import React from 'react';
 import { useTheme } from '../ThemeWrapper';
 import SectionHeader from '../SectionHeader';
 import ScrollReveal from '../ScrollReveal';
-
-// ============================================
-// SECTION LAYOUT TYPES
-// ============================================
+import { Theme } from '@/lib/types';
 
 export type SectionLayoutType = 'card' | 'timeline' | 'grid';
 
 export interface BaseSectionLayoutProps {
-  /** Section title */
   title?: string;
-  /** Section subtitle */
   subtitle?: string;
-  /** Section icon (emoji) */
   icon?: string;
-  /** Theme */
   theme: Theme;
-  /** Section content */
   children: React.ReactNode;
-  /** HTML id for anchor links */
   id?: string;
-  /** Section variant for alternating backgrounds */
   variant?: 'default' | 'alt';
-  /** Animation delay */
+  staggered?: boolean;
   animationDelay?: number;
 }
 
-// ============================================
-// CARD SECTION LAYOUT
-// ============================================
-
-/**
- * Card Section Layout - for sections with centered card content
- * Use for: Love Letter, Future Dreams, Quotes, Letter to Future, Gift, Surprise
- */
+// Premium Card Section Layout
 export function CardSectionLayout({
   title,
   subtitle,
@@ -46,42 +29,60 @@ export function CardSectionLayout({
   children,
   id,
   variant = 'default',
+  staggered = false,
   animationDelay = 0,
-}: BaseSectionLayoutProps) {
+}: BaseSectionLayoutProps & { staggered?: boolean }) {
   const styles = useTheme(theme);
 
-  // Determine background based on variant
   const getBackgroundClass = () => {
     switch (variant) {
       case 'alt':
-        return styles.sectionBgAlt;
+        return styles.sectionBgAlt || 'bg-gradient-to-b from-white/90 to-white/30 backdrop-blur-xl';
       default:
-        return styles.sectionBg;
+        return styles.sectionBg || 'bg-gradient-to-b from-rose-50/80 to-pink-50/60 backdrop-blur-lg';
     }
+  };
+
+  const getContentAlignment = () => {
+    if (staggered) {
+      return 'md:text-left max-w-4xl mx-auto transform md:-skew-x-1 hover:skew-x-0 transition-transform duration-500 md:-translate-x-8 lg:-translate-x-12';
+    }
+    return 'text-center max-w-4xl mx-auto';
   };
 
   return (
     <section
       id={id}
-      className={`py-20 md:py-24 ${getBackgroundClass()}`}
+      className={`py-24 lg:py-32 ${getBackgroundClass()}`}
     >
-      <div className="max-w-6xl mx-auto px-4 md:px-6">
-        {/* Section Header */}
+      <div className="max-w-6xl mx-auto px-6 lg:px-8">
+        {/* Header ABOVE card */}
         {(title || subtitle) && (
           <ScrollReveal animation="fade-up" delay={animationDelay}>
-            <SectionHeader
-              icon={icon || '💕'}
-              title={title || ''}
-              subtitle={subtitle || ''}
-              theme={theme}
-            />
+            <div className="text-center mb-16 lg:mb-24 max-w-3xl mx-auto">
+              <SectionHeader
+                icon={icon || '💕'}
+                title={title || ''}
+                subtitle={subtitle || ''}
+                theme={theme}
+              />
+            </div>
           </ScrollReveal>
         )}
 
-        {/* Section Content */}
-        <ScrollReveal animation="fade-up" delay={animationDelay + 100}>
-          <div className={title || subtitle ? 'mt-10' : ''}>
-            {children}
+        {/* Card Container */}
+        <ScrollReveal animation="fade-up" delay={animationDelay + 200}>
+          <div className={getContentAlignment()}>
+            <div className={`
+              bg-white/95 backdrop-blur-xl border border-white/40 rounded-3xl lg:rounded-[3rem] 
+              shadow-2xl lg:shadow-[0_35px_60px_-15px_rgba(0,0,0,0.1)]
+              p-10 lg:p-16 xl:p-20
+              hover:shadow-[0_35px_60px_-15px_rgba(244,114,182,0.15)] hover:border-rose-200/50 hover:-translate-y-2
+              transition-all duration-500 ease-out relative overflow-hidden
+              before:absolute before:inset-0 before:bg-gradient-to-br before:from-rose-50/50 before:to-transparent before:blur-xl before:-z-10
+            `}>
+              {children}
+            </div>
           </div>
         </ScrollReveal>
       </div>
@@ -89,14 +90,7 @@ export function CardSectionLayout({
   );
 }
 
-// ============================================
-// GRID SECTION LAYOUT
-// ============================================
-
-/**
- * Grid Section Layout - for sections with grid-based content
- * Use for: Reasons I Love You, Gallery, Special Moments, Video Memories
- */
+// Enhanced Grid Section Layout
 export function GridSectionLayout({
   title,
   subtitle,
@@ -105,44 +99,57 @@ export function GridSectionLayout({
   children,
   id,
   variant = 'default',
+  gridCols = 'grid-cols-1 md:grid-cols-2 lg:grid-cols-2',
+  gap = 'gap-8 lg:gap-10',
   animationDelay = 0,
-  gridCols = 'grid-cols-1 md:grid-cols-2',
-  gap = 'gap-6',
 }: BaseSectionLayoutProps & { gridCols?: string; gap?: string }) {
   const styles = useTheme(theme);
 
-  // Determine background based on variant
   const getBackgroundClass = () => {
     switch (variant) {
       case 'alt':
-        return styles.sectionBgAlt;
+        return styles.sectionBgAlt || 'bg-gradient-to-b from-slate-50/80 to-white/60 backdrop-blur-lg';
       default:
-        return styles.sectionBg;
+        return styles.sectionBg || 'bg-gradient-to-b from-pink-50/70 to-rose-50/50 backdrop-blur-xl';
     }
   };
 
   return (
     <section
       id={id}
-      className={`py-20 md:py-24 ${getBackgroundClass()}`}
+      className={`py-24 lg:py-32 ${getBackgroundClass()}`}
     >
-      <div className="max-w-6xl mx-auto px-4 md:px-6">
-        {/* Section Header */}
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        {/* Header ABOVE grid */}
         {(title || subtitle) && (
           <ScrollReveal animation="fade-up" delay={animationDelay}>
-            <SectionHeader
-              icon={icon || '💕'}
-              title={title || ''}
-              subtitle={subtitle || ''}
-              theme={theme}
-            />
+            <div className="text-center mb-20 lg:mb-28 max-w-4xl mx-auto">
+              <SectionHeader
+                icon={icon || '💕'}
+                title={title || ''}
+                subtitle={subtitle || ''}
+                theme={theme}
+              />
+            </div>
           </ScrollReveal>
         )}
 
-        {/* Section Content - Grid */}
-        <ScrollReveal animation="fade-up" delay={animationDelay + 100}>
-          <div className={`${title || subtitle ? 'mt-10' : ''} grid ${gridCols} ${gap}`}>
-            {children}
+        {/* Premium Grid */}
+        <ScrollReveal animation="fade-up" delay={animationDelay + 200}>
+          <div className={`grid ${gridCols} ${gap}`}>
+            {React.Children.toArray(children).map((child, index) => (
+              <div key={index} className="group">
+                <div className={`
+                  h-full min-h-[280px] lg:min-h-[320px] ${styles.card} backdrop-blur-md border border-white/30
+                  rounded-2xl lg:rounded-3xl shadow-xl lg:shadow-2xl p-8 lg:p-10
+                  hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] hover:shadow-rose-100/50 hover:-translate-y-3 hover:scale-[1.02]
+                  transition-all duration-500 ease-out hover:border-rose-200/60
+                  relative before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-rose-50/60 before:to-transparent before:blur-md before:-z-10 before:opacity-0 group-hover:before:opacity-100 before:transition-all before:duration-500
+                `}>
+                  {child}
+                </div>
+              </div>
+            ))}
           </div>
         </ScrollReveal>
       </div>
@@ -150,14 +157,7 @@ export function GridSectionLayout({
   );
 }
 
-// ============================================
-// NARROW SECTION LAYOUT
-// ============================================
-
-/**
- * Narrow Section Layout - for sections with narrow, focused content
- * Use for: Relationship Stats, Anniversary Countdown, Playlist
- */
+// Narrow Section Layout
 export function NarrowSectionLayout({
   title,
   subtitle,
@@ -170,37 +170,36 @@ export function NarrowSectionLayout({
 }: BaseSectionLayoutProps) {
   const styles = useTheme(theme);
 
-  // Determine background based on variant
   const getBackgroundClass = () => {
     switch (variant) {
       case 'alt':
-        return styles.sectionBgAlt;
+        return styles.sectionBgAlt || 'bg-gradient-to-b from-white/90 to-white/40 backdrop-blur-lg';
       default:
-        return styles.sectionBg;
+        return styles.sectionBg || 'bg-gradient-to-b from-rose-50/80 to-pink-50/60 backdrop-blur-xl';
     }
   };
 
   return (
     <section
       id={id}
-      className={`py-20 md:py-24 ${getBackgroundClass()}`}
+      className={`py-24 lg:py-32 ${getBackgroundClass()}`}
     >
-      <div className="max-w-4xl mx-auto px-4 md:px-6">
-        {/* Section Header */}
+      <div className="max-w-4xl mx-auto px-6 lg:px-8">
         {(title || subtitle) && (
           <ScrollReveal animation="fade-up" delay={animationDelay}>
-            <SectionHeader
-              icon={icon || '💕'}
-              title={title || ''}
-              subtitle={subtitle || ''}
-              theme={theme}
-            />
+            <div className="text-center mb-16 lg:mb-24 max-w-3xl mx-auto">
+              <SectionHeader
+                icon={icon || '💕'}
+                title={title || ''}
+                subtitle={subtitle || ''}
+                theme={theme}
+              />
+            </div>
           </ScrollReveal>
         )}
 
-        {/* Section Content */}
-        <ScrollReveal animation="fade-up" delay={animationDelay + 100}>
-          <div className={title || subtitle ? 'mt-10' : ''}>
+        <ScrollReveal animation="fade-up" delay={animationDelay + 200}>
+          <div className="">
             {children}
           </div>
         </ScrollReveal>
@@ -209,35 +208,27 @@ export function NarrowSectionLayout({
   );
 }
 
-// ============================================
-// SECTION SEPARATOR
-// ============================================
-
-/**
- * Romantic Section Separator - adds visual breaks between major sections
- */
+// Separators
 export function SectionSeparator({ theme = 'romantic_classic' }: { theme?: Theme }) {
   const styles = useTheme(theme);
 
   return (
-    <div className="relative py-8">
-      {/* Hearts in the middle */}
-      <div className="absolute left-0 right-0 -top-4 flex justify-center items-center">
+    <div className="relative py-12 lg:py-16">
+      <div className="absolute inset-x-0 -top-6 flex justify-center items-center">
         <div 
-          className="px-4"
+          className="px-8 py-3 rounded-3xl bg-gradient-to-r from-rose-100/80 to-pink-100/80 backdrop-blur-xl shadow-2xl ring-2 ring-white/50"
           style={{ 
             backgroundColor: theme === 'dark_elegant' ? '#18181b' : '#fff' 
           }}
         >
-          <span className="text-rose-300 text-lg">
+          <span className="text-2xl md:text-3xl animate-gentle-pulse">
             💕
           </span>
         </div>
       </div>
       
-      {/* Divider */}
       <div 
-        className="border-t" 
+        className="border-t-2" 
         style={{ 
           borderColor: theme === 'dark_elegant' ? '#3f3f46' : '#fce7f3' 
         }} 
@@ -246,14 +237,11 @@ export function SectionSeparator({ theme = 'romantic_classic' }: { theme?: Theme
   );
 }
 
-/**
- * Gradient Section Separator - subtle gradient divider
- */
 export function GradientSeparator({ theme = 'romantic_classic' }: { theme?: Theme }) {
   return (
-    <div className="relative py-6">
+    <div className="relative py-12">
       <div 
-        className="h-px bg-gradient-to-r from-transparent via-rose-200 to-transparent"
+        className="h-2 mx-auto w-32 bg-gradient-to-r from-rose-400 via-pink-500 to-rose-400 rounded-full shadow-xl blur-sm opacity-75 animate-pulse-slow"
         style={{
           background: theme === 'dark_elegant' 
             ? 'linear-gradient(to right, transparent, #3f3f46, transparent)'
@@ -264,32 +252,23 @@ export function GradientSeparator({ theme = 'romantic_classic' }: { theme?: Them
   );
 }
 
-/**
- * Dots Separator - elegant dotted line
- */
 export function DotsSeparator({ theme = 'romantic_classic' }: { theme?: Theme }) {
+  const colors = theme === 'dark_elegant' ? 'text-amber-400/60' : 'text-rose-400/70';
   return (
-    <div className="relative py-6 flex items-center justify-center">
-      <div className="flex items-center gap-3">
-        <span className="text-rose-200">•</span>
-        <span className="text-rose-300">•</span>
-        <span className="text-rose-400">💕</span>
-        <span className="text-rose-300">•</span>
-        <span className="text-rose-200">•</span>
+    <div className="relative py-12 flex items-center justify-center">
+      <div className="flex items-center gap-4">
+        <span className={`text-2xl animate-pulse-slow ${colors}`}>✨</span>
+        <span className={`text-xl ${colors}`}>•</span>
+        <span className={`text-3xl animate-gentle-pulse ${colors}`}>💕</span>
+        <span className={`text-xl ${colors}`}>•</span>
+        <span className={`text-2xl animate-pulse-slow ${colors}`}>✨</span>
       </div>
     </div>
   );
 }
 
-// ============================================
-// SECTION LAYOUT CLASSES
-// ============================================
-
-/**
- * Get section layout type based on section key
- */
+// Section Layout Helpers
 export function getSectionLayoutType(sectionKey: string): SectionLayoutType {
-  // Card sections - centered card content
   const cardSections = [
     'love_letter',
     'future_dreams',
@@ -299,13 +278,11 @@ export function getSectionLayoutType(sectionKey: string): SectionLayoutType {
     'surprise_message',
   ];
   
-  // Timeline sections - chronological events
   const timelineSections = [
     'timeline',
-    'our_story', // For narrative story
+    'our_story',
   ];
   
-  // Grid sections - grid-based content
   const gridSections = [
     'reasons_love_you',
     'gallery',
@@ -315,56 +292,22 @@ export function getSectionLayoutType(sectionKey: string): SectionLayoutType {
     'guest_messages',
   ];
   
-  if (cardSections.includes(sectionKey)) {
-    return 'card';
-  }
-  
-  if (timelineSections.includes(sectionKey)) {
-    return 'timeline';
-  }
-  
-  if (gridSections.includes(sectionKey)) {
-    return 'grid';
-  }
-  
-  // Default to card layout
+  if (cardSections.includes(sectionKey)) return 'card';
+  if (timelineSections.includes(sectionKey)) return 'timeline';
+  if (gridSections.includes(sectionKey)) return 'grid';
   return 'card';
 }
 
-/**
- * Get grid configuration based on section type
- */
 export function getGridConfig(sectionKey: string): { gridCols: string; gap: string } {
   const gridConfigs: Record<string, { gridCols: string; gap: string }> = {
-    reasons_love_you: {
-      gridCols: 'grid-cols-1 md:grid-cols-2',
-      gap: 'gap-4',
-    },
-    gallery: {
-      gridCols: 'grid-cols-2 md:grid-cols-3',
-      gap: 'gap-4 md:gap-6',
-    },
-    special_moments: {
-      gridCols: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
-      gap: 'gap-6',
-    },
-    video_memories: {
-      gridCols: 'grid-cols-1 md:grid-cols-2',
-      gap: 'gap-6',
-    },
-    milestones: {
-      gridCols: 'grid-cols-1 md:grid-cols-2',
-      gap: 'gap-4',
-    },
-    guest_messages: {
-      gridCols: 'grid-cols-1 md:grid-cols-2',
-      gap: 'gap-6',
-    },
+    reasons_love_you: { gridCols: 'grid-cols-1 md:grid-cols-2', gap: 'gap-6 lg:gap-8' },
+    gallery: { gridCols: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4', gap: 'gap-6 lg:gap-8' },
+    special_moments: { gridCols: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3', gap: 'gap-8 lg:gap-10' },
+    video_memories: { gridCols: 'grid-cols-1 md:grid-cols-2', gap: 'gap-8 lg:gap-10' },
+    milestones: { gridCols: 'grid-cols-1 md:grid-cols-2', gap: 'gap-6 lg:gap-8' },
+    guest_messages: { gridCols: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3', gap: 'gap-8 lg:gap-10' },
   };
   
-  return gridConfigs[sectionKey] || {
-    gridCols: 'grid-cols-1 md:grid-cols-2',
-    gap: 'gap-6',
-  };
+  return gridConfigs[sectionKey] || { gridCols: 'grid-cols-1 md:grid-cols-2', gap: 'gap-8 lg:gap-10' };
 }
 

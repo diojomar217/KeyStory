@@ -1,7 +1,7 @@
 'use client';
 
-import { Theme } from '@/lib/types';
-import { CardSectionLayout } from '../love/SectionLayouts';
+import type { Theme } from '@/lib/types';
+import SectionHeader from '../SectionHeader';
 import ScrollReveal from '../ScrollReveal';
 
 interface QuotesSectionProps {
@@ -10,7 +10,6 @@ interface QuotesSectionProps {
   variant?: 'default' | 'alt';
 }
 
-// Default romantic quotes
 const defaultQuotes = [
   { id: '1', text: 'Love is composed of two souls protecting each other.', author: 'Thich Nhat Hanh' },
   { id: '2', text: 'The best thing to hold onto in life is each other.', author: 'Audrey Hepburn' },
@@ -23,37 +22,45 @@ export default function QuotesSection({
   quotes,
   variant = 'default'
 }: QuotesSectionProps) {
-  // Use provided quotes or fallback to defaults
   const displayQuotes = quotes && quotes.length > 0 ? quotes : defaultQuotes;
 
   return (
-    <CardSectionLayout
-      title="Love Quotes"
-      subtitle="Words that capture our feelings"
-      icon="💕"
-      theme={theme}
-      variant={variant}
-      id="quotes"
-    >
-      <div className="grid gap-6 max-w-4xl mx-auto">
-        {displayQuotes.map((quote, index) => (
-          <ScrollReveal key={quote.id} animation="fade-up" delay={index * 100}>
-            <div
-              className="bg-white dark:bg-zinc-800 rounded-2xl border border-rose-100 dark:border-zinc-700 p-8 text-center hover:shadow-lg transition-all"
-            >
-              <blockquote className="text-xl mb-4 italic text-gray-700 dark:text-gray-300">
-                "{quote.text}"
-              </blockquote>
-              {quote.author && (
-                <cite className="text-sm not-italic text-gray-500 dark:text-gray-400">
-                  — {quote.author}
-                </cite>
-              )}
-            </div>
-          </ScrollReveal>
-        ))}
+    <section className={`py-20 md:py-24 ${variant === 'alt' ? 'bg-gradient-to-b from-slate-50/80 to-white/60' : 'bg-gradient-to-b from-rose-50/80 to-pink-50/60'} backdrop-blur-lg`} id="quotes">
+      <div className="max-w-6xl mx-auto px-6 lg:px-8">
+        <ScrollReveal animation="fade-up">
+          <SectionHeader
+            icon="💕"
+            title="Love Quotes"
+            subtitle="Words that capture our feelings"
+            theme={theme}
+          />
+        </ScrollReveal>
+
+        <ScrollReveal animation="fade-up" delay={200}>
+          <div className="grid gap-8 lg:gap-12 max-w-4xl mx-auto">
+            {displayQuotes.map((quote, index) => (
+              <ScrollReveal key={quote.id} animation="fade-up" delay={index * 100}>
+                <div className="
+                  group bg-white/95 backdrop-blur-xl border border-white/40 rounded-3xl shadow-xl lg:shadow-2xl
+                  p-10 lg:p-12 text-center hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] hover:shadow-rose-100/50
+                  hover:-translate-y-3 hover:scale-[1.02] transition-all duration-500 ease-out hover:border-rose-200/60
+                  before:absolute before:inset-0 before:rounded-3xl before:bg-gradient-to-br before:from-rose-50/60 before:to-transparent before:blur-md before:-z-10 before:opacity-0 group-hover:before:opacity-100 before:transition-all before:duration-500
+                  relative overflow-hidden
+                ">
+                  <blockquote className="text-2xl lg:text-3xl mb-6 italic font-light text-rose-800 leading-relaxed">
+                    "{quote.text}"
+                  </blockquote>
+                  {quote.author && (
+                    <cite className="text-lg font-semibold text-rose-700 not-italic">
+                      — {quote.author}
+                    </cite>
+                  )}
+                </div>
+              </ScrollReveal>
+            ))}
+          </div>
+        </ScrollReveal>
       </div>
-    </CardSectionLayout>
+    </section>
   );
 }
-

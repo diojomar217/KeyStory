@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Theme } from '@/lib/types';
-import { CardSectionLayout } from '../love/SectionLayouts';
+import ScrollReveal from '../ScrollReveal';
 
 interface SurpriseMessageSectionProps {
   theme: Theme;
@@ -12,7 +12,6 @@ interface SurpriseMessageSectionProps {
   hint?: string;
 }
 
-// Default fallback values
 const defaultMessage = 'I love you more than words can say! 💖';
 
 export default function SurpriseMessageSection({ 
@@ -22,54 +21,75 @@ export default function SurpriseMessageSection({
   message,
   hint
 }: SurpriseMessageSectionProps) {
-  // Use provided message or fallback to default
   const displayMessage = message || defaultMessage;
   const [isRevealed, setIsRevealed] = useState(false);
 
   return (
-    <CardSectionLayout
-      title="A Surprise for You"
-      subtitle={hint || 'Click the gift to reveal your surprise! 💕'}
-      icon="🎉"
-      theme={theme}
-      variant="default"
-      id="surprise"
-    >
-      <div className="max-w-3xl mx-auto text-center">
-        {!isRevealed ? (
-          <div>
-            <button
-              onClick={() => setIsRevealed(true)}
-              className="relative group"
-            >
-              <div className="w-32 h-32 mx-auto rounded-full flex items-center justify-center text-5xl animate-pulse bg-rose-500 text-white">
-                🎁
+    <section className="py-24 lg:py-32 bg-gradient-to-b from-rose-50/80 to-pink-50/60 backdrop-blur-lg" id="surprise">
+      <div className="max-w-4xl mx-auto px-6 lg:px-8">
+        <ScrollReveal animation="fade-up">
+          <div className="text-center mb-16 lg:mb-24 max-w-2xl mx-auto">
+            <div className="inline-flex items-center justify-center mb-6 p-2 rounded-2xl bg-white/80 backdrop-blur-sm shadow-2xl ring-2 ring-offset-4 ring-rose-100/50">
+              <span className="text-3xl md:text-4xl drop-shadow-2xl ring-2 ring-offset-2 ring-white/50 shadow-lg text-rose-400">🎉</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight tracking-tight bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent mb-6">
+              A Surprise for You
+            </h2>
+            <div className="w-24 h-1.5 mx-auto mt-4 bg-gradient-to-r from-transparent via-white/90 to-transparent bg-[length:200% 100%] animate-shimmer rounded-full shadow-xl border border-white/50 p-1 backdrop-blur-sm" />
+            <p className="mt-6 text-lg md:text-xl font-medium max-w-xl mx-auto text-rose-700">
+              {hint || 'Click the gift to reveal your surprise! 💕'}
+            </p>
+          </div>
+        </ScrollReveal>
+
+        <ScrollReveal animation="fade-up" delay={200}>
+          <div className="max-w-3xl mx-auto text-center">
+            {!isRevealed ? (
+              <div className="group cursor-pointer">
+                <div className="
+                  mx-auto w-36 h-36 rounded-3xl flex items-center justify-center text-6xl
+                  bg-gradient-to-br from-rose-400 to-pink-500 shadow-2xl hover:scale-110
+                  transition-all duration-500 hover:shadow-[0_20px_40px_rgba(244,63,94,0.4)]
+                  relative overflow-hidden animate-pulse
+                ">
+                  <span className="relative z-10">🎁</span>
+                  <div className="absolute inset-0 bg-gradient-to-br from-rose-300 opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-pulse rounded-3xl" />
+                </div>
+                <button
+                  onClick={() => setIsRevealed(true)}
+                  className="mt-8 px-8 py-4 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-3xl text-lg font-bold shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300"
+                >
+                  Open Surprise
+                </button>
               </div>
-              <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity bg-rose-300 animate-pulse" />
-            </button>
+            ) : (
+              <div className="
+                bg-white/95 backdrop-blur-xl border border-white/40 rounded-3xl lg:rounded-[3rem] shadow-2xl lg:shadow-[0_35px_60px_-15px_rgba(0,0,0,0.1)] p-12 lg:p-16
+                hover:shadow-[0_35px_60px_-15px_rgba(244,114,182,0.15)] hover:border-rose-200/50 hover:-translate-y-2
+                transition-all duration-500 ease-out relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-rose-50/50 before:to-transparent before:blur-xl before:-z-10
+              ">
+                <div className="text-6xl mb-8 animate-bounce">💕</div>
+                <h3 className="text-3xl lg:text-4xl font-bold mb-6 text-rose-900">
+                  Hey {partnerName}!
+                </h3>
+                <p className="text-xl mb-6 text-rose-700">
+                  {customerName} wanted to tell you something special...
+                </p>
+                <p className="text-4xl lg:text-5xl font-bold text-rose-600 mb-8 animate-pulse">
+                  {displayMessage}
+                </p>
+                <button
+                  onClick={() => setIsRevealed(false)}
+                  className="px-8 py-3 bg-gradient-to-r from-rose-100 to-pink-100 text-rose-700 rounded-2xl font-semibold hover:from-rose-200 hover:shadow-lg transition-all duration-300"
+                >
+                  🎁 Hide surprise
+                </button>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="p-8 rounded-2xl animate-fade-in bg-white dark:bg-zinc-800 border border-rose-100 dark:border-zinc-700">
-            <div className="text-6xl mb-4">💕</div>
-            <h3 className="text-2xl font-bold mb-4 text-rose-900 dark:text-zinc-100">
-              Hey {partnerName}!
-            </h3>
-            <p className="text-lg mb-4 text-rose-600 dark:text-zinc-400">
-              {customerName} wanted to tell you something special...
-            </p>
-            <p className="text-3xl font-bold text-rose-600 dark:text-rose-300">
-              {displayMessage}
-            </p>
-            <button
-              onClick={() => setIsRevealed(false)}
-              className="mt-6 text-sm text-rose-500 hover:text-rose-600 underline"
-            >
-              Hide surprise
-            </button>
-          </div>
-        )}
+        </ScrollReveal>
       </div>
-    </CardSectionLayout>
+    </section>
   );
 }
 

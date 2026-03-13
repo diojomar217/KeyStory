@@ -25,7 +25,7 @@ import PolaroidGallerySection from './sections/PolaroidGallerySection';
 import FirstDateSection from './sections/FirstDateSection';
 import SpecialMomentsSection from './sections/SpecialMomentsSection';
 import ReasonsILoveYouSection from './sections/ReasonsILoveYouSection';
-import MemoryMapSection from './sections/MemoryMapSection';
+// MemoryMapSection from './sections/MemoryMapSection'; // SSR issue - disabled for PHASE 2
 import GuestMessagesSection from './sections/GuestMessagesSection';
 import LetterToFutureSection from './sections/LetterToFutureSection';
 import GiftSection from './sections/GiftSection';
@@ -156,7 +156,12 @@ export default function LovePageClient({
   // Main content rendering with alternating backgrounds
   const renderMainContent = () => {
     // Track section index for alternating backgrounds
-    let sectionIndex = 0;
+let sectionIndex = 0;
+  const getSectionVariant = (index: number) => {
+    const variant = index % 2 === 1 ? 'alt' : 'default';
+    const staggered = index % 4 === 1 || index % 4 === 2;
+    return { variant, staggered };
+  };
     
     return (
       <ThemeWrapper theme={theme}>
@@ -297,12 +302,12 @@ export default function LovePageClient({
           )}
 
           {/* 12. Memory Map Section */}
-          {sections.includes('memory_map') && (
+{/* MemoryMap disabled for PHASE 2 SSR fix {sections.includes('memory_map') && (
             <MemoryMapSection 
               theme={theme} 
               locations={sectionContent?.memory_map?.locations}
             />
-          )}
+          )} */}
 
           {/* 13. Letter to Future Section */}
           {sections.includes('letter_future') && (

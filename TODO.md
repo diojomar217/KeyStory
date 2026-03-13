@@ -1,15 +1,22 @@
-# Memory Map Interactive Implementation
+# Refactor /love/[slug] Sections for Uniform Headers & Separators
 
-## Steps
+## Plan Breakdown & Progress
 
-1. Install leaflet and react-leaflet dependencies.
-2. Update MemoryMapSection.tsx to use the existing MemoryMap component.
-3. Ensure leaflet CSS is properly imported.
-4. Test the integration.
+### Phase 1: Setup & Core Components [COMPLETE]
+- [x] ✅ **Create TODO.md** (tracking progress)
+- [x] ✅ Enhance `components/SectionHeader.tsx` with responsive sizing, gradient title, icon container, divider, subtitle matching current premium style
+- [x] ✅ Verify/enhance `components/love/SectionLayouts.tsx` SectionSeparator (romantic 💕 style)
 
-## Progress
+### Phase 2: Refactor Priority Sections [COMPLETE]
 
-- [x] Step 1: Install dependencies
-- [x] Step 2: Update MemoryMapSection.tsx
-- [x] Step 3: Verify SSR safety
-- [ ] Step 4: Test builder and love page
+### Phase 3: Full Rollout [TODO]
+- [ ] Update remaining sections: LetterToFutureSection, SurpriseMessageSection, ReasonsILoveYouSection, GuestMessagesSection, etc.
+- [ ] Standardize section padding to `py-20 md:py-24`
+- [ ] Update LovePageClient.tsx if needed (spacing consistency)
+
+### Phase 4: Testing & Completion [TODO]
+- [ ] Test all sections render uniformly
+- [ ] Mobile responsiveness check
+- [ ] Builder compatibility verification
+- [ ] Run `npm run dev` and preview /love/[slug]
+- [ ] ✅ **attempt_completion**
