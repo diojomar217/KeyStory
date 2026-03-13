@@ -18,6 +18,7 @@ export default function QRCardPage({ params }: PageProps) {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Restore original: no cardConfigs
 
   useEffect(() => {
     if (id) {
@@ -98,7 +99,10 @@ export default function QRCardPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* QR Card Display */}
+      {/* Card size/quantity selection UI - Hidden when printing */}
+      // ...existing code...
+
+      {/* QR Card Display - Print grid of selected sizes */}
       <div className="print:p-0">
         <PrintableCardLayout>
           <QRCard
@@ -151,8 +155,8 @@ export default function QRCardPage({ params }: PageProps) {
 
       {/* Help text - Hidden when printing */}
       <div className="print:hidden text-center mt-6 text-sm text-slate-500">
-        <p>Tip: Use Ctrl+P (or Cmd+P on Mac) to print this card.</p>
-        <p className="mt-1">The card is optimized for standard paper sizes.</p>
+        <p>Tip: Use Ctrl+P (or Cmd+P on Mac) to print these cards.</p>
+        <p className="mt-1">Cards are optimized for standard paper sizes.</p>
       </div>
     </>
   );

@@ -201,6 +201,7 @@ export default function QRCard({
 
   // Size configurations
   const sizeConfig = {
+    compact: { card: 'max-w-[180px]', qr: 120, padding: 'p-2' },
     small: { card: 'max-w-[280px]', qr: 180, padding: 'p-4' },
     medium: { card: 'max-w-[340px]', qr: 220, padding: 'p-6' },
     large: { card: 'max-w-[400px]', qr: 260, padding: 'p-8' },
@@ -539,6 +540,8 @@ export default function QRCard({
       return renderMinimalLayout();
     case 'elegant':
       return renderElegantLayout();
+    case 'classic':
+      return renderClassicLayout();
     default:
       return renderClassicLayout();
   }

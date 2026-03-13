@@ -40,8 +40,8 @@ export default async function LovePage({ params }: PageProps) {
   if (error) {
     console.error('Supabase fetch error:', error);
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-rose-50 to-pink-50">
-        <div className="text-center p-8">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-rose-50 to-pink-50 px-4">
+        <div className="text-center p-6 rounded-lg shadow-md bg-white/80">
           <h1 className="text-3xl font-serif text-rose-900 mb-4">Oops!</h1>
           <p className="text-rose-700">Something went wrong. Please try again later.</p>
         </div>
@@ -51,8 +51,8 @@ export default async function LovePage({ params }: PageProps) {
 
   if (!data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-rose-50 to-pink-50">
-        <div className="text-center p-8">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-rose-50 to-pink-50 px-4">
+        <div className="text-center p-6 rounded-lg shadow-md bg-white/80">
           <h1 className="text-3xl font-serif text-rose-900 mb-4">Page Not Found</h1>
           <p className="text-rose-700">This love story doesn&apos;t exist or the link is invalid.</p>
         </div>

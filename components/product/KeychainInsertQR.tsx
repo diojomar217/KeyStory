@@ -11,6 +11,15 @@ interface KeychainInsertQRProps {
   qrCodeUrl?: string;
   caption?: string;
   scale?: number;
+  qrDesign?: {
+    dotsColor: string;
+    backgroundColor: string;
+    cornersColor: string;
+    dotsType: 'rounded' | 'dots' | 'classy' | 'classy-rounded' | 'square' | 'extra-rounded';
+    cornersType: 'square' | 'dot' | 'extra-rounded';
+    cornersDotType: 'dot' | 'square';
+    logoUrl?: string;
+  };
 }
 
 export default function KeychainInsertQR({
@@ -20,6 +29,7 @@ export default function KeychainInsertQR({
   qrCodeUrl,
   caption = 'Scan our love story',
   scale = 1,
+  qrDesign,
 }: KeychainInsertQRProps) {
   const qrRef = useRef<HTMLDivElement>(null);
   const qrCodeInstanceRef = useRef<QRCodeStyling | null>(null);
@@ -52,27 +62,27 @@ export default function KeychainInsertQR({
         margin: 4,
       },
       dotsOptions: {
-        color: '#e11d48', // rose-600
-        type: 'rounded',
+        color: qrDesign?.dotsColor || '#e11d48',
+        type: qrDesign?.dotsType || 'rounded',
       },
       backgroundOptions: {
-        color: '#ffffff',
+        color: qrDesign?.backgroundColor || '#ffffff',
       },
       cornersSquareOptions: {
-        color: '#e11d48',
-        type: 'extra-rounded',
+        color: qrDesign?.cornersColor || '#e11d48',
+        type: qrDesign?.cornersType || 'extra-rounded',
       },
       cornersDotOptions: {
-        color: '#e11d48',
-        type: 'dot',
+        color: qrDesign?.cornersColor || '#e11d48',
+        type: qrDesign?.cornersDotType || 'dot',
       },
-      image: '/heart-icon.svg',
+      image: qrDesign?.logoUrl || '/heart-icon.svg',
       qrOptions: {
         errorCorrectionLevel: 'H',
       },
     });
 
-    qrCodeInstanceRef.current = qrCode;
+    // Clear the container and append the new QR code
     qrRef.current.innerHTML = '';
     qrCode.append(qrRef.current);
 
@@ -81,7 +91,7 @@ export default function KeychainInsertQR({
         qrRef.current.innerHTML = '';
       }
     };
-  }, [qrDataUrl, qrSize, isClient]);
+  }, [qrDataUrl, qrSize, isClient, qrDesign?.dotsColor, qrDesign?.backgroundColor, qrDesign?.cornersColor, qrDesign?.dotsType, qrDesign?.cornersType, qrDesign?.cornersDotType, qrDesign?.logoUrl]);
 
   return (
     <div
@@ -96,6 +106,7 @@ export default function KeychainInsertQR({
       <div className="flex-shrink-0">
         {qrDataUrl && isClient ? (
           <div
+            key={`${qrDataUrl}-${qrDesign?.dotsColor}-${qrDesign?.backgroundColor}-${qrDesign?.cornersColor}-${qrDesign?.dotsType}-${qrDesign?.cornersType}-${qrDesign?.cornersDotType}-${qrDesign?.logoUrl}`}
             ref={qrRef}
             className="mx-auto"
             style={{ width: qrSize, height: qrSize }}
