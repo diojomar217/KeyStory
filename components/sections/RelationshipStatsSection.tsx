@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Theme } from '@/lib/types';
+import SectionHeader from '../SectionHeader';
+import { useTheme } from '../ThemeWrapper';
 import { THEME_PRESETS } from '@/lib/builder-constants';
 
 interface RelationshipStatsSectionProps {
@@ -35,7 +37,6 @@ export default function RelationshipStatsSection({ theme, anniversaryDate }: Rel
       const now = new Date();
       const diff = now.getTime() - start.getTime();
       
-      // Ensure non-negative values
       const days = Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
       const months = Math.max(0, Math.floor(days / 30));
       const years = Math.max(0, Math.floor(days / 365));
@@ -46,7 +47,7 @@ export default function RelationshipStatsSection({ theme, anniversaryDate }: Rel
     };
 
     calculateStats();
-    const interval = setInterval(calculateStats, 60000); // Update every minute
+    const interval = setInterval(calculateStats, 60000);
     return () => clearInterval(interval);
   }, [anniversaryDate]);
 
@@ -59,21 +60,17 @@ export default function RelationshipStatsSection({ theme, anniversaryDate }: Rel
 
   return (
     <section 
+      id="relationship-stats"
       className="py-16 px-4"
       style={{ backgroundColor: colors.background }}
     >
       <div className="max-w-4xl mx-auto">
-        <h2 
-          className="text-4xl font-bold text-center mb-12"
-          style={{ 
-            color: colors.primary,
-            fontFamily: typography.headingFont,
-            fontWeight: typography.headingWeight 
-          }}
-        >
-          📊 Our Journey Together
-        </h2>
-        
+        <SectionHeader
+          icon="📊"
+          title="Our Journey Together"
+          subtitle="Stats that show how much time we've shared"
+          theme={theme}
+        />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {statItems.map((item) => (
             <div
@@ -109,4 +106,3 @@ export default function RelationshipStatsSection({ theme, anniversaryDate }: Rel
     </section>
   );
 }
-

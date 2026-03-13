@@ -25,7 +25,7 @@ import PolaroidGallerySection from './sections/PolaroidGallerySection';
 import FirstDateSection from './sections/FirstDateSection';
 import SpecialMomentsSection from './sections/SpecialMomentsSection';
 import ReasonsILoveYouSection from './sections/ReasonsILoveYouSection';
-// MemoryMapSection from './sections/MemoryMapSection'; // SSR issue - disabled for PHASE 2
+import MemoryMapSection from './sections/MemoryMapSection';
 import GuestMessagesSection from './sections/GuestMessagesSection';
 import LetterToFutureSection from './sections/LetterToFutureSection';
 import GiftSection from './sections/GiftSection';
@@ -302,12 +302,12 @@ let sectionIndex = 0;
           )}
 
           {/* 12. Memory Map Section */}
-{/* MemoryMap disabled for PHASE 2 SSR fix {sections.includes('memory_map') && (
+          {sections.includes('memory_map') && (
             <MemoryMapSection 
               theme={theme} 
               locations={sectionContent?.memory_map?.locations}
             />
-          )} */}
+          )}
 
           {/* 13. Letter to Future Section */}
           {sections.includes('letter_future') && (

@@ -1,6 +1,8 @@
 'use client';
 
 import { Theme } from '@/lib/types';
+import SectionHeader from '../SectionHeader';
+import { useTheme } from '../ThemeWrapper';
 import { THEME_PRESETS } from '@/lib/builder-constants';
 
 interface VideoMemory {
@@ -17,6 +19,7 @@ interface VideoMemoriesSectionProps {
 }
 
 export default function VideoMemoriesSection({ theme, videos = [] }: VideoMemoriesSectionProps) {
+  const styles = useTheme(theme);
   const themeConfig = THEME_PRESETS[theme];
   const { colors, typography } = themeConfig;
 
@@ -36,20 +39,17 @@ export default function VideoMemoriesSection({ theme, videos = [] }: VideoMemori
   if (videos.length === 0) {
     return (
       <section 
+        id="video-memories"
         className="py-16 px-4"
         style={{ backgroundColor: colors.background }}
       >
         <div className="max-w-4xl mx-auto">
-          <h2 
-            className="text-4xl font-bold text-center mb-8"
-            style={{ 
-              color: colors.primary,
-              fontFamily: typography.headingFont,
-              fontWeight: typography.headingWeight 
-            }}
-          >
-            🎬 Video Memories
-          </h2>
+        <SectionHeader
+          icon="🎬"
+          title="Video Memories"
+          subtitle="Relive your most precious moments together"
+          theme={theme}
+        />
           <div 
             className="text-center p-12 rounded-2xl"
             style={{ 
@@ -69,20 +69,17 @@ export default function VideoMemoriesSection({ theme, videos = [] }: VideoMemori
 
   return (
     <section 
+      id="video-memories"
       className="py-16 px-4"
       style={{ backgroundColor: colors.background }}
     >
       <div className="max-w-4xl mx-auto">
-        <h2 
-          className="text-4xl font-bold text-center mb-12"
-          style={{ 
-            color: colors.primary,
-            fontFamily: typography.headingFont,
-            fontWeight: typography.headingWeight 
-          }}
-        >
-          🎬 Video Memories
-        </h2>
+        <SectionHeader
+          icon="🎬"
+          title="Video Memories"
+          subtitle="Relive your most precious moments together"
+          theme={theme}
+        />
         
         <div className="grid gap-8">
           {videos.map((video) => (

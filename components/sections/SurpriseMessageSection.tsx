@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { Theme } from '@/lib/types';
+import SectionHeader from '../SectionHeader';
 import ScrollReveal from '../ScrollReveal';
+import { useTheme } from '../ThemeWrapper';
 
 interface SurpriseMessageSectionProps {
   theme: Theme;
@@ -28,18 +30,12 @@ export default function SurpriseMessageSection({
     <section className="py-24 lg:py-32 bg-gradient-to-b from-rose-50/80 to-pink-50/60 backdrop-blur-lg" id="surprise">
       <div className="max-w-4xl mx-auto px-6 lg:px-8">
         <ScrollReveal animation="fade-up">
-          <div className="text-center mb-16 lg:mb-24 max-w-2xl mx-auto">
-            <div className="inline-flex items-center justify-center mb-6 p-2 rounded-2xl bg-white/80 backdrop-blur-sm shadow-2xl ring-2 ring-offset-4 ring-rose-100/50">
-              <span className="text-3xl md:text-4xl drop-shadow-2xl ring-2 ring-offset-2 ring-white/50 shadow-lg text-rose-400">🎉</span>
-            </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight tracking-tight bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent mb-6">
-              A Surprise for You
-            </h2>
-            <div className="w-24 h-1.5 mx-auto mt-4 bg-gradient-to-r from-transparent via-white/90 to-transparent bg-[length:200% 100%] animate-shimmer rounded-full shadow-xl border border-white/50 p-1 backdrop-blur-sm" />
-            <p className="mt-6 text-lg md:text-xl font-medium max-w-xl mx-auto text-rose-700">
-              {hint || 'Click the gift to reveal your surprise! 💕'}
-            </p>
-          </div>
+          <SectionHeader
+            icon="🎉"
+            title="A Surprise for You"
+            subtitle={hint || 'Click the gift to reveal your surprise! 💕'}
+            theme={theme}
+          />
         </ScrollReveal>
 
         <ScrollReveal animation="fade-up" delay={200}>

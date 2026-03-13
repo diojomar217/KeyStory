@@ -1,6 +1,8 @@
 'use client';
 
 import { Theme } from '@/lib/types';
+import SectionHeader from '../SectionHeader';
+import { useTheme } from '../ThemeWrapper';
 import { THEME_PRESETS } from '@/lib/builder-constants';
 
 interface PlaylistSectionProps {
@@ -36,27 +38,17 @@ export default function PlaylistSection({ theme, songLink }: PlaylistSectionProp
 
   return (
     <section 
+      id="playlist"
       className="py-16 px-4"
       style={{ backgroundColor: colors.background }}
     >
       <div className="max-w-4xl mx-auto">
-        <h2 
-          className="text-4xl font-bold text-center mb-8"
-          style={{ 
-            color: colors.primary,
-            fontFamily: typography.headingFont,
-            fontWeight: typography.headingWeight 
-          }}
-        >
-          🎶 Our Playlist
-        </h2>
-        
-        <p 
-          className="text-center mb-8"
-          style={{ color: colors.text }}
-        >
-          Songs that define our relationship
-        </p>
+        <SectionHeader
+          icon="🎶"
+          title="Our Playlist"
+          subtitle="Songs that define our relationship"
+          theme={theme}
+        />
         
         <div 
           className="rounded-2xl overflow-hidden"

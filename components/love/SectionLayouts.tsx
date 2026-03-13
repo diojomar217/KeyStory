@@ -123,7 +123,7 @@ export function GridSectionLayout({
         {/* Header ABOVE grid */}
         {(title || subtitle) && (
           <ScrollReveal animation="fade-up" delay={animationDelay}>
-            <div className="text-center mb-20 lg:mb-28 max-w-4xl mx-auto">
+            <div className="text-center mb-16 lg:mb-24 max-w-3xl mx-auto">
               <SectionHeader
                 icon={icon || '💕'}
                 title={title || ''}
