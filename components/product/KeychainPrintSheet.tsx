@@ -75,7 +75,17 @@ function InsertPair({
   useEffect(() => {
     if (!isClient || !qrDataUrl || !qrRef.current) return;
 
-    const accent = accentColor || '#e11d48';
+    const defaultDesign = {
+      dotsColor: accentColor || '#e11d48',
+      backgroundColor: '#ffffff',
+      cornersColor: accentColor || '#e11d48',
+      dotsType: 'rounded' as const,
+      cornersType: 'extra-rounded' as const,
+      cornersDotType: 'dot' as const,
+      logoUrl: '/heart-icon.svg',
+    };
+    const design = qrDesign || defaultDesign;
+
     const qrCode = new QRCodeStyling({
       width: qrSizePx,
       height: qrSizePx,
@@ -83,21 +93,21 @@ function InsertPair({
       data: qrDataUrl!,
       imageOptions: { crossOrigin: 'anonymous', margin: 4 },
       dotsOptions: { 
-        color: qrDesign?.dotsColor || accent, 
-        type: qrDesign?.dotsType || 'rounded',
+        color: design.dotsColor, 
+        type: design.dotsType,
       },
       backgroundOptions: { 
-        color: qrDesign?.backgroundColor || '#ffffff',
+        color: design.backgroundColor,
       },
       cornersSquareOptions: { 
-        color: qrDesign?.cornersColor || accent, 
-        type: qrDesign?.cornersType || 'extra-rounded',
+        color: design.cornersColor, 
+        type: design.cornersType,
       },
       cornersDotOptions: { 
-        color: qrDesign?.cornersColor || accent, 
-        type: qrDesign?.cornersDotType || 'dot',
+        color: design.cornersColor, 
+        type: design.cornersDotType,
       },
-      image: qrDesign?.logoUrl || '/heart-icon.svg',
+      image: design.logoUrl,
       qrOptions: { 
         errorCorrectionLevel: 'H',
       },
@@ -113,7 +123,7 @@ function InsertPair({
         qrRef.current.innerHTML = '';
       }
     };
-  }, [isClient, qrDataUrl, qrSizePx, accentColor, qrDesign?.dotsColor, qrDesign?.backgroundColor, qrDesign?.cornersColor, qrDesign?.dotsType, qrDesign?.cornersType, qrDesign?.cornersDotType, qrDesign?.logoUrl]);
+  }, [isClient, qrDataUrl, qrSizePx, accentColor, qrDesign]);
 
   return (
     <div

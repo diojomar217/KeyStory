@@ -15,7 +15,7 @@ interface PageProps {
 export default function KeychainPrintPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
-  
+
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,13 +41,13 @@ export default function KeychainPrintPage({ params }: PageProps) {
   };
 
   const [insertConfigs, setInsertConfigs] = useState<InsertConfig[]>([
-    { 
-      size: KEYCHAIN_SIZES[1], 
-      customWidth: 50, 
-      customHeight: 35, 
-      caption: 'Scan our love story', 
-      copies: 12, 
-      photoIndex: 0, 
+    {
+      size: KEYCHAIN_SIZES[1],
+      customWidth: 50,
+      customHeight: 35,
+      caption: 'Scan our love story',
+      copies: 12,
+      photoIndex: 0,
       useCustomQr: false,
       qrDesign: {
         dotsColor: '#e11d48',
@@ -63,6 +63,7 @@ export default function KeychainPrintPage({ params }: PageProps) {
   const [pairsPerRow, setPairsPerRow] = useState(2);
   const [showGuides, setShowGuides] = useState(true);
   const [autoFit, setAutoFit] = useState(true);
+  const [scanWarning, setScanWarning] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -98,16 +99,21 @@ export default function KeychainPrintPage({ params }: PageProps) {
   const config = order?.config || {};
   const coupleNames = order ? `${order.customer_name} & ${order.partner_name}` : '';
   // Safely extract qr_data_url - ensure it's a string
-  const qrDataUrl = typeof config.qr_data_url === 'string' ? config.qr_data_url : undefined;
-  const qrCodeUrl = order?.qr_code_url;
   
+
   const photos = order?.photos || [];
   // Safely extract cover photo index - ensure it's a number
   const coverPhotoIndex = typeof config.cover_photo_index === 'number' ? config.cover_photo_index : 0;
-  
-  const websiteUrl = order?.website_name 
+
+  const websiteUrl = order?.website_name
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/love/${order.website_name}`
     : undefined;
+
+    const qrDataUrl =
+  typeof config.qr_data_url === 'string' && config.qr_data_url.trim() !== ''
+    ? config.qr_data_url
+    : websiteUrl;
+  const qrCodeUrl = order?.qr_code_url;
 
   const handlePrint = () => {
     window.print();
@@ -139,6 +145,29 @@ export default function KeychainPrintPage({ params }: PageProps) {
   const activeConfig = insertConfigs[activeConfigIndex] ?? insertConfigs[0];
   const { widthMm, heightMm } = getActualDimensions(activeConfig);
   const activePhotoUrl = photos[activeConfig.photoIndex] || '';
+
+  // Scanability validation
+  const validateScanability = (dotsColor: string, bgColor: string): string | null => {
+    const getLuminance = (hex: string) => {
+      let r = parseInt(hex.slice(1, 3), 16) / 255;
+      let g = parseInt(hex.slice(3, 5), 16) / 255;
+      let b = parseInt(hex.slice(5, 7), 16) / 255;
+      r = r <= 0.03928 ? r / 12.92 : Math.pow((r + 0.055) / 1.055, 2.4);
+      g = g <= 0.03928 ? g / 12.92 : Math.pow((g + 0.055) / 1.055, 2.4);
+      b = b <= 0.03928 ? b / 12.92 : Math.pow((b + 0.055) / 1.055, 2.4);
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+
+    const lumDots = getLuminance(dotsColor);
+    const lumBg = getLuminance(bgColor);
+    const ratio = lumBg > lumDots ? lumBg / lumDots : lumDots / lumBg;
+
+    if (ratio < 3) return '⚠️ Low contrast - QR may not scan reliably';
+    if (ratio < 4.5) return '⚠️ Poor contrast - test scanning before printing';
+    return null;
+  };
+
+  const activeWarning = activeConfig.useCustomQr ? validateScanability(activeConfig.qrDesign.dotsColor, activeConfig.qrDesign.backgroundColor) : null;
 
   return (
     <>
@@ -467,8 +496,8 @@ export default function KeychainPrintPage({ params }: PageProps) {
                                           cornersDotType: 'square' as const,
                                         }
                                       };
-                                      const newConfigs = insertConfigs.map((config, i) => 
-                                        i === idx 
+                                      const newConfigs = insertConfigs.map((config, i) =>
+                                        i === idx
                                           ? { ...config, qrDesign: { ...config.qrDesign, ...presets[e.target.value as keyof typeof presets] } }
                                           : config
                                       );
@@ -494,8 +523,8 @@ export default function KeychainPrintPage({ params }: PageProps) {
                                     type="color"
                                     value={cfg.qrDesign.dotsColor}
                                     onChange={(e) => {
-                                      const newConfigs = insertConfigs.map((config, i) => 
-                                        i === idx 
+                                      const newConfigs = insertConfigs.map((config, i) =>
+                                        i === idx
                                           ? { ...config, qrDesign: { ...config.qrDesign, dotsColor: e.target.value } }
                                           : config
                                       );
@@ -511,8 +540,8 @@ export default function KeychainPrintPage({ params }: PageProps) {
                                     type="color"
                                     value={cfg.qrDesign.backgroundColor}
                                     onChange={(e) => {
-                                      const newConfigs = insertConfigs.map((config, i) => 
-                                        i === idx 
+                                      const newConfigs = insertConfigs.map((config, i) =>
+                                        i === idx
                                           ? { ...config, qrDesign: { ...config.qrDesign, backgroundColor: e.target.value } }
                                           : config
                                       );
@@ -528,8 +557,8 @@ export default function KeychainPrintPage({ params }: PageProps) {
                                     type="color"
                                     value={cfg.qrDesign.cornersColor}
                                     onChange={(e) => {
-                                      const newConfigs = insertConfigs.map((config, i) => 
-                                        i === idx 
+                                      const newConfigs = insertConfigs.map((config, i) =>
+                                        i === idx
                                           ? { ...config, qrDesign: { ...config.qrDesign, cornersColor: e.target.value } }
                                           : config
                                       );
@@ -544,8 +573,8 @@ export default function KeychainPrintPage({ params }: PageProps) {
                                   <select
                                     value={cfg.qrDesign.dotsType}
                                     onChange={(e) => {
-                                      const newConfigs = insertConfigs.map((config, i) => 
-                                        i === idx 
+                                      const newConfigs = insertConfigs.map((config, i) =>
+                                        i === idx
                                           ? { ...config, qrDesign: { ...config.qrDesign, dotsType: e.target.value as any } }
                                           : config
                                       );
@@ -567,8 +596,8 @@ export default function KeychainPrintPage({ params }: PageProps) {
                                   <select
                                     value={cfg.qrDesign.cornersType}
                                     onChange={(e) => {
-                                      const newConfigs = insertConfigs.map((config, i) => 
-                                        i === idx 
+                                      const newConfigs = insertConfigs.map((config, i) =>
+                                        i === idx
                                           ? { ...config, qrDesign: { ...config.qrDesign, cornersType: e.target.value as any } }
                                           : config
                                       );
@@ -587,8 +616,8 @@ export default function KeychainPrintPage({ params }: PageProps) {
                                   <select
                                     value={cfg.qrDesign.cornersDotType}
                                     onChange={(e) => {
-                                      const newConfigs = insertConfigs.map((config, i) => 
-                                        i === idx 
+                                      const newConfigs = insertConfigs.map((config, i) =>
+                                        i === idx
                                           ? { ...config, qrDesign: { ...config.qrDesign, cornersDotType: e.target.value as any } }
                                           : config
                                       );
@@ -608,8 +637,8 @@ export default function KeychainPrintPage({ params }: PageProps) {
                                   type="url"
                                   value={cfg.qrDesign.logoUrl || ''}
                                   onChange={(e) => {
-                                    const newConfigs = insertConfigs.map((config, i) => 
-                                      i === idx 
+                                    const newConfigs = insertConfigs.map((config, i) =>
+                                      i === idx
                                         ? { ...config, qrDesign: { ...config.qrDesign, logoUrl: e.target.value || undefined } }
                                         : config
                                     );
@@ -637,13 +666,13 @@ export default function KeychainPrintPage({ params }: PageProps) {
                 className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-rose-100 rounded-xl text-rose-700 font-medium hover:bg-rose-200"
                 onClick={() => setInsertConfigs([
                   ...insertConfigs,
-                  { 
-                    size: KEYCHAIN_SIZES[1], 
-                    customWidth: 50, 
-                    customHeight: 35, 
-                    caption: 'Scan our love story', 
-                    copies: 12, 
-                    photoIndex: 0, 
+                  {
+                    size: KEYCHAIN_SIZES[1],
+                    customWidth: 50,
+                    customHeight: 35,
+                    caption: 'Scan our love story',
+                    copies: 12,
+                    photoIndex: 0,
                     useCustomQr: false,
                     qrDesign: {
                       dotsColor: '#e11d48',
@@ -710,6 +739,11 @@ export default function KeychainPrintPage({ params }: PageProps) {
 
           <div className="lg:col-span-8 space-y-6">
             {/* Screen-only: Live Preview */}
+            {activeWarning && (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-sm text-amber-800">{activeWarning}</p>
+              </div>
+            )}
             <KeychainInsertPreview
               widthMm={widthMm}
               heightMm={heightMm}
@@ -749,34 +783,38 @@ export default function KeychainPrintPage({ params }: PageProps) {
       </div>
 
       {/* Print-only: Actual Print Sheet - Only visible when printing */}
-      <div 
-        className="hidden print:block" 
-        style={{ 
-          margin: 0, 
-          padding: 0, 
-          position: 'absolute', 
-          top: 0, 
+      <div
+        className="hidden print:block"
+        style={{
+          margin: 0,
+          padding: 0,
+          position: 'absolute',
+          top: 0,
           left: 0,
-          width: '100%'
+          width: '100%',
         }}
       >
         {insertConfigs.map((cfg, idx) => {
           const { widthMm: cfgWidth, heightMm: cfgHeight } = getActualDimensions(cfg);
           const photoUrl = photos[cfg.photoIndex] || '';
-          return <KeychainPrintSheet
-            key={idx}
-            widthMm={cfgWidth}
-            heightMm={cfgHeight}
-            qrDataUrl={qrDataUrl}
-            qrCodeUrl={qrCodeUrl}
-            coverPhotoUrl={photoUrl}
-            coupleNames={coupleNames}
-            caption={cfg.caption}
-            copies={cfg.copies}
-            pairsPerRow={pairsPerRow}
-            showGuides={showGuides}
-            autoFit={autoFit}
-          />;
+
+          return (
+            <KeychainPrintSheet
+              key={idx}
+              widthMm={cfgWidth}
+              heightMm={cfgHeight}
+              qrDataUrl={qrDataUrl}
+              qrCodeUrl={qrCodeUrl}
+              coverPhotoUrl={photoUrl}
+              coupleNames={coupleNames}
+              caption={cfg.caption}
+              copies={cfg.copies}
+              pairsPerRow={pairsPerRow}
+              showGuides={showGuides}
+              autoFit={autoFit}
+              qrDesign={cfg.useCustomQr ? cfg.qrDesign : undefined}
+            />
+          );
         })}
       </div>
     </>

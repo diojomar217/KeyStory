@@ -71,13 +71,18 @@ export default function QRCardPage({ params }: PageProps) {
   const config = order.config || {};
   const theme: Theme = (config.theme as Theme) || 'romantic_classic';
   // Safely extract qr_data_url - ensure it's a string
-  const qrDataUrl = typeof config.qr_data_url === 'string' ? config.qr_data_url : undefined;
-  const qrCodeUrl = order.qr_code_url;
+  
   
   // Get website URL
   const websiteUrl = order.website_name 
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/love/${order.website_name}`
     : undefined;
+
+    const qrDataUrl =
+  typeof config.qr_data_url === 'string' && config.qr_data_url.trim() !== ''
+    ? config.qr_data_url
+    : websiteUrl;
+  const qrCodeUrl = order.qr_code_url;
 
   return (
     <>

@@ -11,7 +11,7 @@ interface KeychainInsertPreviewProps {
   coverPhotoUrl?: string;
   coupleNames: string;
   caption?: string;
-  qrDesign?: {
+    qrDesign?: {
     dotsColor: string;
     backgroundColor: string;
     cornersColor: string;
