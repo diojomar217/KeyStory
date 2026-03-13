@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
-import QRCard from '@/components/product/QRCard';
+import QRCard from '@/components/ui/QRCard';
 import PrintableCardLayout from '@/components/product/PrintableCardLayout';
 import PrintActions from '@/components/product/PrintActions';
 import { Order } from '@/lib/supabase';

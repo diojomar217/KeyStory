@@ -5,33 +5,32 @@
 // This file provides the connection between section registry and actual
 // React components that render each section.
 
-import { Section, Theme, TimelineEvent } from './types';
+import { Section, Theme, TimelineEvent, Participant } from './types';
 
-// Import main section components
-import HomeSection from '@/components/HomeSection';
-import GallerySection from '@/components/GallerySection';
-import TimelineSection from '@/components/TimelineSection';
-import SongSection from '@/components/SongSection';
-import LoveLetterSection from '@/components/LoveLetterSection';
+// Import shared sections
+import HomeSection from '@/components/page/HomeSection';
+import GallerySection from '@/components/sections/shared/GallerySection';
+import TimelineSection from '@/components/sections/shared/TimelineSection';
+import SongSection from '@/components/sections/shared/SongSection';
+import AnniversaryCountdownSection from '@/components/sections/couple/AnniversaryCountdownSection';
+import MemoryMapSection from '@/components/sections/shared/MemoryMapSection';
+import GuestMessagesSection from '@/components/sections/shared/GuestMessagesSection';
+import VideoMemoriesSection from '@/components/sections/shared/VideoMemoriesSection';
+import PlaylistSection from '@/components/sections/shared/PlaylistSection';
 
-// Import additional section components
-import QuotesSection from '@/components/sections/QuotesSection';
-import OurStorySection from '@/components/sections/OurStorySection';
-import MilestonesSection from '@/components/sections/MilestonesSection';
-import FutureDreamsSection from '@/components/sections/FutureDreamsSection';
-import VideoMemoriesSection from '@/components/sections/VideoMemoriesSection';
-import RelationshipStatsSection from '@/components/sections/RelationshipStatsSection';
-import AnniversaryCountdownSection from '@/components/sections/AnniversaryCountdownSection';
-import PolaroidGallerySection from '@/components/sections/PolaroidGallerySection';
-import FirstDateSection from '@/components/sections/FirstDateSection';
-import SpecialMomentsSection from '@/components/sections/SpecialMomentsSection';
-import ReasonsILoveYouSection from '@/components/sections/ReasonsILoveYouSection';
-import MemoryMapSection from '@/components/sections/MemoryMapSection';
-import GuestMessagesSection from '@/components/sections/GuestMessagesSection';
-import LetterToFutureSection from '@/components/sections/LetterToFutureSection';
-import GiftSection from '@/components/sections/GiftSection';
-import SurpriseMessageSection from '@/components/sections/SurpriseMessageSection';
-import PlaylistSection from '@/components/sections/PlaylistSection';
+// Import couple-specific sections
+import LoveLetterSection from '@/components/sections/couple/LoveLetterSection';
+import QuotesSection from '@/components/sections/couple/QuotesSection';
+import OurStorySection from '@/components/sections/couple/OurStorySection';
+import ReasonsILoveYouSection from '@/components/sections/couple/ReasonsILoveYouSection';
+import FirstDateSection from '@/components/sections/couple/FirstDateSection';
+import SpecialMomentsSection from '@/components/sections/couple/SpecialMomentsSection';
+import MilestonesSection from '@/components/sections/couple/MilestonesSection';
+import RelationshipStatsSection from '@/components/sections/couple/RelationshipStatsSection';
+import FutureDreamsSection from '@/components/sections/couple/FutureDreamsSection';
+import LetterToFutureSection from '@/components/sections/couple/LetterToFutureSection';
+import GiftSection from '@/components/sections/couple/GiftSection';
+import SurpriseMessageSection from '@/components/sections/couple/SurpriseMessageSection';
 
 // ============================================
 // SECTION RENDERER PROPS - Base interface for all section renderers
@@ -43,9 +42,8 @@ export interface BaseSectionProps {
 
 export interface HomeSectionProps extends BaseSectionProps {
   template: string;
-  customerName: string;
-  partnerName: string;
-  anniversaryDate: string;
+  participants: Participant[];
+  specialDate: string;
   message: string;
   tagline?: string;
   photos: string[];
@@ -95,9 +93,8 @@ export const SECTION_RENDERERS: Record<Section, {
     getProps: (config) => ({
       theme: config.theme,
       template: config.section_templates?.home || config.home_template || 'hero_centered',
-      customerName: config.customerName,
-      partnerName: config.partnerName,
-      anniversaryDate: config.anniversaryDate,
+      participants: config.participants || [{name: config.customerName || ''}, {name: config.partnerName || '', role: 'partner'}],
+      specialDate: config.specialDate || config.anniversaryDate || '',
       message: config.message,
       tagline: config.tagline,
       photos: config.photos || [],
@@ -145,8 +142,7 @@ export const SECTION_RENDERERS: Record<Section, {
     component: OurStorySection,
     getProps: (config) => ({
       theme: config.theme,
-      customerName: config.customerName,
-      partnerName: config.partnerName,
+      participants: config.participants || [{name: config.customerName || ''}, {name: config.partnerName || '', role: 'partner'}],
     }),
   },
   

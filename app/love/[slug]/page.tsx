@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
 import { Theme, HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent } from '@/lib/types';
-import LovePageClient from '@/components/LovePageClient';
+import LovePageClient from '@/components/page/LovePageClient';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -105,9 +105,11 @@ export default async function LovePage({ params }: PageProps) {
       homeTemplate={homeTemplate}
       galleryTemplate={galleryTemplate}
       timelineTemplate={timelineTemplate}
-      customerName={data.customer_name}
-      partnerName={data.partner_name}
-      anniversaryDate={data.anniversary_date}
+      participants={data.customer_name && data.partner_name ? [
+        {name: data.customer_name},
+        {name: data.partner_name, role: 'partner'}
+      ] : []}
+      specialDate={data.anniversary_date}
       message={data.message}
       tagline={tagline}
       photos={photos}

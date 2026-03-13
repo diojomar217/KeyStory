@@ -12,14 +12,14 @@ import {
   getStepConfig 
 } from '@/lib/builder-steps-config';
 import { getTemplateSections, getSectionMetadata, getSectionTemplates } from '@/lib/section-registry';
-import ThemeSelector from '@/components/ThemeSelector';
-import SectionSelector from '@/components/SectionSelector';
-import TemplateSelector from '@/components/TemplateSelector';
-import LayoutPresetSelector from '@/components/LayoutPresetSelector';
-import TimelineEditor from '@/components/TimelineEditor';
-import LivePreview from '@/components/LivePreview';
-import StepNavigator from '@/components/StepNavigator';
-import SummaryPanel from '@/components/SummaryPanel';
+import ThemeSelector from '@/components/builder/ThemeSelector';
+import SectionSelector from '@/components/builder/SectionSelector';
+import TemplateSelector from '@/components/builder/TemplateSelector';
+import LayoutPresetSelector from '@/components/builder/LayoutPresetSelector';
+import TimelineEditor from '@/components/builder/TimelineEditor';
+import LivePreview from '@/components/builder/LivePreview';
+import StepNavigator from '@/components/builder/StepNavigator';
+import SummaryPanel from '@/components/builder/SummaryPanel';
 import {
   TextContentInput,
   UrlContentInput,
