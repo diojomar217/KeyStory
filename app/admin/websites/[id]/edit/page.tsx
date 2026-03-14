@@ -22,6 +22,8 @@ type LocalForm = {
   song_link: string;
   photos: File[];
   existingPhotos: string[];
+  occasion: 'couple' | 'birthday';
+  participants: { id: string; name: string; role?: string }[];
 };
 
 const validateStep = (
@@ -158,6 +160,11 @@ export default function EditWebsitePage() {
     song_link: '',
     photos: [],
     existingPhotos: [],
+    occasion: 'couple',
+    participants: [
+      { id: 'customer', name: '', role: 'primary' },
+      { id: 'partner', name: '', role: 'partner' },
+    ],
   });
 
 const [config, setConfig] = useState<SiteConfig>({
@@ -214,6 +221,11 @@ const [config, setConfig] = useState<SiteConfig>({
           song_link: site.config?.media?.song_link || site.song_link || '',
           photos: [],
           existingPhotos: site.config?.media?.photos || site.photos || [],
+          occasion: occasionValue as 'couple' | 'birthday',
+          participants: [
+            { id: 'customer', name: customerName, role: 'primary' },
+            { id: 'partner', name: partnerName, role: 'partner' },
+          ],
         });
 
         setPhotoPreviews(site.photos || []);
