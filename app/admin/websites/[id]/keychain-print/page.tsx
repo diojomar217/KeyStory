@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import KeychainTypeSelector from '@/components/product/KeychainTypeSelector';
 import KeychainInsertPreview from '@/components/product/KeychainInsertPreview';
 import KeychainPrintSheet from '@/components/product/KeychainPrintSheet';
-import { Order } from '@/lib/supabase';
+import { Site } from '@/lib/supabase';
 import { KeychainSize, KEYCHAIN_SIZES } from '@/components/product/KeychainSizeConfig';
 
 interface PageProps {
@@ -16,7 +16,7 @@ export default function KeychainPrintPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
 
-  const [order, setOrder] = useState<Order | null>(null);
+  const [order, setOrder] = useState<Site | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -76,8 +76,8 @@ export default function KeychainPrintPage({ params }: PageProps) {
       const res = await fetch(`/api/admin?id=${id}`);
       const data = await res.json();
 
-      if (data.order) {
-        setOrder(data.order);
+      if (data.site || data.order) {
+        setOrder((data.site || data.order) as Site);
       } else {
         setError('Website not found');
       }
@@ -97,16 +97,18 @@ export default function KeychainPrintPage({ params }: PageProps) {
   };
 
   const config = order?.config || {};
-  const coupleNames = order ? `${order.customer_name} & ${order.partner_name}` : '';
-  // Safely extract qr_data_url - ensure it's a string
-  
+  const customerName = config?.people?.primary || order?.customer_name || 'Your Name';
+  const partnerName = config?.people?.secondary || order?.partner_name || 'Partner Name';
+  const coupleNames = `${customerName} & ${partnerName}`;
 
-  const photos = order?.photos || [];
+  const photos = Array.isArray(config?.media?.photos)
+    ? config.media.photos
+    : order?.photos || [];
   // Safely extract cover photo index - ensure it's a number
   const coverPhotoIndex = typeof config.cover_photo_index === 'number' ? config.cover_photo_index : 0;
 
   const websiteUrl = order?.website_name
-    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/love/${order.website_name}`
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/site/${order.website_name}`
     : undefined;
 
     const qrDataUrl =
@@ -396,7 +398,7 @@ export default function KeychainPrintPage({ params }: PageProps) {
                             }}
                             className="mt-1 border rounded px-2 py-1 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-slate-900"
                           >
-                            {photos.map((url, pidx) => (
+                            {photos.map((url: string, pidx: number) => (
                               <option key={pidx} value={pidx}>
                                 Photo {pidx + 1}
                               </option>

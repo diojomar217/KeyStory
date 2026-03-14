@@ -69,7 +69,7 @@ export default function WebsiteActions({
 
       {/* View Website Button */}
       <a
-        href={`/love/${slug}`}
+        href={`/site/${slug}`}
         target="_blank"
         rel="noopener noreferrer"
         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 hover:scale-110"

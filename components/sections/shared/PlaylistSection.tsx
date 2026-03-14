@@ -7,10 +7,11 @@ import { THEME_PRESETS } from '@/lib/builder-constants';
 
 interface PlaylistSectionProps {
   theme: Theme;
+  siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
   songLink?: string;
 }
 
-export default function PlaylistSection({ theme, songLink }: PlaylistSectionProps) {
+export default function PlaylistSection({ theme, siteType = 'couple', songLink }: PlaylistSectionProps) {
   const themeConfig = THEME_PRESETS[theme];
   const { colors, typography } = themeConfig;
 
@@ -44,9 +45,9 @@ export default function PlaylistSection({ theme, songLink }: PlaylistSectionProp
     >
       <div className="max-w-4xl mx-auto">
         <SectionHeader
-          icon="🎶"
-          title="Our Playlist"
-          subtitle="Songs that define our relationship"
+          icon={siteType === 'birthday' ? '🎵' : '🎶'}
+          title={siteType === 'birthday' ? 'Birthday Playlist' : 'Our Playlist'}
+          subtitle={siteType === 'birthday' ? 'Tunes to celebrate the day' : 'Songs that define our relationship'}
           theme={theme}
         />
         

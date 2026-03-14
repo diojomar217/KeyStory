@@ -11,41 +11,42 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // order type shared across client/server
-export type Order = {
+export type Site = {
   id?: string;
   slug: string;
-  website_name?: string; // human-readable identifier used in URL
-  customer_name: string;
-  partner_name: string;
-  anniversary_date: string;
-  message: string;
-  tagline?: string; // Added - stored in config but exposed at top level
-  photos: string[];
-  song_link?: string;
+  website_name?: string;
+  site_type?: string;
+  status?: string;
   qr_code_url?: string;
-
-  // individual config columns (optional)
+  config?: any;
   theme?: string;
   sections?: string[];
   home_template?: string;
   gallery_template?: string;
   timeline_template?: string;
-  timeline_events?: unknown;
-
-  config?: Record<string, unknown>;
-  status?: string;
+  timeline_events?: any[];
   created_at?: string;
+
+  // Legacy fields (backwards compatibility)
+  customer_name?: string;
+  partner_name?: string;
+  anniversary_date?: string;
+  specialDate?: string;
+  message?: string;
+  tagline?: string;
+  song_link?: string;
+  photos?: string[];
 };
 
-export async function insertOrder(order: Order) {
-  const { data, error } = await supabase.from('orders').insert(order).select().single();
+export async function insertSite(site: Site) {
+  const { data, error } = await supabase.from('sites').insert(site).select().single();
   if (error) throw error;
   return data;
 }
 
-export async function updateOrder(id: string, updates: Partial<Order>) {
+export async function updateSite(id: string, updates: Partial<Site>) {
   const { data, error } = await supabase
-    .from('orders')
+    .from('sites')
     .update(updates)
     .eq('id', id)
     .select()
@@ -54,26 +55,27 @@ export async function updateOrder(id: string, updates: Partial<Order>) {
   return data;
 }
 
-export async function deleteOrder(id: string) {
-  const { error } = await supabase.from('orders').delete().eq('id', id);
+export async function deleteSite(id: string) {
+  const { error } = await supabase.from('sites').delete().eq('id', id);
   if (error) throw error;
 }
 
-export async function getOrders() {
+export async function getSites() {
   const { data, error } = await supabase
-    .from('orders')
+    .from('sites')
     .select('*')
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data;
 }
 
-export async function getOrderById(id: string) {
+export async function getSiteById(id: string) {
   const { data, error } = await supabase
-    .from('orders')
+    .from('sites')
     .select('*')
     .eq('id', id)
     .single();
   if (error) throw error;
   return data;
 }
+

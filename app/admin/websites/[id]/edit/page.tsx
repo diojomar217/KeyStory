@@ -7,19 +7,23 @@ import SectionSelector from '@/components/builder/SectionSelector';
 import TemplateSelector from '@/components/builder/TemplateSelector';
 import TimelineEditor from '@/components/builder/TimelineEditor';
 import SectionContentInputs from '@/components/builder/SectionContentInputs';
+import SummaryPanel from '@/components/builder/SummaryPanel';
 import { SiteConfig, Theme, Section, SectionContentMap } from '@/lib/types';
-import { Order } from '@/lib/supabase';
+import { Site } from '@/lib/supabase';
 
 type LocalForm = {
   website_name: string;
   customer_name: string;
   partner_name: string;
   anniversary_date: string;
+  specialDate: string;
   message: string;
   tagline: string;
   song_link: string;
   photos: File[];
   existingPhotos: string[];
+  occasion: 'couple' | 'birthday';
+  participants: { id: string; name: string; role?: string }[];
 };
 
 const validateStep = (
@@ -33,16 +37,13 @@ const validateStep = (
         return { valid: false, error: 'Website name is required' };
       }
       if (!form.customer_name.trim()) {
-        return { valid: false, error: 'Your name is required' };
+        return { valid: false, error: config.occasion === 'couple' ? 'Your name is required' : 'Celebrant name is required' };
       }
-      if (!form.partner_name.trim()) {
+      if (config.occasion === 'couple' && !form.partner_name.trim()) {
         return { valid: false, error: "Partner's name is required" };
       }
-      if (!form.anniversary_date) {
-        return { valid: false, error: 'Anniversary date is required' };
-      }
-      if (!form.message.trim()) {
-        return { valid: false, error: 'Love message is required' };
+      if (!form.specialDate && !form.anniversary_date) {
+        return { valid: false, error: config.occasion === 'couple' ? 'Anniversary date is required' : 'Birth date is required' };
       }
       return { valid: true };
 
@@ -153,11 +154,17 @@ export default function EditWebsitePage() {
     customer_name: '',
     partner_name: '',
     anniversary_date: '',
+    specialDate: '',
     message: '',
     tagline: '',
     song_link: '',
     photos: [],
     existingPhotos: [],
+    occasion: 'couple',
+    participants: [
+      { id: 'customer', name: '', role: 'primary' },
+      { id: 'partner', name: '', role: 'partner' },
+    ],
   });
 
 const [config, setConfig] = useState<SiteConfig>({
@@ -192,54 +199,76 @@ const [config, setConfig] = useState<SiteConfig>({
       const res = await fetch(`/api/admin?id=${id}`);
       const data = await res.json();
 
-      if (data.order) {
-        const order: Order = data.order;
+      if (data.site || data.order) {
+        const site: Site = (data.site || data.order) as Site;
         // Safely extract tagline - it could be in config or at top level
-        const taglineValue = typeof order.tagline === 'string' 
-          ? order.tagline 
-          : (typeof order.config?.tagline === 'string' ? order.config.tagline : '');
-          
+        const taglineValue = typeof site.tagline === 'string' 
+          ? site.tagline 
+          : (typeof site.config?.tagline === 'string' ? site.config.tagline : '');
+
+        const customerName = site.config?.people?.primary || site.customer_name || '';
+        const partnerName = site.config?.people?.secondary || site.partner_name || '';
+        const anniversaryDateValue = site.config?.dates?.special_date || site.specialDate || site.anniversary_date || '';
+
+        const partnerFromData = (site.config?.people?.secondary || site.partner_name || '').toString().trim();
+        const customerFromData = (site.config?.people?.primary || site.customer_name || '').toString().trim();
+        const declaredOccasion = (site.config?.occasion || site.site_type) as 'couple' | 'birthday' | undefined;
+        const occasionValue = declaredOccasion
+          ? declaredOccasion
+          : partnerFromData
+          ? 'couple'
+          : customerFromData
+          ? 'birthday'
+          : 'couple';
+
         setForm({
-          website_name: order.website_name || order.slug || '',
-          customer_name: order.customer_name || '',
-          partner_name: order.partner_name || '',
-          anniversary_date: order.anniversary_date || '',
-          message: order.message || '',
+          website_name: site.website_name || site.slug || '',
+          customer_name: customerName,
+          partner_name: partnerName,
+          anniversary_date: anniversaryDateValue,
+          specialDate: anniversaryDateValue,
+          message: site.config?.message || site.message || '',
           tagline: taglineValue,
-          song_link: order.song_link || '',
+          song_link: site.config?.media?.song_link || site.song_link || '',
           photos: [],
-          existingPhotos: order.photos || [],
+          existingPhotos: site.config?.media?.photos || site.photos || [],
+          occasion: occasionValue,
+          participants: [
+            { id: 'customer', name: customerName, role: 'primary' },
+            { id: 'partner', name: partnerName, role: 'partner' },
+          ],
         });
 
-        setPhotoPreviews(order.photos || []);
+        setPhotoPreviews(site.photos || []);
 
         // Safely extract sections - ensure it's an array and cast to Section[]
-        const rawSections = Array.isArray(order.config?.sections) 
-          ? order.config.sections 
-          : (Array.isArray(order.sections) ? order.sections : ['home']);
+        const siteAny = site as any;
+        const rawSections = Array.isArray(site.config?.sections)
+          ? site.config.sections
+          : (Array.isArray(siteAny.sections) ? siteAny.sections : ['home']);
         const sectionsValue: Section[] = rawSections as Section[];
           
         // Safely extract template values with proper type assertions
-        const homeTemplateValue = order.config?.home_template || order.home_template;
-        const galleryTemplateValue = order.config?.gallery_template || order.gallery_template;
-        const timelineTemplateValue = order.config?.timeline_template || order.timeline_template;
+        const homeTemplateValue = site.config?.home_template || siteAny.home_template;
+        const galleryTemplateValue = site.config?.gallery_template || siteAny.gallery_template;
+        const timelineTemplateValue = site.config?.timeline_template || siteAny.timeline_template;
         
         // Safely extract timeline events
-        const timelineEventsValue = Array.isArray(order.config?.timeline_events) 
-          ? order.config.timeline_events 
-          : (Array.isArray(order.timeline_events) ? order.timeline_events : []);
+        const timelineEventsValue = Array.isArray(site.config?.timeline_events)
+          ? site.config.timeline_events
+          : (Array.isArray(siteAny.timeline_events) ? siteAny.timeline_events : []);
           
         // Safely extract cover photo index (only from config)
-        const coverPhotoIndexValue = typeof order.config?.cover_photo_index === 'number' 
-          ? order.config.cover_photo_index 
+        const coverPhotoIndexValue = typeof site.config?.cover_photo_index === 'number'
+          ? site.config.cover_photo_index
           : undefined;
-          
+
         // Safely extract section_content (new feature)
-        const sectionContentValue = order.config?.section_content || {};
-          
+        const sectionContentValue = site.config?.section_content || {};
+
         setConfig({
-          occasion: 'couple' as const,
-          theme: (order.config?.theme || order.theme) as Theme || 'romantic_classic',
+          occasion: occasionValue as 'couple' | 'birthday',
+          theme: (site.config?.theme || siteAny.theme) as Theme || 'romantic_classic',
           sections: sectionsValue,
           home_template: homeTemplateValue as SiteConfig['home_template'],
           gallery_template: galleryTemplateValue as SiteConfig['gallery_template'],
@@ -319,7 +348,7 @@ const [config, setConfig] = useState<SiteConfig>({
       setCompletedSteps([...completedSteps, currentStep]);
     }
 
-    if (currentStep < 5) {
+    if (currentStep < 6) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -331,9 +360,7 @@ const [config, setConfig] = useState<SiteConfig>({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     const validation = validateStep(5, form, config);
     if (!validation.valid) {
       setError(validation.error || 'Please complete all required content');
@@ -367,10 +394,11 @@ const [config, setConfig] = useState<SiteConfig>({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id,
-          website_name: form.website_name,
-          customer_name: form.customer_name,
+          website_name: form.website_name,          site_type: config.occasion,
+          occasion: config.occasion,          customer_name: form.customer_name,
           partner_name: form.partner_name,
-          anniversary_date: form.anniversary_date,
+          specialDate: form.specialDate || form.anniversary_date,
+          anniversary_date: form.specialDate || form.anniversary_date,
           message: form.message,
           tagline: form.tagline,
           song_link: form.song_link,
@@ -403,7 +431,7 @@ const [config, setConfig] = useState<SiteConfig>({
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Website Name</label>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-400 text-sm">yoursite.com/love/</span>
+                  <span className="text-slate-400 text-sm">yoursite.com/site/</span>
                   <input
                     name="website_name"
                     required
@@ -415,7 +443,9 @@ const [config, setConfig] = useState<SiteConfig>({
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Your Name</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    {config.occasion === 'couple' ? 'Your Name' : 'Celebrant Name'}
+                  </label>
                   <input
                     name="customer_name"
                     required
@@ -424,58 +454,26 @@ const [config, setConfig] = useState<SiteConfig>({
                     onChange={handleChange}
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Partner's Name</label>
-                  <input
-                    name="partner_name"
-                    required
-                    value={form.partner_name}
-                    className="w-full px-4 py-3 rounded-lg border border-slate-300 text-slate-900 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
-                    onChange={handleChange}
-                  />
-                </div>
+                {config.occasion === 'couple' && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Partner's Name</label>
+                    <input
+                      name="partner_name"
+                      required
+                      value={form.partner_name}
+                      className="w-full px-4 py-3 rounded-lg border border-slate-300 text-slate-900 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
+                      onChange={handleChange}
+                    />
+                  </div>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Anniversary Date</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Special Date</label>
                 <input
-                  name="anniversary_date"
+                  name="specialDate"
                   required
                   type="date"
-                  value={form.anniversary_date}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-300 text-slate-900 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
-                  onChange={handleChange}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Love Message</label>
-                <textarea
-                  name="message"
-                  required
-                  rows={3}
-                  value={form.message}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-300 text-slate-900 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
-                  onChange={handleChange}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Hero Tagline</label>
-                <input
-                  name="tagline"
-                  maxLength={120}
-                  placeholder="Every love story is beautiful, but ours is my favorite."
-                  value={form.tagline}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
-                  onChange={handleChange}
-                />
-                <p className="text-xs text-slate-400 mt-1">
-                  A short romantic line shown in the hero section. (Max 120 characters)
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Song Link (Optional)</label>
-                <input
-                  name="song_link"
-                  value={form.song_link}
+                  value={form.specialDate}
                   className="w-full px-4 py-3 rounded-lg border border-slate-300 text-slate-900 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
                   onChange={handleChange}
                 />
@@ -483,6 +481,7 @@ const [config, setConfig] = useState<SiteConfig>({
             </div>
           </div>
         );
+
 
       case 2:
         return (
@@ -496,7 +495,11 @@ const [config, setConfig] = useState<SiteConfig>({
         return (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
             <h2 className="text-lg font-semibold text-slate-900 mb-6">Select Website Sections</h2>
-            <SectionSelector value={config.sections} onChange={(sections) => handleConfigChange({ sections })} />
+            <SectionSelector
+              value={config.sections}
+              occasion={config.occasion || 'couple'}
+              onChange={(sections) => handleConfigChange({ sections })}
+            />
           </div>
         );
 
@@ -538,7 +541,48 @@ const [config, setConfig] = useState<SiteConfig>({
         return (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-6">
             <h2 className="text-lg font-semibold text-slate-900">Add Your Content</h2>
-            
+
+            {config.sections.includes('home') && (
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                <h3 className="text-sm font-semibold text-slate-700 mb-2">Hero Tagline</h3>
+                <input
+                  name="tagline"
+                  maxLength={120}
+                  placeholder="Every love story is beautiful, but ours is my favorite."
+                  value={form.tagline}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                  onChange={handleChange}
+                />
+                <p className="text-xs text-slate-400 mt-1">A short romantic line shown in the hero section. (Max 120 characters)</p>
+              </div>
+            )}
+
+            {config.sections.includes('love_letter') && (
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                <h3 className="text-sm font-semibold text-slate-700 mb-2">Your Love Message</h3>
+                <textarea
+                  name="message"
+                  rows={4}
+                  placeholder="Write a heartfelt message for your partner..."
+                  value={form.message}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all resize-none"
+                  onChange={handleChange}
+                />
+              </div>
+            )}
+
+            {config.sections.includes('song') && (
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                <h3 className="text-sm font-semibold text-slate-700 mb-2">Song Link (Optional)</h3>
+                <input
+                  name="song_link"
+                  value={form.song_link}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                  onChange={handleChange}
+                />
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Photos {config.sections.includes('gallery') && <span className="text-rose-500">*</span>}
@@ -548,7 +592,6 @@ const [config, setConfig] = useState<SiteConfig>({
                 type="file"
                 accept="image/*"
                 multiple
-                max={15}
                 className="w-full px-4 py-3 rounded-lg border border-slate-300 bg-slate-50"
                 onChange={handlePhotos}
               />
@@ -580,9 +623,7 @@ const [config, setConfig] = useState<SiteConfig>({
 
             {config.sections.includes('timeline') && (
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-3">
-                  Timeline Events <span className="text-rose-500">*</span>
-                </label>
+                <label className="block text-sm font-medium text-slate-700 mb-3">Timeline Events <span className="text-rose-500">*</span></label>
                 <TimelineEditor
                   events={config.timeline_events || []}
                   onChange={(timeline_events) => handleConfigChange({ timeline_events })}
@@ -594,6 +635,18 @@ const [config, setConfig] = useState<SiteConfig>({
             <SectionContentInputs
               config={config}
               onSectionContentChange={handleSectionContentChange}
+            />
+          </div>
+        );
+
+      case 6:
+        return (
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-6">
+            <h2 className="text-lg font-semibold text-slate-900">Review</h2>
+            <SummaryPanel
+              config={config}
+              form={form}
+              onEditSection={(step) => setCurrentStep(step)}
             />
           </div>
         );
@@ -624,7 +677,7 @@ const [config, setConfig] = useState<SiteConfig>({
         
         <div className="flex gap-4 justify-center">
           <a
-            href={`/love/${form.website_name}`}
+            href={`/site/${form.website_name}`}
             target="_blank"
             className="px-6 py-3 bg-rose-600 text-white font-medium rounded-lg hover:bg-rose-700"
           >
@@ -641,6 +694,13 @@ const [config, setConfig] = useState<SiteConfig>({
     );
   }
 
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (currentStep === 6) {
+      await handleSubmit();
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -655,7 +715,7 @@ const [config, setConfig] = useState<SiteConfig>({
 
       {/* Step Indicator */}
       <div className="flex items-center gap-2">
-        {[1, 2, 3, 4, 5].map((step) => (
+        {[1, 2, 3, 4, 5, 6].map((step) => (
           <button
             key={step}
             onClick={() => {
@@ -672,7 +732,17 @@ const [config, setConfig] = useState<SiteConfig>({
                 : 'bg-slate-100 text-slate-600'
             }`}
           >
-            {step === 1 ? 'Info' : step === 2 ? 'Theme' : step === 3 ? 'Sections' : step === 4 ? 'Templates' : 'Content'}
+            {step === 1
+              ? 'Info'
+              : step === 2
+              ? 'Theme'
+              : step === 3
+              ? 'Sections'
+              : step === 4
+              ? 'Templates'
+              : step === 5
+              ? 'Content'
+              : 'Review'}
           </button>
         ))}
       </div>
@@ -683,7 +753,7 @@ const [config, setConfig] = useState<SiteConfig>({
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleFormSubmit}>
         {renderStepContent()}
 
         <div className="flex justify-between mt-6">
@@ -699,13 +769,13 @@ const [config, setConfig] = useState<SiteConfig>({
             <div></div>
           )}
 
-          {currentStep < 5 ? (
+          {currentStep < 6 ? (
             <button
               type="button"
               onClick={handleNext}
               className="px-6 py-3 bg-rose-600 text-white font-medium rounded-lg hover:bg-rose-700"
             >
-              Continue
+              {currentStep === 5 ? 'Next: Review' : 'Continue'}
             </button>
           ) : (
             <button

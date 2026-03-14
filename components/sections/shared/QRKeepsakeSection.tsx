@@ -80,9 +80,9 @@ export default function QRKeepsakeSection({
   // Get the link URL for the QR code
   const getQRLinkUrl = () => {
     if (typeof window !== 'undefined') {
-      return window.location.origin + '/love/' + slug;
+      return window.location.origin + '/site/' + slug;
     }
-    return '/love/' + slug;
+    return '/site/' + slug;
   };
 
   // Handle download of the QR card
@@ -296,7 +296,7 @@ export default function QRKeepsakeSection({
                 {/* Link hint */}
                 {slug && (
                   <p className={`mt-5 text-xs ${styles.textMuted}`}>
-                    or visit: yourdomain.com/love/{slug}
+                    or visit: yourdomain.com/site/{slug}
                   </p>
                 )}
               </div>

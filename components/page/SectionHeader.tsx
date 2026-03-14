@@ -104,6 +104,12 @@ const themeAccents: Record<Theme, { icon: string; title: string; subtitle: strin
     subtitle: 'text-violet-600',
     line: 'from-violet-300 via-purple-200 to-violet-300',
   },
+  colorful_celebration: {
+    icon: 'text-amber-500',
+    title: 'text-orange-900',
+    subtitle: 'text-orange-700',
+    line: 'from-yellow-300 via-orange-300 to-pink-300',
+  },
   photo_focus: {
     icon: 'text-slate-500',
     title: 'text-slate-900',

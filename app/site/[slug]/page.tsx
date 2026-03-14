@@ -1,4 +1,4 @@
-﻿import { Metadata } from 'next';
+import { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
 import { Theme, HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent } from '@/lib/types';
 import LovePageClient from '@/components/page/LovePageClient';
@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function LovePage({ params }: PageProps) {
   const { slug } = await params;
   
-  // Fetch order from Supabase using slug
+  // Fetch site from Supabase using slug
   const { data, error } = await supabase
     .from('sites')
     .select('*')
@@ -65,7 +65,7 @@ export default async function LovePage({ params }: PageProps) {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-rose-50 to-pink-50 px-4">
         <div className="text-center p-6 rounded-lg shadow-md bg-white/80">
           <h1 className="text-3xl font-serif text-rose-900 mb-4">Page Not Found</h1>
-          <p className="text-rose-700">This love story doesn&apos;t exist or the link is invalid.</p>
+          <p className="text-rose-700">This site doesn&apos;t exist or the link is invalid.</p>
         </div>
       </div>
     );
@@ -108,7 +108,7 @@ export default async function LovePage({ params }: PageProps) {
   // Get cover photo index from config
   const coverPhotoIndex = config.cover_photo_index;
 
-  // Get QR data URL from config
+  // Get QR data url from config
   const qrDataUrl = config.qr_data_url || data.qr_code_url;
 
   const siteType = (data.site_type as 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary') || 'couple';
@@ -119,7 +119,7 @@ export default async function LovePage({ params }: PageProps) {
   const songLink = config?.media?.song_link || data.song_link || '';
 
   return (
-      <LovePageClient
+    <LovePageClient
         siteType={siteType}
         config={config}
         slug={slug}

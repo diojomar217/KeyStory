@@ -33,6 +33,14 @@ import LetterToFutureSection from '@/components/sections/couple/LetterToFutureSe
 import GiftSection from '@/components/sections/couple/GiftSection';
 import SurpriseMessageSection from '@/components/sections/couple/SurpriseMessageSection';
 
+// Birthday-specific sections
+import BirthdayMessageSection from '@/components/sections/birthday/BirthdayMessageSection';
+import BirthdayWishesSection from '@/components/sections/birthday/BirthdayWishesSection';
+import BirthdayCountdownSection from '@/components/sections/birthday/BirthdayCountdownSection';
+import BirthdayTimelineSection from '@/components/sections/birthday/BirthdayTimelineSection';
+import PartyDetailsSection from '@/components/sections/birthday/PartyDetailsSection';
+import GiftWishlistSection from '@/components/sections/birthday/GiftWishlistSection';
+
 // ============================================
 // SECTION RENDERER PROPS - Base interface for all section renderers
 // ============================================
@@ -241,6 +249,53 @@ home: {
     component: MemoryMapSection,
     getProps: (config) => ({
       theme: config.theme,
+    }),
+  },
+  
+  birthday_message: {
+    component: BirthdayMessageSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      message: config.message || 'Happy Birthday! Wishing you all the best.',
+    }),
+  },
+  birthday_wishes: {
+    component: BirthdayWishesSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      wishes: config.birthday_wishes || [],
+    }),
+  },
+  birthday_countdown: {
+    component: BirthdayCountdownSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      birthdayDate: config.anniversaryDate || config.specialDate || config.birthdayDate || '',
+    }),
+  },
+  birthday_timeline: {
+    component: BirthdayTimelineSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      template: config.section_templates?.timeline || config.timeline_template || 'vertical_timeline',
+      events: config.timelineEvents || config.timeline_events || [],
+    }),
+  },
+  party_details: {
+    component: PartyDetailsSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      location: config.partyLocation || config.venue || '',
+      date: config.specialDate || config.birthdayDate || '',
+      time: config.partyTime || '',
+      dressCode: config.dressCode || 'Festive attire',
+    }),
+  },
+  gift_wishlist: {
+    component: GiftWishlistSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      items: config.giftWishlist || [],
     }),
   },
   

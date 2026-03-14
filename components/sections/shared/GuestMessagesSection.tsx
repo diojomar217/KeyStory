@@ -13,6 +13,7 @@ interface GuestMessage {
 
 interface GuestMessagesSectionProps {
   theme: Theme;
+  siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
   messages?: GuestMessage[];
   variant?: 'default' | 'alt';
 }
@@ -25,17 +26,24 @@ const defaultMessages: GuestMessage[] = [
 
 export default function GuestMessagesSection({ 
   theme, 
+  siteType = 'couple',
   messages,
   variant = 'default'
 }: GuestMessagesSectionProps) {
   // Use provided messages or fallback to defaults
   const displayMessages = messages && messages.length > 0 ? messages : defaultMessages;
 
+  const sectionTitle = siteType === 'birthday' ? 'Birthday Wishes' : 'Guest Messages';
+  const sectionSubtitle = siteType === 'birthday'
+    ? 'Birthday wishes from friends and family'
+    : 'Messages from friends and family';
+  const sectionIcon = siteType === 'birthday' ? '🥳' : '💬';
+
   return (
     <GridSectionLayout
-      title="Guest Messages"
-      subtitle="Messages from friends and family"
-      icon="💬"
+      title={sectionTitle}
+      subtitle={sectionSubtitle}
+      icon={sectionIcon}
       theme={theme}
       variant={variant}
       id="guest-messages"

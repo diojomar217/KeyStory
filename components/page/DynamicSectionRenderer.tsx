@@ -98,6 +98,12 @@ const RENDERER_COMPONENTS: Record<Section, React.ComponentType<any>> = {
   letter_future: LetterToFutureSection,
   gift_section: GiftSection,
   surprise_message: SurpriseMessageSection,
+  birthday_message: LoveLetterSection,
+  birthday_wishes: QuotesSection,
+  birthday_countdown: AnniversaryCountdownSection,
+  birthday_timeline: TimelineSection,
+  party_details: OurStorySection,
+  gift_wishlist: GiftSection,
   qr_keepsake: () => null, // QR is handled separately
 };
 

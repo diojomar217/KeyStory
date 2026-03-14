@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, Order } from '@/lib/supabase';
+import { supabase, Site } from '@/lib/supabase';
 
-// GET - Fetch all orders from Supabase
+// GET - Fetch all sites from Supabase
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
-    // If an ID is provided, fetch a single order
+    // If an ID is provided, fetch a single site
     if (id) {
       const { data, error } = await supabase
-        .from('orders')
+        .from('sites')
         .select('*')
         .eq('id', id)
         .single();
@@ -26,9 +26,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: true, order: data });
     }
 
-    // Otherwise, fetch all orders
+    // Otherwise, fetch all sites
     const { data, error } = await supabase
-      .from('orders')
+      .from('sites')
       .select('*')
       .order('created_at', { ascending: false });
 

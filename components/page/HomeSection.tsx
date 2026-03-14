@@ -2,13 +2,16 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { Theme, HomeTemplate } from '@/lib/types';
+import { Theme, HomeTemplate, Participant } from '@/lib/types';
 import { useTheme } from '../builder/ThemeWrapper';
 import RelationshipTimer from './RelationshipTimer';
-import HeroOverlay, { HeroDecorations, PremiumDualCTAs } from './HeroOverlay';
+import { HeroDecorations, PremiumDualCTAs } from './HeroOverlay';
+import { resolveHeroConfig } from '@/lib/site-type-utils';
 
 type Props = {
   theme: Theme;
+  siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
+  config?: any;
   template: HomeTemplate;
   customerName: string;
   partnerName: string;
@@ -22,6 +25,8 @@ type Props = {
 
 export default function HomeSection({
   theme,
+  siteType = 'couple',
+  config,
   template,
   customerName,
   partnerName,
@@ -33,6 +38,53 @@ export default function HomeSection({
 }: Props) {
   const styles = useTheme(theme);
   const [isLoaded, setIsLoaded] = useState(false);
+  const isBirthday = siteType === 'birthday';
+
+  const celebrantName = isBirthday
+    ? config?.people?.celebrant || config?.participants?.[0]?.name || customerName || 'Birthday Star'
+    : customerName || 'Your Name';
+
+  const birthdayDate = isBirthday
+    ? config?.dates?.birthday || config?.specialDate || anniversaryDate
+    : anniversaryDate;
+
+  const normalizedDate = birthdayDate && !Number.isNaN(new Date(birthdayDate).getTime())
+    ? birthdayDate
+    : undefined;
+
+  const heroConfig = resolveHeroConfig(siteType, isBirthday
+    ? [{ id: 'celebrant', name: celebrantName }]
+    : [
+        { id: 'customer', name: customerName || 'Your Name' },
+        { id: 'partner', name: partnerName || 'Partner Name' },
+      ],
+    normalizedDate);
+
+  const birthdayStats = isBirthday && normalizedDate ? (() => {
+    const birth = new Date(normalizedDate);
+    if (Number.isNaN(birth.getTime())) return null;
+
+    const now = new Date();
+    let nextBirth = new Date(birth);
+    nextBirth.setFullYear(now.getFullYear());
+    if (nextBirth < now) {
+      nextBirth.setFullYear(now.getFullYear() + 1);
+    }
+
+    const ageTurning = nextBirth.getFullYear() - birth.getFullYear();
+    const diffMs = nextBirth.getTime() - now.getTime();
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const months = Math.floor(days / 30);
+    const remDays = days - months * 30;
+    const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+    return {
+      ageTurning,
+      eventDate: nextBirth.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }),
+      countdown: `${months} months • ${remDays} days • ${hours} hours remaining`,
+    };
+  })() : null;
+
   
   // Use cover photo index if available, otherwise fallback to first photo
   const heroImage = (coverPhotoIndex !== undefined && photos?.[coverPhotoIndex]) 
@@ -70,8 +122,8 @@ export default function HomeSection({
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-gradient-to-b from-rose-500/15 via-pink-500/10 to-transparent rounded-full blur-3xl opacity-50" />
         </div>
         
-        {/* Floating hearts decoration - repositioned to be less intrusive */}
-        <HeroDecorations theme={theme} variant="centered" />
+        {/* Floating decorations, now siteType-aware */}
+        <HeroDecorations theme={theme} siteType={siteType} variant="centered" />
         
         <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center w-full relative z-10">
           
@@ -85,9 +137,9 @@ export default function HomeSection({
                 ${accentColor === 'amber' ? 'bg-amber-400/20 text-amber-300' : accentColor === 'purple' ? 'bg-purple-100 text-purple-600' : accentColor === 'slate' ? 'bg-slate-100 text-slate-600' : 'bg-rose-100 text-rose-600'}
               `}
             >
-              <span className="animate-pulse">💕</span>
-              <span>Our Love Story</span>
-              <span className="animate-pulse">💕</span>
+              <span className="animate-pulse">{heroConfig.decorations.badge}</span>
+              <span>{heroConfig.title}</span>
+              <span className="animate-pulse">{heroConfig.cta.endIcon}</span>
             </span>
           </div>
 
@@ -123,7 +175,7 @@ export default function HomeSection({
             </div>
           </div>
 
-          {/* Couple Names - IN ONE ROW on desktop */}
+          {/* Title text for couple/birthday */}
           <div className={`mb-3 transition-all duration-500 delay-200 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
             <h1 className={`
               ${styles.heading} 
@@ -135,29 +187,25 @@ export default function HomeSection({
               drop-shadow-lg
               flex flex-wrap items-center justify-center gap-x-3 gap-y-1
             `}>
-              {/* Customer Name */}
-              <span className="inline-block">
-                {displayCustomerName}
-              </span>
-              
-              {/* Decorative Ampersand - inline */}
-              <span className={`
-                text-xl md:text-2xl lg:text-3xl
-                ${theme === 'dark_elegant' ? 'text-amber-400/80' : theme === 'cute_pastel' ? 'text-purple-400' : theme === 'minimal_modern' ? 'text-slate-400' : 'text-rose-400'}
-                font-light italic
-              `}>
-                <span className="inline-block animate-fade-in-scale" style={{ animationDelay: '0.3s' }}>&</span>
-              </span>
-              
-              {/* Partner Name */}
-              <span className="inline-block">
-                {displayPartnerName}
-              </span>
+              {isBirthday ? (
+                <span className="inline-block">{celebrantName}</span>
+              ) : (
+                <>
+                  <span className="inline-block">{displayCustomerName}</span>
+                  <span className={`
+                    text-xl md:text-2xl lg:text-3xl
+                    ${theme === 'dark_elegant' ? 'text-amber-400/80' : theme === 'cute_pastel' ? 'text-purple-400' : theme === 'minimal_modern' ? 'text-slate-400' : 'text-rose-400'}
+                    font-light italic
+                  `}>
+                    <span className="inline-block animate-fade-in-scale" style={{ animationDelay: '0.3s' }}>&</span>
+                  </span>
+                  <span className="inline-block">{displayPartnerName}</span>
+                </>
+              )}
             </h1>
           </div>
 
-          {/* Anniversary Date - Compact */}
-          {(anniversaryDate || hasValidNames) && (
+          {(normalizedDate || (isBirthday && celebrantName) || hasValidNames) && (
             <p className={`
               text-sm md:text-base 
               ${styles.textMuted} 
@@ -167,23 +215,50 @@ export default function HomeSection({
               transition-all duration-500 delay-300
               ${isLoaded ? 'opacity-70 translate-y-0' : 'opacity-0 translate-y-2'}
             `}>
-              {anniversaryDate ? (
-                <>Together since <span className={`font-semibold ${styles.text}`}>{anniversaryDate}</span></>
+              {isBirthday ? (
+                birthdayStats ? (
+                  <>Turning <span className={`font-semibold ${styles.text}`}>{birthdayStats.ageTurning}</span> on <span className={`font-semibold ${styles.text}`}>{birthdayStats.eventDate}</span></>
+                ) : (
+                  <span className="opacity-60">Let’s celebrate your special day</span>
+                )
+              ) : normalizedDate ? (
+                <>Together since <span className={`font-semibold ${styles.text}`}>{normalizedDate}</span></>
               ) : (
                 <span className="opacity-60">Started our journey</span>
               )}
             </p>
           )}
 
-          {/* Relationship Timer - Compact */}
-          {anniversaryDate && (
-            <div className={`
-              mb-4
-              transition-all duration-500 delay-400
-              ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}
-            `}>
-              <RelationshipTimer anniversary={anniversaryDate} theme={theme} />
-            </div>
+          {/* Relationship / Birthday Timer */}
+          {isBirthday ? (
+            birthdayStats && (
+              <div className={`
+                mb-4
+                transition-all duration-500 delay-400
+                ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}
+              `}>
+                <div className={`
+                  ${styles.timerBg} ${styles.timerBorder} border rounded-full px-5 py-2.5 md:px-7 md:py-3 inline-flex items-center gap-2 md:gap-3 shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm
+                `}>
+                  <span className="text-xl">✨</span>
+                  <div className="text-center">
+                    <div className={`${styles.text} font-medium text-sm md:text-base`}>Countdown to the celebration</div>
+                    <div className="text-xs md:text-sm text-white/80">{birthdayStats.countdown}</div>
+                  </div>
+                  <span className="text-xl">🎉</span>
+                </div>
+              </div>
+            )
+          ) : (
+            normalizedDate && (
+              <div className={`
+                mb-4
+                transition-all duration-500 delay-400
+                ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}
+              `}>
+                <RelationshipTimer anniversary={normalizedDate} theme={theme} />
+              </div>
+            )
           )}
 
           {/* Tagline - Compact with tighter spacing */}
@@ -204,7 +279,7 @@ export default function HomeSection({
             </div>
           )}
 
-          {/* Premium Dual CTAs - Tight spacing */}
+          {/* Premium Dual CTAs - Tight spacing (birthday uses single CTA) */}
           <div className={`
             flex flex-col sm:flex-row items-center justify-center gap-3
             transition-all duration-500 delay-600
@@ -229,45 +304,47 @@ export default function HomeSection({
                 no-underline
               "
             >
-              <span className="transition-transform group-hover:animate-pulse">💕</span>
-              Start Our Story
-              <span className="transition-transform group-hover:translate-y-0.5">↓</span>
+              <span className="transition-transform group-hover:animate-pulse">{heroConfig.cta.startIcon}</span>
+              {heroConfig.cta.primary}
+              <span className="transition-transform group-hover:translate-y-0.5">{heroConfig.cta.endIcon}</span>
             </a>
 
-            {/* Secondary Button - Glassmorphism */}
-            <a
-              href="#gallery"
-              className="
-                group
-                flex items-center justify-center gap-2
-                min-w-[160px]
-                px-6 py-2.5
-                bg-white/20 backdrop-blur-sm
-                border border-white/40
-                hover:bg-white/30 hover:border-white/60
-                text-white
-                font-medium text-xs
-                rounded-full
-                transition-all duration-300
-                hover:scale-105 hover:shadow-lg
-                active:scale-95
-                no-underline
-              "
-              style={{ 
-                backgroundColor: theme === 'dark_elegant' ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.7)',
-                borderColor: theme === 'dark_elegant' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
-                color: theme === 'dark_elegant' ? 'white' : theme === 'cute_pastel' ? '#be185d' : theme === 'minimal_modern' ? '#475569' : '#be185d'
-              }}
-            >
-              <span>📸</span>
-              View Our Memories
-              <span className="transition-transform group-hover:translate-x-0.5">→</span>
-            </a>
+            {/* Secondary Button - only for non-birthday site types */}
+            {!isBirthday && (
+              <a
+                href="#gallery"
+                className="
+                  group
+                  flex items-center justify-center gap-2
+                  min-w-[160px]
+                  px-6 py-2.5
+                  bg-white/20 backdrop-blur-sm
+                  border border-white/40
+                  hover:bg-white/30 hover:border-white/60
+                  text-white
+                  font-medium text-xs
+                  rounded-full
+                  transition-all duration-300
+                  hover:scale-105 hover:shadow-lg
+                  active:scale-95
+                  no-underline
+                "
+                style={{ 
+                  backgroundColor: theme === 'dark_elegant' ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.7)',
+                  borderColor: theme === 'dark_elegant' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
+                  color: theme === 'dark_elegant' ? 'white' : theme === 'cute_pastel' ? '#be185d' : theme === 'minimal_modern' ? '#475569' : '#be185d'
+                }}
+              >
+                <span>{heroConfig.cta.endIcon}</span>
+                {heroConfig.cta.secondary}
+                <span className="transition-transform group-hover:translate-x-0.5">→</span>
+              </a>
+            )}
           </div>
           
           {/* Minimal scroll hint - Only visible when there's room */}
           <div className="mt-4 animate-bounce-subtle">
-            <span className="text-lg opacity-30">💕</span>
+            <span className="text-lg opacity-30">{isBirthday ? '🎉' : '💕'}</span>
           </div>
         </div>
       </div>
@@ -312,13 +389,13 @@ export default function HomeSection({
             {/* Soft vignette effect */}
             <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.3) 100%)' }} />
             
-            {/* Decorative heart element */}
+            {/* Decorative hero badge element */}
             <div className="absolute bottom-6 left-6 lg:bottom-10 lg:left-10">
-              <span className="text-3xl lg:text-4xl animate-pulse">💕</span>
+              <span className="text-3xl lg:text-4xl animate-pulse">{heroConfig.decorations.badge}</span>
             </div>
             
-            {/* Floating hearts decoration */}
-            <HeroDecorations theme={theme} variant="full" />
+            {/* Floating decorations for all occasions */}
+            <HeroDecorations theme={theme} siteType={siteType} variant="full" />
           </div>
 
           {/* Right Side - Content with proper vertical centering */}
@@ -335,11 +412,11 @@ export default function HomeSection({
               {/* Decorative element */}
               <div className="mb-6 lg:mb-8">
                 <span className={`text-4xl lg:text-5xl ${accentColor === 'amber' ? 'text-amber-300' : accentColor === 'purple' ? 'text-purple-400' : accentColor === 'slate' ? 'text-slate-400' : 'text-rose-400'}`}>
-                  💕
+                  {isBirthday ? '🎉' : '💕'}
                 </span>
               </div>
 
-              {/* Names with premium typography - larger and more prominent */}
+              {/* Name/Title */}
               <div className="space-y-2 mb-6">
                 <h1 className={`
                   ${styles.heading} 
@@ -349,29 +426,32 @@ export default function HomeSection({
                   leading-[1.1]
                   tracking-tight
                 `}>
-                  {customerName}
+                  {isBirthday ? celebrantName : customerName}
                 </h1>
-                
-                <p className={`
-                  text-2xl md:text-3xl lg:text-4xl 
-                  ${styles.accent}
-                  font-light
-                  py-1
-                `}>&</p>
-                
-                <h1 className={`
-                  ${styles.heading} 
-                  text-4xl md:text-5xl lg:text-6xl xl:text-7xl
-                  font-bold 
-                  ${styles.text}
-                  leading-[1.1]
-                  tracking-tight
-                `}>
-                  {partnerName}
-                </h1>
+
+                {!isBirthday && (
+                  <>
+                    <p className={`
+                      text-2xl md:text-3xl lg:text-4xl 
+                      ${styles.accent}
+                      font-light
+                      py-1
+                    `}>&</p>
+                    <h1 className={`
+                      ${styles.heading} 
+                      text-4xl md:text-5xl lg:text-6xl xl:text-7xl
+                      font-bold 
+                      ${styles.text}
+                      leading-[1.1]
+                      tracking-tight
+                    `}>
+                      {partnerName}
+                    </h1>
+                  </>
+                )}
               </div>
 
-              {/* Anniversary - elegant secondary text */}
+              {/* Date text */}
               <p className={`
                 text-base md:text-lg 
                 ${styles.textMuted} 
@@ -379,12 +459,35 @@ export default function HomeSection({
                 font-light
                 tracking-wide
               `}>
-                Together since <span className={`font-medium ${styles.text}`}>{anniversaryDate}</span>
+                {isBirthday ? (
+                  birthdayStats ? (
+                    <>Turning <span className={`font-medium ${styles.text}`}>{birthdayStats.ageTurning}</span> on <span className={`font-medium ${styles.text}`}>{birthdayStats.eventDate}</span></>
+                  ) : (
+                    <span className="opacity-70">Prime birthday celebration coming soon</span>
+                  )
+                ) : (
+                  <>Together since <span className={`font-medium ${styles.text}`}>{anniversaryDate}</span></>
+                )}
               </p>
 
-              {/* Relationship Timer */}
+              {/* Timer / Countdown */}
               <div className="mb-8">
-                <RelationshipTimer anniversary={anniversaryDate} theme={theme} />
+                {isBirthday ? (
+                  birthdayStats ? (
+                    <div className={`
+                      ${styles.timerBg} ${styles.timerBorder} border rounded-full px-5 py-2.5 md:px-7 md:py-3 inline-flex items-center gap-2 md:gap-3 shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm
+                    `}>
+                      <span className="text-xl">✨</span>
+                      <div className="text-center">
+                        <div className={`${styles.text} font-medium text-sm md:text-base`}>Countdown to the celebration</div>
+                        <div className="text-xs md:text-sm text-white/80">{birthdayStats.countdown}</div>
+                      </div>
+                      <span className="text-xl">🎈</span>
+                    </div>
+                  ) : null
+                ) : (
+                  <RelationshipTimer anniversary={anniversaryDate} theme={theme} />
+                )}
               </div>
 
               {/* Tagline - styled as elegant romantic quote */}
@@ -411,7 +514,7 @@ export default function HomeSection({
                 </div>
               )}
 
-              {/* CTA Buttons - Premium styled */}
+              {/* CTA Buttons - Premium styled (birthday: single CTA) */}
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-10">
                 {/* Primary Button - Gradient with hover animation */}
                 <a
@@ -431,39 +534,40 @@ export default function HomeSection({
                     no-underline
                   "
                 >
-                  <span className="transition-transform group-hover:animate-pulse">💕</span>
-                  Start Our Story
-                  <span className="transition-transform group-hover:translate-y-0.5">↓</span>
+                  <span className="transition-transform group-hover:animate-pulse">{heroConfig.cta.startIcon}</span>
+                  {heroConfig.cta.primary}
+                  <span className="transition-transform group-hover:translate-y-0.5">{heroConfig.cta.endIcon}</span>
                 </a>
 
-                {/* Secondary Button - Glassmorphism style */}
-                <a
-                  href="#gallery"
-                  className="
-                    group
-                    flex items-center justify-center gap-2
-                    px-6 py-3
-                    bg-white/20 backdrop-blur-sm
-                    border border-white/40
-                    hover:bg-white/30 hover:border-white/60
-                    text-white
-                    font-medium text-sm
-                    rounded-full
-                    transition-all duration-300
-                    hover:scale-105
-                    active:scale-95
-                    no-underline
-                  "
-                  style={{ 
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.6)',
-                    borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
-                    color: isDark ? 'white' : isPastel ? '#be185d' : isMinimal ? '#475569' : '#be185d'
-                  }}
-                >
-                  <span>📸</span>
-                  View Our Memories
-                  <span className="transition-transform group-hover:translate-x-0.5">→</span>
-                </a>
+                {!isBirthday && (
+                  <a
+                    href="#gallery"
+                    className="
+                      group
+                      flex items-center justify-center gap-2
+                      px-6 py-3
+                      bg-white/20 backdrop-blur-sm
+                      border border-white/40
+                      hover:bg-white/30 hover:border-white/60
+                      text-white
+                      font-medium text-sm
+                      rounded-full
+                      transition-all duration-300
+                      hover:scale-105
+                      active:scale-95
+                      no-underline
+                    "
+                    style={{ 
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.6)',
+                      borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
+                      color: isDark ? 'white' : isPastel ? '#be185d' : isMinimal ? '#475569' : '#be185d'
+                    }}
+                  >
+                    <span>{heroConfig.cta.endIcon}</span>
+                    {heroConfig.cta.secondary}
+                    <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                  </a>
+                )}
               </div>
 
             </div>
@@ -514,8 +618,8 @@ export default function HomeSection({
           <div className="absolute inset-0" style={{ background: styles.heroVignette }} />
         </div>
 
-        {/* Decorative elements - subtle floating hearts */}
-        <HeroDecorations theme={theme} variant="full" />
+        {/* Decorative elements - site-type-aware floating accents */}
+        <HeroDecorations theme={theme} siteType={siteType} variant="full" />
 
 {/* Content Overlay - Centered with improved layout */}
         <div className="relative z-10 text-center text-white px-4 
@@ -524,10 +628,12 @@ export default function HomeSection({
           
           {/* Decorative element at top */}
           <div className="mb-8">
-            <span className="text-5xl md:text-6xl animate-pulse inline-block">💕</span>
+            <span className="text-5xl md:text-6xl animate-pulse inline-block">
+              {isBirthday ? '🎉' : '💕'}
+            </span>
           </div>
 
-          {/* Couple Names - Largest text, dramatic but elegant */}
+          {/* Name/Title */}
           <h1 className={`
             ${styles.heading} 
             text-4xl md:text-6xl 
@@ -537,19 +643,46 @@ export default function HomeSection({
             leading-tight
             tracking-wide
           `}>
-            {customerName} 
-            <span className="block md:inline mx-0 md:mx-4 text-3xl md:text-4xl text-rose-300/80 font-light">&</span> 
-            {partnerName}
+            {isBirthday ? celebrantName : (
+              <>
+                {customerName || 'Your Name'}
+                <span className="block md:inline mx-0 md:mx-4 text-3xl md:text-4xl text-rose-300/80 font-light">&</span>
+                {partnerName || 'Partner Name'}
+              </>
+            )}
           </h1>
 
-          {/* "Together since" Date - Subtle secondary text */}
+          {/* Date text */}
           <p className="text-base md:text-lg mb-8 opacity-60 font-light tracking-wide drop-shadow-md">
-            Together since <span className="font-normal">{anniversaryDate}</span>
+            {isBirthday ? (
+              birthdayStats ? (
+                <>Turning {birthdayStats.ageTurning} on <span className="font-normal">{birthdayStats.eventDate}</span></>
+              ) : (
+                <span className="font-normal">Let’s celebrate your special day</span>
+              )
+            ) : (
+              <>Together since <span className="font-normal">{anniversaryDate}</span></>
+            )}
           </p>
 
-          {/* Relationship Timer Pill - Clean single container */}
+          {/* Countdown / Relationship Timer */}
           <div className="mb-8">
-            <RelationshipTimer anniversary={anniversaryDate} theme={theme} />
+            {isBirthday ? (
+              birthdayStats ? (
+                <div className={`
+                  ${styles.timerBg} ${styles.timerBorder} border rounded-full px-5 py-2.5 md:px-7 md:py-3 inline-flex items-center gap-2 md:gap-3 shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm
+                `}>
+                  <span className="text-xl">✨</span>
+                  <div className="text-center">
+                    <div className={`${styles.text} font-medium text-sm md:text-base`}>Countdown to the celebration</div>
+                    <div className="text-xs md:text-sm text-white/80">{birthdayStats.countdown}</div>
+                  </div>
+                  <span className="text-xl">🎈</span>
+                </div>
+              ) : null
+            ) : (
+              <RelationshipTimer anniversary={anniversaryDate} theme={theme} />
+            )}
           </div>
 
           {/* Tagline / Quote - Elegant italic styling */}
@@ -569,9 +702,10 @@ export default function HomeSection({
           )}
         </div>
         
-        {/* Premium Dual CTAs - NEW ENHANCEMENT */}
+        {/* Premium CTAs - Birthday shows single button, others show dual */}
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2">
           <PremiumDualCTAs 
+            siteType={siteType}
             primaryTarget="love-letter" 
             secondaryTarget="gallery" 
           />

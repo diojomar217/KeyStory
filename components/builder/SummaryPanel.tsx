@@ -1,6 +1,7 @@
 'use client';
 
-import { SiteConfig, CreateOrderPayload } from '@/lib/types';
+import { SiteConfig, CreateOrderPayload, OccasionType } from '@/lib/types';
+import { getOccasionMetadata } from '@/lib/occasion-registry';
 import { THEME_PRESETS, LAYOUT_PRESETS, SECTION_TOGGLES } from '@/lib/builder-constants';
 
 type LocalForm = Omit<CreateOrderPayload, 'config' | 'photos'> & { photos: File[] };
@@ -345,8 +346,11 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
     warnings.push('No cover photo selected - first photo will be used');
   }
 
+  const occasionMeta = getOccasionMetadata(form.occasion || 'couple');
   const coupleDetailsComplete =
-    !!form.website_name && !!form.customer_name && !!form.partner_name && !!form.anniversary_date;
+    !!form.website_name && 
+    form.participants?.some(p => !!p.name) && 
+    !!form.specialDate;
   const coupleDetailsStatus: 'completed' | 'missing' = coupleDetailsComplete ? 'completed' : 'missing';
 
   const heroContentComplete = !!form.message;
@@ -522,7 +526,7 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
 
       {/* A. Couple Details */}
       <ReviewBlock
-        title="Couple Details"
+        title="Website Details"
         icon={
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -540,20 +544,16 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
           <div>
             <p className="text-slate-500 text-xs">Website</p>
             <p className="font-medium text-slate-800">
-              yoursite.com/love/{form.website_name || '...'}
+              yoursite.com/site/{form.website_name || '...'}
             </p>
           </div>
           <div>
-            <p className="text-slate-500 text-xs">Anniversary</p>
-            <p className="font-medium text-slate-800">{form.anniversary_date || 'Not set'}</p>
+            <p className="text-slate-500 text-xs">{occasionMeta.specialDateLabel}</p>
+            <p className="font-medium text-slate-800">{form.specialDate || 'Not set'}</p>
           </div>
           <div>
-            <p className="text-slate-500 text-xs">Your Name</p>
-            <p className="font-medium text-slate-800">{form.customer_name || 'Not set'}</p>
-          </div>
-          <div>
-            <p className="text-slate-500 text-xs">Partner&apos;s Name</p>
-            <p className="font-medium text-slate-800">{form.partner_name || 'Not set'}</p>
+            <p className="text-slate-500 text-xs">{occasionMeta.participantsLabel}</p>
+            <p className="font-medium text-slate-800">{form.participants?.map(p => p.name).filter(Boolean).join(' & ') || 'Not set'}</p>
           </div>
         </div>
       </ReviewBlock>

@@ -162,11 +162,76 @@ body {
   /* Floating hearts animation */
   .animate-float-heart {
     animation: floatHeart 4s ease-in-out infinite;
-    opacity: 0;
-  }
-  
-  .animate-float-heart.active {
     opacity: 1;
+  }
+
+  .animate-float-heart-slow {
+    animation: floatHeart 8s ease-in-out infinite;
+    opacity: 1;
+  }
+
+  .animate-float-heart-reverse {
+    animation: floatHeart 8s ease-in-out infinite reverse;
+    opacity: 1;
+  }
+
+  .animate-twinkle {
+    animation: pulse 3s ease-in-out infinite;
+    opacity: 0.2;
+  }
+
+  .animate-twinkle-slow {
+    animation: pulse 4.5s ease-in-out infinite;
+    opacity: 0.15;
+  }
+
+  .animate-petal-fall {
+    animation: petalFall 15s linear infinite;
+  }
+
+  .animate-petal-float {
+    animation: petalFloat 18s ease-in-out infinite;
+  }
+
+  .animate-birthday-confetti {
+    animation: birthdayConfetti 6s ease-in infinite;
+    animation-name: birthday-confetti;
+  }
+
+  .animate-birthday-balloon {
+    animation: birthdayBalloon 5.5s ease-in-out infinite;
+    animation-name: birthday-balloon;
+  }
+
+  /* Consistent names for birthday hero + background decorations */
+  .animate-birthday-confetti {
+    animation-name: birthday-confetti;
+    animation-duration: 6s;
+    animation-timing-function: ease-in;
+    animation-iteration-count: infinite;
+  }
+
+  .animate-birthday-balloon {
+    animation-name: birthday-balloon;
+    animation-duration: 5.5s;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+
+  @keyframes birthday-confetti {
+    0% { transform: translateY(0px) rotate(0deg) scale(0.9); opacity: 0.8; }
+    25% { transform: translateY(-35px) rotate(45deg) scale(1.1); opacity: 0.9; }
+    50% { transform: translateY(-80px) rotate(180deg) scale(1.1); opacity: 0.5; }
+    75% { transform: translateY(-35px) rotate(270deg) scale(1.05); opacity: 0.6; }
+    100% { transform: translateY(0px) rotate(360deg) scale(0.9); opacity: 0.35; }
+  }
+
+  @keyframes birthday-balloon {
+    0% { transform: translateY(0px) translateX(0px) scale(0.9); opacity: 0.6; }
+    25% { transform: translateY(-15px) translateX(4px) scale(1.05); opacity: 0.85; }
+    50% { transform: translateY(-28px) translateX(-6px) scale(1.1); opacity: 0.96; }
+    75% { transform: translateY(-15px) translateX(3px) scale(1.05); opacity: 0.85; }
+    100% { transform: translateY(0px) translateX(0px) scale(0.9); opacity: 0.6; }
   }
 
   /* Scroll indicator bounce */
@@ -442,17 +507,63 @@ body {
 @keyframes floatHeart {
   0%, 100% {
     transform: translateY(0) scale(1);
-    opacity: 0;
+    opacity: 0.25;
   }
   10% {
-    opacity: 0.6;
+    opacity: 0.7;
   }
   50% {
     transform: translateY(-30px) scale(1.1);
-    opacity: 0.4;
+    opacity: 0.5;
   }
   90% {
-    opacity: 0;
+    opacity: 0.25;
+  }
+}
+
+@keyframes birthdayConfetti {
+  0% {
+    transform: translateY(0px) rotate(0deg) scale(0.9);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translateY(-20px) rotate(45deg) scale(1.05);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-40px) rotate(90deg) scale(1.15);
+    opacity: 0.85;
+  }
+  75% {
+    transform: translateY(-20px) rotate(135deg) scale(1.05);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(0px) rotate(180deg) scale(0.9);
+    opacity: 0.3;
+  }
+}
+
+@keyframes birthdayBalloon {
+  0% {
+    transform: translateY(0px) translateX(0px) scale(0.9);
+    opacity: 0.4;
+  }
+  25% {
+    transform: translateY(-15px) translateX(5px) scale(1.05);
+    opacity: 0.75;
+  }
+  50% {
+    transform: translateY(-30px) translateX(-6px) scale(1.1);
+    opacity: 0.95;
+  }
+  75% {
+    transform: translateY(-15px) translateX(3px) scale(1.05);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translateY(0px) translateX(0px) scale(0.9);
+    opacity: 0.4;
   }
 }
 

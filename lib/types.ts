@@ -20,7 +20,8 @@ export type Theme =
   | 'minimal_white'
   | 'cute_kawaii'
   | 'soft_lavender'
-  | 'photo_focus';
+  | 'photo_focus'
+  | 'colorful_celebration';
 
 // ============================================
 // SECTION TYPES - Refactored to Remove Redundancy
@@ -42,6 +43,12 @@ export type Section =
   | 'video_memories'
   | 'qr_keepsake'
   | 'anniversary_countdown'
+  | 'birthday_message'
+  | 'birthday_wishes'
+  | 'birthday_countdown'
+  | 'birthday_timeline'
+  | 'party_details'
+  | 'gift_wishlist'
   | 'relationship_stats'
   | 'memory_map'
   | 'polaroid_gallery'        // DEPRECATED - use gallery with layout="polaroid"

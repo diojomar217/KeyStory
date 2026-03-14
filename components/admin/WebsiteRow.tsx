@@ -1,10 +1,10 @@
 'use client';
 
-import { Order } from '@/lib/supabase';
+import { Site } from '@/lib/supabase';
 import WebsiteActions from './WebsiteActions';
 
 interface WebsiteRowProps {
-  order: Order;
+  order: Site;
   onDelete: (id: string) => void;
 }
 
@@ -45,9 +45,22 @@ export default function WebsiteRow({ order, onDelete }: WebsiteRowProps) {
     }
   };
 
-  // Get cover photo from config or photos array
-  const coverPhoto = order.config?.cover_photo || order.photos?.[0];
+  // Normalized site properties
+  const siteType = order.site_type || 'couple';
+  const customerName = order.config?.people?.primary || order.customer_name || '';
+  const partnerName = order.config?.people?.secondary || order.partner_name || '';
+
+  const peopleDisplay = siteType === 'birthday'
+    ? customerName || 'Birthday Guest'
+    : partnerName
+      ? `${customerName || 'Your Name'} & ${partnerName || 'Partner Name'}`
+      : customerName || 'Your Name';
+
+  // Get cover photo from config.media or fallback older fields
+  const coverPhoto = order.config?.media?.photos?.[0] || order.config?.cover_photo || order.photos?.[0] || '';
   const websiteName = order.website_name || order.slug;
+
+  const themeValue = (order.config?.theme as string) || (order.theme as string) || 'romantic_classic';
 
   return (
     <tr className="hover:bg-slate-50 transition-colors duration-150">
@@ -75,17 +88,24 @@ export default function WebsiteRow({ order, onDelete }: WebsiteRowProps) {
         </span>
       </td>
 
-      {/* Couple Names */}
+      {/* Site Type */}
+      <td className="px-4 py-3">
+        <span className="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold bg-slate-100 text-slate-700">
+          {order.site_type || 'couple'}
+        </span>
+      </td>
+
+      {/* People */}
       <td className="px-4 py-3">
         <span className="font-medium text-slate-700">
-          {order.customer_name} ❤️ {order.partner_name}
+          {peopleDisplay}
         </span>
       </td>
 
       {/* Theme */}
       <td className="px-4 py-3">
-        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getThemeColor(typeof order.config?.theme === 'string' ? order.config.theme : (order.theme || 'romantic_classic'))}`}>
-          {getThemeColor(typeof order.config?.theme === 'string' ? order.config.theme : (order.theme || 'romantic_classic'))}
+        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getThemeColor(themeValue)}`}>
+          {getThemeLabel(themeValue)}
         </span>
       </td>
 

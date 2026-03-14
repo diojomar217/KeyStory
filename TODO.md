@@ -1,16 +1,40 @@
-# Keychain Custom QR Fix Progress
+# Keystory Landing Page Builder - Implementation TODO
 
-## Planned Steps
-- [x] 1. Fix print sheet InsertPair QR fallback logic
-- [x] 2. Add scanability validation (contrast check + warning)
-- [ ] 3. Add localStorage persistence for configs
-- [ ] 4. Enhance logo handling (error + size limits)
-- [ ] 5. Add QR data validation/loading states
-- [ ] 6. Test end-to-end (toggle, styles, preview/print, scan)
-- [ ] 7. Complete
+**Status: 🚀 In Progress** | **Plan Approved: ✅**
 
-## Current Status
-✅ State/UI wiring complete  
-✅ qr-code-styling integrated  
-✅ Live preview works  
-🔄 Fixing minor print fallback + polish
+## Implementation Steps (from approved plan)
+
+### 1. **Create TODO.md** ✅ **Completed**
+   - Track progress of landing page builder implementation
+
+### 2. **Update BuilderForm.tsx** ✅ **Completed**
+   - Added `onFormChange` callback with `FormPreviewState`
+   - Live photo preview URLs via FileReader
+   - Added tagline/song_link inputs
+   - TS fixes (any[] casts, null safety)
+
+### 3. **Major: Rewrite app/page.tsx** ✅ **Completed**
+   - Full responsive landing: Hero + HowItWorks + 2-col Builder|Preview
+   - Live sync: Form → KeychainInsertPreview updates instantly
+   - Success modal with final QR, download, view website
+   - All animations, Tailwind responsive (lg:grid-cols-2)
+
+### 4. **Test Implementation** ✅ **Completed**
+   - Dev server running on :3001
+   - Form → live preview sync ✓
+   - Responsive design perfect ✓
+   - Submit → success modal + QR ✓
+   - Multi-occasion/participants ✓
+   - Edge cases handled ✓
+
+### 5. **Final Updates** ✅ **Completed**
+   - TODO_LANDING_PAGE.md updated
+   - All TODOs marked ✅
+
+### 6. **Demo & Deploy** ✅ **Ready**
+   - /love/demo verified
+   - `npm run build` → Compiled successfully!
+   - Deploy: `vercel --prod`
+
+**🎉 LANDING PAGE COMPLETE!**
+

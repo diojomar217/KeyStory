@@ -2,16 +2,21 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { Theme } from '@/lib/types';
+import { resolveHeroConfig } from '@/lib/site-type-utils';
 
 interface RomanticOpeningProps {
   theme: Theme;
+  siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
   tagline?: string;
   onReveal: () => void;
 }
 
-export default function RomanticOpening({ theme, tagline, onReveal }: RomanticOpeningProps) {
+export default function RomanticOpening({ theme, siteType = 'couple', tagline, onReveal }: RomanticOpeningProps) {
   const [isHiding, setIsHiding] = useState(false);
   const [showBurst, setShowBurst] = useState(false);
+
+  const isBirthday = siteType === 'birthday';
+  const heroConfig = resolveHeroConfig(siteType || 'couple', [], undefined);
 
   // Get theme-specific classes
   const getThemeClasses = () => {
@@ -50,15 +55,14 @@ export default function RomanticOpening({ theme, tagline, onReveal }: RomanticOp
 
   const themeClasses = getThemeClasses();
 
-  // Generate heart burst positions using useMemo for deterministic rendering
-  const heartBurstPositions = useMemo(() => {
+  // Generate burst positions using useMemo for deterministic rendering
+  const burstPositions = useMemo(() => {
     const positions = [];
-    const numHearts = 20;
+    const num = 24;
     
-    for (let i = 0; i < numHearts; i++) {
-      const angle = (i / numHearts) * 360;
-      // Use a deterministic "random" based on index for consistent rendering
-      const distance = 200 + ((i * 37) % 200); // Pseudo-random but deterministic
+    for (let i = 0; i < num; i++) {
+      const angle = (i / num) * 360;
+      const distance = 180 + ((i * 41) % 220);
       const tx = Math.cos((angle * Math.PI) / 180) * distance;
       const ty = Math.sin((angle * Math.PI) / 180) * distance;
       positions.push({ tx, ty });
@@ -76,11 +80,13 @@ export default function RomanticOpening({ theme, tagline, onReveal }: RomanticOp
     }, 1500);
   }, [onReveal]);
 
-  // Generate heart burst particles
-  const renderHeartBurst = () => {
+  // Generate burst particles
+  const renderBurst = () => {
     if (!showBurst) return null;
 
-    const hearts = heartBurstPositions.map((pos, i) => (
+    const emojis = heroConfig.decorations.iconSet;
+
+    const particles = burstPositions.map((pos, i) => (
       <div
         key={i}
         className="heart-burst animate"
@@ -89,11 +95,11 @@ export default function RomanticOpening({ theme, tagline, onReveal }: RomanticOp
           '--ty': `${pos.ty}px`,
         } as React.CSSProperties}
       >
-        💕
+        {emojis[i % emojis.length]}
       </div>
     ));
     
-    return <div className="heart-burst-container">{hearts}</div>;
+    return <div className="heart-burst-container">{particles}</div>;
   };
 
   return (
@@ -103,38 +109,51 @@ export default function RomanticOpening({ theme, tagline, onReveal }: RomanticOp
           isHiding ? 'hidden' : ''
         }`}
       >
-        {/* Floating hearts decoration */}
-        <span className="opening-floating-heart">💕</span>
-        <span className="opening-floating-heart">❤️</span>
-        <span className="opening-floating-heart">💗</span>
-        <span className="opening-floating-heart">💖</span>
-        <span className="opening-floating-heart">💘</span>
+        {/* Occasion-aware decoration */}
+        {isBirthday ? (
+          <>
+            <span className="opening-floating-heart">🎉</span>
+            <span className="opening-floating-heart">🎈</span>
+            <span className="opening-floating-heart">✨</span>
+            <span className="opening-floating-heart">🥳</span>
+            <span className="opening-floating-heart">🎂</span>
+          </>
+        ) : (
+          <>
+            <span className="opening-floating-heart">💕</span>
+            <span className="opening-floating-heart">❤️</span>
+            <span className="opening-floating-heart">💗</span>
+            <span className="opening-floating-heart">💖</span>
+            <span className="opening-floating-heart">💘</span>
+          </>
+        )}
 
         <div className={`opening-content ${isHiding ? 'hiding' : ''}`}>
           {/* Title */}
           <h1 className={`opening-title ${themeClasses.title} font-serif`}>
-            A message for you
+            {heroConfig.title}
           </h1>
 
-          {/* Subtitle - Show tagline if available, otherwise show default */}
+          {/* Subtitle */}
           <p className={`opening-subtitle ${themeClasses.subtitle}`}>
-            {tagline ? `"${tagline}"` : "This website was made with love."}
+            {tagline ? `"${tagline}"` : heroConfig.subtitle}
           </p>
 
           {/* Open Button */}
           <button
             onClick={handleOpen}
             className={`opening-button ${themeClasses.button}`}
-            aria-label="Open your love story"
+            aria-label={heroConfig.cta.primary}
           >
-            <span className="opening-button-heart">💕</span>
-            <span>Open Your Love Story</span>
+            <span className="opening-button-heart">{heroConfig.cta.startIcon}</span>
+            <span>{heroConfig.cta.primary}</span>
+            <span className="opening-button-heart">{heroConfig.cta.endIcon}</span>
           </button>
         </div>
       </div>
 
-      {/* Heart burst animation */}
-      {renderHeartBurst()}
+      {/* Occasion burst animation */}
+      {renderBurst()}
     </>
   );
 }

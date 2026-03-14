@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { SiteConfig, Theme, Section } from '@/lib/types';
+import { SiteConfig, Theme, Section, OccasionType } from '@/lib/types';
 import { THEME_PRESETS, SECTION_TOGGLES } from '@/lib/builder-constants';
 import { SectionRenderer } from '@/components/builder/SectionPreviews';
 
@@ -19,6 +19,14 @@ type ThemeStyle = {
 };
 
 const themeStyles: Record<Theme, ThemeStyle> = {
+  colorful_celebration: {
+    bg: 'bg-gradient-to-r from-yellow-50 to-orange-50',
+    text: 'text-orange-900',
+    accent: 'text-orange-600',
+    card: 'bg-white',
+    border: 'border-orange-200',
+    muted: 'text-orange-600/70',
+  },
   romantic_classic: {
     bg: 'bg-gradient-to-b from-rose-50 to-pink-50',
     text: 'text-rose-900',
@@ -139,7 +147,7 @@ const themeStyles: Record<Theme, ThemeStyle> = {
     border: 'border-violet-200',
     muted: 'text-violet-600/70',
   },
-  photo_focus: {
+photo_focus: {
     bg: 'bg-gradient-to-b from-gray-50 to-slate-100',
     text: 'text-slate-900',
     accent: 'text-slate-500',
@@ -147,6 +155,7 @@ const themeStyles: Record<Theme, ThemeStyle> = {
     border: 'border-slate-200',
     muted: 'text-slate-500/70',
   },
+  // duplicate colorful_celebration entry removed (already defined above)
 };
 
 // ============================================
@@ -157,6 +166,7 @@ type DeviceType = 'desktop' | 'mobile';
 
 interface Props {
   config: SiteConfig;
+  occasion?: OccasionType;
   isMobileOpen: boolean;
   onMobileClose: () => void;
   coupleNames?: {
@@ -164,6 +174,8 @@ interface Props {
     partner_name: string;
   };
   tagline?: string;
+  message?: string;
+  specialDate?: string;
   coverPhotoUrl?: string;
 }
 
@@ -249,7 +261,7 @@ function DeviceFrame({
               <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
             </div>
             <div className="flex-1 bg-slate-700 rounded-md px-3 py-1 text-[10px] text-slate-400 text-center">
-              {websiteName ? `yoursite.com/love/${websiteName}` : 'yoursite.com/love/...'}
+              {websiteName ? `yoursite.com/site/${websiteName}` : 'yoursite.com/site/...'}
             </div>
           </div>
         )}
@@ -273,7 +285,7 @@ function DeviceFrame({
 // LIVE PREVIEW COMPONENT
 // ============================================
 
-export default function LivePreview({ config, isMobileOpen, onMobileClose, coupleNames, tagline }: Props) {
+export default function LivePreview({ config, occasion, isMobileOpen, onMobileClose, coupleNames, tagline, message, specialDate }: Props) {
   const [device, setDevice] = useState<DeviceType>('desktop');
   const [mounted, setMounted] = useState(false);
 
@@ -303,6 +315,29 @@ export default function LivePreview({ config, isMobileOpen, onMobileClose, coupl
       </div>
     );
   }
+
+  const hasEnteredContent = !!(
+    coupleNames?.customer_name?.trim() ||
+    coupleNames?.partner_name?.trim() ||
+    tagline?.trim() ||
+    message?.trim() ||
+    config.message?.trim() ||
+    specialDate ||
+    config.specialDate ||
+    (config.timeline_events?.length ?? 0) > 0 ||
+    (config.section_content && Object.keys(config.section_content).length > 0)
+  );
+
+  const hasLoveLetterInput = !!((message || config.message)?.trim());
+  const hasSpecialDateInput = !!(specialDate || config.specialDate);
+
+  const previewSections = (config.sections && config.sections.length > 0)
+    ? config.sections
+    : hasEnteredContent
+      ? ['home']
+      : [];
+
+  const currentOccasion = occasion || config.occasion || 'couple';
 
   const content = (
     <div className="h-full flex flex-col">
@@ -338,18 +373,26 @@ export default function LivePreview({ config, isMobileOpen, onMobileClose, coupl
 
       {/* Preview Content */}
       <div className="flex-1 overflow-y-auto p-3">
-        {sections.length === 0 ? (
+        {previewSections.length === 0 ? (
           <EmptyPreviewState theme={theme} />
         ) : (
           <DeviceFrame device={device} theme={theme}>
             <div className="space-y-3 px-2 sm:px-3">
-              {sections.map((section, index) => (
+              {previewSections.map((section, index) => (
                 <div 
                   key={`${section}-${index}`}
                   className="transform transition-all duration-300 animate-fade-in-up"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
-<SectionRenderer sectionId={section} config={config} coupleNames={coupleNames} tagline={tagline} />
+                  <SectionRenderer
+                    sectionId={section}
+                    config={config}
+                    occasion={currentOccasion}
+                    coupleNames={coupleNames}
+                    tagline={tagline}
+                    message={message}
+                    specialDate={specialDate}
+                  />
                 </div>
               ))}
             </div>

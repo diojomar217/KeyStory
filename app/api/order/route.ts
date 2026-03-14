@@ -1,16 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, Order } from '@/lib/supabase';
+import { supabase, Site } from '@/lib/supabase';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import { generateQRCode } from '@/lib/qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import { SiteConfig } from '@/lib/types';
 
+const slugify = (text: string): string =>
+  text
+    .toString()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+const randomSuffix = () => Math.floor(1000 + Math.random() * 9000).toString();
+
 interface OrderRequest {
   website_name?: string;
-  customer_name: string;
-  partner_name: string;
-  anniversary_date: string;
-  message: string;
+  occasion?: 'couple' | 'birthday' | string;
+  customer_name?: string;
+  partner_name?: string;
+  anniversary_date?: string;
+  participants?: { id: string; name: string; role?: string }[];
+  specialDate?: string;
+  message?: string;
   tagline?: string;
   song_link?: string;
   photos?: string[];
@@ -20,19 +35,43 @@ interface OrderRequest {
 export async function POST(req: NextRequest) {
   try {
     const data: OrderRequest = await req.json();
+    const occasion = (data.occasion || data.config?.occasion || 'couple').toString();
 
-    // basic validation
-    if (
-      !data.customer_name ||
-      !data.partner_name ||
-      !data.anniversary_date ||
-      !data.message
-    ) {
-      return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 });
+    const customerName = data.customer_name || data.participants?.[0]?.name || '';
+    const partnerName = data.partner_name || data.participants?.[1]?.name || '';
+    const specialDate = data.specialDate || data.anniversary_date || '';
+    const message = data.message || '';
+
+    const requiredFieldsByOccasion: Record<string, string[]> = {
+      couple: ['customer_name', 'partner_name', 'special_date', 'message'],
+      birthday: ['customer_name', 'special_date', 'message'],
+    };
+
+    const requiredFields = requiredFieldsByOccasion[occasion] || requiredFieldsByOccasion.couple;
+
+    const missingFields = requiredFields.filter((field) => {
+      if (field === 'customer_name') return !customerName.trim();
+      if (field === 'partner_name') return !partnerName.trim();
+      if (field === 'special_date') return !specialDate.trim();
+      if (field === 'message') return !message.trim();
+      return true;
+    });
+
+    if (missingFields.length > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Missing required fields for ${occasion} occasion: ${missingFields.join(', ')}`,
+          missingFields,
+        },
+        { status: 400 }
+      );
     }
 
     const slug = uuidv4();
-    const website_name = data.website_name || slug; // use provided name, fallback to slug
+    const cleanName = (data.website_name || '').trim();
+    const normalized = cleanName ? slugify(cleanName) : slug;
+    const website_name = cleanName ? `${normalized}-${randomSuffix()}` : slug;
 
     // upload pictures
     const photoUrls: string[] = [];
@@ -49,43 +88,47 @@ export async function POST(req: NextRequest) {
 
     // Get base URL safely
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://your-domain.vercel.app';
-    const coupleUrl = `${baseUrl}/love/${website_name}`;
+    const coupleUrl = `${baseUrl}/site/${website_name}`;
     const qrCodeUrl = await generateQRCode(coupleUrl);
 
-    // Store the URL in config for styled QR generation
-    const qrConfig = {
+    // Build normalized site config for storage
+    const siteConfig = {
       ...data.config,
-      qr_data_url: coupleUrl,
-      tagline: data.tagline,
+      people: {
+        primary: customerName,
+        secondary: partnerName,
+      },
+      dates: {
+        special_date: specialDate,
+      },
+      theme: data.config?.theme || data.config?.theme || 'romantic_classic',
+      sections: data.config?.sections || [],
+      templates: {
+        home: data.config?.home_template,
+        gallery: data.config?.gallery_template,
+        timeline: data.config?.timeline_template,
+      },
+      media: {
+        photos: photoUrls,
+        song_link: data.song_link || '',
+      },
+      timeline: data.config?.timeline_events || [],
+      content: data.config?.section_content || {},
+      message,
+      tagline: data.tagline || data.config?.tagline || '',
     };
 
-    // prepare insert object
-    const insertObj: Partial<Order> = {
+    const insertObj: Partial<Site> = {
       slug,
       website_name,
-      customer_name: data.customer_name,
-      partner_name: data.partner_name,
-      anniversary_date: data.anniversary_date,
-      message: data.message,
-      photos: photoUrls,
-      song_link: data.song_link,
-      qr_code_url: qrCodeUrl,
+      site_type: occasion,
       status: 'pending',
+      qr_code_url: qrCodeUrl,
+      config: siteConfig,
     };
 
-    // configuration extracted from payload
-    if (qrConfig) {
-      insertObj.config = qrConfig;
-      insertObj.theme = qrConfig.theme;
-      insertObj.sections = qrConfig.sections || [];
-      insertObj.home_template = qrConfig.home_template;
-      insertObj.gallery_template = qrConfig.gallery_template;
-      insertObj.timeline_template = qrConfig.timeline_template;
-      insertObj.timeline_events = qrConfig.timeline_events || [];
-    }
-
-    const { data: order, error } = await supabase
-      .from('orders')
+    const { data: site, error } = await supabase
+      .from('sites')
       .insert([insertObj])
       .select()
       .single();

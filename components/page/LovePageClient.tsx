@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Theme, HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, SectionContentMap, GalleryLayout } from '@/lib/types';
+import { Theme, HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, SectionContentMap, GalleryLayout, Section } from '@/lib/types';
+import BackgroundDecorations from './BackgroundDecorations';
 import ThemeWrapper from '../builder/ThemeWrapper';
 import HomeSection from './HomeSection';
+import { getAvailableSections } from '@/lib/section-registry';
 import GallerySection from '../sections/shared/GallerySection';
 import TimelineSection from '../sections/shared/TimelineSection';
 import SongSection from '../sections/shared/SongSection';
@@ -44,7 +46,9 @@ import { SectionSeparator } from './SectionLayouts';
 
 type Props = {
   theme: Theme;
-  sections: string[];
+  siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
+  config?: any; // optional, new site config object (for footer and future sections)
+  sections: Section[];
   homeTemplate: HomeTemplate;
   galleryTemplate: GalleryTemplate;
   timelineTemplate: TimelineTemplate;
@@ -65,6 +69,8 @@ type Props = {
 
 export default function LovePageClient({
   theme,
+  siteType = 'couple',
+  config,
   sections,
   homeTemplate,
   galleryTemplate,
@@ -83,13 +89,22 @@ export default function LovePageClient({
   sectionContent,
   slug,
 }: Props) {
+  const isBirthday = siteType === 'birthday';
+
   // Romantic opening state
   const [showOpening, setShowOpening] = useState(true);
   const [isRevealing, setIsRevealing] = useState(false);
 
+  // Use registry-based allowed sections to make site type rules data-driven
+  const allowedSections = getAvailableSections(siteType);
+
+  const effectiveSections = sections.filter((section) => allowedSections.includes(section));
+
+  const activeSections = effectiveSections;
+
   // Determine if we need alternating backgrounds
-  const hasGallery = sections.includes('gallery');
-  const hasTimeline = sections.includes('timeline');
+  const hasGallery = activeSections.includes('gallery');
+  const hasTimeline = activeSections.includes('timeline');
   const hasSong = !!songLink;
 
   // Check localStorage on mount to determine if we should skip the opening
@@ -142,10 +157,10 @@ export default function LovePageClient({
   }, [sections, galleryTemplate, timelineEvents, sectionContent]);
 
   // Check for deprecated sections
-  const hasFirstDate = sections.includes('first_date');
-  const hasSpecialMoments = sections.includes('special_moments');
-  const hasMilestones = sections.includes('milestones');
-  const hasPolaroidGallery = sections.includes('polaroid_gallery');
+  const hasFirstDate = activeSections.includes('first_date');
+  const hasSpecialMoments = activeSections.includes('special_moments');
+  const hasMilestones = activeSections.includes('milestones');
+  const hasPolaroidGallery = activeSections.includes('polaroid_gallery');
   
   // Show timeline if it's enabled OR if deprecated story sections exist
   const shouldShowTimeline = hasTimeline || hasFirstDate || hasSpecialMoments || hasMilestones;
@@ -165,21 +180,25 @@ let sectionIndex = 0;
     
     return (
       <ThemeWrapper theme={theme}>
-        <div className="min-h-screen">
-          {/* 1. Home Section - Hero - Full Width */}
-          {sections.includes('home') && (
-            <HomeSection
-              theme={theme}
-              template={homeTemplate}
-              customerName={customerName}
-              partnerName={partnerName}
-              anniversaryDate={anniversaryDate}
-              message={message}
-              tagline={tagline}
-              photos={photos}
-              coverPhotoIndex={coverPhotoIndex}
-            />
-          )}
+        <div className="relative min-h-screen">
+          <BackgroundDecorations theme={theme} siteType={siteType} />
+          <div className="relative z-10">
+            {/* 1. Home Section - Hero - Full Width */}
+            {activeSections.includes('home') && (
+              <HomeSection
+                theme={theme}
+                siteType={siteType}
+                config={config}
+                template={homeTemplate}
+                customerName={customerName}
+                partnerName={partnerName}
+                anniversaryDate={anniversaryDate}
+                message={message}
+                tagline={tagline}
+                photos={photos}
+                coverPhotoIndex={coverPhotoIndex}
+              />
+            )}
 
           {/* 2. Love Letter Section - Full Width below hero */}
           {message && (
@@ -190,7 +209,7 @@ let sectionIndex = 0;
           )}
 
           {/* 3. Our Story Section - Alternating background */}
-          {sections.includes('our_story') && (
+          {activeSections.includes('our_story') && (
             <OurStorySection
               theme={theme}
               customerName={customerName}
@@ -231,7 +250,7 @@ let sectionIndex = 0;
           )}
 
           {/* 6b. Playlist Section */}
-          {sections.includes('playlist') && (
+          {activeSections.includes('playlist') && (
             <PlaylistSection
               theme={theme}
               songLink={sectionContent?.playlist?.playlistUrl || songLink}
@@ -239,12 +258,12 @@ let sectionIndex = 0;
           )}
 
           {/* 6c. Video Memories Section */}
-          {sections.includes('video_memories') && (
+          {activeSections.includes('video_memories') && (
             <VideoMemoriesSection theme={theme} videos={sectionContent?.video_memories?.videos} />
           )}
 
           {/* 7. Relationship Stats Section */}
-          {sections.includes('relationship_stats') && (
+          {activeSections.includes('relationship_stats') && (
             <RelationshipStatsSection
               theme={theme}
               anniversaryDate={anniversaryDate}
@@ -252,7 +271,7 @@ let sectionIndex = 0;
           )}
 
           {/* 7b. Anniversary Countdown Section */}
-          {sections.includes('anniversary_countdown') && (
+          {activeSections.includes('anniversary_countdown') && (
             <AnniversaryCountdownSection
               theme={theme}
               anniversaryDate={anniversaryDate}
@@ -260,12 +279,12 @@ let sectionIndex = 0;
           )}
 
           {/* Separator after Stats sections */}
-          {(sections.includes('relationship_stats') || sections.includes('anniversary_countdown')) && (
+          {(activeSections.includes('relationship_stats') || activeSections.includes('anniversary_countdown')) && (
             <SectionSeparator theme={theme} />
           )}
 
           {/* 8. Future Dreams Section - Alternating background */}
-          {sections.includes('future_dreams') && (
+          {activeSections.includes('future_dreams') && (
             <FutureDreamsSection 
               theme={theme} 
               dreams={sectionContent?.future_dreams?.dreams}
@@ -274,7 +293,7 @@ let sectionIndex = 0;
           )}
 
           {/* 9. Reasons I Love You Section - Alternating background */}
-          {sections.includes('reasons_love_you') && (
+          {activeSections.includes('reasons_love_you') && (
             <ReasonsILoveYouSection
               theme={theme}
               partnerName={partnerName}
@@ -284,7 +303,7 @@ let sectionIndex = 0;
           )}
 
           {/* 10. Quotes Section - Alternating background */}
-          {sections.includes('quotes') && (
+          {activeSections.includes('quotes') && (
             <QuotesSection 
               theme={theme} 
               quotes={sectionContent?.quotes?.quotes}
@@ -293,16 +312,17 @@ let sectionIndex = 0;
           )}
 
           {/* 11. Guest Messages Section - Alternating background */}
-          {sections.includes('guest_messages') && (
+          {activeSections.includes('guest_messages') && (
             <GuestMessagesSection 
               theme={theme} 
+              siteType={siteType}
               messages={sectionContent?.guest_messages?.messages}
               variant={sectionIndex++ % 2 === 1 ? 'alt' : 'default'}
             />
           )}
 
           {/* 12. Memory Map Section */}
-          {sections.includes('memory_map') && (
+          {activeSections.includes('memory_map') && (
             <MemoryMapSection 
               theme={theme} 
               locations={sectionContent?.memory_map?.locations}
@@ -310,7 +330,7 @@ let sectionIndex = 0;
           )}
 
           {/* 13. Letter to Future Section */}
-          {sections.includes('letter_future') && (
+          {activeSections.includes('letter_future') && (
             <LetterToFutureSection
               theme={theme}
               customerName={customerName}
@@ -321,7 +341,7 @@ let sectionIndex = 0;
           )}
 
           {/* 14. Gift Section */}
-          {sections.includes('gift_section') && (
+          {activeSections.includes('gift_section') && (
             <GiftSection
               theme={theme}
               partnerName={partnerName}
@@ -330,7 +350,7 @@ let sectionIndex = 0;
           )}
 
           {/* 15. Surprise Message Section */}
-          {sections.includes('surprise_message') && (
+          {activeSections.includes('surprise_message') && (
             <SurpriseMessageSection
               theme={theme}
               customerName={customerName}
@@ -343,7 +363,7 @@ let sectionIndex = 0;
           {/* 16. Memory Card Section - Premium Keepsake - Only render if qr_keepsake is enabled */}
           {/* Backward compatibility: if sections array is missing, check for qrCodeUrl */}
           {(() => {
-            const isQrKeepsakeEnabled = Array.isArray(sections) && sections.includes('qr_keepsake');
+            const isQrKeepsakeEnabled = Array.isArray(sections) && activeSections.includes('qr_keepsake');
             const hasQrCode = !!qrCodeUrl;
             const isLegacyWebsite = !Array.isArray(sections);
             
@@ -366,6 +386,8 @@ let sectionIndex = 0;
           {/* 17. Footer */}
           <FooterSection
             theme={theme}
+            siteType={siteType}
+            config={config}
             customerName={customerName}
             partnerName={partnerName}
             qrCodeUrl={qrCodeUrl}
@@ -375,6 +397,7 @@ let sectionIndex = 0;
           {/* Back to Top Button */}
           <BackToTop />
         </div>
+      </div>
       </ThemeWrapper>
     );
   };
@@ -383,9 +406,10 @@ let sectionIndex = 0;
   if (showOpening) {
     return (
       <>
-        {/* Romantic Opening Screen */}
+        {/* Occasion-aware Opening Screen */}
         <RomanticOpening 
           theme={theme}
+          siteType={siteType}
           tagline={tagline}
           onReveal={handleReveal} 
         />

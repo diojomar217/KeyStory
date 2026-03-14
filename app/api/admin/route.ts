@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, Order } from '@/lib/supabase';
+import { supabase, Site } from '@/lib/supabase';
 
 // GET - Fetch all orders or single order by id
 export async function GET(req: NextRequest) {
@@ -7,12 +7,12 @@ export async function GET(req: NextRequest) {
   const id = searchParams.get('id');
 
   if (id) {
-    const { data, error } = await supabase.from('orders').select('*').eq('id', id).single();
+    const { data, error } = await supabase.from('sites').select('*').eq('id', id).single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ order: data });
+    return NextResponse.json({ site: data });
   }
 
-  const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+  const { data, error } = await supabase.from('sites').select('*').order('created_at', { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ orders: data });
 }
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const { id, status } = await req.json();
-    const { error } = await supabase.from('orders').update({ status }).eq('id', id);
+    const { error } = await supabase.from('sites').update({ status }).eq('id', id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   } catch (err) {
@@ -40,35 +40,50 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ message: 'Order ID is required' }, { status: 400 });
     }
 
-    // Build update object with config fields flattened
-    // Note: tagline is stored in config.jsonb column, not as a direct column
-    const updateObj: Partial<Order> = {
+    // Build update object with normalized config in JSONB
+    const updateObj: Partial<Site> = {
       website_name: updates.website_name,
-      customer_name: updates.customer_name,
-      partner_name: updates.partner_name,
-      anniversary_date: updates.anniversary_date,
-      message: updates.message,
-      song_link: updates.song_link,
-      photos: updates.photos,
+      site_type: updates.site_type || updates.occasion,
+      status: updates.status,
       config: {
         ...updates.config,
-        tagline: updates.tagline,
+        people: {
+          primary: updates.customer_name || updates.config?.people?.primary,
+          secondary: updates.partner_name || updates.config?.people?.secondary,
+        },
+        dates: {
+          special_date: updates.specialDate || updates.anniversary_date || updates.config?.dates?.special_date,
+        },
+        occasion: updates.occasion || updates.site_type || updates.config?.occasion || undefined,
+        theme: updates.config?.theme || updates.theme || 'romantic_classic',
+        sections: updates.config?.sections || updates.sections || [],
+        templates: {
+          home: updates.config?.home_template || updates.home_template,
+          gallery: updates.config?.gallery_template || updates.gallery_template,
+          timeline: updates.config?.timeline_template || updates.timeline_template,
+        },
+        media: {
+          photos: updates.photos || updates.config?.media?.photos || [],
+          song_link: updates.song_link || updates.config?.media?.song_link || '',
+        },
+        timeline: updates.config?.timeline || updates.config?.timeline_events || updates.timeline_events || [],
+        content: updates.config?.content || updates.config?.section_content || {},
+        message: updates.message || updates.config?.message || '',
+        tagline: updates.tagline || updates.config?.tagline || '',
       },
     };
 
-    // Also update individual config columns
-    // Note: section_content is already included in the config object
-    if (updates.config) {
-      updateObj.theme = updates.config.theme;
-      updateObj.sections = updates.config.sections;
-      updateObj.home_template = updates.config.home_template;
-      updateObj.gallery_template = updates.config.gallery_template;
-      updateObj.timeline_template = updates.config.timeline_template;
-      updateObj.timeline_events = updates.config.timeline_events;
-    }
+    // We keep only config JSONB here. Avoid top-level legacy fields unless explicitly required by your schema.
+    // This prevents schema-cache issues when columns like theme/sections/home_template don't exist.
+    // (If your DB actually has these columns, re-enable carefully.)
+
+    // const configUpdates = updates.config as any;
+    // if (configUpdates) {
+    //   updateObj.theme = configUpdates.theme;
+    // }
 
     const { data, error } = await supabase
-      .from('orders')
+      .from('sites')
       .update(updateObj)
       .eq('id', id)
       .select()
@@ -94,7 +109,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ message: 'Order ID is required' }, { status: 400 });
     }
 
-    const { error } = await supabase.from('orders').delete().eq('id', id);
+    const { error } = await supabase.from('sites').delete().eq('id', id);
 
     if (error) {
       return NextResponse.json({ message: error.message }, { status: 500 });

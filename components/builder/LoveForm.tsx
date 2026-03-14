@@ -10,6 +10,7 @@ export default function LoveForm({ onCreated }: Props) {
   const [form, setForm] = useState({
     customer_name: '',
     partner_name: '',
+    specialDate: '',
     anniversary_date: '',
     message: '',
     photos: [] as File[],
@@ -42,7 +43,12 @@ export default function LoveForm({ onCreated }: Props) {
     );
     const res = await fetch('/api/order', {
       method: 'POST',
-      body: JSON.stringify({ ...form, photos: photosBase64 }),
+      body: JSON.stringify({
+        ...form,
+        anniversary_date: form.anniversary_date || form.specialDate,
+        specialDate: form.specialDate || form.anniversary_date,
+        photos: photosBase64,
+      }),
       headers: { 'Content-Type': 'application/json' },
     });
     const data = await res.json();
@@ -54,7 +60,7 @@ export default function LoveForm({ onCreated }: Props) {
     <form className="space-y-4" onSubmit={handleSubmit}>
       <input name="customer_name" required placeholder="Your Name" className="input input-bordered w-full" onChange={handleChange} />
       <input name="partner_name" required placeholder="Partner's Name" className="input input-bordered w-full" onChange={handleChange} />
-      <input name="anniversary_date" required type="date" className="input input-bordered w-full" onChange={handleChange} />
+      <input name="specialDate" required type="date" className="input input-bordered w-full" onChange={handleChange} />
       <textarea name="message" required placeholder="Your Love Message" className="textarea textarea-bordered w-full" onChange={handleChange} />
       <input name="photos" type="file" accept="image/*" multiple max={5} className="file-input w-full" onChange={handlePhotos} />
       <button type="submit" className="btn btn-primary w-full" disabled={loading}>{loading ? 'Creating...' : 'Create Website'}</button>

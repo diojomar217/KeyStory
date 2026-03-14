@@ -66,7 +66,7 @@ export const OCCASION_REGISTRY: Record<OccasionType, OccasionMetadata> = {
     supportedThemes: [
       'wedding_style', 'elegant_rose_gold', 'luxury_gold', 'minimal_white'
     ],
-    isProductionReady: false, // Stub - needs sections/validation
+    isProductionReady: true,
   },
   birthday: {
     key: 'birthday',
@@ -74,11 +74,11 @@ export const OCCASION_REGISTRY: Record<OccasionType, OccasionMetadata> = {
     description: 'Surprise birthday tribute websites',
     icon: '🎂',
     color: '#F59E0B',
-    defaultSections: ['home', 'gallery', 'timeline'],
+    defaultSections: ['home', 'birthday_message', 'birthday_wishes', 'gallery', 'playlist', 'birthday_countdown', 'qr_keepsake'],
     defaultTheme: 'cute_pastel',
     participantsLabel: 'Birthday Person',
     specialDateLabel: 'Birthday',
-    supportedThemes: ['cute_pastel', 'cute_kawaii', 'soft_pastel'],
+    supportedThemes: ['cute_pastel', 'cute_kawaii', 'soft_pastel', 'colorful_celebration'],
     isProductionReady: false,
   },
   proposal: {

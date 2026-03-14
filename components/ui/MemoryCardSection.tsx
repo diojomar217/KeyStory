@@ -35,7 +35,7 @@ export default function MemoryCardSection({
   const [isClient, setIsClient] = useState(false);
   
   // Generate the love page URL from slug
-  const lovePageUrl = slug ? `/love/${slug}` : currentUrl;
+  const lovePageUrl = slug ? `/site/${slug}` : currentUrl;
   
   // Save card state
   const [isSaving, setIsSaving] = useState(false);
