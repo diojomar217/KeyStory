@@ -263,6 +263,24 @@ const [config, setConfig] = useState<SiteConfig>({
           ? declaredOccasion
           : (partnerFromData ? 'couple' : customerFromData ? 'birthday' : 'couple');
 
+        setForm({
+          website_name: site.website_name || site.slug || '',
+          customer_name: customerName,
+          partner_name: partnerName,
+          anniversary_date: anniversaryDateValue,
+          specialDate: anniversaryDateValue,
+          message: site.config?.message || site.message || '',
+          tagline: taglineValue,
+          song_link: site.config?.media?.song_link || site.song_link || '',
+          photos: [],
+          existingPhotos: site.config?.media?.photos || site.photos || [],
+          occasion: occasionValue as 'couple' | 'birthday',
+          participants: [
+            { id: 'customer', name: customerName, role: 'primary' },
+            { id: 'partner', name: partnerName, role: 'partner' },
+          ],
+        });
+
         setConfig({
           occasion: occasionValue as 'couple' | 'birthday',
           theme: (site.config?.theme || siteAny.theme) as Theme || 'romantic_classic',
