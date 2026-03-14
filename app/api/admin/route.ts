@@ -54,6 +54,7 @@ export async function PUT(req: NextRequest) {
         dates: {
           special_date: updates.specialDate || updates.anniversary_date || updates.config?.dates?.special_date,
         },
+        occasion: updates.occasion || updates.site_type || updates.config?.occasion || undefined,
         theme: updates.config?.theme || updates.theme || 'romantic_classic',
         sections: updates.config?.sections || updates.sections || [],
         templates: {

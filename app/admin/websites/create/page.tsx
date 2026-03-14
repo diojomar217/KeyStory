@@ -68,7 +68,7 @@ export default function CreateWebsitePage() {
   const [config, setConfig] = useState<SiteConfig>({
     occasion: 'couple' as const,
     theme: 'romantic_classic',
-    sections: ['home'],
+    sections: [],
     home_template: undefined,
     gallery_template: undefined,
     timeline_template: undefined,
@@ -109,6 +109,17 @@ export default function CreateWebsitePage() {
       photoPreviews.forEach((url) => URL.revokeObjectURL(url));
     };
   }, [photoPreviews]);
+
+  useEffect(() => {
+    setConfig((prev) => ({
+      ...prev,
+      occasion: form.occasion,
+      participants: form.participants,
+      message: form.message,
+      tagline: form.tagline,
+      specialDate: form.specialDate,
+    }));
+  }, [form.occasion, form.participants, form.message, form.tagline, form.specialDate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const name = e.target.name as keyof LocalForm;
@@ -409,72 +420,6 @@ export default function CreateWebsitePage() {
 
       case 2:
         return (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/50 p-6 md:p-8 space-y-6 opacity-0 animate-fade-in-up">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-pink-500 text-white font-bold text-sm">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                  />
-                </svg>
-              </div>
-              <h2 className="text-xl font-bold text-slate-800">
-                {stepInfo?.title || 'Hero & Message'}
-              </h2>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                Your Love Message
-              </label>
-              <textarea
-                name="message"
-                required
-                rows={4}
-                placeholder="Write a heartfelt message for your partner..."
-                value={form.message}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all resize-none"
-                onChange={handleChange}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                Hero Tagline
-              </label>
-              <input
-                name="tagline"
-                maxLength={120}
-                placeholder="Every love story is beautiful, but ours is my favorite."
-                value={form.tagline}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
-                onChange={handleChange}
-              />
-              <p className="text-xs text-slate-400 mt-1">
-                A short romantic line shown in the hero section. (Max 120 characters)
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                Song Link (Optional)
-              </label>
-              <input
-                name="song_link"
-                placeholder="Spotify or YouTube link"
-                value={form.song_link}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-        );
-
-      case 3:
-        return (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/50 p-6 md:p-8 opacity-0 animate-fade-in-up">
             <div className="flex items-center gap-3 mb-6">
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-pink-500 text-white font-bold text-sm">
@@ -506,7 +451,7 @@ export default function CreateWebsitePage() {
           </div>
         );
 
-      case 4:
+      case 3:
         return (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/50 p-6 md:p-8 opacity-0 animate-fade-in-up">
             <div className="flex items-center gap-3 mb-6">
@@ -527,8 +472,78 @@ export default function CreateWebsitePage() {
 
             <SectionSelector
               value={config.sections}
-onChange={(sections: import('@/lib/types').Section[]) => handleConfigChange({ sections })}
+              occasion={config.occasion || 'couple'}
+              onChange={(sections: import('@/lib/types').Section[]) => handleConfigChange({ sections })}
             />
+          </div>
+        );
+
+      case 4:
+        return (
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/50 p-6 md:p-8 space-y-8 opacity-0 animate-fade-in-up">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-pink-500 text-white font-bold text-sm">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"
+                  />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-slate-800">
+                {stepInfo?.title || 'Templates'}
+              </h2>
+            </div>
+
+            {config.sections.length === 0 ? (
+              <p className="text-slate-500 text-center py-8">
+                Please select sections in the previous step first.
+              </p>
+            ) : (
+              <div className="space-y-6">
+                {config.sections.includes('home') && (
+                  <TemplateSelector
+                    section="home"
+                    value={config.home_template}
+                    onChange={(home_template) =>
+                      handleConfigChange({ home_template: home_template as any })
+                    }
+                  />
+                )}
+
+                {config.sections.includes('gallery') && (
+                  <TemplateSelector
+                    section="gallery"
+                    value={config.gallery_template}
+                    onChange={(gallery_template) =>
+                      handleConfigChange({ gallery_template: gallery_template as any })
+                    }
+                  />
+                )}
+
+                {config.sections.includes('timeline') && (
+                  <TemplateSelector
+                    section="timeline"
+                    value={config.timeline_template}
+                    onChange={(timeline_template) =>
+                      handleConfigChange({ timeline_template: timeline_template as any })
+                    }
+                  />
+                )}
+
+                {config.sections.includes('song') && (
+                  <TemplateSelector
+                    section="song"
+                    value={config.song_template}
+                    onChange={(song_template) =>
+                      handleConfigChange({ song_template: song_template as any })
+                    }
+                  />
+                )}
+              </div>
+            )}
           </div>
         );
 
@@ -601,7 +616,7 @@ onChange={(sections: import('@/lib/types').Section[]) => handleConfigChange({ se
           </div>
         );
 
-      case 6:
+      case 5:
         return (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/50 p-6 md:p-8 space-y-6 opacity-0 animate-fade-in-up">
             <div className="flex items-center gap-3 mb-6">
@@ -619,6 +634,50 @@ onChange={(sections: import('@/lib/types').Section[]) => handleConfigChange({ se
                 {stepInfo?.title || 'Content'}
               </h2>
             </div>
+
+            {config.sections.includes('home') && (
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">Hero Content</h3>
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">Hero Tagline</label>
+                <input
+                  name="tagline"
+                  maxLength={120}
+                  placeholder="Every love story is beautiful, but ours is my favorite."
+                  value={form.tagline}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                  onChange={handleChange}
+                />
+                <p className="text-xs text-slate-400 mt-1">A short romantic line shown in the hero section. (Max 120 characters)</p>
+              </div>
+            )}
+
+            {config.sections.includes('love_letter') && (
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">Your Love Message</h3>
+                <textarea
+                  name="message"
+                  rows={4}
+                  placeholder="Write a heartfelt message for your partner..."
+                  value={form.message}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all resize-none"
+                  onChange={handleChange}
+                />
+              </div>
+            )}
+
+            {config.sections.includes('song') && (
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">Song</h3>
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">Song Link (Optional)</label>
+                <input
+                  name="song_link"
+                  placeholder="Spotify or YouTube link"
+                  value={form.song_link}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                  onChange={handleChange}
+                />
+              </div>
+            )}
 
             {/* Media Content Section - Photos */}
             {(config.sections.includes('gallery') || config.sections.includes('polaroid_gallery')) && (
@@ -931,7 +990,7 @@ onChange={(sections: import('@/lib/types').Section[]) => handleConfigChange({ se
           </div>
         );
 
-      case 7:
+      case 6:
         return (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/50 p-6 md:p-8 space-y-6">
             <div className="flex items-center gap-3 mb-6">
@@ -1048,7 +1107,7 @@ onChange={(sections: import('@/lib/types').Section[]) => handleConfigChange({ se
                       onClick={handleNext}
                       className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all"
                     >
-                      {currentStep === 6 ? 'Next: Review' : 'Continue'}
+                      {currentStep === 5 ? 'Next: Review' : 'Continue'}
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
                           strokeLinecap="round"
@@ -1107,12 +1166,15 @@ onChange={(sections: import('@/lib/types').Section[]) => handleConfigChange({ se
             </div>
 
 <LivePreview
+              occasion={form.occasion}
               config={config}
               coupleNames={{
                 customer_name: form.customer_name ?? form.participants?.[0]?.name ?? '',
                 partner_name: form.partner_name ?? form.participants?.[1]?.name ?? '',
               }}
               tagline={form.tagline}
+              message={form.message}
+              specialDate={form.specialDate}
               isMobileOpen={mobilePreviewOpen}
               onMobileClose={() => setMobilePreviewOpen(false)}
             />

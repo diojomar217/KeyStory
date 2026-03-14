@@ -2,6 +2,8 @@
 
 import { Section } from '@/lib/types';
 import { SECTION_TOGGLES } from '@/lib/builder-constants';
+import { getSectionMetadata } from '@/lib/section-registry';
+import { OccasionType } from '@/lib/occasion-registry';
 import React, { useState } from 'react';
 import {
   DndContext,
@@ -274,13 +276,19 @@ function LayoutPreview({ sections }: LayoutPreviewProps) {
 type Props = {
   value: Section[];
   onChange: (sections: Section[]) => void;
+  occasion?: OccasionType;
 };
 
-export default function SectionSelector({ value, onChange }: Props) {
+export default function SectionSelector({ value, onChange, occasion = 'couple' }: Props) {
   const [showAllSections, setShowAllSections] = useState(false);
 
-  // Get all available sections
-  const allSections = SECTION_TOGGLES.map(t => t.id);
+  // Get all available sections by occasion
+  const allSections = SECTION_TOGGLES
+    .map((t) => t.id)
+    .filter((section) => {
+      const metadata = getSectionMetadata(section);
+      return metadata?.supportedOccasions?.includes(occasion);
+    });
   
   // Get currently enabled sections (with required sections first)
   const requiredSections = allSections.filter(id => {

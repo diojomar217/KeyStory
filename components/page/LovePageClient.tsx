@@ -5,6 +5,7 @@ import { Theme, HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, 
 import BackgroundDecorations from './BackgroundDecorations';
 import ThemeWrapper from '../builder/ThemeWrapper';
 import HomeSection from './HomeSection';
+import { getAvailableSections } from '@/lib/section-registry';
 import GallerySection from '../sections/shared/GallerySection';
 import TimelineSection from '../sections/shared/TimelineSection';
 import SongSection from '../sections/shared/SongSection';
@@ -94,24 +95,10 @@ export default function LovePageClient({
   const [showOpening, setShowOpening] = useState(true);
   const [isRevealing, setIsRevealing] = useState(false);
 
-  const coupleOnlySections = [
-    'our_story',
-    'love_letter',
-    'relationship_stats',
-    'anniversary_countdown',
-    'future_dreams',
-    'reasons_love_you',
-    'quotes',
-    'milestones',
-    'first_date',
-    'special_moments',
-    'gift_section',
-    'surprise_message',
-  ];
+  // Use registry-based allowed sections to make site type rules data-driven
+  const allowedSections = getAvailableSections(siteType);
 
-  const effectiveSections = isBirthday
-    ? sections.filter((section) => !coupleOnlySections.includes(section))
-    : sections;
+  const effectiveSections = sections.filter((section) => allowedSections.includes(section));
 
   const activeSections = effectiveSections;
 
@@ -328,6 +315,7 @@ let sectionIndex = 0;
           {activeSections.includes('guest_messages') && (
             <GuestMessagesSection 
               theme={theme} 
+              siteType={siteType}
               messages={sectionContent?.guest_messages?.messages}
               variant={sectionIndex++ % 2 === 1 ? 'alt' : 'default'}
             />

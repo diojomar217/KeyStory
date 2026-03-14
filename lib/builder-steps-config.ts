@@ -194,6 +194,11 @@ export const validateContentStep = (
     }
   }
   
+  // Love Letter requires hero message content (moved from step 2 into content)
+  if (sections.includes('love_letter') && !form.message?.trim()) {
+    return { valid: false, error: 'Love message is required when Love Letter section is selected' };
+  }
+
   // Song requires song link (from form)
   if (sections.includes('song') && !form.song_link?.trim()) {
     return { valid: false, error: 'Song section requires a song link' };
@@ -270,41 +275,34 @@ export const WIZARD_STEPS: WizardStepConfig[] = [
   },
   {
     id: 2,
-    key: 'hero',
-    title: 'Hero & Message',
-    subtitle: 'Your special message',
-    validate: validateHeroStep,
-  },
-  {
-    id: 3,
     key: 'style',
     title: 'Choose Style',
     subtitle: 'Pick the mood',
     validate: validateStyleStep,
   },
   {
-    id: 4,
+    id: 3,
     key: 'layout',
     title: 'Page Layout',
     subtitle: 'Select sections',
     validate: validateLayoutStep,
   },
   {
-    id: 5,
+    id: 4,
     key: 'templates',
     title: 'Templates',
     subtitle: 'Design picks',
     validate: validateTemplateStep,
   },
   {
-    id: 6,
+    id: 5,
     key: 'content',
     title: 'Content',
     subtitle: 'Fill in your sections',
     validate: validateContentStep,
   },
   {
-    id: 7,
+    id: 6,
     key: 'review',
     title: 'Review',
     subtitle: 'Almost done!',
@@ -315,7 +313,7 @@ export const WIZARD_STEPS: WizardStepConfig[] = [
 /**
  * Total number of wizard steps
  */
-export const TOTAL_STEPS = 7;
+export const TOTAL_STEPS = 6;
 
 /**
  * Get step configuration by ID

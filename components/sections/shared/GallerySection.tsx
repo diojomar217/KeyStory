@@ -13,9 +13,10 @@ type Props = {
   template: GalleryTemplate;
   photos: string[];
   coverPhotoIndex?: number;
+  siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
 };
 
-export default function GallerySection({ theme, template, photos, coverPhotoIndex }: Props) {
+export default function GallerySection({ theme, template, photos, coverPhotoIndex, siteType = 'couple' }: Props) {
   const styles = useTheme(theme);
   const [currentIndex, setCurrentIndex] = useState(0);
   
@@ -200,9 +201,9 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
         {/* Section Header */}
         <ScrollReveal animation="fade-up">
           <SectionHeader
-            icon="📸"
-            title="Our Memories"
-            subtitle="Moments we will never forget"
+            icon={siteType === 'birthday' ? '🎉' : '📸'}
+            title={siteType === 'birthday' ? 'Birthday Memories' : 'Our Memories'}
+            subtitle={siteType === 'birthday' ? 'Celebrating your most joyful moments' : 'Moments we will never forget'}
             theme={theme}
           />
         </ScrollReveal>

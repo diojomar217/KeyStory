@@ -46,6 +46,9 @@ export type Section =
   | 'birthday_message'
   | 'birthday_wishes'
   | 'birthday_countdown'
+  | 'birthday_timeline'
+  | 'party_details'
+  | 'gift_wishlist'
   | 'relationship_stats'
   | 'memory_map'
   | 'polaroid_gallery'        // DEPRECATED - use gallery with layout="polaroid"

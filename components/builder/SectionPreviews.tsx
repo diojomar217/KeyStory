@@ -1,6 +1,6 @@
 'use client';
 
-import { SiteConfig, Theme } from '@/lib/types';
+import { SiteConfig, Theme, OccasionType } from '@/lib/types';
 import { THEME_PRESETS } from '@/lib/builder-constants';
 
 // ============================================
@@ -38,6 +38,7 @@ const getThemeColors = (theme: Theme): ThemeColors => {
 
 interface HomeSectionPreviewProps {
   theme: Theme;
+  siteType?: OccasionType;
   customerName: string;
   partnerName: string;
   tagline?: string;
@@ -49,6 +50,7 @@ interface HomeSectionPreviewProps {
 
 export function HomeSectionPreview({
   theme,
+  siteType = 'couple',
   customerName,
   partnerName,
   tagline,
@@ -68,14 +70,25 @@ export function HomeSectionPreview({
     ? { hasContent: true, text: tagline } 
     : { hasContent: false, text: 'Your tagline will appear here' };
 
+  const isBirthday = siteType === 'birthday';
+
   const dateString = specialDate || anniversary_date;
   const anniversaryData = dateString
     ? { hasContent: true, text: new Date(dateString).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }
-    : { hasContent: false, text: 'Add your special date' };
+    : { hasContent: false, text: isBirthday ? 'Add your birthday date' : 'Add your special date' };
 
   const messageData = message?.trim() 
     ? { hasContent: true, text: message }
-    : { hasContent: false, text: 'Your love message will appear here' };
+    : { hasContent: false, text: isBirthday ? 'Your birthday message will appear here' : 'Your love message will appear here' };
+
+  const heroTitle = isBirthday && customerName?.trim()
+    ? `${customerName}'s Birthday`
+    : isBirthday
+      ? 'Birthday Celebration'
+      : nameData.primary;
+
+  const heroTagline = taglineData.hasContent ? taglineData.text : '';
+  const dateLabel = isBirthday ? '🎂 Birthday' : '💍 Since';
 
   return (
     <div 
@@ -100,64 +113,67 @@ export function HomeSectionPreview({
         </div>
         
         <h2 
-          className={`text-sm font-bold leading-tight line-clamp-1 mb-1 transition-opacity ${nameData.hasContent ? '' : 'italic'}`}
+          className={`text-sm font-bold leading-tight line-clamp-1 mb-1 transition-opacity ${(nameData.hasContent || isBirthday) ? '' : 'italic'}`}
           style={{ 
             color: colors.text,
-            opacity: nameData.hasContent ? 1 : 0.5
+            opacity: (nameData.hasContent || isBirthday) ? 1 : 0.5
           }}
         >
-          {nameData.primary}
+          {heroTitle}
         </h2>
         
         <p 
-          className={`text-xs leading-tight line-clamp-1 px-1 transition-all ${taglineData.hasContent ? 'font-normal' : 'italic'}`}
+          className={`text-xs leading-tight line-clamp-1 px-1 transition-all ${heroTagline ? 'font-normal' : 'italic'}`}
           style={{ 
             color: colors.muted,
-            opacity: taglineData.hasContent ? 1 : 0.6,
-            fontStyle: taglineData.hasContent ? 'normal' : 'italic'
+            opacity: heroTagline ? 1 : 0.6,
+            fontStyle: heroTagline ? 'normal' : 'italic'
           }}
         >
-          "{taglineData.text}"
+          "{heroTagline}"
         </p>
       </div>
 
       {/* Message Card */}
-      <div 
-        className="mx-3 -mt-6 p-3 rounded-xl shadow-sm border"
-        style={{ 
-          backgroundColor: colors.card, 
-          borderColor: colors.border,
-          borderWidth: messageData.hasContent ? '1px' : '2px',
-          borderStyle: messageData.hasContent ? 'solid' : 'dashed'
-        }}
-      >
-        <p 
-          className="text-xs leading-relaxed line-clamp-3 transition-opacity"
+      {messageData.hasContent && (
+        <div 
+          className="mx-3 -mt-6 p-3 rounded-xl shadow-sm border"
           style={{ 
-            color: colors.text,
-            opacity: messageData.hasContent ? 1 : 0.5,
-            fontStyle: messageData.hasContent ? 'normal' : 'italic'
+            backgroundColor: colors.card, 
+            borderColor: colors.border,
+            borderWidth: '1px',
+            borderStyle: 'solid'
           }}
         >
-          {messageData.text}
-        </p>
-      </div>
+          <p 
+            className="text-xs leading-relaxed line-clamp-3"
+            style={{ 
+              color: colors.text,
+              opacity: 1,
+              fontStyle: 'normal'
+            }}
+          >
+            {messageData.text}
+          </p>
+        </div>
+      )}
 
       {/* Anniversary Badge */}
-      <div className="flex justify-center py-2 px-4">
-        <span 
-          className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all ${anniversaryData.hasContent ? '' : 'opacity-60 italic'}`}
-          style={{ 
-            backgroundColor: colors.secondary + (anniversaryData.hasContent ? '' : '66'),
-            color: colors.primary,
-            borderWidth: anniversaryData.hasContent ? 0 : '1px',
-            borderStyle: 'dashed',
-            borderColor: colors.muted.replace('99', '50')
-          }}
-        >
-          💍 Since {anniversaryData.text}
-        </span>
-      </div>
+      {anniversaryData.hasContent && (
+        <div className="flex justify-center py-2 px-4">
+          <span 
+            className="text-xs px-3 py-1.5 rounded-full font-medium transition-all"
+            style={{ 
+              backgroundColor: colors.secondary,
+              color: colors.primary,
+              borderWidth: 0,
+              borderStyle: 'solid',
+            }}
+          >
+            {dateLabel} {anniversaryData.text}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -848,15 +864,19 @@ export function DefaultSectionPreview({
 interface SectionRendererProps {
   sectionId: string;
   config: SiteConfig;
+  occasion?: OccasionType;
   coupleNames?: {
     customer_name: string;
     partner_name: string;
   };
   tagline?: string;
+  message?: string;
+  specialDate?: string;
 }
 
-export function SectionRenderer({ sectionId, config, coupleNames, tagline }: SectionRendererProps) {
+export function SectionRenderer({ sectionId, config, occasion, coupleNames, tagline, message, specialDate }: SectionRendererProps) {
   const theme = config.theme || 'romantic_classic';
+  const siteType = occasion || config.occasion || 'couple';
   const hasCoverPhoto = config.cover_photo_index !== undefined;
   const photoCount = config.cover_photo_index !== undefined ? 5 : 0;
   const eventCount = config.timeline_events?.length || 0;
@@ -867,10 +887,12 @@ export function SectionRenderer({ sectionId, config, coupleNames, tagline }: Sec
       return (
         <HomeSectionPreview
           theme={theme}
+          siteType={siteType}
           customerName={coupleNames?.customer_name || 'Your Name'}
           partnerName={coupleNames?.partner_name || 'Partner Name'}
           tagline={tagline || config.tagline || ''}
-          message={config.message || 'Your love message'}
+          message={message || config.message || ''}
+          specialDate={specialDate || config.specialDate || ''}
           hasCoverPhoto={hasCoverPhoto}
         />
       );

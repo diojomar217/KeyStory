@@ -15,10 +15,11 @@ interface VideoMemory {
 
 interface VideoMemoriesSectionProps {
   theme: Theme;
+  siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
   videos?: VideoMemory[];
 }
 
-export default function VideoMemoriesSection({ theme, videos = [] }: VideoMemoriesSectionProps) {
+export default function VideoMemoriesSection({ theme, siteType = 'couple', videos = [] }: VideoMemoriesSectionProps) {
   const styles = useTheme(theme);
   const themeConfig = THEME_PRESETS[theme];
   const { colors, typography } = themeConfig;
@@ -45,9 +46,9 @@ export default function VideoMemoriesSection({ theme, videos = [] }: VideoMemori
       >
         <div className="max-w-4xl mx-auto">
         <SectionHeader
-          icon="🎬"
-          title="Video Memories"
-          subtitle="Relive your most precious moments together"
+          icon={siteType === 'birthday' ? '🎬' : '🎬'}
+          title={siteType === 'birthday' ? 'Birthday Videos' : 'Video Memories'}
+          subtitle={siteType === 'birthday' ? 'Special birthday moments on video' : 'Relive your most precious moments together'}
           theme={theme}
         />
           <div 
@@ -75,9 +76,9 @@ export default function VideoMemoriesSection({ theme, videos = [] }: VideoMemori
     >
       <div className="max-w-4xl mx-auto">
         <SectionHeader
-          icon="🎬"
-          title="Video Memories"
-          subtitle="Relive your most precious moments together"
+          icon={siteType === 'birthday' ? '🎬' : '🎬'}
+          title={siteType === 'birthday' ? 'Birthday Videos' : 'Video Memories'}
+          subtitle={siteType === 'birthday' ? 'Special birthday moments on video' : 'Relive your most precious moments together'}
           theme={theme}
         />
         
