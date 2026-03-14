@@ -210,6 +210,17 @@ const [config, setConfig] = useState<SiteConfig>({
         const partnerName = site.config?.people?.secondary || site.partner_name || '';
         const anniversaryDateValue = site.config?.dates?.special_date || site.specialDate || site.anniversary_date || '';
 
+        const partnerFromData = (site.config?.people?.secondary || site.partner_name || '').toString().trim();
+        const customerFromData = (site.config?.people?.primary || site.customer_name || '').toString().trim();
+        const declaredOccasion = (site.config?.occasion || site.site_type) as 'couple' | 'birthday' | undefined;
+        const occasionValue = declaredOccasion
+          ? declaredOccasion
+          : partnerFromData
+          ? 'couple'
+          : customerFromData
+          ? 'birthday'
+          : 'couple';
+
         setForm({
           website_name: site.website_name || site.slug || '',
           customer_name: customerName,
@@ -221,7 +232,7 @@ const [config, setConfig] = useState<SiteConfig>({
           song_link: site.config?.media?.song_link || site.song_link || '',
           photos: [],
           existingPhotos: site.config?.media?.photos || site.photos || [],
-          occasion: occasionValue as 'couple' | 'birthday',
+          occasion: occasionValue,
           participants: [
             { id: 'customer', name: customerName, role: 'primary' },
             { id: 'partner', name: partnerName, role: 'partner' },
@@ -254,32 +265,6 @@ const [config, setConfig] = useState<SiteConfig>({
 
         // Safely extract section_content (new feature)
         const sectionContentValue = site.config?.section_content || {};
-
-        const partnerFromData = (site.config?.people?.secondary || site.partner_name || '').toString().trim();
-        const customerFromData = (site.config?.people?.primary || site.customer_name || '').toString().trim();
-
-        const declaredOccasion = (site.config?.occasion || site.site_type) as 'couple' | 'birthday' | undefined;
-        const occasionValue = declaredOccasion
-          ? declaredOccasion
-          : (partnerFromData ? 'couple' : customerFromData ? 'birthday' : 'couple');
-
-        setForm({
-          website_name: site.website_name || site.slug || '',
-          customer_name: customerName,
-          partner_name: partnerName,
-          anniversary_date: anniversaryDateValue,
-          specialDate: anniversaryDateValue,
-          message: site.config?.message || site.message || '',
-          tagline: taglineValue,
-          song_link: site.config?.media?.song_link || site.song_link || '',
-          photos: [],
-          existingPhotos: site.config?.media?.photos || site.photos || [],
-          occasion: occasionValue as 'couple' | 'birthday',
-          participants: [
-            { id: 'customer', name: customerName, role: 'primary' },
-            { id: 'partner', name: partnerName, role: 'partner' },
-          ],
-        });
 
         setConfig({
           occasion: occasionValue as 'couple' | 'birthday',
