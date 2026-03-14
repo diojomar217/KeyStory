@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Theme, HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, SectionContentMap, GalleryLayout } from '@/lib/types';
+import { Theme, HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, SectionContentMap, GalleryLayout, Section } from '@/lib/types';
 import BackgroundDecorations from './BackgroundDecorations';
 import ThemeWrapper from '../builder/ThemeWrapper';
 import HomeSection from './HomeSection';
@@ -48,7 +48,7 @@ type Props = {
   theme: Theme;
   siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
   config?: any; // optional, new site config object (for footer and future sections)
-  sections: string[];
+  sections: Section[];
   homeTemplate: HomeTemplate;
   galleryTemplate: GalleryTemplate;
   timelineTemplate: TimelineTemplate;

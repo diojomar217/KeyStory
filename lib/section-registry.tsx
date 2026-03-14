@@ -62,7 +62,6 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     title: 'Home',
     description: 'Hero section with names, special date, and message',
     icon: '🏠',
-    supportedOccasions: ['couple','wedding','anniversary','birthday','proposal'],
     supportedOccasions: ['couple', 'wedding', 'anniversary', 'birthday', 'proposal'],
     requiresPhotos: false,
     requiresTimeline: false,
@@ -809,6 +808,9 @@ export const SECTION_TEMPLATES: Record<Section, SectionTemplate[]> = {
   letter_future: [],
   gift_section: [],
   surprise_message: [],
+  birthday_timeline: [],
+  party_details: [],
+  gift_wishlist: [],
 };
 
 // ============================================
@@ -968,6 +970,9 @@ export const getSectionTemplateLabel = (section: Section): string => {
     birthday_message: 'Birthday Message Section',
     birthday_wishes: 'Birthday Wishes Section',
     birthday_countdown: 'Birthday Countdown Section',
+    birthday_timeline: 'Birthday Timeline Section',
+    party_details: 'Party Details Section',
+    gift_wishlist: 'Gift Wishlist Section',
     future_dreams: 'Future Dreams Section',
     quotes: 'Love Quotes Section',
     reasons_love_you: 'Reasons I Love You Section',
