@@ -54,7 +54,7 @@ export const validateDetailsStep = (
     };
   }
   
-if (!form.participants || form.participants.length === 0) {
+if (!form.participants || form.participants.length === 0 || !form.participants[0]?.name?.trim()) {
     return { valid: false, error: 'At least one participant name is required' };
   }
   

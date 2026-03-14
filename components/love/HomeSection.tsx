@@ -9,6 +9,7 @@ import HeroOverlay, { HeroDecorations, PremiumDualCTAs } from '../page/HeroOverl
 
 type Props = {
   theme: Theme;
+  siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
   template: HomeTemplate;
   customerName: string;
   partnerName: string;
@@ -22,6 +23,7 @@ type Props = {
 
 export default function HomeSection({
   theme,
+  siteType = 'couple',
   template,
   customerName,
   partnerName,
@@ -70,8 +72,8 @@ export default function HomeSection({
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-gradient-to-b from-rose-500/15 via-pink-500/10 to-transparent rounded-full blur-3xl opacity-50" />
         </div>
         
-        {/* Floating hearts decoration - repositioned to be less intrusive */}
-        <HeroDecorations theme={theme} variant="centered" />
+        {/* Floating decoration - siteType-aware */}
+        <HeroDecorations theme={theme} siteType={siteType} variant="centered" />
         
         <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center w-full relative z-10">
           
@@ -85,20 +87,12 @@ export default function HomeSection({
                 ${accentColor === 'amber' ? 'bg-amber-400/20 text-amber-300' : accentColor === 'purple' ? 'bg-purple-100 text-purple-600' : accentColor === 'slate' ? 'bg-slate-100 text-slate-600' : 'bg-rose-100 text-rose-600'}
               `}
             >
-              <span className="animate-pulse">💕</span>
-              <span>Our Love Story</span>
-              <span className="animate-pulse">💕</span>
+              <span className="animate-pulse">{siteType === 'birthday' ? '🎉' : '💕'}</span>
+              <span>{siteType === 'birthday' ? 'Happy Birthday' : 'Our Love Story'}</span>
+              <span className="animate-pulse">{siteType === 'birthday' ? '🎈' : '💕'}</span>
             </span>
-          </div>
+            </div>
 
-          {/* Hero Image - Compact size */}
-          <div className={`relative mx-auto mb-5 transition-all duration-500 delay-100 ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
-            {/* Outer glow ring - Smaller */}
-            <div className={`
-              absolute -inset-3 rounded-full blur-lg opacity-30
-              ${accentColor === 'amber' ? 'bg-amber-400' : accentColor === 'purple' ? 'bg-purple-400' : accentColor === 'slate' ? 'bg-slate-400' : 'bg-rose-400'}
-            `} />
-            
             {/* Image container - Smaller */}
             <div className={`
               relative w-40 h-40 md:w-48 md:h-48 lg:w-52 lg:h-52
@@ -121,7 +115,6 @@ export default function HomeSection({
               {/* Inner ring effect */}
               <div className="absolute inset-0 rounded-full ring-1 ring-white/20 pointer-events-none" />
             </div>
-          </div>
 
           {/* Couple Names - IN ONE ROW on desktop */}
           <div className={`mb-3 transition-all duration-500 delay-200 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
@@ -135,24 +128,21 @@ export default function HomeSection({
               drop-shadow-lg
               flex flex-wrap items-center justify-center gap-x-3 gap-y-1
             `}>
-              {/* Customer Name */}
-              <span className="inline-block">
-                {displayCustomerName}
-              </span>
-              
-              {/* Decorative Ampersand - inline */}
-              <span className={`
-                text-xl md:text-2xl lg:text-3xl
-                ${theme === 'dark_elegant' ? 'text-amber-400/80' : theme === 'cute_pastel' ? 'text-purple-400' : theme === 'minimal_modern' ? 'text-slate-400' : 'text-rose-400'}
-                font-light italic
-              `}>
-                <span className="inline-block animate-fade-in-scale" style={{ animationDelay: '0.3s' }}>&</span>
-              </span>
-              
-              {/* Partner Name */}
-              <span className="inline-block">
-                {displayPartnerName}
-              </span>
+              {siteType === 'birthday'
+                ? <span className="inline-block">{displayCustomerName || 'Happy Birthday!'}</span>
+                : (
+                  <>
+                    <span className="inline-block">{displayCustomerName}</span>
+                    <span className={`
+                      text-xl md:text-2xl lg:text-3xl
+                      ${theme === 'dark_elegant' ? 'text-amber-400/80' : theme === 'cute_pastel' ? 'text-purple-400' : theme === 'minimal_modern' ? 'text-slate-400' : 'text-rose-400'}
+                      font-light italic
+                    `}>
+                      <span className="inline-block animate-fade-in-scale" style={{ animationDelay: '0.3s' }}>&</span>
+                    </span>
+                    <span className="inline-block">{displayPartnerName}</span>
+                  </>
+                )}
             </h1>
           </div>
 
@@ -317,8 +307,8 @@ export default function HomeSection({
               <span className="text-3xl lg:text-4xl animate-pulse">💕</span>
             </div>
             
-            {/* Floating hearts decoration */}
-            <HeroDecorations theme={theme} variant="full" />
+            {/* Floating hearts/birthday decoration */}
+            <HeroDecorations theme={theme} siteType={siteType} variant="full" />
           </div>
 
           {/* Right Side - Content with proper vertical centering */}
@@ -515,7 +505,7 @@ export default function HomeSection({
         </div>
 
         {/* Decorative elements - subtle floating hearts */}
-        <HeroDecorations theme={theme} variant="full" />
+        <HeroDecorations theme={theme} siteType={siteType} variant="full" />
 
 {/* Content Overlay - Centered with improved layout */}
         <div className="relative z-10 text-center text-white px-4 

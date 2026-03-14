@@ -19,6 +19,14 @@ type ThemeStyle = {
 };
 
 const themeStyles: Record<Theme, ThemeStyle> = {
+  colorful_celebration: {
+    bg: 'bg-gradient-to-r from-yellow-50 to-orange-50',
+    text: 'text-orange-900',
+    accent: 'text-orange-600',
+    card: 'bg-white',
+    border: 'border-orange-200',
+    muted: 'text-orange-600/70',
+  },
   romantic_classic: {
     bg: 'bg-gradient-to-b from-rose-50 to-pink-50',
     text: 'text-rose-900',
@@ -139,7 +147,7 @@ const themeStyles: Record<Theme, ThemeStyle> = {
     border: 'border-violet-200',
     muted: 'text-violet-600/70',
   },
-  photo_focus: {
+photo_focus: {
     bg: 'bg-gradient-to-b from-gray-50 to-slate-100',
     text: 'text-slate-900',
     accent: 'text-slate-500',
@@ -147,6 +155,7 @@ const themeStyles: Record<Theme, ThemeStyle> = {
     border: 'border-slate-200',
     muted: 'text-slate-500/70',
   },
+  // duplicate colorful_celebration entry removed (already defined above)
 };
 
 // ============================================
@@ -249,7 +258,7 @@ function DeviceFrame({
               <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
             </div>
             <div className="flex-1 bg-slate-700 rounded-md px-3 py-1 text-[10px] text-slate-400 text-center">
-              {websiteName ? `yoursite.com/love/${websiteName}` : 'yoursite.com/love/...'}
+              {websiteName ? `yoursite.com/site/${websiteName}` : 'yoursite.com/site/...'}
             </div>
           </div>
         )}

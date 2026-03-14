@@ -9,7 +9,8 @@ interface ReviewPublishPanelProps {
     website_name: string;
     customer_name: string;
     partner_name: string;
-    anniversary_date: string;
+    specialDate?: string;
+    anniversary_date?: string;
     message: string;
     tagline?: string;
     song_link?: string;
@@ -46,11 +47,12 @@ export default function ReviewPublishPanel({
   const hasCoverPhoto = config.cover_photo_index !== undefined || photoCount > 0;
 
   // Format date
-  const formattedDate = form.anniversary_date 
-    ? new Date(form.anniversary_date).toLocaleDateString('en-US', { 
-        month: 'long', 
-        day: 'numeric', 
-        year: 'numeric' 
+  const dateString = form.specialDate || form.anniversary_date;
+  const formattedDate = dateString
+    ? new Date(dateString).toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
       })
     : 'Not set';
 
@@ -68,7 +70,7 @@ export default function ReviewPublishPanel({
           <div className="bg-white rounded-xl p-4 border border-slate-200">
             <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Website URL</span>
             <p className="text-lg font-semibold text-slate-800 mt-1">
-              yoursite.com/love/{form.website_name || '...'}
+              yoursite.com/site/{form.website_name || '...'}
             </p>
           </div>
 

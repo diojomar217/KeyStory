@@ -244,6 +244,28 @@ home: {
     }),
   },
   
+  birthday_message: {
+    component: LoveLetterSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      message: config.message || 'Happy Birthday! Wishing you all the best.',
+    }),
+  },
+  birthday_wishes: {
+    component: QuotesSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      quotes: config.birthday_wishes || [],
+    }),
+  },
+  birthday_countdown: {
+    component: AnniversaryCountdownSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      anniversaryDate: config.anniversaryDate || config.specialDate || config.birthdayDate || '',
+    }),
+  },
+  
   // Guest & Messages
   guest_messages: {
     component: GuestMessagesSection,

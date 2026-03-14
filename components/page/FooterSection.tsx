@@ -1,25 +1,42 @@
 'use client';
 
-import { Theme } from '@/lib/types';
+import { SiteConfig, Theme, Participant } from '@/lib/types';
 import { useTheme } from '../builder/ThemeWrapper';
+import { OccasionType } from '@/lib/occasion-registry';
+import { resolveFooterConfig, resolveDisplayName } from '@/lib/site-type-utils';
+
+type SiteType = OccasionType;
 
 type Props = {
   theme: Theme;
-  customerName: string;
-  partnerName: string;
+  siteType?: SiteType;
+  config?: SiteConfig;
+  customerName?: string;
+  partnerName?: string;
   qrCodeUrl?: string;
   qrDataUrl?: string;
 };
 
-export default function FooterSection({ 
-  theme, 
-  customerName, 
-  partnerName, 
+export default function FooterSection({
+  theme,
+  siteType = 'couple',
+  config,
+  customerName = '',
+  partnerName = '',
   qrCodeUrl,
   qrDataUrl,
 }: Props) {
   const styles = useTheme(theme);
-  const coupleNames = `${customerName} & ${partnerName}`;
+  const resolvedSiteType: SiteType = siteType || 'couple';
+
+  const displayName = resolveDisplayName(
+    resolvedSiteType,
+    config?.participants || [],
+    customerName,
+    partnerName,
+  );
+
+  const activeFooter = resolveFooterConfig(resolvedSiteType, displayName);
 
   // Only show the QR section if MemoryCardSection is not shown (no QR URL)
   const showLegacyQR = qrCodeUrl && !qrDataUrl;
@@ -37,55 +54,50 @@ export default function FooterSection({
               Scan to revisit our special moments
             </p>
             <div className="inline-block bg-white rounded-xl p-3 shadow-lg">
-              <img 
-                src={qrCodeUrl} 
-                alt="QR Code" 
+              <img
+                src={qrCodeUrl}
+                alt="QR Code"
                 className="w-32 h-32 object-contain"
               />
             </div>
           </div>
         </div>
       )}
-      
-      {/* Footer Content - Romantic Closing */}
+
+      {/* Footer Content - Occasion-aware closing */}
       <div className="max-w-4xl mx-auto px-4 md:px-6 py-12 text-center">
-        {/* Decorative hearts with animation */}
+        {/* Decorative motif */}
         <div className="flex items-center justify-center gap-3 mb-6">
-          <span className="text-rose-300/60 text-lg">💗</span>
-          <span className="text-rose-300 animate-pulse">💕</span>
-          <span className="text-2xl">💖</span>
-          <span className="text-rose-300 animate-pulse">💕</span>
-          <span className="text-rose-300/60 text-lg">💗</span>
+          {activeFooter.decorations.map((icon, idx) => (
+            <span key={idx} className={activeFooter.decorationClasses || 'text-white'}>
+              {icon}
+            </span>
+          ))}
         </div>
-        
-        {/* Couple Names - Elegant typography */}
+
+        {/* Person name */}
         <h3 className="font-serif text-2xl md:text-3xl mb-3 tracking-wide">
-          {coupleNames}
+          {displayName}
         </h3>
-        
-        {/* Romantic tagline */}
-        <p className="text-white/80 mb-6 font-light italic">
-          Forever & Always 💍
-        </p>
-        
+
+        {/* Closing tagline */}
+        <p className="text-white/80 mb-6 font-light italic">{activeFooter.tagline}</p>
+
         {/* Decorative divider */}
         <div className="w-24 h-px mx-auto bg-gradient-to-r from-transparent via-rose-400/50 to-transparent mb-6" />
-        
-        {/* Made with love */}
+
+        {/* Made with */}
         <div className="pt-4">
-          <p className="text-white/50 text-sm flex items-center justify-center gap-2">
-            <span>Made with</span>
-            <span className="text-rose-300">💕</span>
-            <span>especially for you</span>
-          </p>
+          <p className="text-white/50 text-sm flex items-center justify-center gap-2">{activeFooter.madeWith}</p>
         </div>
-        
+
         {/* Year */}
         <p className="text-white/30 text-xs mt-3">
-          © {new Date().getFullYear()} {coupleNames}. All rights reserved.
+          © {new Date().getFullYear()} {displayName}. All rights reserved.
         </p>
       </div>
     </footer>
   );
 }
+
 

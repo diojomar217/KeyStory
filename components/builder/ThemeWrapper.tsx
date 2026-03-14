@@ -248,6 +248,7 @@ export const themeStyles: Record<Theme, ThemeStyles> = {
   cute_kawaii: {} as ThemeStyles,
   soft_lavender: {} as ThemeStyles,
   photo_focus: {} as ThemeStyles,
+  colorful_celebration: {} as ThemeStyles,
 };
 
 type Props = {

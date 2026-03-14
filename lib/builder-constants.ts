@@ -433,6 +433,34 @@ export const THEME_PRESETS: Record<Theme, ThemePresetConfig> = {
     },
     preview: ['#7C3AED', '#EDE9FE', '#A78BFA', '#FAF5FF'],
   },
+  colorful_celebration: {
+    key: 'colorful_celebration',
+    label: 'Colorful Celebration',
+    description: 'Festive colors for birthdays and anniversaries',
+    colors: {
+      primary: '#F59E0B',
+      secondary: '#FCD34D',
+      accent: '#EC4899',
+      background: '#FEF3C7',
+      text: '#BE185D',
+      card: '#FFFFFF',
+      border: '#FEE2E2',
+    },
+    typography: {
+      headingFont: 'sans-serif',
+      bodyFont: 'sans-serif',
+      headingWeight: 700,
+      bodyWeight: 400,
+    },
+    style: {
+      cardStyle: 'rounded',
+      sectionSpacing: 'normal',
+      accentStyle: 'gradient',
+      buttonStyle: 'pill',
+      shadowIntensity: 'light',
+    },
+    preview: ['#F59E0B', '#FCD34D', '#EC4899', '#FBCFE8'],
+  },
   photo_focus: {
     key: 'photo_focus',
     label: 'Photo Focus',
@@ -449,7 +477,7 @@ export const THEME_PRESETS: Record<Theme, ThemePresetConfig> = {
     typography: {
       headingFont: 'sans-serif',
       bodyFont: 'sans-serif',
-      headingWeight: 500,
+      headingWeight: 600,
       bodyWeight: 400,
     },
     style: {

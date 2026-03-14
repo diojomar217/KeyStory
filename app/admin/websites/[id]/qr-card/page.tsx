@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import QRCard from '@/components/ui/QRCard';
 import PrintableCardLayout from '@/components/product/PrintableCardLayout';
 import PrintActions from '@/components/product/PrintActions';
-import { Order } from '@/lib/supabase';
+import { Site } from '@/lib/supabase';
 import { Theme } from '@/lib/types';
 
 interface PageProps {
@@ -15,7 +15,7 @@ interface PageProps {
 export default function QRCardPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
-  const [order, setOrder] = useState<Order | null>(null);
+  const [order, setOrder] = useState<Site | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // Restore original: no cardConfigs
@@ -31,8 +31,8 @@ export default function QRCardPage({ params }: PageProps) {
       const res = await fetch(`/api/admin?id=${id}`);
       const data = await res.json();
 
-      if (data.order) {
-        setOrder(data.order);
+      if (data.site || data.order) {
+        setOrder(data.site || data.order);
       } else {
         setError('Website not found');
       }
@@ -67,21 +67,23 @@ export default function QRCardPage({ params }: PageProps) {
     );
   }
 
-  // Get theme from order config
+  // Get theme from site config
   const config = order.config || {};
   const theme: Theme = (config.theme as Theme) || 'romantic_classic';
-  // Safely extract qr_data_url - ensure it's a string
-  
-  
+
+  const customerName = config?.people?.primary || order.customer_name || 'Your Name';
+  const partnerName = config?.people?.secondary || order.partner_name || 'Partner Name';
+  const anniversaryDate = config?.dates?.special_date || order.specialDate || order.anniversary_date || '';
+
   // Get website URL
   const websiteUrl = order.website_name 
-    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/love/${order.website_name}`
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/site/${order.website_name}`
     : undefined;
 
-    const qrDataUrl =
-  typeof config.qr_data_url === 'string' && config.qr_data_url.trim() !== ''
-    ? config.qr_data_url
-    : websiteUrl;
+  const qrDataUrl =
+    typeof config.qr_data_url === 'string' && config.qr_data_url.trim() !== ''
+      ? config.qr_data_url
+      : websiteUrl;
   const qrCodeUrl = order.qr_code_url;
 
   return (
@@ -92,7 +94,7 @@ export default function QRCardPage({ params }: PageProps) {
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Printable QR Card</h1>
             <p className="text-slate-500 mt-1">
-              {order.customer_name} & {order.partner_name}
+              {customerName} & {partnerName}
             </p>
           </div>
           <a 
@@ -112,9 +114,9 @@ export default function QRCardPage({ params }: PageProps) {
         <PrintableCardLayout>
           <QRCard
             theme={theme}
-            customerName={order.customer_name}
-            partnerName={order.partner_name}
-            anniversaryDate={order.anniversary_date}
+            customerName={customerName}
+            partnerName={partnerName}
+            anniversaryDate={anniversaryDate}
             qrCodeUrl={qrCodeUrl}
             qrDataUrl={qrDataUrl}
             websiteUrl={websiteUrl}
@@ -151,8 +153,8 @@ export default function QRCardPage({ params }: PageProps) {
 
         {/* Print Actions */}
         <PrintActions
-          customerName={order.customer_name}
-          partnerName={order.partner_name}
+          customerName={customerName}
+          partnerName={partnerName}
           qrDataUrl={qrDataUrl}
           qrCodeUrl={qrCodeUrl}
         />

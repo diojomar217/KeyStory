@@ -42,6 +42,7 @@ interface HomeSectionPreviewProps {
   partnerName: string;
   tagline?: string;
   message?: string;
+  specialDate?: string;
   anniversary_date?: string;
   hasCoverPhoto: boolean;
 }
@@ -52,6 +53,7 @@ export function HomeSectionPreview({
   partnerName,
   tagline,
   message,
+  specialDate,
   anniversary_date,
   hasCoverPhoto,
 }: HomeSectionPreviewProps) {
@@ -66,8 +68,9 @@ export function HomeSectionPreview({
     ? { hasContent: true, text: tagline } 
     : { hasContent: false, text: 'Your tagline will appear here' };
 
-  const anniversaryData = anniversary_date 
-    ? { hasContent: true, text: new Date(anniversary_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }
+  const dateString = specialDate || anniversary_date;
+  const anniversaryData = dateString
+    ? { hasContent: true, text: new Date(dateString).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }
     : { hasContent: false, text: 'Add your special date' };
 
   const messageData = message?.trim() 

@@ -2,7 +2,9 @@
 
 import { Theme } from '@/lib/types';
 import { useTheme } from '../builder/ThemeWrapper';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { resolveDecorations, resolveDefaultCTA } from '@/lib/site-type-utils';
+import { OccasionType } from '@/lib/occasion-registry';
 
 type Props = {
   theme: Theme;
@@ -57,14 +59,19 @@ export default function HeroOverlay({ theme, variant = 'full' }: Props) {
   );
 }
 
-export function HeroDecorations({ theme, variant = 'centered' }: { theme: Theme; variant?: 'centered' | 'full' }) {
-  const accentColor = theme === 'dark_elegant' ? 'amber' : 'rose';
-  const heartColorClass = accentColor === 'amber' ? 'text-amber-300' : 'text-rose-400';
-  
+export function HeroDecorations({
+  theme,
+  siteType = 'couple',
+  variant = 'centered',
+}: { theme: Theme; siteType?: OccasionType; variant?: 'centered' | 'full' }) {
+  const isBirthday = siteType === 'birthday';
+  const decorations = resolveDecorations(siteType);
+  const iconColorClass = decorations.themeTone === 'romantic' ? 'text-rose-400' : decorations.themeTone === 'celebration' ? 'text-yellow-300' : 'text-sky-300';
+
+
   // Different positioning based on variant
   const getHeartPosition = (index: number) => {
     if (variant === 'centered') {
-      // More spread out, positioned away from center content for hero_centered layout
       const positions = [
         { x: 5, y: 15 },
         { x: 85, y: 10 },
@@ -75,7 +82,6 @@ export function HeroDecorations({ theme, variant = 'centered' }: { theme: Theme;
       ];
       return positions[index] || { x: 10, y: 50 };
     } else {
-      // Full layout - more centered
       const positions = [
         { x: 15, y: 25 },
         { x: 75, y: 20 },
@@ -88,41 +94,47 @@ export function HeroDecorations({ theme, variant = 'centered' }: { theme: Theme;
     }
   };
 
-  const [hearts, setHearts] = useState<Array<{ id: number; x: number; y: number; delay: number; emoji: string }>>([]);
+  const items = (() => {
+    const badgeEmojis = decorations.iconSet;
 
-  useEffect(() => {
-    const heartEmojis = ['💕', '💗', '💖', '💓', '💞', '💘'];
-    const newHearts = Array.from({ length: 6 }, (_, i) => {
+    return Array.from({ length: 6 }, (_, i) => {
       const pos = getHeartPosition(i);
       return {
         id: i,
         x: pos.x,
         y: pos.y,
-        delay: Math.random() * 5,
-        emoji: heartEmojis[Math.floor(Math.random() * heartEmojis.length)],
+        delay: ((i * 0.8 + 1.2) % 5) + 0.2,
+        emoji: badgeEmojis[i % badgeEmojis.length],
       };
     });
-    setHearts(newHearts);
-  }, [variant]);
+  })();
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-      {hearts.map((heart) => (
+      {items.map((item) => (
         <div
-          key={heart.id}
-          className={`absolute ${heartColorClass} animate-float-heart`}
+          key={item.id}
+          className={`absolute ${iconColorClass} ${isBirthday ? 'animate-birthday-confetti' : 'animate-float-heart'}`}
           style={{
-            left: `${heart.x}%`,
-            top: `${heart.y}%`,
-            animationDelay: `${heart.delay}s`,
-            animationDuration: '8s',
+            left: `${item.x}%`,
+            top: `${item.y}%`,
+            animationDelay: `${item.delay}s`,
+            animationDuration: '7s',
             fontSize: variant === 'centered' ? '1rem' : '1.25rem',
-            opacity: variant === 'centered' ? 0.25 : 0.4,
+            opacity: variant === 'centered' ? 0.35 : 0.55,
           }}
         >
-          <span>{heart.emoji}</span>
+          <span>{item.emoji}</span>
         </div>
       ))}
+
+      {/* Add some additional star/bubble highlights for birthdays */}
+      {isBirthday && (
+        <>
+          <div className="absolute top-10 left-1/4 w-3 h-3 bg-white/70 rounded-full animate-pulse-slow" />
+          <div className="absolute top-32 right-24 w-4 h-4 bg-blue-200/70 rounded-full animate-pulse-slow" />
+        </>
+      )}
     </div>
   );
 }
@@ -167,12 +179,17 @@ export function ScrollIndicator({ targetId = 'our-story' }: { targetId?: string 
 
 // Premium Dual CTA Buttons - Using native anchor links with fixed positioning
 export function PremiumDualCTAs({ 
+  siteType = 'couple',
   primaryTarget = 'love-letter',
-  secondaryTarget = 'gallery' 
+  secondaryTarget = 'gallery',
 }: { 
+  siteType?: OccasionType;
   primaryTarget?: string;
   secondaryTarget?: string;
 }) {
+  const ctaConfig = resolveDefaultCTA(siteType);
+  const isBirthday = siteType === 'birthday';
+
   return (
     <div 
       className="fixed bottom-8 left-0 right-0 flex flex-col items-center gap-4"
@@ -198,35 +215,37 @@ export function PremiumDualCTAs({
           "
           style={{ pointerEvents: 'auto' }}
         >
-          <span>💕</span>
-          Start Our Story
-          <span>↓</span>
+          <span>{ctaConfig.startIcon}</span>
+          {ctaConfig.primary}
+          <span>{isBirthday ? '🎂' : '↓'}</span>
         </a>
 
-        <a
-          href={`#${secondaryTarget}`}
-          className="
-            min-w-[220px] h-14
-            px-6 
-            bg-gradient-to-r from-rose-500 to-pink-500
-            hover:from-rose-400 hover:to-pink-400
-            border border-rose-400/50
-            rounded-full
-            text-white text-sm font-medium
-            hover:scale-105 active:scale-95
-            transition-all duration-300
-            shadow-lg shadow-rose-500/30
-            inline-flex items-center justify-center gap-2
-            whitespace-nowrap
-            cursor-pointer
-            no-underline
-          "
-          style={{ pointerEvents: 'auto' }}
-        >
-          <span>📸</span>
-          View Our Memories
-          <span>→</span>
-        </a>
+        {!isBirthday && (
+          <a
+            href={`#${secondaryTarget}`}
+            className="
+              min-w-[220px] h-14
+              px-6 
+              bg-gradient-to-r from-rose-500 to-pink-500
+              hover:from-rose-400 hover:to-pink-400
+              border border-rose-400/50
+              rounded-full
+              text-white text-sm font-medium
+              hover:scale-105 active:scale-95
+              transition-all duration-300
+              shadow-lg shadow-rose-500/30
+              inline-flex items-center justify-center gap-2
+              whitespace-nowrap
+              cursor-pointer
+              no-underline
+            "
+            style={{ pointerEvents: 'auto' }}
+          >
+            <span>{ctaConfig.endIcon}</span>
+            {ctaConfig.secondary}
+            <span>→</span>
+          </a>
+        )}
       </div>
     </div>
   );

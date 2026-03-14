@@ -8,13 +8,14 @@ import TemplateSelector from '@/components/builder/TemplateSelector';
 import TimelineEditor from '@/components/builder/TimelineEditor';
 import SectionContentInputs from '@/components/builder/SectionContentInputs';
 import { SiteConfig, Theme, Section, SectionContentMap } from '@/lib/types';
-import { Order } from '@/lib/supabase';
+import { Site } from '@/lib/supabase';
 
 type LocalForm = {
   website_name: string;
   customer_name: string;
   partner_name: string;
   anniversary_date: string;
+  specialDate: string;
   message: string;
   tagline: string;
   song_link: string;
@@ -38,8 +39,8 @@ const validateStep = (
       if (!form.partner_name.trim()) {
         return { valid: false, error: "Partner's name is required" };
       }
-      if (!form.anniversary_date) {
-        return { valid: false, error: 'Anniversary date is required' };
+      if (!form.specialDate && !form.anniversary_date) {
+        return { valid: false, error: 'Special date is required' };
       }
       if (!form.message.trim()) {
         return { valid: false, error: 'Love message is required' };
@@ -153,6 +154,7 @@ export default function EditWebsitePage() {
     customer_name: '',
     partner_name: '',
     anniversary_date: '',
+    specialDate: '',
     message: '',
     tagline: '',
     song_link: '',
@@ -192,54 +194,60 @@ const [config, setConfig] = useState<SiteConfig>({
       const res = await fetch(`/api/admin?id=${id}`);
       const data = await res.json();
 
-      if (data.order) {
-        const order: Order = data.order;
+      if (data.site || data.order) {
+        const site: Site = (data.site || data.order) as Site;
         // Safely extract tagline - it could be in config or at top level
-        const taglineValue = typeof order.tagline === 'string' 
-          ? order.tagline 
-          : (typeof order.config?.tagline === 'string' ? order.config.tagline : '');
-          
+        const taglineValue = typeof site.tagline === 'string' 
+          ? site.tagline 
+          : (typeof site.config?.tagline === 'string' ? site.config.tagline : '');
+
+        const customerName = site.config?.people?.primary || site.customer_name || '';
+        const partnerName = site.config?.people?.secondary || site.partner_name || '';
+        const anniversaryDateValue = site.config?.dates?.special_date || site.specialDate || site.anniversary_date || '';
+
         setForm({
-          website_name: order.website_name || order.slug || '',
-          customer_name: order.customer_name || '',
-          partner_name: order.partner_name || '',
-          anniversary_date: order.anniversary_date || '',
-          message: order.message || '',
+          website_name: site.website_name || site.slug || '',
+          customer_name: customerName,
+          partner_name: partnerName,
+          anniversary_date: anniversaryDateValue,
+          specialDate: anniversaryDateValue,
+          message: site.config?.message || site.message || '',
           tagline: taglineValue,
-          song_link: order.song_link || '',
+          song_link: site.config?.media?.song_link || site.song_link || '',
           photos: [],
-          existingPhotos: order.photos || [],
+          existingPhotos: site.config?.media?.photos || site.photos || [],
         });
 
-        setPhotoPreviews(order.photos || []);
+        setPhotoPreviews(site.photos || []);
 
         // Safely extract sections - ensure it's an array and cast to Section[]
-        const rawSections = Array.isArray(order.config?.sections) 
-          ? order.config.sections 
-          : (Array.isArray(order.sections) ? order.sections : ['home']);
+        const siteAny = site as any;
+        const rawSections = Array.isArray(site.config?.sections)
+          ? site.config.sections
+          : (Array.isArray(siteAny.sections) ? siteAny.sections : ['home']);
         const sectionsValue: Section[] = rawSections as Section[];
           
         // Safely extract template values with proper type assertions
-        const homeTemplateValue = order.config?.home_template || order.home_template;
-        const galleryTemplateValue = order.config?.gallery_template || order.gallery_template;
-        const timelineTemplateValue = order.config?.timeline_template || order.timeline_template;
+        const homeTemplateValue = site.config?.home_template || siteAny.home_template;
+        const galleryTemplateValue = site.config?.gallery_template || siteAny.gallery_template;
+        const timelineTemplateValue = site.config?.timeline_template || siteAny.timeline_template;
         
         // Safely extract timeline events
-        const timelineEventsValue = Array.isArray(order.config?.timeline_events) 
-          ? order.config.timeline_events 
-          : (Array.isArray(order.timeline_events) ? order.timeline_events : []);
+        const timelineEventsValue = Array.isArray(site.config?.timeline_events)
+          ? site.config.timeline_events
+          : (Array.isArray(siteAny.timeline_events) ? siteAny.timeline_events : []);
           
         // Safely extract cover photo index (only from config)
-        const coverPhotoIndexValue = typeof order.config?.cover_photo_index === 'number' 
-          ? order.config.cover_photo_index 
+        const coverPhotoIndexValue = typeof site.config?.cover_photo_index === 'number'
+          ? site.config.cover_photo_index
           : undefined;
-          
+
         // Safely extract section_content (new feature)
-        const sectionContentValue = order.config?.section_content || {};
-          
+        const sectionContentValue = site.config?.section_content || {};
+
         setConfig({
           occasion: 'couple' as const,
-          theme: (order.config?.theme || order.theme) as Theme || 'romantic_classic',
+          theme: (site.config?.theme || siteAny.theme) as Theme || 'romantic_classic',
           sections: sectionsValue,
           home_template: homeTemplateValue as SiteConfig['home_template'],
           gallery_template: galleryTemplateValue as SiteConfig['gallery_template'],
@@ -370,7 +378,8 @@ const [config, setConfig] = useState<SiteConfig>({
           website_name: form.website_name,
           customer_name: form.customer_name,
           partner_name: form.partner_name,
-          anniversary_date: form.anniversary_date,
+          specialDate: form.specialDate || form.anniversary_date,
+          anniversary_date: form.specialDate || form.anniversary_date,
           message: form.message,
           tagline: form.tagline,
           song_link: form.song_link,
@@ -403,7 +412,7 @@ const [config, setConfig] = useState<SiteConfig>({
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Website Name</label>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-400 text-sm">yoursite.com/love/</span>
+                  <span className="text-slate-400 text-sm">yoursite.com/site/</span>
                   <input
                     name="website_name"
                     required
@@ -436,12 +445,12 @@ const [config, setConfig] = useState<SiteConfig>({
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Anniversary Date</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Special Date</label>
                 <input
-                  name="anniversary_date"
+                  name="specialDate"
                   required
                   type="date"
-                  value={form.anniversary_date}
+                  value={form.specialDate}
                   className="w-full px-4 py-3 rounded-lg border border-slate-300 text-slate-900 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
                   onChange={handleChange}
                 />
@@ -624,7 +633,7 @@ const [config, setConfig] = useState<SiteConfig>({
         
         <div className="flex gap-4 justify-center">
           <a
-            href={`/love/${form.website_name}`}
+            href={`/site/${form.website_name}`}
             target="_blank"
             className="px-6 py-3 bg-rose-600 text-white font-medium rounded-lg hover:bg-rose-700"
           >

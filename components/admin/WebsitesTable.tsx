@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Order } from '@/lib/supabase';
+import { Site } from '@/lib/supabase';
 import SearchInput from './SearchInput';
 import WebsiteRow from './WebsiteRow';
 
 interface WebsitesTableProps {
-  orders: Order[];
+  orders: Site[];
   onDelete: (id: string) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
@@ -25,11 +25,13 @@ export default function WebsitesTable({
   // Filter orders based on search and theme
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
+      const customerName = order.config?.people?.primary || (order as any).customer_name || '';
+      const partnerName = order.config?.people?.secondary || (order as any).partner_name || '';
       const matchesSearch = 
         searchQuery === '' ||
         (order.website_name || order.slug || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (order.customer_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (order.partner_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        partnerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (order.slug || '').toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesTheme = 
@@ -126,7 +128,10 @@ export default function WebsitesTable({
                     Website
                   </th>
                   <th className="px-4 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                    Couple
+                    Site Type
+                  </th>
+                  <th className="px-4 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    People
                   </th>
                   <th className="px-4 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                     Theme
@@ -172,9 +177,21 @@ function MobileWebsiteCard({
   order, 
   onDelete 
 }: { 
-  order: Order; 
+  order: Site; 
   onDelete: (id: string) => void;
 }) {
+  const siteType = order.site_type || 'couple';
+  const customerName = order.config?.people?.primary || (order as any).customer_name || '';
+  const partnerName = order.config?.people?.secondary || (order as any).partner_name || '';
+  const peopleDisplay = siteType === 'birthday'
+    ? customerName || 'Birthday Guest'
+    : partnerName
+      ? `${customerName || 'Your Name'} & ${partnerName || 'Partner Name'}`
+      : customerName || 'Your Name';
+  const themeValue = (order.config?.theme as string) || (order as any).theme || 'romantic_classic';
+  const coverPhoto = order.config?.media?.photos?.[0] || order.config?.cover_photo || order.photos?.[0] || '';
+  const websiteName = order.website_name || order.slug;
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -204,9 +221,6 @@ function MobileWebsiteCard({
     }
   };
 
-  const coverPhoto = order.config?.cover_photo || order.photos?.[0];
-  const websiteName = order.website_name || order.slug;
-
   return (
     <div className="p-4 hover:bg-slate-50/80 transition-colors">
       <div className="flex items-start gap-3">
@@ -235,11 +249,14 @@ function MobileWebsiteCard({
                 {websiteName}
               </p>
               <p className="text-sm text-slate-500">
-                {order.customer_name} ❤️ {order.partner_name}
+                {peopleDisplay}
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                Type: {siteType}
               </p>
             </div>
-            <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${getThemeLabel(typeof order.config?.theme === 'string' ? order.config.theme : (order.theme || 'romantic_classic'))}`}>
-              {getThemeLabel(typeof order.config?.theme === 'string' ? order.config.theme : (order.theme || 'romantic_classic'))}
+            <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${getThemeLabel(themeValue)}`}>
+              {getThemeLabel(themeValue)}
             </span>
           </div>
           
@@ -249,7 +266,7 @@ function MobileWebsiteCard({
             </span>
             <div className="flex items-center gap-1">
               <a
-                href={`/love/${order.website_name || order.slug}`}
+                href={`/site/${order.website_name || order.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

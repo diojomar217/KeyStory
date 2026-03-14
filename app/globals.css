@@ -162,11 +162,43 @@ body {
   /* Floating hearts animation */
   .animate-float-heart {
     animation: floatHeart 4s ease-in-out infinite;
-    opacity: 0;
-  }
-  
-  .animate-float-heart.active {
     opacity: 1;
+  }
+
+  .animate-float-heart-slow {
+    animation: floatHeart 8s ease-in-out infinite;
+    opacity: 1;
+  }
+
+  .animate-float-heart-reverse {
+    animation: floatHeart 8s ease-in-out infinite reverse;
+    opacity: 1;
+  }
+
+  .animate-twinkle {
+    animation: pulse 3s ease-in-out infinite;
+    opacity: 0.2;
+  }
+
+  .animate-twinkle-slow {
+    animation: pulse 4.5s ease-in-out infinite;
+    opacity: 0.15;
+  }
+
+  .animate-petal-fall {
+    animation: petalFall 15s linear infinite;
+  }
+
+  .animate-petal-float {
+    animation: petalFloat 18s ease-in-out infinite;
+  }
+
+  .animate-birthday-confetti {
+    animation: birthdayConfetti 6s ease-in infinite;
+  }
+
+  .animate-birthday-balloon {
+    animation: birthdayBalloon 5.5s ease-in-out infinite;
   }
 
   /* Scroll indicator bounce */
@@ -442,17 +474,17 @@ body {
 @keyframes floatHeart {
   0%, 100% {
     transform: translateY(0) scale(1);
-    opacity: 0;
+    opacity: 0.25;
   }
   10% {
-    opacity: 0.6;
+    opacity: 0.7;
   }
   50% {
     transform: translateY(-30px) scale(1.1);
-    opacity: 0.4;
+    opacity: 0.5;
   }
   90% {
-    opacity: 0;
+    opacity: 0.25;
   }
 }
 

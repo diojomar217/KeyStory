@@ -20,12 +20,14 @@ const themeStyles: Record<Theme, { bg: string; text: string; accent: string; car
   cute_kawaii: { bg: 'bg-gradient-to-b from-pink-50 to-purple-50', text: 'text-pink-900', accent: 'text-pink-600', card: 'bg-white/80 border-pink-200', gradient: 'from-pink-400 to-purple-500' },
   soft_lavender: { bg: 'bg-gradient-to-b from-violet-50 to-purple-50', text: 'text-violet-900', accent: 'text-violet-600', card: 'bg-white/80 border-violet-200', gradient: 'from-violet-400 to-purple-500' },
   photo_focus: { bg: 'bg-gradient-to-b from-gray-50 to-slate-100', text: 'text-slate-900', accent: 'text-slate-600', card: 'bg-white border-slate-200', gradient: 'from-slate-400 to-slate-600' },
+  colorful_celebration: { bg: 'bg-gradient-to-r from-yellow-50 to-orange-50', text: 'text-orange-900', accent: 'text-orange-600', card: 'bg-white/80 border-orange-200', gradient: 'from-orange-400 to-pink-500' },
 };
 
 interface FormData {
   customer_name: string;
   partner_name: string;
-  anniversary_date: string;
+  specialDate?: string;
+  anniversary_date?: string;
   tagline: string;
   message: string;
   song_link: string;
@@ -75,16 +77,17 @@ const getDisplayTagline = (form: FormData): { hasContent: boolean; text: string 
   return { hasContent: false, text: 'Your tagline will appear here' };
 };
 
-// Helper to get anniversary with proper empty state
+// Helper to get special date with proper empty state
 const getDisplayAnniversary = (form: FormData): { hasContent: boolean; text: string } => {
-  if (form.anniversary_date) {
-    const date = new Date(form.anniversary_date);
-    return { 
-      hasContent: true, 
-      text: date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) 
+  const dateString = form.specialDate || form.anniversary_date;
+  if (dateString) {
+    const date = new Date(dateString);
+    return {
+      hasContent: true,
+      text: date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
     };
   }
-  return { hasContent: false, text: 'Add your anniversary date' };
+  return { hasContent: false, text: 'Add your special date' };
 };
 
 export default function LivePreviewPanel({
@@ -109,7 +112,7 @@ export default function LivePreviewPanel({
   // Use helper functions for proper empty state handling
   const nameData = useMemo(() => getDisplayNames(form), [form.customer_name, form.partner_name]);
   const taglineData = useMemo(() => getDisplayTagline(form), [form.tagline]);
-  const anniversaryData = useMemo(() => getDisplayAnniversary(form), [form.anniversary_date]);
+  const anniversaryData = useMemo(() => getDisplayAnniversary(form), [form.anniversary_date, form.specialDate]);
 
   const content = (
     <div className={`w-full h-full ${theme.bg} p-3 overflow-y-auto`}>
@@ -122,7 +125,7 @@ export default function LivePreviewPanel({
         <h3 className={`font-bold text-sm truncate ${nameData.hasContent ? theme.text : `${theme.text} opacity-40 italic`}`}>
           {nameData.primary}
         </h3>
-        <p className={`text-xs ${theme.text} opacity-50 truncate`}>yoursite.com/love/...</p>
+        <p className={`text-xs ${theme.text} opacity-50 truncate`}>yoursite.com/site/...</p>
       </div>
 
       {/* Cover Photo - More compact aspect ratio */}

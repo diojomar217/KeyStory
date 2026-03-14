@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Order } from '@/lib/supabase';
+import { Site } from '@/lib/supabase';
 import Link from 'next/link';
 import AdminHeader from '@/components/admin/AdminHeader';
 import DashboardStatCard, { TotalWebsitesCard, WebsitesThisMonthCard, QuickActionsCard } from '@/components/admin/DashboardStatCard';
 import EmptyState from '@/components/admin/EmptyState';
 
 export default function DashboardPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<Site[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -107,14 +107,14 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center text-white font-semibold shadow-md">
-                      {order.customer_name?.[0]?.toUpperCase() || '?'}
+                      {((order.config?.people?.primary || order.customer_name || '?')[0] || '?').toUpperCase()}
                     </div>
                     <div>
                       <p className="font-semibold text-slate-900">
                         {order.website_name || order.slug}
                       </p>
                       <p className="text-sm text-slate-500">
-                        {order.customer_name} & {order.partner_name}
+                        {(order.config?.people?.primary || order.customer_name || 'Your Name')} & {(order.config?.people?.secondary || order.partner_name || 'Partner Name')}
                       </p>
                     </div>
                   </div>
@@ -123,7 +123,7 @@ export default function DashboardPage() {
                       {formatDate(order.created_at)}
                     </span>
                     <a
-                      href={`/love/${order.website_name || order.slug}`}
+                      href={`/site/${order.website_name || order.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"

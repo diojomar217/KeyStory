@@ -51,12 +51,12 @@ const sanitizeSlug = (value: string): string => {
 };
 
 export default function CreateWebsitePage() {
-const [form, setForm] = useState<LocalForm>({
+  const [form, setForm] = useState<LocalForm>({
     website_name: '',
     occasion: 'couple',
     participants: [
-      { id: 'customer', name: '' },
-      { id: 'partner', name: '' }
+      { id: 'customer', name: '', role: 'primary' },
+      { id: 'partner', name: '', role: 'partner' }
     ],
     specialDate: '',
     message: '',
@@ -110,7 +110,7 @@ const [form, setForm] = useState<LocalForm>({
     };
   }, [photoPreviews]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const name = e.target.name as keyof LocalForm;
     if (name === 'website_name') {
       const sanitized = sanitizeSlug(e.target.value);
@@ -311,66 +311,94 @@ const [form, setForm] = useState<LocalForm>({
               </h2>
             </div>
 
-            <div className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                  Website Name (used in URL)
-                </label>
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-400 text-sm">yoursite.com/love/</span>
-                  <input
-                    name="website_name"
-                    required
-                    placeholder="john-and-jane"
-                    value={form.website_name}
-                    className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
-                    onChange={handleChange}
-                  />
-                </div>
-                <p className="text-xs text-slate-400 mt-1">
-                  Only letters, numbers, and hyphens allowed
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-5">
                 <div>
                   <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                    Your Name
+                    Website Name (used in URL)
                   </label>
-                  <input
-                    name="customer_name"
-                    required
-                    placeholder="Your name"
-                    value={form.customer_name}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
-                    onChange={handleChange}
-                  />
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 text-sm">yoursite.com/</span>
+                    <input
+                      name="website_name"
+                      required
+                      placeholder="john-birthday"
+                      value={form.website_name}
+                      className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Only letters, numbers, and hyphens allowed
+                  </p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                    Partner&apos;s Name
+                    Occasion Type
                   </label>
-                  <input
-                    name="partner_name"
-                    required
-                    placeholder="Partner's name"
-                    value={form.partner_name}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                  <select
+                    name="occasion"
+                    value={form.occasion}
                     onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                  >
+                    <option value="couple">💕 Romantic Couple</option>
+                    <option value="birthday">🎂 Birthday Celebration</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                    {form.occasion === 'couple' ? 'Your Name' : 'Celebrant Name'}
+                  </label>
+<input
+                    name="participants.0.name"
+                    required
+                    placeholder={form.occasion === 'couple' ? 'Your name' : 'Celebrant name'}
+                    value={form.participants?.[0]?.name || ''}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                    onChange={(e) => {
+                      const newParticipants = [...(form.participants || [{id: '0', name: ''}])];
+                      newParticipants[0] = { ...newParticipants[0], name: e.target.value };
+                      setForm({...form, participants: newParticipants});
+                    }}
                   />
+                </div>
+
+                <div>
+{form.occasion === 'couple' && (
+                  <>
+                    <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                      Partner&apos;s Name
+                    </label>
+                    <input
+                      name="participants.1.name"
+                      required
+                      placeholder="Partner's name"
+                      value={form.participants?.[1]?.name || ''}
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                      onChange={(e) => {
+                        const newParticipants = [...(form.participants || [{id: '0', name: ''}, {id: '1', name: ''}])];
+                        newParticipants[1] = { ...newParticipants[1], name: e.target.value };
+                        setForm({...form, participants: newParticipants});
+                      }}
+                    />
+                  </>
+                )}
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                  Anniversary Date
+                  {form.occasion === 'couple' ? 'Anniversary Date' : 'Birth Date'}
                 </label>
-                <input
-                  name="anniversary_date"
+
+<input
+                  name="specialDate"
                   required
                   type="date"
-                  value={form.anniversary_date}
+                  value={form.specialDate}
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
                   onChange={handleChange}
                 />
@@ -1109,7 +1137,7 @@ onChange={(sections: import('@/lib/types').Section[]) => handleConfigChange({ se
             </div>
 
             <a
-              href={`/love/${result.website_name}`}
+              href={`/site/${result.website_name}`}
               className="inline-block mb-6 text-rose-600 underline text-lg hover:text-rose-700"
             >
               View Couple Page

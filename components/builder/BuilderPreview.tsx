@@ -10,6 +10,7 @@ interface BuilderPreviewProps {
     customer_name: string;
     partner_name: string;
     anniversary_date: string;
+    specialDate?: string;
     tagline: string;
     message: string;
     song_link: string;
@@ -51,16 +52,17 @@ const getDisplayTagline = (form: { tagline: string }): { hasContent: boolean; te
   return { hasContent: false, text: 'Your tagline will appear here' };
 };
 
-// Helper to get anniversary with proper empty state
-const getDisplayAnniversary = (form: { anniversary_date: string }): { hasContent: boolean; text: string } => {
-  if (form.anniversary_date) {
-    const date = new Date(form.anniversary_date);
-    return { 
-      hasContent: true, 
-      text: date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) 
+// Helper to get special date with proper empty state
+const getDisplayAnniversary = (form: { anniversary_date?: string; specialDate?: string }): { hasContent: boolean; text: string } => {
+  const dateString = form.specialDate || form.anniversary_date;
+  if (dateString) {
+    const date = new Date(dateString);
+    return {
+      hasContent: true,
+      text: date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
     };
   }
-  return { hasContent: false, text: 'Add anniversary date' };
+  return { hasContent: false, text: 'Add special date' };
 };
 
 export default function BuilderPreview({
@@ -98,19 +100,20 @@ export default function BuilderPreview({
   // Use helper functions for proper empty state handling
   const nameData = useMemo(() => getDisplayNames(form), [form.customer_name, form.partner_name]);
   const taglineData = useMemo(() => getDisplayTagline(form), [form.tagline]);
-  const anniversaryData = useMemo(() => getDisplayAnniversary(form), [form.anniversary_date]);
+  const anniversaryData = useMemo(() => getDisplayAnniversary(form), [form.anniversary_date, form.specialDate]);
 
   // Format date for display
   const formattedDate = useMemo(() => {
-    if (form.anniversary_date) {
-      return new Date(form.anniversary_date).toLocaleDateString('en-US', { 
-        month: 'long', 
-        day: 'numeric', 
-        year: 'numeric' 
+    const dateString = form.specialDate || form.anniversary_date;
+    if (dateString) {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
       });
     }
     return null;
-  }, [form.anniversary_date]);
+  }, [form.anniversary_date, form.specialDate]);
 
   // Theme styles
   const themeStyles = useMemo(() => {
@@ -162,7 +165,7 @@ className={`rounded-xl p-4 mb-4 shadow-md border-dashed ${nameData.hasContent ? 
           {nameData.primary}
         </h3>
         <p className="text-xs truncate" style={{ color: themePreset.colors.text, opacity: 0.5 }}>
-          yoursite.com/love/...
+          yoursite.com/site/...
         </p>
       </div>
 

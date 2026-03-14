@@ -114,6 +114,12 @@ const romanticTaglines: Record<Theme, string[]> = {
     "Scan to view our story",
     "Where it all began...",
   ],
+  colorful_celebration: [
+    "Celebrate together with one scan!",
+    "A joyful journey starts here.",
+    "Discover our birthday surprise.",
+    "Scan and join the celebration!",
+  ],
   photo_focus: [
     "Our story, one scan away.",
     "A glimpse into us.",

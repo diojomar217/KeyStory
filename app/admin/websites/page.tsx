@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Order } from '@/lib/supabase';
+import { Site } from '@/lib/supabase';
 import WebsitesTable from '@/components/admin/WebsitesTable';
 import EmptyState from '@/components/admin/EmptyState';
 import ConfirmDeleteModal from '@/components/admin/ConfirmDeleteModal';
 
 export default function WebsitesPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<Site[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
