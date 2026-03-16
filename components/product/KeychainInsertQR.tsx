@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import QRCodeStyling from 'qr-code-styling';
 import { getInsertDimensions } from './KeychainSizeConfig';
 
@@ -11,6 +11,9 @@ interface KeychainInsertQRProps {
   qrCodeUrl?: string;
   caption?: string;
   scale?: number;
+  qrScale?: number;
+  printMode?: boolean;
+  showGuides?: boolean;
   qrDesign?: {
     dotsColor: string;
     backgroundColor: string;
@@ -29,6 +32,9 @@ export default function KeychainInsertQR({
   qrCodeUrl,
   caption = 'Scan our love story',
   scale = 1,
+  qrScale = 1,
+  printMode = false,
+  showGuides = true,
   qrDesign,
 }: KeychainInsertQRProps) {
   const qrRef = useRef<HTMLDivElement>(null);
@@ -42,11 +48,16 @@ export default function KeychainInsertQR({
   // Calculate dimensions
   const dimensions = getInsertDimensions(widthMm, heightMm, scale);
   
-  // QR code size - leave some padding
+  // Strong clamp: keep the QR scaling tightly controlled.
+  const rawScale = qrScale ?? 1;
+  const MIN_QR_SCALE = 0.97;
+  const MAX_QR_SCALE = 1.03;
+  const clampedScale = Math.max(MIN_QR_SCALE, Math.min(MAX_QR_SCALE, rawScale));
+  const effectiveQrScale = clampedScale;
   const qrSize = Math.min(
-    Number(dimensions.width.replace('px', '')) * 0.7,
-    Number(dimensions.height.replace('px', '')) * 0.5
-  );
+    Number(dimensions.width.replace('px', '')) * 0.817,
+    Number(dimensions.height.replace('px', '')) * 0.741
+  ) * effectiveQrScale;
 
     const shouldUseStyledQr = isClient && !!qrDataUrl;
 
@@ -93,6 +104,8 @@ export default function KeychainInsertQR({
       qrOptions: {
         errorCorrectionLevel: 'H',
       },
+      // only include logo if provided (prevents invalid URL from breaking QR render)
+      ...(design.logoUrl ? { image: design.logoUrl } : {}),
     });
 
     // Clear the container and append the new QR code
@@ -106,18 +119,45 @@ export default function KeychainInsertQR({
     };
     }, [shouldUseStyledQr, qrDataUrl, qrSize, qrDesign]);
 
+  const polaroidContainerStyle: CSSProperties = {
+    width: dimensions.width,
+    height: dimensions.height,
+    backgroundColor: '#ffffff',
+    border: showGuides ? '0.3mm dashed #444' : 'none',
+    boxShadow: 'none',
+    borderRadius: '0.8rem',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    padding: '4px',
+    paddingBottom: '10px',
+    boxSizing: 'border-box',
+    position: 'relative',
+    overflow: 'hidden',
+  };
+
+  const frameStyle: CSSProperties = {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#fdf9f3',
+    border: printMode ? 'none' : '2px solid #e8d7c5',
+    borderRadius: '0.55rem',
+    padding: '4px',
+    boxShadow: printMode ? 'none' : '0 10px 24px rgba(0,0,0,0.08)',
+    boxSizing: 'border-box',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  };
+
   return (
-    <div
-      className="flex flex-col items-center justify-center bg-white rounded-lg border-2 border-dashed border-slate-300"
-      style={{
-        width: dimensions.width,
-        height: dimensions.height,
-        padding: '4px',
-      }}
-    >
+    <div style={polaroidContainerStyle}>
+      <div style={frameStyle}>
       {/* QR Code */}
-      <div className="flex-shrink-0">
-                {shouldUseStyledQr ? (
+      <div className="flex-shrink-0" style={{ width: '100%', height: '78%', padding: '2px', backgroundColor: '#ffffff', border: '1px solid #d8cfc3', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {qrDataUrl ? (
           <div
             key={`${qrDataUrl}-${qrDesign?.dotsColor}-${qrDesign?.backgroundColor}-${qrDesign?.cornersColor}-${qrDesign?.dotsType}-${qrDesign?.cornersType}-${qrDesign?.cornersDotType}-${qrDesign?.logoUrl}`}
             ref={qrRef}
@@ -147,17 +187,34 @@ export default function KeychainInsertQR({
 
       {/* Caption */}
       {caption && (
-        <p
-          className="text-slate-600 text-center font-medium mt-1"
-          style={{
-            fontSize: Math.max(6, Math.min(10, widthMm * 0.2)) + 'px',
-            lineHeight: 1.2,
-            maxWidth: '100%',
-          }}
-        >
-          {caption}
-        </p>
+        <div style={{
+          width: '100%',
+          textAlign: 'center' as const,
+          marginTop: '6px',
+          padding: '8px 10px',
+          backgroundColor: '#fffefb',
+          borderBottomLeftRadius: '0.55rem',
+          borderBottomRightRadius: '0.55rem',
+          minHeight: '22%',
+          boxSizing: 'border-box',
+        }}>
+          <p
+            className="text-slate-900 font-semibold"
+            style={{
+              fontFamily: 'Georgia, "Times New Roman", serif',
+              letterSpacing: '0.04em',
+              fontSize: Math.max(7, Math.min(11, widthMm * 0.22)) + 'px',
+              lineHeight: 1.25,
+              maxWidth: '100%',
+              margin: 0,
+              textShadow: '0 1px 0 rgba(255,255,255,0.65)',
+            }}
+          >
+            {caption}
+          </p>
+        </div>
       )}
+      </div>
     </div>
   );
 }

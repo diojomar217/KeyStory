@@ -62,7 +62,11 @@ const SettingsIcon = ({ className }: { className?: string }) => (
 );
 
 // Sidebar configuration
-const sidebarItems: NavItem[] = [
+interface SidebarItem extends NavItem {
+  children?: NavItem[];
+}
+
+const sidebarItems: SidebarItem[] = [
   {
     name: 'Dashboard',
     href: '/admin/dashboard',
@@ -72,11 +76,13 @@ const sidebarItems: NavItem[] = [
     name: 'Websites',
     href: '/admin/websites',
     icon: <WebsitesIcon className="w-5 h-5" />,
-  },
-  {
-    name: 'Create Website',
-    href: '/admin/websites/create',
-    icon: <CreateIcon className="w-5 h-5" />,
+    children: [
+      {
+        name: 'Create Website',
+        href: '/admin/websites/create',
+        icon: <CreateIcon className="w-4 h-4" />,
+      },
+    ],
   },
   {
     name: 'Settings',
@@ -127,6 +133,9 @@ function SidebarNavItem({ item, isActive, isCollapsed }: SidebarNavItemProps) {
   const [showTooltip, setShowTooltip] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
+  const isCreateAction = item.href === '/admin/websites/create';
+  const baseTextClass = isActive ? 'text-white' : isCreateAction ? 'text-slate-400' : 'text-slate-300';
+
   return (
     <li 
       className="relative"
@@ -140,7 +149,9 @@ function SidebarNavItem({ item, isActive, isCollapsed }: SidebarNavItemProps) {
           transition-all duration-300 ease-in-out
           ${isActive
             ? 'bg-rose-600 text-white shadow-md'
-            : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+            : isCreateAction
+              ? 'text-slate-400 hover:bg-slate-800 hover:text-white'
+              : 'text-slate-300 hover:bg-slate-800 hover:text-white'
           }
           ${isCollapsed ? 'justify-center px-3' : ''}
         `}
@@ -154,6 +165,7 @@ function SidebarNavItem({ item, isActive, isCollapsed }: SidebarNavItemProps) {
             font-medium whitespace-nowrap overflow-hidden
             transition-all duration-300 ease-in-out
             ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}
+            ${baseTextClass}
           `}
         >
           {item.name}
@@ -286,12 +298,28 @@ export default function AdminSidebar({
             {sidebarItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
               return (
-                <SidebarNavItem
-                  key={item.name}
-                  item={item}
-                  isActive={isActive}
-                  isCollapsed={isCollapsed}
-                />
+                <div key={item.name} className="space-y-1">
+                  <SidebarNavItem
+                    item={item}
+                    isActive={isActive}
+                    isCollapsed={isCollapsed}
+                  />
+                  {!isCollapsed && item.children?.length ? (
+                    <ul className="ml-6 space-y-1">
+                      {item.children.map((child) => {
+                        const childActive = pathname === child.href || pathname.startsWith(child.href + '/');
+                        return (
+                          <SidebarNavItem
+                            key={child.name}
+                            item={child}
+                            isActive={childActive}
+                            isCollapsed={isCollapsed}
+                          />
+                        );
+                      })}
+                    </ul>
+                  ) : null}
+                </div>
               );
             })}
           </ul>

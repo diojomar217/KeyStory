@@ -109,6 +109,23 @@ export function WebsitesThisMonthCard({ count }: { count: number }) {
   );
 }
 
+export function PublishedWebsitesCard({ count }: { count: number }) {
+  return (
+    <DashboardStatCard
+      title="Published Websites"
+      value={count}
+      icon={
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+      }
+      iconBgColor="bg-gradient-to-br from-lime-100 to-emerald-100"
+      iconColor="text-emerald-600"
+    />
+  );
+}
+
+// QuickActionsCard is no longer used in the dashboard
 export function QuickActionsCard() {
   return (
     <DashboardStatCard

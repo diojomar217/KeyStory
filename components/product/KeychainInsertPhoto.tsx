@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import type { CSSProperties } from 'react';
 import { getInsertDimensions } from './KeychainSizeConfig';
 
 interface KeychainInsertPhotoProps {
@@ -9,6 +10,8 @@ interface KeychainInsertPhotoProps {
   coverPhotoUrl?: string;
   coupleNames: string;
   scale?: number;
+  printMode?: boolean;
+  showGuides?: boolean;
 }
 
 export default function KeychainInsertPhoto({
@@ -17,6 +20,8 @@ export default function KeychainInsertPhoto({
   coverPhotoUrl,
   coupleNames,
   scale = 1,
+  printMode = false,
+  showGuides = true,
 }: KeychainInsertPhotoProps) {
   // Calculate dimensions
   const dimensions = getInsertDimensions(widthMm, heightMm, scale);
@@ -30,23 +35,57 @@ export default function KeychainInsertPhoto({
   // Font size based on width
   const fontSize = Math.max(6, Math.min(12, widthMm * 0.22));
 
+  const polaroidContainerStyle: CSSProperties = {
+    width: dimensions.width,
+    height: dimensions.height,
+    backgroundColor: '#ffffff',
+    border: showGuides ? '0.3mm dashed #444' : 'none',
+    boxShadow: 'none',
+    borderRadius: '0.8rem',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    padding: '4px',
+    paddingBottom: '10px',
+    boxSizing: 'border-box',
+    position: 'relative',
+    overflow: 'hidden',
+  };
+
+  const frameStyle: CSSProperties = {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#fffefb',
+    border: 'none',
+    borderRadius: '0.55rem',
+    padding: '3px',
+    boxSizing: 'border-box',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  };
+
   return (
-    <div
-      className="flex flex-col items-center justify-center bg-white rounded-lg border-2 border-dashed border-slate-300"
-      style={{
-        width: dimensions.width,
-        height: dimensions.height,
-        padding: '4px',
-      }}
-    >
-      {/* Cover Photo */}
-      <div
-        className="relative flex-shrink-0 overflow-hidden rounded-md bg-slate-100"
-        style={{
-          width: photoSize,
-          height: photoSize,
-        }}
-      >
+    <div style={polaroidContainerStyle}>
+      <div style={frameStyle}>
+        {/* Polaroid photo area */}
+        <div
+          className="relative flex-shrink-0 overflow-hidden"
+          style={{
+            width: '100%',
+            height: '78%',
+            backgroundColor: '#f3f2f0',
+            borderRadius: '0.35rem',
+            overflow: 'hidden',
+            border: '1px solid #d8cfc3',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '2px',
+          }}
+        >
         {coverPhotoUrl ? (
           <Image
             src={coverPhotoUrl}
@@ -63,17 +102,37 @@ export default function KeychainInsertPhoto({
 
       {/* Couple Names */}
       {coupleNames && (
-        <p
-          className="text-slate-700 text-center font-semibold mt-1"
+        <div
           style={{
-            fontSize: `${fontSize}px`,
-            lineHeight: 1.2,
-            maxWidth: '100%',
+            width: '100%',
+            textAlign: 'center' as const,
+            marginTop: '6px',
+            padding: '8px 10px',
+            backgroundColor: '#fffefb',
+            borderBottomLeftRadius: '0.55rem',
+            borderBottomRightRadius: '0.55rem',
+            minHeight: '22%',
+            boxSizing: 'border-box',
+
           }}
         >
-          {coupleNames}
-        </p>
+          <p
+            className="text-slate-900 font-semibold"
+            style={{
+              fontFamily: 'Georgia, "Times New Roman", serif',
+              letterSpacing: '0.04em',
+              fontSize: Math.max(7, Math.min(11, widthMm * 0.22)) + 'px',
+              lineHeight: 1.25,
+              maxWidth: '100%',
+              margin: 0,
+              textShadow: '0 1px 0 rgba(255,255,255,0.65)',
+            }}
+          >
+            {coupleNames}
+          </p>
+        </div>
       )}
+      </div>
     </div>
   );
 }

@@ -136,6 +136,17 @@ export default function KeychainTypeSelector({
         </div>
       )}
 
+      {/* Size Guide */}
+      <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+        <p className="text-sm font-semibold text-slate-800 mb-2">Keychain Insert Sizes (portrait by default)</p>
+        <ul className="text-xs text-slate-600 list-disc list-inside space-y-1">
+          <li>Small Portrait: 32mm × 46mm</li>
+          <li>Medium Portrait: 35mm × 50mm (recommended for clear acrylic)</li>
+          <li>Large Portrait: 40mm × 60mm</li>
+          <li>Square: 32mm × 32mm</li>
+        </ul>
+      </div>
+
       {/* Print Info */}
       <p className="mt-4 text-xs text-slate-500">
         💡 Tip: These inserts are designed for double-sided clear acrylic

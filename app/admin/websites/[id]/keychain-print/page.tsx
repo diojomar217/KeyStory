@@ -16,11 +16,70 @@ export default function KeychainPrintPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
 
+  const QR_LOGO_OPTIONS = [
+    { label: 'None', value: undefined },
+    { label: 'Heart', value: '/heart-icon.svg' },
+    { label: 'File', value: '/file.svg' },
+    { label: 'Globe', value: '/globe.svg' },
+    { label: 'Window', value: '/window.svg' },
+    { label: 'Vercel', value: '/vercel.svg' },
+  ];
+
+  const QR_PRESETS: Record<QrPreset, InsertConfig['qrDesign']> = {
+    classic: {
+      dotsColor: '#000000',
+      backgroundColor: '#ffffff',
+      cornersColor: '#000000',
+      dotsType: 'square',
+      cornersType: 'square',
+      cornersDotType: 'square',
+      logoUrl: '/heart-icon.svg',
+    },
+    modern: {
+      dotsColor: '#6366f1',
+      backgroundColor: '#ffffff',
+      cornersColor: '#6366f1',
+      dotsType: 'rounded',
+      cornersType: 'extra-rounded',
+      cornersDotType: 'dot',
+      logoUrl: '/heart-icon.svg',
+    },
+    minimal: {
+      dotsColor: '#374151',
+      backgroundColor: '#f9fafb',
+      cornersColor: '#374151',
+      dotsType: 'dots',
+      cornersType: 'dot',
+      cornersDotType: 'dot',
+      logoUrl: '/heart-icon.svg',
+    },
+    elegant: {
+      dotsColor: '#7c3aed',
+      backgroundColor: '#ffffff',
+      cornersColor: '#7c3aed',
+      dotsType: 'classy',
+      cornersType: 'extra-rounded',
+      cornersDotType: 'dot',
+      logoUrl: '/heart-icon.svg',
+    },
+    bold: {
+      dotsColor: '#dc2626',
+      backgroundColor: '#ffffff',
+      cornersColor: '#dc2626',
+      dotsType: 'extra-rounded',
+      cornersType: 'extra-rounded',
+      cornersDotType: 'square',
+      logoUrl: '/heart-icon.svg',
+    },
+  };
+
   const [order, setOrder] = useState<Site | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Multi-insert config state
+  type QrPreset = 'classic' | 'modern' | 'minimal' | 'elegant' | 'bold';
+
   type InsertConfig = {
     size: KeychainSize;
     customWidth: number;
@@ -29,6 +88,7 @@ export default function KeychainPrintPage({ params }: PageProps) {
     copies: number;
     photoIndex: number;
     useCustomQr: boolean;
+    qrPreset: QrPreset;
     qrDesign: {
       dotsColor: string;
       backgroundColor: string;
@@ -49,6 +109,7 @@ export default function KeychainPrintPage({ params }: PageProps) {
       copies: 12,
       photoIndex: 0,
       useCustomQr: false,
+      qrPreset: 'classic',
       qrDesign: {
         dotsColor: '#e11d48',
         backgroundColor: '#ffffff',
@@ -63,6 +124,7 @@ export default function KeychainPrintPage({ params }: PageProps) {
   const [pairsPerRow, setPairsPerRow] = useState(2);
   const [showGuides, setShowGuides] = useState(true);
   const [autoFit, setAutoFit] = useState(true);
+  const [qrScale, setQrScale] = useState(1);
   const [scanWarning, setScanWarning] = useState<string | null>(null);
 
   useEffect(() => {
@@ -187,7 +249,7 @@ export default function KeychainPrintPage({ params }: PageProps) {
           body {
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
-            background-color: transparent !important;
+            background-color: #ffffff !important;
           }
           /* Hide all non-print UI */
           .print:hidden {
@@ -207,12 +269,13 @@ export default function KeychainPrintPage({ params }: PageProps) {
           .print-sheet, .Print-sheet {
             margin: 0 !important;
             padding: 0 !important;
-            background-color: transparent !important;
+            background-color: #ffffff !important;
           }
           .print-page, .Print-page {
             page-break-after: always;
             margin: 0 !important;
             padding: 0 !important;
+            background-color: #ffffff !important;
           }
           .print-page:last-child, .Print-page:last-child {
             page-break-after: avoid;
@@ -451,64 +514,21 @@ export default function KeychainPrintPage({ params }: PageProps) {
 
                               <div className="mb-4">
                                 <label className="flex flex-col text-sm font-semibold text-slate-800">
-                                  Quick Presets
+                                  QR Template
                                   <select
-                                    value=""
+                                    value={cfg.qrPreset}
                                     onChange={(e) => {
-                                      if (e.target.value === '') return;
-                                      const presets = {
-                                        classic: {
-                                          dotsColor: '#000000',
-                                          backgroundColor: '#ffffff',
-                                          cornersColor: '#000000',
-                                          dotsType: 'square' as const,
-                                          cornersType: 'square' as const,
-                                          cornersDotType: 'square' as const,
-                                        },
-                                        modern: {
-                                          dotsColor: '#6366f1',
-                                          backgroundColor: '#ffffff',
-                                          cornersColor: '#6366f1',
-                                          dotsType: 'rounded' as const,
-                                          cornersType: 'extra-rounded' as const,
-                                          cornersDotType: 'dot' as const,
-                                        },
-                                        minimal: {
-                                          dotsColor: '#374151',
-                                          backgroundColor: '#f9fafb',
-                                          cornersColor: '#374151',
-                                          dotsType: 'dots' as const,
-                                          cornersType: 'dot' as const,
-                                          cornersDotType: 'dot' as const,
-                                        },
-                                        elegant: {
-                                          dotsColor: '#7c3aed',
-                                          backgroundColor: '#ffffff',
-                                          cornersColor: '#7c3aed',
-                                          dotsType: 'classy' as const,
-                                          cornersType: 'extra-rounded' as const,
-                                          cornersDotType: 'dot' as const,
-                                        },
-                                        bold: {
-                                          dotsColor: '#dc2626',
-                                          backgroundColor: '#ffffff',
-                                          cornersColor: '#dc2626',
-                                          dotsType: 'extra-rounded' as const,
-                                          cornersType: 'extra-rounded' as const,
-                                          cornersDotType: 'square' as const,
-                                        }
-                                      };
+                                      const selected = e.target.value as QrPreset;
+                                      if (!(selected in QR_PRESETS)) return;
                                       const newConfigs = insertConfigs.map((config, i) =>
                                         i === idx
-                                          ? { ...config, qrDesign: { ...config.qrDesign, ...presets[e.target.value as keyof typeof presets] } }
+                                          ? { ...config, qrPreset: selected, qrDesign: { ...QR_PRESETS[selected] } }
                                           : config
                                       );
                                       setInsertConfigs(newConfigs);
-                                      e.target.value = ''; // Reset select
                                     }}
                                     className="mt-1 border rounded px-2 py-1 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-slate-900"
                                   >
-                                    <option value="">Choose a preset...</option>
                                     <option value="classic">Classic Black</option>
                                     <option value="modern">Modern Blue</option>
                                     <option value="minimal">Minimal Gray</option>
@@ -634,21 +654,26 @@ export default function KeychainPrintPage({ params }: PageProps) {
                               </div>
 
                               <label className="flex flex-col text-sm font-semibold text-slate-800 mt-3">
-                                Logo URL (optional)
-                                <input
-                                  type="url"
+                                Logo (optional)
+                                <select
                                   value={cfg.qrDesign.logoUrl || ''}
                                   onChange={(e) => {
+                                    const value = e.target.value || undefined;
                                     const newConfigs = insertConfigs.map((config, i) =>
                                       i === idx
-                                        ? { ...config, qrDesign: { ...config.qrDesign, logoUrl: e.target.value || undefined } }
+                                        ? { ...config, qrDesign: { ...config.qrDesign, logoUrl: value } }
                                         : config
                                     );
                                     setInsertConfigs(newConfigs);
                                   }}
-                                  placeholder="https://example.com/logo.png"
                                   className="mt-1 border rounded px-2 py-1 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-slate-900"
-                                />
+                                >
+                                  {QR_LOGO_OPTIONS.map((option) => (
+                                    <option key={option.label} value={option.value || ''}>
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </select>
                               </label>
                             </div>
 
@@ -675,8 +700,7 @@ export default function KeychainPrintPage({ params }: PageProps) {
                     caption: 'Scan our love story',
                     copies: 12,
                     photoIndex: 0,
-                    useCustomQr: false,
-                    qrDesign: {
+                    useCustomQr: false,                    qrPreset: 'classic',                    qrDesign: {
                       dotsColor: '#e11d48',
                       backgroundColor: '#ffffff',
                       cornersColor: '#e11d48',
@@ -707,7 +731,20 @@ export default function KeychainPrintPage({ params }: PageProps) {
                     </select>
                   </div>
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm font-semibold text-slate-700">Show print guides</span>
+                    <label className="text-sm font-semibold text-slate-700">QR size preset</label>
+                    <select
+                      id="qr-scale-select"
+                      value={qrScale}
+                      onChange={(e) => setQrScale(Number(e.target.value))}
+                      className="border rounded px-2 py-1 text-slate-900"
+                    >
+                      <option value={0.97}>Small</option>
+                      <option value={1}>Medium</option>
+                      <option value={1.03}>Large</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <label className="text-sm font-semibold text-slate-700">Show print guides</label>
                     <input
                       type="checkbox"
                       checked={showGuides}
@@ -716,7 +753,7 @@ export default function KeychainPrintPage({ params }: PageProps) {
                     />
                   </div>
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm font-semibold text-slate-700">Auto-fit to page</span>
+                    <label className="text-sm font-semibold text-slate-700">Auto-fit to page</label>
                     <input
                       type="checkbox"
                       checked={autoFit}
@@ -754,6 +791,7 @@ export default function KeychainPrintPage({ params }: PageProps) {
               coverPhotoUrl={activePhotoUrl}
               coupleNames={coupleNames}
               caption={activeConfig.caption}
+              qrScale={qrScale}
               qrDesign={activeConfig.useCustomQr ? activeConfig.qrDesign : undefined}
             />
 
@@ -776,6 +814,7 @@ export default function KeychainPrintPage({ params }: PageProps) {
                   pairsPerRow={pairsPerRow}
                   showGuides={showGuides}
                   autoFit={autoFit}
+                  qrScale={qrScale}
                   qrDesign={cfg.useCustomQr ? cfg.qrDesign : undefined}
                 />;
               })}
@@ -814,6 +853,7 @@ export default function KeychainPrintPage({ params }: PageProps) {
               pairsPerRow={pairsPerRow}
               showGuides={showGuides}
               autoFit={autoFit}
+              qrScale={qrScale}
               qrDesign={cfg.useCustomQr ? cfg.qrDesign : undefined}
             />
           );
