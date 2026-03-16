@@ -132,6 +132,7 @@ export default async function LovePage({ params }: PageProps) {
   const specialDateVal = config?.dates?.special_date || data.specialDate || data.anniversary_date || '';
   const message = config?.message || data.message || '';
   const songLink = config?.media?.song_link || data.song_link || '';
+  const songAutoplay = config?.media?.song_autoplay ?? (data as any).song_autoplay ?? false;
 
   return (
     <LovePageClient
@@ -151,6 +152,7 @@ export default async function LovePage({ params }: PageProps) {
         photos={photos}
         coverPhotoIndex={coverPhotoIndex}
         songLink={songLink}
+        songAutoplay={songAutoplay}
         qrCodeUrl={data.qr_code_url}
         qrDataUrl={qrDataUrl}
         timelineEvents={timelineEvents}

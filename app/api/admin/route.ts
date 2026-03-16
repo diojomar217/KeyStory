@@ -65,6 +65,7 @@ export async function PUT(req: NextRequest) {
         media: {
           photos: updates.photos || updates.config?.media?.photos || [],
           song_link: updates.song_link || updates.config?.media?.song_link || '',
+          song_autoplay: updates.song_autoplay ?? updates.config?.media?.song_autoplay ?? false,
         },
         timeline: updates.config?.timeline || updates.config?.timeline_events || updates.timeline_events || [],
         content: updates.config?.content || updates.config?.section_content || {},

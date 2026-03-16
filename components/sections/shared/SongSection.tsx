@@ -10,6 +10,7 @@ import ScrollReveal from '../../ui/ScrollReveal';
 type Props = {
   theme: Theme;
   songLink?: string;
+  autoplay?: boolean;
 };
 
 // Helper function to get theme accent colors
@@ -26,7 +27,7 @@ function getThemeAccents(theme: Theme) {
   }
 }
 
-export default function SongSection({ theme, songLink }: Props) {
+export default function SongSection({ theme, songLink, autoplay = false }: Props) {
   const styles = useTheme(theme);
   const accent = getThemeAccents(theme);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -34,7 +35,7 @@ export default function SongSection({ theme, songLink }: Props) {
   if (!songLink) return null;
 
   // Use helper function to get embed info
-  const { provider, embedUrl, isValid } = getMusicEmbedInfo(songLink);
+  const { provider, embedUrl, isValid } = getMusicEmbedInfo(songLink, !!autoplay);
 
   // Don't render if invalid URL
   if (!isValid || !embedUrl) {

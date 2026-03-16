@@ -60,6 +60,7 @@ type Props = {
   photos: string[];
   coverPhotoIndex?: number;
   songLink?: string;
+  songAutoplay?: boolean;
   qrCodeUrl?: string;
   qrDataUrl?: string;
   timelineEvents: TimelineEvent[];
@@ -87,6 +88,7 @@ export default function LovePageClient({
   qrDataUrl,
   timelineEvents,
   sectionContent,
+  songAutoplay = false,
   slug,
 }: Props) {
   const isBirthday = siteType === 'birthday';
@@ -235,6 +237,7 @@ export default function LovePageClient({
               key="song"
               theme={theme}
               songLink={songLink}
+              autoplay={songAutoplay}
             />
           );
 

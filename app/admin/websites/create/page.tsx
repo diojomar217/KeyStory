@@ -39,7 +39,7 @@ import {
 } from '@/components/builder/ContentInputComponents';
 import { SectionContentMap, Section } from '@/lib/types';
 
-type LocalForm = Omit<CreateOrderPayload, 'config' | 'photos'> & { photos: File[] };
+type LocalForm = Omit<CreateOrderPayload, 'config' | 'photos'> & { photos: File[]; song_autoplay?: boolean };
 
 const sanitizeSlug = (value: string): string => {
   return value
@@ -62,6 +62,7 @@ export default function CreateWebsitePage() {
     message: '',
     tagline: '',
     song_link: '',
+    song_autoplay: false,
     photos: [],
   });
 
@@ -118,19 +119,26 @@ export default function CreateWebsitePage() {
       message: form.message,
       tagline: form.tagline,
       specialDate: form.specialDate,
+      media: {
+        ...(prev.media || {}),
+        song_link: form.song_link,
+        song_autoplay: !!form.song_autoplay,
+      },
     }));
-  }, [form.occasion, form.participants, form.message, form.tagline, form.specialDate]);
+  }, [form.occasion, form.participants, form.message, form.tagline, form.specialDate, form.song_link, form.song_autoplay]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const name = e.target.name as keyof LocalForm;
+    const value = e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value;
+
     if (name === 'website_name') {
-      const sanitized = sanitizeSlug(e.target.value);
+      const sanitized = sanitizeSlug(value as string);
       setForm((prev) => ({ ...prev, [name]: sanitized }));
       setSlugSanitized(true);
     } else if (name === 'specialDate') {
-      setForm((prev) => ({ ...prev, specialDate: e.target.value }));
+      setForm((prev) => ({ ...prev, specialDate: value as string }));
     } else {
-      setForm((prev) => ({ ...prev, [name]: e.target.value }));
+      setForm((prev) => ({ ...prev, [name]: value as any }));
     }
   };
 
@@ -617,17 +625,20 @@ export default function CreateWebsitePage() {
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
                   onChange={handleChange}
                 />
-              </div>
-            )}
 
-            {/* Media Content Section - Photos */}
-            {(config.sections.includes('gallery') || config.sections.includes('polaroid_gallery')) && (
-              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">📸</span>
-                  <h3 className="font-semibold text-slate-700">Photos</h3>
+                <div className="mt-3 flex items-center gap-2">
+                  <input
+                    id="song_autoplay"
+                    name="song_autoplay"
+                    type="checkbox"
+                    checked={!!form.song_autoplay}
+                    onChange={handleChange}
+                    className="h-4 w-4 rounded border-slate-300 text-rose-500 focus:ring-rose-500"
+                  />
+                  <label htmlFor="song_autoplay" className="text-sm text-slate-600">
+                    Auto-play song when page loads
+                  </label>
                 </div>
-                
                 <div>
                   <label className="block text-sm font-medium text-slate-600 mb-1.5">
                     Upload Photos {(config.sections.includes('gallery') || config.sections.includes('polaroid_gallery')) && <span className="text-rose-500">*</span>}

@@ -179,6 +179,12 @@ export interface SiteConfig {
   // NEW: Generalized fields (backward compat - populate from legacy)
   participants?: Participant[];
   specialDate?: string;
+  // Media settings for components like song and gallery
+  media?: {
+    photos?: string[];
+    song_link?: string;
+    song_autoplay?: boolean;
+  };
   // Dynamic section content for each enabled section
   section_content?: SectionContentMap;
 }

@@ -67,7 +67,7 @@ function extractYouTubeId(url: string): string | null {
  * @param songLink - The original song URL (YouTube or Spotify)
  * @returns MusicEmbedInfo with provider type and embed URL
  */
-export function getMusicEmbedInfo(songLink: string): MusicEmbedInfo {
+export function getMusicEmbedInfo(songLink: string, autoplay = false): MusicEmbedInfo {
   if (!songLink) {
     return { provider: null, embedUrl: null, isValid: false };
   }
@@ -79,7 +79,8 @@ export function getMusicEmbedInfo(songLink: string): MusicEmbedInfo {
     const spotifyInfo = extractSpotifyId(trimmedLink);
     
     if (spotifyInfo) {
-      const embedUrl = `https://open.spotify.com/embed/${spotifyInfo.type}/${spotifyInfo.id}?utm_source=generator&theme=0`;
+      const query = `utm_source=generator&theme=0${autoplay ? '&autoplay=1' : ''}`;
+      const embedUrl = `https://open.spotify.com/embed/${spotifyInfo.type}/${spotifyInfo.id}?${query}`;
       return {
         provider: 'spotify',
         embedUrl,
@@ -96,7 +97,8 @@ export function getMusicEmbedInfo(songLink: string): MusicEmbedInfo {
     const videoId = extractYouTubeId(trimmedLink);
 
     if (videoId) {
-      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0`;
+      const autoplayParam = autoplay ? '1' : '0';
+      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=${autoplayParam}&rel=0`;
       return {
         provider: 'youtube',
         embedUrl,

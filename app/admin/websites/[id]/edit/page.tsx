@@ -20,6 +20,7 @@ type LocalForm = {
   message: string;
   tagline: string;
   song_link: string;
+  song_autoplay: boolean;
   photos: File[];
   existingPhotos: string[];
   occasion: 'couple' | 'birthday';
@@ -158,6 +159,7 @@ export default function EditWebsitePage() {
     message: '',
     tagline: '',
     song_link: '',
+    song_autoplay: false,
     photos: [],
     existingPhotos: [],
     occasion: 'couple',
@@ -230,6 +232,7 @@ const [config, setConfig] = useState<SiteConfig>({
           message: site.config?.message || site.message || '',
           tagline: taglineValue,
           song_link: site.config?.media?.song_link || site.song_link || '',
+          song_autoplay: site.config?.media?.song_autoplay ?? false,
           photos: [],
           existingPhotos: site.config?.media?.photos || site.photos || [],
           occasion: occasionValue,
@@ -276,6 +279,11 @@ const [config, setConfig] = useState<SiteConfig>({
           timeline_events: timelineEventsValue as SiteConfig['timeline_events'],
           cover_photo_index: coverPhotoIndexValue,
           section_content: sectionContentValue,
+          media: {
+            ...(site.config?.media || {}),
+            song_link: site.config?.media?.song_link || site.song_link || '',
+            song_autoplay: site.config?.media?.song_autoplay ?? false,
+          },
         });
 
         setCompletedSteps([1, 2, 3, 4, 5]);
@@ -289,12 +297,24 @@ const [config, setConfig] = useState<SiteConfig>({
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const value = e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value;
+    setForm({ ...form, [e.target.name]: value });
   };
 
   const handleConfigChange = (newConfig: Partial<SiteConfig>) => {
     setConfig({ ...config, ...newConfig });
   };
+
+  useEffect(() => {
+    setConfig((prev) => ({
+      ...prev,
+      media: {
+        ...(prev.media || {}),
+        song_link: form.song_link,
+        song_autoplay: !!form.song_autoplay,
+      },
+    }));
+  }, [form.song_link, form.song_autoplay]);
 
   const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -395,13 +415,15 @@ const [config, setConfig] = useState<SiteConfig>({
         body: JSON.stringify({
           id,
           website_name: form.website_name,          site_type: config.occasion,
-          occasion: config.occasion,          customer_name: form.customer_name,
+          occasion: config.occasion,
+          customer_name: form.customer_name,
           partner_name: form.partner_name,
           specialDate: form.specialDate || form.anniversary_date,
           anniversary_date: form.specialDate || form.anniversary_date,
           message: form.message,
           tagline: form.tagline,
           song_link: form.song_link,
+          song_autoplay: form.song_autoplay,
           photos: allPhotos,
           config,
         }),
@@ -580,6 +602,20 @@ const [config, setConfig] = useState<SiteConfig>({
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
                   onChange={handleChange}
                 />
+
+                <div className="mt-3 flex items-center gap-2">
+                  <input
+                    id="song_autoplay"
+                    name="song_autoplay"
+                    type="checkbox"
+                    checked={!!form.song_autoplay}
+                    onChange={handleChange}
+                    className="h-4 w-4 rounded border-slate-300 text-rose-500 focus:ring-rose-500"
+                  />
+                  <label htmlFor="song_autoplay" className="text-sm text-slate-600">
+                    Auto-play song when page loads
+                  </label>
+                </div>
               </div>
             )}
 

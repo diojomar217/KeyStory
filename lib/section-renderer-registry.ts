@@ -136,6 +136,7 @@ home: {
     getProps: (config) => ({
       theme: config.theme,
       songLink: config.songLink || config.song_link || '',
+      autoplay: config.songAutoplay || config.song_autoplay || false,
     }),
   },
   
