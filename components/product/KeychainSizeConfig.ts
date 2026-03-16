@@ -14,18 +14,18 @@ export interface KeychainSize {
 // Predefined keychain sizes
 export const KEYCHAIN_SIZES: KeychainSize[] = [
   {
-    label: 'Small Rectangle',
-    width_mm: 46,
-    height_mm: 32,
+    label: 'Small Portrait',
+    width_mm: 32,
+    height_mm: 46,
     shape: 'rectangle',
-    description: 'Compact size - 46mm × 32mm',
+    description: 'Compact portrait - 32mm × 46mm',
   },
   {
-    label: 'Medium Rectangle',
-    width_mm: 50,
-    height_mm: 35,
+    label: 'Medium Portrait',
+    width_mm: 35,
+    height_mm: 50,
     shape: 'rectangle',
-    description: 'Standard size - 50mm × 35mm',
+    description: 'Standard portrait - 35mm × 50mm (recommended for clear acrylic)',
   },
   {
     label: 'Square',
@@ -35,18 +35,18 @@ export const KEYCHAIN_SIZES: KeychainSize[] = [
     description: 'Square shape - 32mm × 32mm',
   },
   {
-    label: 'Large Rectangle',
-    width_mm: 60,
-    height_mm: 40,
+    label: 'Large Portrait',
+    width_mm: 40,
+    height_mm: 60,
     shape: 'rectangle',
-    description: 'Large size - 60mm × 40mm',
+    description: 'Large portrait - 40mm × 60mm',
   },
   {
     label: 'Custom Size',
     width_mm: 0,
     height_mm: 0,
     shape: 'rectangle',
-    description: 'Enter custom dimensions',
+    description: 'Enter custom dimensions (for unique layouts)',
   },
 ];
 

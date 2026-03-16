@@ -358,9 +358,15 @@ export default function SectionSelector({ value, onChange, occasion = 'couple' }
 
   const handleSelectPopular = () => {
     const popular = SECTION_TOGGLES
-      .filter(t => t.defaultEnabled)
-      .map(t => t.id);
-    onChange(popular);
+      .filter((t) => {
+        const meta = getSectionMetadata(t.id);
+        return t.defaultEnabled && meta?.supportedOccasions?.includes(occasion);
+      })
+      .map((t) => t.id);
+
+    // Keep in-app valid sections only (matching current occasion)
+    const sanitized = popular.filter((section) => allSections.includes(section));
+    onChange(sanitized);
   };
 
   const handleSelectAll = () => {

@@ -1,5 +1,6 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import KeychainInsertQR from './KeychainInsertQR';
 import KeychainInsertPhoto from './KeychainInsertPhoto';
 
@@ -11,7 +12,8 @@ interface KeychainInsertPreviewProps {
   coverPhotoUrl?: string;
   coupleNames: string;
   caption?: string;
-    qrDesign?: {
+  qrScale?: number;
+  qrDesign?: {
     dotsColor: string;
     backgroundColor: string;
     cornersColor: string;
@@ -30,8 +32,21 @@ export default function KeychainInsertPreview({
   coverPhotoUrl,
   coupleNames,
   caption = 'Scan our love story',
+  qrScale = 1,
   qrDesign,
 }: KeychainInsertPreviewProps) {
+  const previewCardStyle: CSSProperties = {
+    backgroundColor: '#ffffff',
+    border: '1px solid #d1d5db',
+    borderRadius: '0.8rem',
+    padding: '0.75rem',
+    boxShadow: 'none',
+  };
+
+  const previewCardStyle2: CSSProperties = {
+    ...previewCardStyle,
+  };
+
   return (
     <div className="bg-slate-100 rounded-xl p-6 border border-slate-200">
       <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
@@ -62,10 +77,17 @@ export default function KeychainInsertPreview({
       <div className="flex flex-wrap gap-8 justify-center items-start">
         {/* QR Side */}
         <div className="flex flex-col items-center">
-          <p className="text-sm font-medium text-slate-600 mb-2">
+          <p className="text-sm font-semibold text-slate-700 mb-2">
             QR Code Side
           </p>
-          <div className="bg-white rounded-lg shadow-md p-2">
+          <div style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #d1d5db',
+            borderRadius: '0.8rem',
+            boxShadow: 'none',
+            padding: '8px',
+            width: 'fit-content',
+          }}>
             <KeychainInsertQR
               widthMm={widthMm}
               heightMm={heightMm}
@@ -73,6 +95,7 @@ export default function KeychainInsertPreview({
               qrCodeUrl={qrCodeUrl}
               caption={caption}
               scale={2}
+              qrScale={qrScale}
               qrDesign={qrDesign}
             />
           </div>
@@ -80,10 +103,17 @@ export default function KeychainInsertPreview({
 
         {/* Photo Side */}
         <div className="flex flex-col items-center">
-          <p className="text-sm font-medium text-slate-600 mb-2">
+          <p className="text-sm font-semibold text-slate-700 mb-2">
             Photo Side
           </p>
-          <div className="bg-white rounded-lg shadow-md p-2">
+          <div style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #d1d5db',
+            borderRadius: '0.8rem',
+            boxShadow: 'none',
+            padding: '8px',
+            width: 'fit-content',
+          }}>
             <KeychainInsertPhoto
               widthMm={widthMm}
               heightMm={heightMm}
