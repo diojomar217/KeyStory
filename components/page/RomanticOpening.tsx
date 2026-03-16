@@ -7,16 +7,28 @@ import { resolveHeroConfig } from '@/lib/site-type-utils';
 interface RomanticOpeningProps {
   theme: Theme;
   siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
+  customerName?: string;
+  partnerName?: string;
   tagline?: string;
   onReveal: () => void;
 }
 
-export default function RomanticOpening({ theme, siteType = 'couple', tagline, onReveal }: RomanticOpeningProps) {
+export default function RomanticOpening({
+  theme,
+  siteType = 'couple',
+  customerName,
+  partnerName,
+  tagline,
+  onReveal,
+}: RomanticOpeningProps) {
   const [isHiding, setIsHiding] = useState(false);
   const [showBurst, setShowBurst] = useState(false);
 
   const isBirthday = siteType === 'birthday';
-  const heroConfig = resolveHeroConfig(siteType || 'couple', [], undefined);
+  const participants = isBirthday
+    ? [{ id: 'customer', name: customerName || 'Celebrant' }]
+    : [{ id: 'customer', name: customerName || 'You' }, { id: 'partner', name: partnerName || 'Partner' }];
+  const heroConfig = resolveHeroConfig(siteType || 'couple', participants, undefined);
 
   // Get theme-specific classes
   const getThemeClasses = () => {

@@ -60,6 +60,7 @@ type Props = {
   photos: string[];
   coverPhotoIndex?: number;
   songLink?: string;
+  songAutoplay?: boolean;
   qrCodeUrl?: string;
   qrDataUrl?: string;
   timelineEvents: TimelineEvent[];
@@ -87,6 +88,7 @@ export default function LovePageClient({
   qrDataUrl,
   timelineEvents,
   sectionContent,
+  songAutoplay = false,
   slug,
 }: Props) {
   const isBirthday = siteType === 'birthday';
@@ -170,20 +172,213 @@ export default function LovePageClient({
 
   // Main content rendering with alternating backgrounds
   const renderMainContent = () => {
-    // Track section index for alternating backgrounds
-let sectionIndex = 0;
-  const getSectionVariant = (index: number) => {
-    const variant = index % 2 === 1 ? 'alt' : 'default';
-    const staggered = index % 4 === 1 || index % 4 === 2;
-    return { variant, staggered };
-  };
-    
+    const getSectionVariant = (index: number) => {
+      return index % 2 === 1 ? 'alt' : 'default';
+    };
+
+    const renderSection = (section: Section, index: number) => {
+      const variant = getSectionVariant(index);
+
+      switch (section) {
+        case 'home':
+          return null; // Home is rendered above
+
+        case 'love_letter':
+          // Love letter is controlled by section settings and message content
+          if (!activeSections.includes('love_letter')) return null;
+          if (!message && !sectionContent?.love_letter?.content) return null;
+          return (
+            <LoveLetterSection
+              key="love_letter"
+              message={sectionContent?.love_letter?.content || message}
+              theme={theme}
+            />
+          );
+
+        case 'our_story':
+          return (
+            <OurStorySection
+              key="our_story"
+              theme={theme}
+              customerName={customerName}
+              partnerName={partnerName}
+              story={sectionContent?.our_story?.content}
+              variant={variant}
+            />
+          );
+
+        case 'timeline':
+          if (!shouldShowTimeline) return null;
+          return (
+            <TimelineSection
+              key="timeline"
+              theme={theme}
+              template={timelineTemplate}
+              events={mergedTimelineEvents}
+            />
+          );
+
+        case 'gallery':
+          if (!shouldShowGallery) return null;
+          return (
+            <GallerySection
+              key="gallery"
+              theme={theme}
+              template={effectiveGalleryLayout as any}
+              photos={photos}
+              coverPhotoIndex={coverPhotoIndex}
+            />
+          );
+
+        case 'song':
+          if (!hasSong) return null;
+          return (
+            <SongSection
+              key="song"
+              theme={theme}
+              songLink={songLink}
+              autoplay={songAutoplay}
+            />
+          );
+
+        case 'playlist':
+          if (!activeSections.includes('playlist')) return null;
+          return (
+            <PlaylistSection
+              key="playlist"
+              theme={theme}
+              songLink={sectionContent?.playlist?.playlistUrl || songLink}
+            />
+          );
+
+        case 'video_memories':
+          if (!activeSections.includes('video_memories')) return null;
+          return (
+            <VideoMemoriesSection
+              key="video_memories"
+              theme={theme}
+              videos={sectionContent?.video_memories?.videos}
+            />
+          );
+
+        case 'relationship_stats':
+          if (!activeSections.includes('relationship_stats')) return null;
+          return (
+            <RelationshipStatsSection
+              key="relationship_stats"
+              theme={theme}
+              anniversaryDate={anniversaryDate}
+            />
+          );
+
+        case 'anniversary_countdown':
+          if (!activeSections.includes('anniversary_countdown')) return null;
+          return (
+            <AnniversaryCountdownSection
+              key="anniversary_countdown"
+              theme={theme}
+              anniversaryDate={anniversaryDate}
+            />
+          );
+
+        case 'future_dreams':
+          return (
+            <FutureDreamsSection
+              key="future_dreams"
+              theme={theme}
+              dreams={sectionContent?.future_dreams?.dreams}
+              variant={variant}
+            />
+          );
+
+        case 'reasons_love_you':
+          return (
+            <ReasonsILoveYouSection
+              key="reasons_love_you"
+              theme={theme}
+              partnerName={partnerName}
+              reasons={sectionContent?.reasons_love_you?.reasons}
+              variant={variant}
+            />
+          );
+
+        case 'quotes':
+          return (
+            <QuotesSection
+              key="quotes"
+              theme={theme}
+              quotes={sectionContent?.quotes?.quotes}
+              variant={variant}
+            />
+          );
+
+        case 'guest_messages':
+          return (
+            <GuestMessagesSection
+              key="guest_messages"
+              theme={theme}
+              siteType={siteType}
+              messages={sectionContent?.guest_messages?.messages}
+              variant={variant}
+            />
+          );
+
+        case 'memory_map':
+          return (
+            <MemoryMapSection
+              key="memory_map"
+              theme={theme}
+              locations={sectionContent?.memory_map?.locations}
+            />
+          );
+
+        case 'letter_future':
+          return (
+            <LetterToFutureSection
+              key="letter_future"
+              theme={theme}
+              customerName={customerName}
+              partnerName={partnerName}
+              letter={sectionContent?.letter_future?.letter}
+              openDate={sectionContent?.letter_future?.openDate}
+            />
+          );
+
+        case 'gift_section':
+          return (
+            <GiftSection
+              key="gift_section"
+              theme={theme}
+              partnerName={partnerName}
+              gifts={sectionContent?.gift_section?.gifts}
+            />
+          );
+
+        case 'surprise_message':
+          return (
+            <SurpriseMessageSection
+              key="surprise_message"
+              theme={theme}
+              customerName={customerName}
+              partnerName={partnerName}
+              message={sectionContent?.surprise_message?.message}
+              hint={sectionContent?.surprise_message?.hint}
+            />
+          );
+
+        default:
+          return null;
+      }
+    };
+
+    const remainingSections = activeSections.filter((section) => section !== 'home');
+
     return (
       <ThemeWrapper theme={theme}>
         <div className="relative min-h-screen">
           <BackgroundDecorations theme={theme} siteType={siteType} />
           <div className="relative z-10">
-            {/* 1. Home Section - Hero - Full Width */}
+            {/* Home Section - Hero */}
             {activeSections.includes('home') && (
               <HomeSection
                 theme={theme}
@@ -200,165 +395,8 @@ let sectionIndex = 0;
               />
             )}
 
-          {/* 2. Love Letter Section - Full Width below hero */}
-          {message && (
-            <LoveLetterSection
-              message={message}
-              theme={theme}
-            />
-          )}
-
-          {/* 3. Our Story Section - Alternating background */}
-          {activeSections.includes('our_story') && (
-            <OurStorySection
-              theme={theme}
-              customerName={customerName}
-              partnerName={partnerName}
-              story={sectionContent?.our_story?.content}
-              variant={sectionIndex++ % 2 === 1 ? 'alt' : 'default'}
-            />
-          )}
-
-          {/* 4. Timeline Section - Now handles first_date, special_moments, milestones */}
-          {shouldShowTimeline && (
-            <TimelineSection
-              theme={theme}
-              template={timelineTemplate}
-              events={mergedTimelineEvents}
-            />
-          )}
-
-          {/* 5. Gallery Section - Now handles polaroid_gallery via layout */}
-          {shouldShowGallery && (
-            <GallerySection
-              theme={theme}
-              template={effectiveGalleryLayout as any}
-              photos={photos}
-              coverPhotoIndex={coverPhotoIndex}
-            />
-          )}
-
-          {/* Separator after Gallery */}
-          {(shouldShowGallery || shouldShowTimeline) && <SectionSeparator theme={theme} />}
-
-          {/* 6. Song Section - Music that represents the relationship */}
-          {hasSong && (
-            <SongSection
-              theme={theme}
-              songLink={songLink}
-            />
-          )}
-
-          {/* 6b. Playlist Section */}
-          {activeSections.includes('playlist') && (
-            <PlaylistSection
-              theme={theme}
-              songLink={sectionContent?.playlist?.playlistUrl || songLink}
-            />
-          )}
-
-          {/* 6c. Video Memories Section */}
-          {activeSections.includes('video_memories') && (
-            <VideoMemoriesSection theme={theme} videos={sectionContent?.video_memories?.videos} />
-          )}
-
-          {/* 7. Relationship Stats Section */}
-          {activeSections.includes('relationship_stats') && (
-            <RelationshipStatsSection
-              theme={theme}
-              anniversaryDate={anniversaryDate}
-            />
-          )}
-
-          {/* 7b. Anniversary Countdown Section */}
-          {activeSections.includes('anniversary_countdown') && (
-            <AnniversaryCountdownSection
-              theme={theme}
-              anniversaryDate={anniversaryDate}
-            />
-          )}
-
-          {/* Separator after Stats sections */}
-          {(activeSections.includes('relationship_stats') || activeSections.includes('anniversary_countdown')) && (
-            <SectionSeparator theme={theme} />
-          )}
-
-          {/* 8. Future Dreams Section - Alternating background */}
-          {activeSections.includes('future_dreams') && (
-            <FutureDreamsSection 
-              theme={theme} 
-              dreams={sectionContent?.future_dreams?.dreams}
-              variant={sectionIndex++ % 2 === 1 ? 'alt' : 'default'}
-            />
-          )}
-
-          {/* 9. Reasons I Love You Section - Alternating background */}
-          {activeSections.includes('reasons_love_you') && (
-            <ReasonsILoveYouSection
-              theme={theme}
-              partnerName={partnerName}
-              reasons={sectionContent?.reasons_love_you?.reasons}
-              variant={sectionIndex++ % 2 === 1 ? 'alt' : 'default'}
-            />
-          )}
-
-          {/* 10. Quotes Section - Alternating background */}
-          {activeSections.includes('quotes') && (
-            <QuotesSection 
-              theme={theme} 
-              quotes={sectionContent?.quotes?.quotes}
-              variant={sectionIndex++ % 2 === 1 ? 'alt' : 'default'}
-            />
-          )}
-
-          {/* 11. Guest Messages Section - Alternating background */}
-          {activeSections.includes('guest_messages') && (
-            <GuestMessagesSection 
-              theme={theme} 
-              siteType={siteType}
-              messages={sectionContent?.guest_messages?.messages}
-              variant={sectionIndex++ % 2 === 1 ? 'alt' : 'default'}
-            />
-          )}
-
-          {/* 12. Memory Map Section */}
-          {activeSections.includes('memory_map') && (
-            <MemoryMapSection 
-              theme={theme} 
-              locations={sectionContent?.memory_map?.locations}
-            />
-          )}
-
-          {/* 13. Letter to Future Section */}
-          {activeSections.includes('letter_future') && (
-            <LetterToFutureSection
-              theme={theme}
-              customerName={customerName}
-              partnerName={partnerName}
-              letter={sectionContent?.letter_future?.letter}
-              openDate={sectionContent?.letter_future?.openDate}
-            />
-          )}
-
-          {/* 14. Gift Section */}
-          {activeSections.includes('gift_section') && (
-            <GiftSection
-              theme={theme}
-              partnerName={partnerName}
-              gifts={sectionContent?.gift_section?.gifts}
-            />
-          )}
-
-          {/* 15. Surprise Message Section */}
-          {activeSections.includes('surprise_message') && (
-            <SurpriseMessageSection
-              theme={theme}
-              customerName={customerName}
-              partnerName={partnerName}
-              message={sectionContent?.surprise_message?.message}
-              hint={sectionContent?.surprise_message?.hint}
-            />
-          )}
+            {/* Render remaining sections in selected order */}
+            {remainingSections.map((section, index) => renderSection(section, index))}
 
           {/* 16. Memory Card Section - Premium Keepsake - Only render if qr_keepsake is enabled */}
           {/* Backward compatibility: if sections array is missing, check for qrCodeUrl */}
@@ -410,6 +448,8 @@ let sectionIndex = 0;
         <RomanticOpening 
           theme={theme}
           siteType={siteType}
+          customerName={customerName}
+          partnerName={partnerName}
           tagline={tagline}
           onReveal={handleReveal} 
         />

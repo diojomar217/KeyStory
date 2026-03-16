@@ -45,6 +45,7 @@ export interface DynamicSectionRendererProps {
   coverPhotoIndex?: number;
   songLink?: string;
   timelineEvents?: TimelineEvent[];
+  songAutoplay?: boolean;
 }
 
 // ============================================
@@ -64,6 +65,8 @@ interface InternalConfig {
   song_link?: string;
   timelineEvents: TimelineEvent[];
   timeline_events?: TimelineEvent[];
+  songAutoplay?: boolean;
+  song_autoplay?: boolean;
   section_templates?: Record<string, string>;
   home_template?: string;
   gallery_template?: string;
@@ -128,6 +131,7 @@ const buildProps = (section: Section, props: DynamicSectionRendererProps): Recor
     song_link: (config as any).song_link,
     timelineEvents: props.timelineEvents || (config as any).timeline_events || [],
     timeline_events: (config as any).timeline_events || [],
+    songAutoplay: (props.songAutoplay !== undefined ? props.songAutoplay : (config as any).media?.song_autoplay) || false,
     section_templates: config.section_templates,
     home_template: config.home_template,
     gallery_template: config.gallery_template,
@@ -195,6 +199,7 @@ const buildProps = (section: Section, props: DynamicSectionRendererProps): Recor
       return {
         theme: mergedConfig.theme,
         songLink: mergedConfig.songLink || mergedConfig.song_link,
+        autoplay: mergedConfig.songAutoplay || mergedConfig.song_autoplay || false,
       };
 
     case 'love_letter':

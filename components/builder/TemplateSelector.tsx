@@ -71,7 +71,7 @@ export default function TemplateSelector({ section, value, onChange }: Props) {
   return (
     <div className="space-y-4 animate-fade-in">
       <div className="flex items-center gap-2">
-        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-rose-500 text-white text-sm font-semibold">5</span>
+        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-rose-500 text-white text-sm font-semibold">4</span>
         <h3 className="text-lg font-semibold text-slate-800">{label}</h3>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

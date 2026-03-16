@@ -118,25 +118,36 @@ function truncateText(text: string, maxLength: number): string {
 // Get section content summary for each enabled section
 function getSectionContentSummary(
   sectionId: string,
-  sectionContent: Record<string, unknown> | undefined
+  sectionContent: Record<string, unknown> | undefined,
+  form: LocalForm
 ): SectionContentSummary | null {
   const sectionInfo = SECTION_TOGGLES.find((t) => t.id === sectionId);
   const content = sectionContent?.[sectionId as keyof Record<string, unknown>] as Record<string, unknown> | undefined;
   
-  // Sections handled elsewhere (photos, song link, timeline events)
-  if (sectionId === 'gallery' || sectionId === 'song' || sectionId === 'timeline') {
+  // Sections handled elsewhere (photos, timeline events)
+  if (sectionId === 'gallery' || sectionId === 'timeline') {
     return null;
   }
 
   switch (sectionId) {
     // Text content sections
     case 'love_letter': {
-      const text = (content?.content as string) || '';
+      const text = (form.message?.trim() || (content?.content as string) || '').trim();
       return {
         label: sectionInfo?.label || 'Love Letter',
         icon: '💌',
         status: text.length > 0 ? 'completed' : 'missing',
         content: text.length > 0 ? truncateText(text, 100) : 'No letter added',
+      };
+    }
+
+    case 'song': {
+      const hasSong = !!form.song_link?.trim();
+      return {
+        label: sectionInfo?.label || 'Song',
+        icon: '🎵',
+        status: hasSong ? 'completed' : 'missing',
+        content: hasSong ? 'Song link added' : 'No song link',
       };
     }
 
@@ -353,7 +364,8 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
     !!form.specialDate;
   const coupleDetailsStatus: 'completed' | 'missing' = coupleDetailsComplete ? 'completed' : 'missing';
 
-  const heroContentComplete = !!form.message;
+  const heroMessageRequired = config.sections?.includes('love_letter');
+  const heroContentComplete = !heroMessageRequired || !!form.message;
   const heroContentStatus: 'completed' | 'missing' = heroContentComplete ? 'completed' : 'missing';
 
   const styleComplete = !!config.theme;
@@ -395,12 +407,20 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
   // Check dynamic section content
   const sectionContent = config.section_content;
   
-  const checkSectionContentComplete = (sectionId: string): boolean => {
+  const checkSectionContentComplete = (sectionId: string, form: LocalForm): boolean => {
     const content = sectionContent?.[sectionId as keyof typeof sectionContent];
+
+    if (sectionId === 'love_letter') {
+      return !!form.message?.trim() || !!(content as { content?: string })?.content;
+    }
+
+    if (sectionId === 'song') {
+      return !!form.song_link?.trim();
+    }
+
     if (!content) return false;
     
     switch (sectionId) {
-      case 'love_letter':
       case 'our_story':
         return !!(content as { content: string }).content;
       case 'first_date':
@@ -436,13 +456,13 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
   
   // Check each enabled content section
   const contentSectionsToCheck = config.sections?.filter(section =>
-    ['love_letter', 'our_story', 'first_date', 'special_moments', 'milestones', 
+    ['love_letter', 'song', 'our_story', 'first_date', 'special_moments', 'milestones', 
      'playlist', 'video_memories', 'future_dreams', 'quotes', 'reasons_love_you',
      'memory_map', 'letter_future', 'gift_section', 'surprise_message'].includes(section)
   ) || [];
   
   const allContentSectionsComplete = contentSectionsToCheck.length === 0 || 
-    contentSectionsToCheck.every(section => checkSectionContentComplete(section));
+    contentSectionsToCheck.every(section => checkSectionContentComplete(section, form));
   
   // Overall content status
   const contentComplete = photosComplete && timelineComplete && allContentSectionsComplete;
@@ -460,7 +480,7 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
   
   // Check each dynamic section for missing content
   contentSectionsToCheck.forEach(section => {
-    const isComplete = checkSectionContentComplete(section);
+    const isComplete = checkSectionContentComplete(section, form);
     if (!isComplete) {
       const sectionInfo = SECTION_TOGGLES.find(t => t.id === section);
       const sectionName = sectionInfo?.label || section;
@@ -576,25 +596,10 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
       >
         <div className="space-y-3 text-sm">
           <div>
-            <p className="text-slate-500 text-xs">Love Message</p>
-            <p className="font-medium text-slate-800 line-clamp-2">
-              {form.message || 'No message added'}
+            <p className="text-slate-500 text-xs">Tagline</p>
+            <p className="font-medium text-slate-800">
+              {form.tagline || 'Default tagline'}
             </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <p className="text-slate-500 text-xs">Tagline</p>
-              <p className="font-medium text-slate-800">
-                {form.tagline || 'Default tagline'}
-              </p>
-            </div>
-            <div>
-              <p className="text-slate-500 text-xs">Song</p>
-              <p className="font-medium text-slate-800">
-                {form.song_link ? 'Added' : 'Not added'}
-              </p>
-            </div>
           </div>
         </div>
       </ReviewBlock>
@@ -685,40 +690,32 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
         status={templatesStatus}
         onEdit={() => onEditSection?.(5)}
       >
-        <div className="grid grid-cols-2 gap-2 text-sm">
+        <div className="space-y-3 text-sm">
           {config.sections?.includes('home') && (
-            <div className="flex justify-between">
-              <span className="text-slate-500">Home</span>
-              <span className="font-medium text-slate-800">
-                {config.home_template || 'Not selected'}
-              </span>
+            <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-white border border-slate-200">
+              <span className="text-slate-700">Home</span>
+              <span className="font-medium text-slate-800">{config.home_template || 'Not selected'}</span>
             </div>
           )}
 
           {config.sections?.includes('gallery') && (
-            <div className="flex justify-between">
-              <span className="text-slate-500">Gallery</span>
-              <span className="font-medium text-slate-800">
-                {config.gallery_template || 'Not selected'}
-              </span>
+            <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-white border border-slate-200">
+              <span className="text-slate-700">Gallery</span>
+              <span className="font-medium text-slate-800">{config.gallery_template || 'Not selected'}</span>
             </div>
           )}
 
           {config.sections?.includes('timeline') && (
-            <div className="flex justify-between">
-              <span className="text-slate-500">Timeline</span>
-              <span className="font-medium text-slate-800">
-                {config.timeline_template || 'Not selected'}
-              </span>
+            <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-white border border-slate-200">
+              <span className="text-slate-700">Timeline</span>
+              <span className="font-medium text-slate-800">{config.timeline_template || 'Not selected'}</span>
             </div>
           )}
 
           {config.sections?.includes('song') && (
-            <div className="flex justify-between">
-              <span className="text-slate-500">Song</span>
-              <span className="font-medium text-slate-800">
-                {config.song_template || 'Not selected'}
-              </span>
+            <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-white border border-slate-200">
+              <span className="text-slate-700">Song</span>
+              <span className="font-medium text-slate-800">{config.song_template || 'Not selected'}</span>
             </div>
           )}
 
@@ -767,6 +764,33 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
           </div>
         </div>
 
+        {/* Main Content Summary (Love Message + Song) */}
+        <div className="border-t border-slate-200 pt-4">
+          <p className="text-xs font-semibold text-slate-500 mb-3 uppercase tracking-wider">
+            Content Details
+          </p>
+          <div className="space-y-2 mb-4">
+            <div className="flex items-center justify-between text-sm p-2 rounded-lg bg-slate-50">
+              <div className="flex items-center gap-2">
+                <span className="text-base">💌</span>
+                <span className="font-medium text-slate-700">Love Message</span>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full ${form.message?.trim() ? 'text-emerald-600 bg-emerald-50' : 'text-red-600 bg-red-50'}`}>
+                {form.message?.trim() ? 'Added' : 'No message added'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm p-2 rounded-lg bg-slate-50">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🎵</span>
+                <span className="font-medium text-slate-700">Song</span>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full ${form.song_link?.trim() ? 'text-emerald-600 bg-emerald-50' : 'text-red-600 bg-red-50'}`}>
+                {form.song_link?.trim() ? 'Added' : 'No song link'}
+              </span>
+            </div>
+          </div>
+        </div>
+
         {/* Dynamic Section Content Summaries */}
         {config.sections && config.sections.length > 0 && (
           <div className="border-t border-slate-200 pt-4">
@@ -775,7 +799,7 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
             </p>
             <div className="space-y-2">
               {config.sections.map((sectionId) => {
-                const summary = getSectionContentSummary(sectionId, config.section_content as Record<string, unknown> | undefined);
+                const summary = getSectionContentSummary(sectionId, config.section_content as Record<string, unknown> | undefined, form);
                 if (!summary) return null;
                 
                 const statusColors = {

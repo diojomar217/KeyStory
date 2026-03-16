@@ -39,7 +39,7 @@ import {
 } from '@/components/builder/ContentInputComponents';
 import { SectionContentMap, Section } from '@/lib/types';
 
-type LocalForm = Omit<CreateOrderPayload, 'config' | 'photos'> & { photos: File[] };
+type LocalForm = Omit<CreateOrderPayload, 'config' | 'photos'> & { photos: File[]; song_autoplay?: boolean };
 
 const sanitizeSlug = (value: string): string => {
   return value
@@ -62,6 +62,7 @@ export default function CreateWebsitePage() {
     message: '',
     tagline: '',
     song_link: '',
+    song_autoplay: false,
     photos: [],
   });
 
@@ -118,19 +119,26 @@ export default function CreateWebsitePage() {
       message: form.message,
       tagline: form.tagline,
       specialDate: form.specialDate,
+      media: {
+        ...(prev.media || {}),
+        song_link: form.song_link,
+        song_autoplay: !!form.song_autoplay,
+      },
     }));
-  }, [form.occasion, form.participants, form.message, form.tagline, form.specialDate]);
+  }, [form.occasion, form.participants, form.message, form.tagline, form.specialDate, form.song_link, form.song_autoplay]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const name = e.target.name as keyof LocalForm;
+    const value = e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value;
+
     if (name === 'website_name') {
-      const sanitized = sanitizeSlug(e.target.value);
+      const sanitized = sanitizeSlug(value as string);
       setForm((prev) => ({ ...prev, [name]: sanitized }));
       setSlugSanitized(true);
     } else if (name === 'specialDate') {
-      setForm((prev) => ({ ...prev, specialDate: e.target.value }));
+      setForm((prev) => ({ ...prev, specialDate: value as string }));
     } else {
-      setForm((prev) => ({ ...prev, [name]: e.target.value }));
+      setForm((prev) => ({ ...prev, [name]: value as any }));
     }
   };
 
@@ -549,75 +557,6 @@ export default function CreateWebsitePage() {
 
       case 5:
         return (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/50 p-6 md:p-8 space-y-8 opacity-0 animate-fade-in-up">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-pink-500 text-white font-bold text-sm">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"
-                  />
-                </svg>
-              </div>
-              <h2 className="text-xl font-bold text-slate-800">
-                {stepInfo?.title || 'Templates'}
-              </h2>
-            </div>
-
-            {config.sections.length === 0 ? (
-              <p className="text-slate-500 text-center py-8">
-                Please select sections in the previous step first.
-              </p>
-            ) : (
-              <div className="space-y-6">
-                {config.sections.includes('home') && (
-                  <TemplateSelector
-                    section="home"
-                    value={config.home_template}
-                    onChange={(home_template) =>
-                      handleConfigChange({ home_template: home_template as any })
-                    }
-                  />
-                )}
-
-                {config.sections.includes('gallery') && (
-                  <TemplateSelector
-                    section="gallery"
-                    value={config.gallery_template}
-                    onChange={(gallery_template) =>
-                      handleConfigChange({ gallery_template: gallery_template as any })
-                    }
-                  />
-                )}
-
-                {config.sections.includes('timeline') && (
-                  <TemplateSelector
-                    section="timeline"
-                    value={config.timeline_template}
-                    onChange={(timeline_template) =>
-                      handleConfigChange({ timeline_template: timeline_template as any })
-                    }
-                  />
-                )}
-
-                {config.sections.includes('song') && (
-                  <TemplateSelector
-                    section="song"
-                    value={config.song_template}
-                    onChange={(song_template) =>
-                      handleConfigChange({ song_template: song_template as any })
-                    }
-                  />
-                )}
-              </div>
-            )}
-          </div>
-        );
-
-      case 5:
-        return (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/50 p-6 md:p-8 space-y-6 opacity-0 animate-fade-in-up">
             <div className="flex items-center gap-3 mb-6">
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-white font-bold text-sm">
@@ -635,23 +574,33 @@ export default function CreateWebsitePage() {
               </h2>
             </div>
 
-            {config.sections.includes('home') && (
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700 mb-3">Hero Content</h3>
-                <label className="block text-sm font-medium text-slate-600 mb-1.5">Hero Tagline</label>
-                <input
-                  name="tagline"
-                  maxLength={120}
-                  placeholder="Every love story is beautiful, but ours is my favorite."
-                  value={form.tagline}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
-                  onChange={handleChange}
-                />
-                <p className="text-xs text-slate-400 mt-1">A short romantic line shown in the hero section. (Max 120 characters)</p>
-              </div>
-            )}
+            <p className="text-sm text-slate-500 mb-4">
+              Step 5 (Content): Add text/image data for the sections you chose in Page Layout.
+            </p>
 
-            {config.sections.includes('love_letter') && (
+            {config.sections.length === 0 ? (
+              <div className="p-6 bg-slate-50 rounded-xl border border-slate-200 text-slate-500">
+                <p className="text-sm">No sections enabled yet. Go back to Step 4 to select sections and continue.</p>
+              </div>
+            ) : (
+              <>
+                {config.sections.includes('home') && (
+                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                    <h3 className="text-sm font-semibold text-slate-700 mb-3">Hero Content</h3>
+                    <label className="block text-sm font-medium text-slate-600 mb-1.5">Hero Tagline</label>
+                    <input
+                      name="tagline"
+                      maxLength={120}
+                      placeholder="Every love story is beautiful, but ours is my favorite."
+                      value={form.tagline}
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                      onChange={handleChange}
+                    />
+                    <p className="text-xs text-slate-400 mt-1">A short romantic line shown in the hero section. (Max 120 characters)</p>
+                  </div>
+                )}
+
+                {config.sections.includes('love_letter') && (
               <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
                 <h3 className="text-sm font-semibold text-slate-700 mb-3">Your Love Message</h3>
                 <textarea
@@ -676,17 +625,20 @@ export default function CreateWebsitePage() {
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
                   onChange={handleChange}
                 />
-              </div>
-            )}
 
-            {/* Media Content Section - Photos */}
-            {(config.sections.includes('gallery') || config.sections.includes('polaroid_gallery')) && (
-              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">📸</span>
-                  <h3 className="font-semibold text-slate-700">Photos</h3>
+                <div className="mt-3 flex items-center gap-2">
+                  <input
+                    id="song_autoplay"
+                    name="song_autoplay"
+                    type="checkbox"
+                    checked={!!form.song_autoplay}
+                    onChange={handleChange}
+                    className="h-4 w-4 rounded border-slate-300 text-rose-500 focus:ring-rose-500"
+                  />
+                  <label htmlFor="song_autoplay" className="text-sm text-slate-600">
+                    Auto-play song when page loads
+                  </label>
                 </div>
-                
                 <div>
                   <label className="block text-sm font-medium text-slate-600 mb-1.5">
                     Upload Photos {(config.sections.includes('gallery') || config.sections.includes('polaroid_gallery')) && <span className="text-rose-500">*</span>}
@@ -986,6 +938,8 @@ export default function CreateWebsitePage() {
                   value={config.section_content?.guest_messages}
                 />
               </div>
+            )}
+              </>
             )}
           </div>
         );

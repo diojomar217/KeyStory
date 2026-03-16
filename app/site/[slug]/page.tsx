@@ -18,23 +18,38 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (data) {
     const siteType = (data.site_type as 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary') || 'couple';
-    const customerName = data.config?.people?.primary || data.customer_name || 'Your Name';
-    const partnerName = data.config?.people?.secondary || data.partner_name || 'Partner Name';
+    const customerName =
+      data.config?.people?.primary || data.customer_name || data.config?.customer_name || '';
+    const partnerName =
+      data.config?.people?.secondary || data.partner_name || data.config?.partner_name || '';
+    const websiteSlug = slug;
+
+    const humanizedSiteTitle = websiteSlug
+      ? websiteSlug.replace(/[-_]/g, ' ').replace(/\b\w/g, (ch) => ch.toUpperCase())
+      : 'Love Story';
 
     if (siteType === 'birthday') {
       return {
-        title: `${customerName} - Happy Birthday!`,
+        title: `${customerName || humanizedSiteTitle} - Happy Birthday!`,
         description: 'A special birthday website full of celebration and joy.',
       };
     }
 
+    const coupleTitle = customerName && partnerName
+      ? `${customerName} & ${partnerName} - Our Love Story`
+      : customerName
+        ? `${customerName} - Our Love Story`
+        : partnerName
+          ? `${partnerName} - Our Love Story`
+          : `${humanizedSiteTitle} - Love Story`;
+
     return {
-      title: `${customerName} & ${partnerName} - Our Love Story`,
+      title: coupleTitle,
       description: 'A special website celebrating our love story.',
     };
   }
   return {
-    title: 'Love Story',
+    title: slug ? `${slug.replace(/[-_]/g, ' ')} - Love Story` : 'Love Story',
   };
 }
 
@@ -117,6 +132,7 @@ export default async function LovePage({ params }: PageProps) {
   const specialDateVal = config?.dates?.special_date || data.specialDate || data.anniversary_date || '';
   const message = config?.message || data.message || '';
   const songLink = config?.media?.song_link || data.song_link || '';
+  const songAutoplay = config?.media?.song_autoplay ?? (data as any).song_autoplay ?? false;
 
   return (
     <LovePageClient
@@ -136,6 +152,7 @@ export default async function LovePage({ params }: PageProps) {
         photos={photos}
         coverPhotoIndex={coverPhotoIndex}
         songLink={songLink}
+        songAutoplay={songAutoplay}
         qrCodeUrl={data.qr_code_url}
         qrDataUrl={qrDataUrl}
         timelineEvents={timelineEvents}
