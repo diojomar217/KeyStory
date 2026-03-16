@@ -74,12 +74,14 @@ if (!form.participants || form.participants.length === 0 || !form.participants[0
  */
 export const validateHeroStep = (
   form: WizardFormData,
-  _config: SiteConfig
+  config: SiteConfig
 ): ValidationResult => {
-  if (!form.message?.trim()) {
+  // Love message is only required if the Love Letter section is enabled
+  const requiresMessage = config.sections?.includes('love_letter');
+  if (requiresMessage && !form.message?.trim()) {
     return { valid: false, error: 'Love message is required' };
   }
-  
+
   return { valid: true };
 };
 
