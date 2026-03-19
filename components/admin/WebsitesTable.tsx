@@ -137,6 +137,12 @@ export default function WebsitesTable({
                     Theme
                   </th>
                   <th className="px-4 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-4 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    Expires
+                  </th>
+                  <th className="px-4 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                     Created
                   </th>
                   <th className="px-4 py-4 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">
@@ -253,6 +259,12 @@ function MobileWebsiteCard({
               </p>
               <p className="text-xs text-slate-400 mt-1">
                 Type: {siteType}
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                Status: {order.status || 'active'}
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                Expires: {order.expires_at ? formatDate(order.expires_at) : '—'}
               </p>
             </div>
             <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${getThemeLabel(themeValue)}`}>

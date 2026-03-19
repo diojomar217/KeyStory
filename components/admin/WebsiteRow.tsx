@@ -61,6 +61,18 @@ export default function WebsiteRow({ order, onDelete }: WebsiteRowProps) {
   const websiteName = order.website_name || order.slug;
 
   const themeValue = (order.config?.theme as string) || (order.theme as string) || 'romantic_classic';
+  const status = (order.status || 'active').toLowerCase();
+  const expiresAt = order.expires_at ? new Date(order.expires_at) : null;
+  const isExpired = expiresAt ? expiresAt.getTime() < Date.now() : false;
+
+  const statusLabel = status === 'archived' ? 'Archived' : status === 'expired' || isExpired ? 'Expired' : 'Active';
+  const statusClass =
+    statusLabel === 'Active' ? 'bg-emerald-100 text-emerald-700' :
+    statusLabel === 'Expired' ? 'bg-amber-100 text-amber-800' :
+    'bg-slate-100 text-slate-700';
+
+  const daysRemaining = expiresAt ? Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : undefined;
+  const expiresLabel = expiresAt ? `${formatDate(expiresAt.toISOString())}${daysRemaining !== undefined ? ` (${daysRemaining >= 0 ? `${daysRemaining}d` : `${Math.abs(daysRemaining)}d overdue`})` : ''}` : '-' ;
 
   return (
     <tr className="hover:bg-slate-50 transition-colors duration-150">
@@ -109,6 +121,18 @@ export default function WebsiteRow({ order, onDelete }: WebsiteRowProps) {
         </span>
       </td>
 
+      {/* Status */}
+      <td className="px-4 py-3">
+        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusClass}`}>
+          {statusLabel}
+        </span>
+      </td>
+
+      {/* Expires At */}
+      <td className="px-4 py-3 text-slate-500">
+        {expiresAt ? expiresLabel : '—'}
+      </td>
+
       {/* Created Date */}
       <td className="px-4 py-3 text-slate-500">
         {formatDate(order.created_at)}
@@ -119,7 +143,10 @@ export default function WebsiteRow({ order, onDelete }: WebsiteRowProps) {
         <WebsiteActions
           slug={order.website_name || order.slug}
           id={order.id!}
+          status={(order.status || 'active').toLowerCase()}
+          expires_at={order.expires_at}
           onDelete={onDelete}
+          onStatusChange={() => window.location.reload()}
         />
       </td>
     </tr>

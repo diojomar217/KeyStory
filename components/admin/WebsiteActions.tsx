@@ -5,7 +5,10 @@ import { useState } from 'react';
 interface WebsiteActionsProps {
   slug: string;
   id: string;
+  status?: string;
+  expires_at?: string | null;
   onDelete: (id: string) => void;
+  onStatusChange?: () => void;
   className?: string;
 }
 
@@ -50,10 +53,70 @@ const DeleteIcon = ({ className }: { className?: string }) => (
 export default function WebsiteActions({
   slug,
   id,
+  status,
+  expires_at,
   onDelete,
+  onStatusChange,
   className = '',
 }: WebsiteActionsProps) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isRenewing, setIsRenewing] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
+
+  const siteStatus = (status || 'active').toLowerCase();
+  const siteExpired = siteStatus === 'expired';
+
+  const fetchRefresh = () => {
+    if (onStatusChange) onStatusChange();
+  };
+
+  const renewSite = async (duration: '6_months' | '1_year') => {
+    if (!id) return;
+    setIsRenewing(true);
+
+    try {
+      const res = await fetch(`/api/admin/sites/${id}/renew`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ duration }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || 'Failed to renew hosting');
+      }
+
+      fetchRefresh();
+    } catch (error: any) {
+      console.error('Renew hosting failed:', error);
+      alert(error.message || 'Unable to renew hosting');
+    } finally {
+      setIsRenewing(false);
+    }
+  };
+
+  const archiveSite = async () => {
+    if (!id) return;
+    setIsArchiving(true);
+
+    try {
+      const res = await fetch(`/api/admin/sites/${id}/archive`, {
+        method: 'PATCH',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || 'Failed to archive site');
+      }
+
+      fetchRefresh();
+    } catch (error: any) {
+      console.error('Archive failed:', error);
+      alert(error.message || 'Unable to archive site');
+    } finally {
+      setIsArchiving(false);
+    }
+  };
 
   const handleDownloadPdf = async () => {
     if (!slug) return;
@@ -144,6 +207,43 @@ export default function WebsiteActions({
       >
         <EditIcon className="w-4 h-4" />
       </a>
+
+      {/* Renew / Reactivate / Archive Buttons */}
+      <button
+        onClick={() => renewSite('6_months')}
+        disabled={isRenewing}
+        className="px-2 py-1 text-xs text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition duration-200"
+        title="Renew 6 months"
+      >
+        {isRenewing ? 'Renewing...' : 'Renew 6m'}
+      </button>
+      <button
+        onClick={() => renewSite('1_year')}
+        disabled={isRenewing}
+        className="px-2 py-1 text-xs text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition duration-200"
+        title="Renew 1 year"
+      >
+        {isRenewing ? 'Renewing...' : 'Renew 1y'}
+      </button>
+      {siteStatus !== 'archived' && (
+        <button
+          onClick={archiveSite}
+          disabled={isArchiving}
+          className="px-2 py-1 text-xs text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition duration-200"
+          title="Archive site"
+        >
+          {isArchiving ? 'Archiving...' : 'Archive'}
+        </button>
+      )}
+      {siteStatus === 'expired' && (
+        <button
+          onClick={() => renewSite('6_months')}
+          className="px-2 py-1 text-xs text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition duration-200"
+          title="Reactivate site"
+        >
+          Reactivate
+        </button>
+      )}
 
       {/* Delete Button */}
       <button

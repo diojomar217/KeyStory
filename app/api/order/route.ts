@@ -6,6 +6,15 @@ import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import { SiteConfig } from '@/lib/types';
 
+const addMonths = (date: Date, months: number): string => {
+  const result = new Date(date);
+  result.setMonth(result.getMonth() + months);
+  return result.toISOString();
+};
+
+const DEFAULT_HOSTING_MONTHS = 6;
+
+
 const slugify = (text: string): string =>
   text
     .toString()
@@ -163,7 +172,9 @@ export async function POST(req: NextRequest) {
       slug,
       website_name,
       site_type: occasion,
-      status: 'pending',
+      status: 'active',
+      expires_at: addMonths(new Date(), DEFAULT_HOSTING_MONTHS),
+      archived_at: null,
       qr_code_url: qrCodeUrl,
       config: siteConfig,
     };

@@ -197,6 +197,17 @@ export interface SiteConfig {
   // Dynamic section content for each enabled section
   section_content?: SectionContentMap;
 
+  // QR keepsake design configuration
+  qr?: {
+    color?: string;
+    background?: string;
+    style?: 'square' | 'dots' | 'rounded';
+    cardStyle?: 'none' | 'love_card' | 'birthday_card' | 'minimal_card' | 'polaroid';
+    title?: string;
+    subtitle?: string;
+    showNames?: boolean;
+  };
+
   // Preset information selected during create flow
   preset?: {
     id: string;

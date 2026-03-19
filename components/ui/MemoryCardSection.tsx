@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import QRCodeStyling from 'qr-code-styling';
 import { toPng } from 'html-to-image';
 import { Theme } from '@/lib/types';
+import type { QrCardStyle } from '@/components/qr/QrKeepsakeCard';
 import { useTheme } from '../builder/ThemeWrapper';
 import ScrollReveal from './ScrollReveal';
 
@@ -14,6 +15,16 @@ type Props = {
   qrCodeUrl?: string;
   qrDataUrl?: string;
   slug?: string;
+  siteType?: 'couple' | 'birthday' | string;
+  qrConfig?: {
+    color?: string;
+    background?: string;
+    style?: 'square' | 'dots' | 'rounded';
+    cardStyle?: 'none' | 'love_card' | 'birthday_card' | 'minimal_card' | 'polaroid';
+    title?: string;
+    subtitle?: string;
+    showNames?: boolean;
+  };
 };
 
 export default function MemoryCardSection({
@@ -23,10 +34,46 @@ export default function MemoryCardSection({
   qrCodeUrl,
   qrDataUrl,
   slug,
+  siteType = 'couple',
+  qrConfig = {},
 }: Props) {
   const styles = useTheme(theme);
   const coupleNames = `${customerName} & ${partnerName}`;
-  
+  const isBirthday = siteType === 'birthday';
+
+  const qrStyleConfig = {
+    color: '#E11D48',
+    background: '#ffffff',
+    style: 'rounded' as const,
+    cardStyle: isBirthday ? 'birthday_card' : 'love_card',
+    title: isBirthday ? 'Scan the birthday surprise 🎉' : 'Scan our love story ❤️',
+    subtitle: 'A keepsake to revisit anytime',
+    showNames: !isBirthday,
+    ...qrConfig,
+  };
+
+  const isDataImageUrl = (value?: string) => typeof value === 'string' && value.startsWith('data:image');
+
+  const getQrDataUrl = () => {
+    if (qrDataUrl && !isDataImageUrl(qrDataUrl)) return qrDataUrl;
+    if (qrCodeUrl && !isDataImageUrl(qrCodeUrl) && /^https?:\/\//.test(qrCodeUrl)) return qrCodeUrl;
+    if (slug && typeof window !== 'undefined') return `${window.location.origin}/site/${slug}`;
+    if (slug) return `/site/${slug}`;
+    return undefined;
+  };
+
+  const targetQrDataUrl = getQrDataUrl();
+
+  const cardStyleClasses: Record<QrCardStyle, string> = {
+    love_card: 'bg-gradient-to-br from-rose-100 to-pink-100 border-2 border-rose-200 text-rose-900',
+    birthday_card: 'bg-gradient-to-br from-orange-100 via-yellow-100 to-pink-100 border-2 border-orange-200 text-orange-900',
+    minimal_card: 'bg-white border border-slate-200 text-slate-900',
+    polaroid: 'bg-white border-2 border-slate-300 shadow-xl text-slate-900',
+    none: 'bg-white text-slate-900',
+  };
+
+  const finalCardStyle = cardStyleClasses[(qrStyleConfig.cardStyle || 'love_card') as QrCardStyle];
+
   const qrRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const qrCodeInstanceRef = useRef<QRCodeStyling | null>(null);
@@ -49,31 +96,34 @@ export default function MemoryCardSection({
 
   // Generate styled QR code
   useEffect(() => {
-    if (!qrRef.current || !qrDataUrl) return;
+    if (!qrRef.current || !targetQrDataUrl) return;
+
+    const dotsType = qrStyleConfig.style === 'square' ? 'classy' : qrStyleConfig.style === 'dots' ? 'dots' : 'rounded';
+    const cornersType = qrStyleConfig.style === 'rounded' ? 'extra-rounded' : 'square';
 
     const qrCode = new QRCodeStyling({
       width: 200,
       height: 200,
       type: 'canvas',
-      data: qrDataUrl,
+      data: targetQrDataUrl,
       imageOptions: {
         crossOrigin: 'anonymous',
         margin: 6,
       },
       dotsOptions: {
-        color: '#E11D48',
-        type: 'rounded',
+        color: qrStyleConfig.color || '#E11D48',
+        type: dotsType as any,
       },
       backgroundOptions: {
-        color: '#ffffff',
+        color: qrStyleConfig.background || '#ffffff',
       },
       cornersSquareOptions: {
-        color: '#E11D48',
-        type: 'extra-rounded',
+        color: qrStyleConfig.color || '#E11D48',
+        type: cornersType as any,
       },
       cornersDotOptions: {
-        color: '#E11D48',
-        type: 'dot',
+        color: qrStyleConfig.color || '#E11D48',
+        type: cornersType as any,
       },
       image: '/heart-icon.svg',
       qrOptions: {
@@ -85,7 +135,7 @@ export default function MemoryCardSection({
     qrRef.current.innerHTML = '';
     qrCode.append(qrRef.current);
 
-  }, [qrDataUrl]);
+  }, [qrDataUrl, qrStyleConfig]);
 
   // Handle save card - capture the full card and download as PNG
   const handleSaveCard = async () => {
@@ -158,7 +208,7 @@ export default function MemoryCardSection({
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
 
-  if (!qrCodeUrl) return null;
+  if (!targetQrDataUrl && !qrCodeUrl && !slug) return null;
 
   // Get accent color based on theme
   const getAccentColor = () => {

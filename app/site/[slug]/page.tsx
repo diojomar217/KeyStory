@@ -86,6 +86,20 @@ export default async function LovePage({ params }: PageProps) {
     );
   }
 
+  const siteStatus = (data.status || 'active').toString().toLowerCase();
+  const expiresAt = data.expires_at ? new Date(data.expires_at) : null;
+  const isExpired = expiresAt ? expiresAt.getTime() < Date.now() : false;
+
+  if (siteStatus === 'archived') {
+    const ArchivedSitePage = (await import('@/components/site/ExpiredSitePage')).default;
+    return <ArchivedSitePage websiteName={data.website_name || data.slug} status="archived" expiresAt={data.expires_at || undefined} />;
+  }
+
+  if (siteStatus === 'expired' || (siteStatus === 'active' && isExpired)) {
+    const ExpiredSitePage = (await import('@/components/site/ExpiredSitePage')).default;
+    return <ExpiredSitePage websiteName={data.website_name || data.slug} status="expired" expiresAt={data.expires_at || undefined} />;
+  }
+
   // Get config from data
   const config = data.config || {};
 
@@ -137,8 +151,8 @@ export default async function LovePage({ params }: PageProps) {
   // Get cover photo index from config
   const coverPhotoIndex = config.cover_photo_index;
 
-  // Get QR data url from config
-  const qrDataUrl = config.qr_data_url || data.qr_code_url;
+  // Get QR data URL target (link to encode in styled QR)
+  const qrDataUrl = config.qr_data_url || undefined;
 
   const siteType = (data.site_type as 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary') || 'couple';
   const customerName = config?.people?.primary || data.customer_name || '';

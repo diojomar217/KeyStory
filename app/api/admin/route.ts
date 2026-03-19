@@ -71,6 +71,8 @@ export async function PUT(req: NextRequest) {
       website_name: updates.website_name,
       site_type: updates.site_type || updates.occasion,
       status: updates.status,
+      expires_at: updates.expires_at,
+      archived_at: updates.archived_at,
       config: {
         ...updates.config,
         people: {

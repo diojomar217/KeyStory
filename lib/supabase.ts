@@ -17,6 +17,8 @@ export type Site = {
   website_name?: string;
   site_type?: string;
   status?: string;
+  expires_at?: string | null;
+  archived_at?: string | null;
   qr_code_url?: string;
   config?: any;
   theme?: string;
