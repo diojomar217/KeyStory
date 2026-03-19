@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Theme, HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, SectionContentMap, GalleryLayout, Section } from '@/lib/types';
+import { Theme, HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, SectionContentMap, GalleryLayout, Section, GuestMessage, GuestMessageRecord } from '@/lib/types';
 import BackgroundDecorations from './BackgroundDecorations';
 import ThemeWrapper from '../builder/ThemeWrapper';
 import PasswordGate from '../site/PasswordGate';
@@ -67,6 +67,7 @@ type Props = {
   timelineEvents: TimelineEvent[];
   sectionContent?: SectionContentMap;
   slug?: string;
+  approvedGuestMessages?: GuestMessageRecord[];
 };
 
 export default function LovePageClient({
@@ -89,6 +90,7 @@ export default function LovePageClient({
   qrDataUrl,
   timelineEvents,
   sectionContent,
+  approvedGuestMessages,
   songAutoplay = false,
   slug,
 }: Props) {
@@ -348,6 +350,8 @@ export default function LovePageClient({
               theme={theme}
               siteType={siteType}
               messages={sectionContent?.guest_messages?.messages}
+              approvedMessages={approvedGuestMessages}
+              slug={slug}
               variant={variant}
             />
           );

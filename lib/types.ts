@@ -350,6 +350,15 @@ export interface MemoryMapLocation {
   address?: string; // Optional formatted address from search
 }
 
+export interface GuestMessageRecord {
+  id: string;
+  site_id: string;
+  name: string;
+  message: string;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+}
+
 // Gift Item
 export interface GiftItem {
   id: string;

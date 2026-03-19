@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
-import { Theme, HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent } from '@/lib/types';
+import { Theme, HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, GuestMessageRecord } from '@/lib/types';
 import LovePageClient from '@/components/page/LovePageClient';
 
 interface PageProps {
@@ -88,6 +88,20 @@ export default async function LovePage({ params }: PageProps) {
 
   // Get config from data
   const config = data.config || {};
+
+  // Fetch approved guest messages from DB for this site
+  const { data: approvedMessagesData, error: approvedMessagesError } = await supabase
+    .from('guest_messages')
+    .select('id, site_id, name, message, status, created_at')
+    .eq('site_id', data.id)
+    .eq('status', 'approved')
+    .order('created_at', { ascending: true });
+
+  if (approvedMessagesError) {
+    console.warn('Failed fetching approved guest messages:', approvedMessagesError.message);
+  }
+
+  const approvedGuestMessages = (approvedMessagesData ?? []) as GuestMessageRecord[];
   
   // Extract theme and templates with fallbacks
   const theme: Theme = (config.theme as Theme) || 'romantic_classic';
@@ -157,6 +171,7 @@ export default async function LovePage({ params }: PageProps) {
         qrDataUrl={qrDataUrl}
         timelineEvents={timelineEvents}
         sectionContent={sectionContent}
+        approvedGuestMessages={approvedGuestMessages}
       />
   );
 }
