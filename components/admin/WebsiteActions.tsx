@@ -235,6 +235,35 @@ export default function WebsiteActions({
           {isArchiving ? 'Archiving...' : 'Archive'}
         </button>
       )}
+
+      {siteStatus === 'archived' && (
+        <button
+          onClick={async () => {
+            if (!id) return;
+            setIsArchiving(true);
+            try {
+              const res = await fetch(`/api/admin/sites/${id}/restore`, { method: 'PATCH' });
+              if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.message || 'Failed to restore site');
+              }
+              fetchRefresh();
+              alert('Site restored successfully');
+            } catch (error: any) {
+              console.error('Restore failed:', error);
+              alert(error.message || 'Unable to restore site');
+            } finally {
+              setIsArchiving(false);
+            }
+          }}
+          disabled={isArchiving}
+          className="px-2 py-1 text-xs text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition duration-200"
+          title="Restore site"
+        >
+          {isArchiving ? 'Restoring...' : 'Restore'}
+        </button>
+      )}
+
       {siteStatus === 'expired' && (
         <button
           onClick={() => renewSite('6_months')}

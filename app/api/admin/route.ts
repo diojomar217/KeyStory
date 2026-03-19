@@ -124,6 +124,19 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ message: error.message }, { status: 500 });
     }
 
+    try {
+      const { revalidatePath } = await import('next/cache');
+      if (data?.website_name) {
+        revalidatePath(`/site/${data.website_name}`);
+        revalidatePath(`/love/${data.website_name}`);
+      } else if (data?.slug) {
+        revalidatePath(`/site/${data.slug}`);
+        revalidatePath(`/love/${data.slug}`);
+      }
+    } catch (err) {
+      console.warn('Revalidation failed in admin update:', err);
+    }
+
     return NextResponse.json({ success: true, order: data });
   } catch (err) {
     console.error('PUT error:', err);

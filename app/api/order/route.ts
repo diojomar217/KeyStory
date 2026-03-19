@@ -121,16 +121,21 @@ export async function POST(req: NextRequest) {
     const normalized = cleanName ? slugify(cleanName) : slug;
     const website_name = cleanName ? `${normalized}-${randomSuffix()}` : slug;
 
-    // upload pictures
+    const MAX_SITE_IMAGES = 18;
+    // upload pictures (cost-controlled)
     const photoUrls: string[] = [];
     if (Array.isArray(data.photos) && data.photos.length > 0) {
-      for (const photo of data.photos) {
+      const photosToProcess = data.photos.slice(0, MAX_SITE_IMAGES);
+      for (const photo of photosToProcess) {
         try {
           const url = await uploadToCloudinary(photo);
           photoUrls.push(url);
         } catch (err) {
           console.error('cloudinary upload error', err);
         }
+      }
+      if (data.photos.length > MAX_SITE_IMAGES) {
+        console.warn(`Image limit exceeded, only storing first ${MAX_SITE_IMAGES} photos`);
       }
     }
 
@@ -187,8 +192,17 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error('supabase insert error', error);
-      // expose error message in development to aid debugging
       return NextResponse.json({ success: false, message: error.message || 'Database error', details: error }, { status: 500 });
+    }
+
+    try {
+      const { revalidatePath } = await import('next/cache');
+      if (site?.website_name) {
+        revalidatePath(`/site/${site.website_name}`);
+        revalidatePath(`/love/${site.website_name}`);
+      }
+    } catch (err) {
+      console.warn('Revalidate path failed on create site:', err);
     }
 
     return NextResponse.json({ success: true, slug, website_name, qr_code_url: qrCodeUrl });

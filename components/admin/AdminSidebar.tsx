@@ -82,6 +82,11 @@ const sidebarItems: SidebarItem[] = [
         href: '/admin/websites/create',
         icon: <CreateIcon className="w-4 h-4" />,
       },
+      {
+        name: 'Archived Sites',
+        href: '/admin/sites/archived',
+        icon: <span className="w-4 h-4 inline-flex">🗄️</span>,
+      },
     ],
   },
   {

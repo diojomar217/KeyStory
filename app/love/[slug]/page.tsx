@@ -1,7 +1,10 @@
 ﻿import { Metadata } from 'next';
-import { supabase } from '@/lib/supabase';
 import { Theme, HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent } from '@/lib/types';
 import LovePageClient from '@/components/page/LovePageClient';
+import { isExpired, isArchived } from '@/lib/site-status';
+import { getPublicSiteBySlug } from '@/lib/site-data';
+
+export const revalidate = 60;
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -10,11 +13,7 @@ interface PageProps {
 // Generate dynamic metadata
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const { data } = await supabase
-    .from('sites')
-    .select('config, site_type, customer_name, partner_name')
-    .eq('website_name', slug)
-    .maybeSingle();
+  const data = await getPublicSiteBySlug(slug);
 
   if (data) {
     const siteType = (data.site_type as 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary') || 'couple';
@@ -55,16 +54,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function LovePage({ params }: PageProps) {
   const { slug } = await params;
-  
-  // Fetch order from Supabase using slug
-  const { data, error } = await supabase
-    .from('sites')
-    .select('*')
-    .eq('website_name', slug)
-    .maybeSingle();
 
-  if (error) {
-    console.error('Supabase fetch error:', error);
+  let data;
+  try {
+    data = await getPublicSiteBySlug(slug);
+  } catch (error) {
+    console.error('Public site fetch error:', error);
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-rose-50 to-pink-50 px-4">
         <div className="text-center p-6 rounded-lg shadow-md bg-white/80">
@@ -86,16 +81,15 @@ export default async function LovePage({ params }: PageProps) {
     );
   }
 
-  const siteStatus = (data.status || 'active').toString().toLowerCase();
-  const expiresAt = data.expires_at ? new Date(data.expires_at) : null;
-  const isExpired = expiresAt ? expiresAt.getTime() < Date.now() : false;
+  const siteIsExpired = isExpired(data);
+  const siteIsArchived = isArchived(data);
 
-  if (siteStatus === 'archived') {
+  if (siteIsArchived) {
     const ArchivedSitePage = (await import('@/components/site/ExpiredSitePage')).default;
     return <ArchivedSitePage websiteName={data.website_name || data.slug} status="archived" expiresAt={data.expires_at || undefined} />;
   }
 
-  if (siteStatus === 'expired' || (siteStatus === 'active' && isExpired)) {
+  if (siteIsExpired) {
     const ExpiredSitePage = (await import('@/components/site/ExpiredSitePage')).default;
     return <ExpiredSitePage websiteName={data.website_name || data.slug} status="expired" expiresAt={data.expires_at || undefined} />;
   }

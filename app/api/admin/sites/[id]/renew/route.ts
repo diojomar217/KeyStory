@@ -32,6 +32,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     const now = new Date();
+
+    if ((site.status || '').toLowerCase() === 'archived') {
+      try {
+        const { restoreSiteFromArchive } = await import('@/lib/archiver');
+        await restoreSiteFromArchive(site);
+      } catch (err) {
+        console.error('Refresh site restore error:', err);
+        return NextResponse.json({ success: false, message: 'Unable to restore archived site' }, { status: 500 });
+      }
+    }
+
     const existingExpires = site.expires_at ? new Date(site.expires_at) : now;
     const effectiveBase = existingExpires > now ? existingExpires : now;
     const nextExpires = addMonths(effectiveBase, durationMap[durationKey]);
@@ -47,6 +58,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     if (updateError) {
       return NextResponse.json({ success: false, message: updateError.message }, { status: 500 });
+    }
+
+    try {
+      const { revalidatePath } = await import('next/cache');
+      const target = site.website_name || site.slug;
+      if (target) {
+        revalidatePath(`/site/${target}`);
+        revalidatePath(`/love/${target}`);
+      }
+    } catch (err) {
+      console.warn('Revalidate path failed on renew:', err);
     }
 
     return NextResponse.json({ success: true, expires_at: nextExpires });

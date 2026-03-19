@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { createArchiveForSite } from '@/lib/archiver';
+import { restoreSiteFromArchive } from '@/lib/archiver';
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -15,12 +15,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ success: false, message: 'Site not found' }, { status: 404 });
     }
 
-    if ((site.status || '').toLowerCase() === 'archived' || site.config?.archive?.archived === true) {
-      return NextResponse.json({ success: true, message: 'Already archived' });
+    if (!site.config?.archive?.archived || site.status?.toLowerCase() !== 'archived') {
+      return NextResponse.json({ success: false, message: 'Site is not archived' }, { status: 400 });
     }
 
     try {
-      const archiveResult = await createArchiveForSite(site);
+      const restoredSite = await restoreSiteFromArchive(site);
 
       try {
         const { revalidatePath } = await import('next/cache');
@@ -30,16 +30,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           revalidatePath(`/love/${target}`);
         }
       } catch (err) {
-        console.warn('Revalidate path failed on archive:', err);
+        console.warn('Revalidate path failed on restore:', err);
       }
 
-      return NextResponse.json({ success: true, archived_at: new Date().toISOString(), archive: archiveResult });
-    } catch (archiveErr) {
-      console.error('Failed to archive site data:', archiveErr);
-      return NextResponse.json({ success: false, message: 'Failed to create archive package' }, { status: 500 });
+      return NextResponse.json({ success: true, restoredSite });
+    } catch (err) {
+      console.error('Restore site error:', err);
+      return NextResponse.json({ success: false, message: 'Failed to restore archived site' }, { status: 500 });
     }
   } catch (err) {
-    console.error('Archive site error:', err);
+    console.error('Restore site error:', err);
     return NextResponse.json({ success: false, message: 'Invalid request' }, { status: 400 });
   }
 }
