@@ -3,6 +3,7 @@ import { supabase, Site } from '@/lib/supabase';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import { generateQRCode } from '@/lib/qrcode';
 import { v4 as uuidv4 } from 'uuid';
+import bcrypt from 'bcryptjs';
 import { SiteConfig } from '@/lib/types';
 
 const slugify = (text: string): string =>
@@ -17,6 +18,43 @@ const slugify = (text: string): string =>
 
 const randomSuffix = () => Math.floor(1000 + Math.random() * 9000).toString();
 
+const normalizePasswordConfig = async (siteConfig: any, passwordInput?: string): Promise<any> => {
+  if (!siteConfig) siteConfig = {};
+
+  if (siteConfig.password?.enabled === true) {
+    if (passwordInput && passwordInput.trim()) {
+      const password = passwordInput.trim();
+      if (password.length < 4 || password.length > 6) {
+        throw new Error('Password must be 4 to 6 characters long');
+      }
+      const hash = await bcrypt.hash(password, 10);
+      return {
+        ...siteConfig,
+        password: {
+          enabled: true,
+          hash,
+        },
+      };
+    }
+
+    if (siteConfig.password.hash) {
+      return {
+        ...siteConfig,
+        password: {
+          enabled: true,
+          hash: siteConfig.password.hash,
+        },
+      };
+    }
+
+    throw new Error('Password is required when protection is enabled');
+  }
+
+  const cleanedConfig = { ...siteConfig };
+  delete cleanedConfig.password;
+  return cleanedConfig;
+};
+
 interface OrderRequest {
   website_name?: string;
   occasion?: 'couple' | 'birthday' | string;
@@ -30,6 +68,7 @@ interface OrderRequest {
   song_link?: string;
   photos?: string[];
   config?: SiteConfig;
+  password_input?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -92,7 +131,7 @@ export async function POST(req: NextRequest) {
     const qrCodeUrl = await generateQRCode(coupleUrl);
 
     // Build normalized site config for storage
-    const siteConfig = {
+    let siteConfig = {
       ...data.config,
       people: {
         primary: customerName,
@@ -119,6 +158,7 @@ export async function POST(req: NextRequest) {
       tagline: data.tagline || data.config?.tagline || '',
     };
 
+    siteConfig = await normalizePasswordConfig(siteConfig, data.password_input);
     const insertObj: Partial<Site> = {
       slug,
       website_name,

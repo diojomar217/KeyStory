@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Theme, HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, SectionContentMap, GalleryLayout, Section } from '@/lib/types';
 import BackgroundDecorations from './BackgroundDecorations';
 import ThemeWrapper from '../builder/ThemeWrapper';
+import PasswordGate from '../site/PasswordGate';
 import HomeSection from './HomeSection';
 import { getAvailableSections } from '@/lib/section-registry';
 import GallerySection from '../sections/shared/GallerySection';
@@ -96,6 +97,7 @@ export default function LovePageClient({
   // Romantic opening state
   const [showOpening, setShowOpening] = useState(true);
   const [isRevealing, setIsRevealing] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(false);
 
   // Use registry-based allowed sections to make site type rules data-driven
   const allowedSections = getAvailableSections(siteType);
@@ -109,6 +111,8 @@ export default function LovePageClient({
   const hasTimeline = activeSections.includes('timeline');
   const hasSong = !!songLink;
 
+  const passwordEnabled = config?.password?.enabled === true;
+  const passwordHash = config?.password?.hash;
   // Check localStorage on mount to determine if we should skip the opening
   useEffect(() => {
     if (slug) {
@@ -123,6 +127,31 @@ export default function LovePageClient({
       setShowOpening(false);
     }
   }, [slug]);
+
+  useEffect(() => {
+    if (!passwordEnabled) {
+      setIsUnlocked(true);
+      return;
+    }
+
+    if (!slug || !passwordHash) {
+      setIsUnlocked(false);
+      return;
+    }
+
+    const storedUnlocked = typeof window !== 'undefined' ? window.localStorage.getItem(`unlocked_${slug}`) : null;
+    const storedHash = typeof window !== 'undefined' ? window.localStorage.getItem(`unlocked_hash_${slug}`) : null;
+
+    if (storedUnlocked === 'true' && storedHash === passwordHash) {
+      setIsUnlocked(true);
+    } else {
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(`unlocked_${slug}`);
+        window.localStorage.removeItem(`unlocked_hash_${slug}`);
+      }
+      setIsUnlocked(false);
+    }
+  }, [slug, passwordEnabled, passwordHash]);
 
   // Handle reveal - called when user clicks the open button
   const handleReveal = useCallback(() => {
@@ -372,6 +401,10 @@ export default function LovePageClient({
     };
 
     const remainingSections = activeSections.filter((section) => section !== 'home');
+
+    if (passwordEnabled && !isUnlocked) {
+      return <PasswordGate slug={slug || ''} passwordHash={passwordHash} onUnlock={() => setIsUnlocked(true)} />;
+    }
 
     return (
       <ThemeWrapper theme={theme}>

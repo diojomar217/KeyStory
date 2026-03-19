@@ -39,7 +39,7 @@ import {
 } from '@/components/builder/ContentInputComponents';
 import { SectionContentMap, Section } from '@/lib/types';
 
-type LocalForm = Omit<CreateOrderPayload, 'config' | 'photos'> & { photos: File[]; song_autoplay?: boolean };
+type LocalForm = Omit<CreateOrderPayload, 'config' | 'photos'> & { photos: File[]; song_autoplay?: boolean; password_input?: string };
 
 const sanitizeSlug = (value: string): string => {
   return value
@@ -64,6 +64,7 @@ export default function CreateWebsitePage() {
     song_link: '',
     song_autoplay: false,
     photos: [],
+    password_input: '',
   });
 
   const [config, setConfig] = useState<SiteConfig>({
@@ -92,6 +93,8 @@ export default function CreateWebsitePage() {
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const [slugSanitized, setSlugSanitized] = useState(false);
   const [explicitSubmit, setExplicitSubmit] = useState(false);
+  const [passwordEnabled, setPasswordEnabled] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const router = useRouter();
 
@@ -126,6 +129,18 @@ export default function CreateWebsitePage() {
       },
     }));
   }, [form.occasion, form.participants, form.message, form.tagline, form.specialDate, form.song_link, form.song_autoplay]);
+
+  useEffect(() => {
+    setConfig((prev) => {
+      const updated = { ...prev };
+      if (passwordEnabled) {
+        updated.password = { enabled: true };
+      } else {
+        delete updated.password;
+      }
+      return updated;
+    });
+  }, [passwordEnabled]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const name = e.target.name as keyof LocalForm;
@@ -268,13 +283,21 @@ export default function CreateWebsitePage() {
         )
       );
 
+      const normalizedConfig = { ...config };
+      if (passwordEnabled) {
+        normalizedConfig.password = { enabled: true };
+      } else {
+        delete normalizedConfig.password;
+      }
+
       const res = await fetch('/api/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
           photos: photosBase64,
-          config,
+          config: normalizedConfig,
+          password_input: form.password_input,
         }),
       });
 
@@ -421,6 +444,45 @@ export default function CreateWebsitePage() {
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
                   onChange={handleChange}
                 />
+              </div>
+
+              <div className="mt-6 bg-white border border-slate-200 rounded-xl p-4">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">Privacy Settings</h3>
+                <label className="flex items-center justify-between gap-3">
+                  <span className="text-sm text-slate-600">Protect this website with a password</span>
+                  <input
+                    type="checkbox"
+                    checked={passwordEnabled}
+                    onChange={(e) => setPasswordEnabled(e.target.checked)}
+                    className="h-4 w-4 text-rose-500 rounded"
+                  />
+                </label>
+
+                {passwordEnabled && (
+                  <div className="mt-3 space-y-2">
+                    <label className="block text-sm font-medium text-slate-600">Password (4-6 chars)</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        name="password_input"
+                        type={showPassword ? 'text' : 'password'}
+                        value={form.password_input || ''}
+                        minLength={4}
+                        maxLength={6}
+                        onChange={handleChange}
+                        className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                        placeholder="Enter password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="text-sm text-rose-600 hover:text-rose-700"
+                      >
+                        {showPassword ? 'Hide' : 'Show'}
+                      </button>
+                    </div>
+                    <p className="text-xs text-slate-400">Saved as an encrypted hash, never in plain text.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

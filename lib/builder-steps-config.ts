@@ -41,7 +41,7 @@ export type WizardFormData = Omit<CreateOrderPayload, 'config' | 'photos'> & { p
  */
 export const validateDetailsStep = (
   form: WizardFormData,
-  _config: SiteConfig
+  config: SiteConfig
 ): ValidationResult => {
   if (!form.website_name?.trim()) {
     return { valid: false, error: 'Website name is required' };
@@ -64,6 +64,16 @@ if (!form.participants || form.participants.length === 0 || !form.participants[0
   
   if (!form.specialDate) {
     return { valid: false, error: 'Special date is required' };
+  }
+
+  if (config?.password?.enabled) {
+    if (!form.password_input?.trim()) {
+      return { valid: false, error: 'Password is required when protection is enabled' };
+    }
+    const len = form.password_input.trim().length;
+    if (len < 4 || len > 6) {
+      return { valid: false, error: 'Password must be 4 to 6 characters long' };
+    }
   }
   
   return { valid: true };

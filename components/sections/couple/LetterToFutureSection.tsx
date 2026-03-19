@@ -31,7 +31,53 @@ export default function LetterToFutureSection({
 }: LetterToFutureSectionProps) {
   const styles = useTheme(theme);
   const content = letter || `${defaultLetter}${customerName} & ${partnerName}`;
-  const date = openDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000 * 3).toLocaleDateString();
+
+  const now = new Date();
+
+  const getDateKey = (date: Date) => {
+    const y = date.getFullYear();
+    const m = `${date.getMonth() + 1}`.padStart(2, '0');
+    const d = `${date.getDate()}`.padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  const parseDateInput = (value: string) => {
+    if (!value) return null;
+
+    // Accept ISO date strings, timezone-aware datetimes, or date-only values.
+    // Examples:
+    //  - 2026-03-20
+    //  - 2026-03-20T00:00:00.000Z
+    //  - 2026-03-20 00:00:00
+    //  - 03/20/2026 (fallback)
+    const dateOnlyCandidate = value.split('T')[0].split(' ')[0];
+
+    const parts = dateOnlyCandidate.split('-').map(Number);
+    if (parts.length === 3 && parts.every((n) => !Number.isNaN(n))) {
+      const [y, m, d] = parts;
+      if (y && m && d) {
+        return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      }
+    }
+
+    const fallback = new Date(value);
+    if (!Number.isNaN(fallback.getTime())) {
+      const y = fallback.getFullYear();
+      const m = fallback.getMonth() + 1;
+      const d = fallback.getDate();
+      return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    }
+
+    return null;
+  };
+
+  const todayKey = getDateKey(now);
+  const openDateKey = parseDateInput(openDate || '');
+
+  const isLocked = openDateKey ? todayKey < openDateKey : false;
+  const displayDate = openDateKey
+    ? openDateKey
+    : getDateKey(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000 * 3));
 
   return (
     <section className="py-24 lg:py-32 bg-gradient-to-b from-rose-50/80 to-pink-50/60 backdrop-blur-lg" id="letter-future">
@@ -40,7 +86,7 @@ export default function LetterToFutureSection({
           <SectionHeader
             icon="💌"
             title="Letter to Our Future"
-            subtitle={'Open on ' + date}
+            subtitle={isLocked ? `Available on ${displayDate}` : `Open on ${displayDate}`}
             theme={theme}
           />
         </ScrollReveal>
@@ -52,13 +98,19 @@ export default function LetterToFutureSection({
             transition-all duration-500 ease-out relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-rose-50/50 before:to-transparent before:blur-xl before:-z-10
             max-w-3xl mx-auto
           ">
-            <div className="prose prose-lg text-rose-800 leading-relaxed">
-              <p className="text-2xl italic mb-8 font-light text-center">"</p>
-              <div className="whitespace-pre-wrap text-lg leading-8">
-                {content}
+            {isLocked ? (
+              <div className="text-center text-rose-700 text-lg font-medium p-10">
+                Your letter is locked until {displayDate}. Come back then to see your message to the future.
               </div>
-              <p className="text-2xl italic mt-8 font-light text-center">"</p>
-            </div>
+            ) : (
+              <div className="prose prose-lg text-rose-800 leading-relaxed">
+                <p className="text-2xl italic mb-8 font-light text-center">"</p>
+                <div className="whitespace-pre-wrap text-lg leading-8">
+                  {content}
+                </div>
+                <p className="text-2xl italic mt-8 font-light text-center">"</p>
+              </div>
+            )}
           </div>
         </ScrollReveal>
       </div>

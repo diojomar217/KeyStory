@@ -1,6 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, Site } from '@/lib/supabase';
 
+const normalizePasswordConfig = async (siteConfig: any, passwordInput?: string): Promise<any> => {
+  if (!siteConfig) siteConfig = {};
+
+  if (siteConfig.password?.enabled === true) {
+    if (passwordInput && passwordInput.trim()) {
+      const password = passwordInput.trim();
+      if (password.length < 4 || password.length > 6) {
+        throw new Error('Password must be 4 to 6 characters long');
+      }
+      const hash = await bcrypt.hash(password, 10);
+      return { ...siteConfig, password: { enabled: true, hash } };
+    }
+
+    if (siteConfig.password.hash) {
+      return { ...siteConfig, password: { enabled: true, hash: siteConfig.password.hash } };
+    }
+
+    throw new Error('Password is required when protection is enabled');
+  }
+
+  const cleanedConfig = { ...siteConfig };
+  delete cleanedConfig.password;
+  return cleanedConfig;
+};
+import bcrypt from 'bcryptjs';
+
 // GET - Fetch all orders or single order by id
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -82,6 +108,8 @@ export async function PUT(req: NextRequest) {
     // if (configUpdates) {
     //   updateObj.theme = configUpdates.theme;
     // }
+
+    updateObj.config = await normalizePasswordConfig(updateObj.config, (updates as any).password_input);
 
     const { data, error } = await supabase
       .from('sites')

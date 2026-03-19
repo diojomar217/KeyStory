@@ -185,6 +185,14 @@ export interface SiteConfig {
     song_link?: string;
     song_autoplay?: boolean;
   };
+  // Password protection config
+  password?: {
+    enabled: boolean;
+    hash?: string;
+  };
+  // Temporary plain password field (never persisted)
+  password_input?: string;
+
   // Dynamic section content for each enabled section
   section_content?: SectionContentMap;
 }
@@ -255,6 +263,7 @@ export interface CreateOrderPayload {
   customer_name?: string;
   partner_name?: string;
   anniversary_date?: string;
+  password_input?: string;
 }
 
 // Admin Sidebar Types
