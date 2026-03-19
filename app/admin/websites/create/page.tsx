@@ -12,6 +12,7 @@ import {
   getStepConfig 
 } from '@/lib/builder-steps-config';
 import { getTemplateSections, getSectionMetadata, getSectionTemplates } from '@/lib/section-registry';
+import { getPresetsForOccasion, getPresetById } from '@/lib/preset-registry';
 import ThemeSelector from '@/components/builder/ThemeSelector';
 import SectionSelector from '@/components/builder/SectionSelector';
 import TemplateSelector from '@/components/builder/TemplateSelector';
@@ -95,6 +96,7 @@ export default function CreateWebsitePage() {
   const [explicitSubmit, setExplicitSubmit] = useState(false);
   const [passwordEnabled, setPasswordEnabled] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
 
   const router = useRouter();
 
@@ -150,6 +152,9 @@ export default function CreateWebsitePage() {
       const sanitized = sanitizeSlug(value as string);
       setForm((prev) => ({ ...prev, [name]: sanitized }));
       setSlugSanitized(true);
+    } else if (name === 'occasion') {
+      setSelectedPresetId(null);
+      setForm((prev) => ({ ...prev, occasion: value as any, preset_id: undefined }));
     } else if (name === 'specialDate') {
       setForm((prev) => ({ ...prev, specialDate: value as string }));
     } else {
@@ -195,6 +200,35 @@ export default function CreateWebsitePage() {
 
   const handleCoverPhotoSelect = (index: number) => {
     setConfig((prev) => ({ ...prev, cover_photo_index: index }));
+  };
+
+  const applyPreset = (presetId: string) => {
+    const preset = getPresetById(presetId);
+    if (!preset) return;
+
+    setSelectedPresetId(presetId);
+    setForm((prev) => ({
+      ...prev,
+      occasion: preset.siteType,
+      preset_id: preset.id,
+      tagline: preset.defaults.copy?.tagline || prev.tagline,
+      message: preset.defaults.copy?.message || prev.message,
+    }));
+
+    setConfig((prev) => ({
+      ...prev,
+      occasion: preset.siteType,
+      preset: { id: preset.id, label: preset.label },
+      theme: preset.defaults.theme,
+      layout_preset: preset.defaults.layout_preset,
+      sections: preset.defaults.sections,
+      home_template: preset.defaults.templates.home,
+      gallery_template: preset.defaults.templates.gallery,
+      timeline_template: preset.defaults.templates.timeline,
+      song_template: preset.defaults.templates.song,
+      tagline: preset.defaults.copy?.tagline || prev.tagline,
+      message: preset.defaults.copy?.message || prev.message,
+    }));
   };
 
   // Handle section content changes for dynamic content step
@@ -387,6 +421,31 @@ export default function CreateWebsitePage() {
                     <option value="couple">💕 Romantic Couple</option>
                     <option value="birthday">🎂 Birthday Celebration</option>
                   </select>
+                </div>
+
+                <div className="mt-4">
+                  <h3 className="text-sm font-semibold text-slate-700 mb-2">Choose a starting template</h3>
+                  <p className="text-xs text-slate-500 mb-3">Pick one and customize as needed later.</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {getPresetsForOccasion(form.occasion).map((preset) => (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => applyPreset(preset.id)}
+                        className={`text-left rounded-xl border p-3 transition hover:shadow-lg ${
+                          selectedPresetId === preset.id
+                            ? 'border-rose-500 bg-rose-50'
+                            : 'border-slate-200 bg-white'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <strong className="text-sm text-slate-800">{preset.label}</strong>
+                          <span className="text-[11px] font-medium text-slate-500">{preset.badge}</span>
+                        </div>
+                        <p className="text-xs text-slate-500">{preset.description}</p>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                

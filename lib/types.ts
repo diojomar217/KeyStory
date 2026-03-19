@@ -86,7 +86,8 @@ export type LayoutPreset =
   | 'elegant_story'
   | 'modern_romance'
   | 'soft_scrapbook'
-  | 'minimal_keepsake';
+  | 'minimal_keepsake'
+  | 'celebration_flow';
 
 // Preview Device Types
 export type PreviewDevice = 'desktop' | 'mobile';
@@ -195,6 +196,12 @@ export interface SiteConfig {
 
   // Dynamic section content for each enabled section
   section_content?: SectionContentMap;
+
+  // Preset information selected during create flow
+  preset?: {
+    id: string;
+    label: string;
+  };
 }
 
 // Builder State Types
@@ -236,6 +243,7 @@ export interface BuilderFormData {
   tagline?: string;
   song_link?: string;
   photos: File[];
+  preset_id?: string;
   // Legacy for migration
   customer_name?: string;
   partner_name?: string;
