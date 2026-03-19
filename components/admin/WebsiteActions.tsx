@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 interface WebsiteActionsProps {
   slug: string;
   id: string;
@@ -51,6 +53,36 @@ export default function WebsiteActions({
   onDelete,
   className = '',
 }: WebsiteActionsProps) {
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  const handleDownloadPdf = async () => {
+    if (!slug) return;
+    setIsGeneratingPdf(true);
+
+    try {
+      const response = await fetch(`/api/site/${slug}/pdf`);
+      if (!response.ok) {
+        const errorMessage = await response.text();
+        throw new Error(errorMessage || 'Failed to generate PDF');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${slug}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.error('PDF download failed:', error);
+      alert('Unable to download PDF. Please try again later.');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
   return (
     <div className={`flex items-center justify-end gap-1 ${className}`}>
       {/* View QR Card Button */}
@@ -61,6 +93,17 @@ export default function WebsiteActions({
       >
         <QRCardIcon className="w-4 h-4" />
       </a>
+
+      {/* Download Memory Book PDF Button */}
+      <button
+        type="button"
+        onClick={handleDownloadPdf}
+        disabled={isGeneratingPdf}
+        className={`p-2 ${isGeneratingPdf ? 'text-slate-400 bg-slate-100' : 'text-violet-600 hover:bg-violet-50'} rounded-lg transition-all duration-200 ${isGeneratingPdf ? '' : 'hover:scale-110'}`}
+        title="Download Memory Book PDF"
+      >
+        <PrintIcon className="w-4 h-4" />
+      </button>
 
       {/* Print QR Card Button */}
       <a
