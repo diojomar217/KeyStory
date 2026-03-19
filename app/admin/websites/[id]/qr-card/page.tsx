@@ -80,10 +80,15 @@ export default function QRCardPage({ params }: PageProps) {
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/site/${order.website_name}`
     : undefined;
 
+  // Use QR redirect path if available to track scans
+  const qrRedirectUrl = order.website_name
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/r/${order.website_name}`
+    : undefined;
+
   const qrDataUrl =
     typeof config.qr_data_url === 'string' && config.qr_data_url.trim() !== ''
       ? config.qr_data_url
-      : websiteUrl;
+      : qrRedirectUrl || websiteUrl;
   const qrCodeUrl = order.qr_code_url;
 
   return (

@@ -10,10 +10,27 @@ import EmptyState from '@/components/admin/EmptyState';
 export default function DashboardPage() {
   const [orders, setOrders] = useState<Site[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalVisits, setTotalVisits] = useState(0);
+  const [totalQrScans, setTotalQrScans] = useState(0);
+  const [recentActivity, setRecentActivity] = useState<Array<{event_type:string; source:string | null; created_at:string}>>([]);
 
   useEffect(() => {
     fetchOrders();
+    fetchAnalytics();
   }, []);
+
+  const fetchAnalytics = async () => {
+    try {
+      const res = await fetch('/api/admin/analytics');
+      if (!res.ok) throw new Error('Failed to fetch analytics');
+      const data = await res.json();
+      setTotalVisits(data.totalVisits || 0);
+      setTotalQrScans(data.totalQrScans || 0);
+      setRecentActivity(data.recentActivity || []);
+    } catch (error) {
+      console.error('Failed to fetch analytics:', error);
+    }
+  };
 
   const fetchOrders = async () => {
     try {
@@ -76,6 +93,23 @@ export default function DashboardPage() {
         <TotalWebsitesCard count={totalWebsites} />
         <WebsitesThisMonthCard count={thisMonthCount} />
         <PublishedWebsitesCard count={publishedWebsites} />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-slate-500">Total Visits</p>
+          <h3 className="text-3xl font-bold text-slate-900">{totalVisits}</h3>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-slate-500">Total QR Scans</p>
+          <h3 className="text-3xl font-bold text-slate-900">{totalQrScans}</h3>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-slate-500">Recent Analytics Events</p>
+          <p className="mt-3 text-sm text-slate-700">{recentActivity.slice(0, 4).map((event, idx) => (
+            <span key={idx} className="block">{new Date(event.created_at).toLocaleString()} - {event.event_type}</span>
+          ))}</p>
+        </div>
       </div>
 
       {/* Helpful Widgets */}

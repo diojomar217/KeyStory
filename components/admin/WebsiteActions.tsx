@@ -33,6 +33,12 @@ const PrintIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const AnalyticsIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 13h3v8H3v-8zm5-5h3v13H8V8zm5 3h3v10h-3V11zm5-4h3v14h-3V7z" />
+  </svg>
+);
+
 const DeleteIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -76,6 +82,15 @@ export default function WebsiteActions({
         title="View website"
       >
         <ViewIcon className="w-4 h-4" />
+      </a>
+
+      {/* Analytics Button */}
+      <a
+        href={`/admin/websites/${id}/analytics`}
+        className="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg transition-all duration-200 hover:scale-110"
+        title="View analytics"
+      >
+        <AnalyticsIcon className="w-4 h-4" />
       </a>
 
       {/* Edit Button */}

@@ -155,6 +155,24 @@ export default function LovePageClient({
     }
   }, [slug, passwordEnabled, passwordHash]);
 
+  useEffect(() => {
+    if (!slug) return;
+
+    if (typeof window === 'undefined') return;
+
+    const sessionKey = `analytics_page_viewed_${slug}`;
+    if (window.sessionStorage.getItem(sessionKey)) return;
+
+    window.sessionStorage.setItem(sessionKey, 'true');
+    fetch('/api/analytics/event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug, event_type: 'page_view', source: 'site' }),
+    }).catch((err) => {
+      console.warn('Analytics page_view tracking failed:', err);
+    });
+  }, [slug]);
+
   // Handle reveal - called when user clicks the open button
   const handleReveal = useCallback(() => {
     setIsRevealing(true);

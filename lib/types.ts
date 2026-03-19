@@ -359,6 +359,17 @@ export interface GuestMessageRecord {
   created_at: string;
 }
 
+export interface SiteAnalyticsEvent {
+  id: string;
+  site_id: string;
+  event_type: 'page_view' | 'qr_scan';
+  source?: string | null;
+  user_agent?: string | null;
+  referrer?: string | null;
+  ip_hash?: string | null;
+  created_at: string;
+}
+
 // Gift Item
 export interface GiftItem {
   id: string;
