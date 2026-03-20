@@ -215,6 +215,38 @@ export const validateContentStep = (
   if (sections.includes('song') && !form.song_link?.trim()) {
     return { valid: false, error: 'Song section requires a song link' };
   }
+
+  // Birthday Message requires content
+  if (sections.includes('birthday_message')) {
+    const message = sectionContent.birthday_message?.content || '';
+    if (!message.trim()) {
+      return { valid: false, error: 'Birthday Message section requires a message' };
+    }
+  }
+
+  // Birthday Wishes requires at least one wish
+  if (sections.includes('birthday_wishes')) {
+    const wishes = sectionContent.birthday_wishes?.quotes || [];
+    if (!Array.isArray(wishes) || wishes.length === 0) {
+      return { valid: false, error: 'Birthday Wishes section requires at least one wish' };
+    }
+  }
+
+  // Party Details require at least one field
+  if (sections.includes('party_details')) {
+    const details = sectionContent.party_details || {};
+    if (!details.location && !details.date && !details.time && !details.dressCode) {
+      return { valid: false, error: 'Party Details section requires at least one field filled in' };
+    }
+  }
+
+  // Gift Wishlist requires at least one item
+  if (sections.includes('gift_wishlist')) {
+    const items = sectionContent.gift_wishlist?.items || [];
+    if (!Array.isArray(items) || items.length === 0) {
+      return { valid: false, error: 'Gift Wishlist section requires at least one item' };
+    }
+  }
   
   // Playlist requires playlist URL
   if (sections.includes('playlist') && sectionContent.playlist) {

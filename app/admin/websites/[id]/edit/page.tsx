@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import ThemeSelector from '@/components/builder/ThemeSelector';
 import SectionSelector from '@/components/builder/SectionSelector';
+import { calculateExpirationDate, getDaysRemaining, getExpirationLabel, ExpirationMode } from '@/lib/expiration-utils';
 import TemplateSelector from '@/components/builder/TemplateSelector';
 import TimelineEditor from '@/components/builder/TimelineEditor';
 import SectionContentInputs from '@/components/builder/SectionContentInputs';
@@ -23,10 +24,15 @@ type LocalForm = {
   song_autoplay: boolean;
   photos: File[];
   existingPhotos: string[];
+  heroPhoto?: File | null;
+  heroPhotoIndex?: number;
   occasion: 'couple' | 'birthday';
   participants: { id: string; name: string; role?: string }[];
   password_input?: string;
+  expires_at?: string;
 };
+
+const MAX_IMAGE_UPLOAD_BYTES = 12 * 1024 * 1024; // 12 MB
 
 const validateStep = (
   step: number,
@@ -195,6 +201,7 @@ const [config, setConfig] = useState<SiteConfig>({
   });
 
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const [heroPhotoPreview, setHeroPhotoPreview] = useState<string | null>(null);
 
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([1, 2, 3, 4, 5]);
@@ -205,11 +212,36 @@ const [config, setConfig] = useState<SiteConfig>({
   const [passwordEnabled, setPasswordEnabled] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const [expirationMode, setExpirationMode] = useState<'3_months'|'6_months'|'1_year'|'custom'>('6_months');
+  const [customExpirationDate, setCustomExpirationDate] = useState('');
+
+  const formatSelectedExpiration = () => {
+    try {
+      const expires = calculateExpirationDate(expirationMode, customExpirationDate || undefined);
+      const days = getDaysRemaining(expires);
+      return `Active until ${getExpirationLabel(expires)}${days !== null ? ` (${days} days remaining)` : ''}`;
+    } catch (error: unknown) {
+      const msg = error && typeof error === 'object' && 'message' in error && typeof (error as any).message === 'string'
+        ? (error as any).message
+        : 'Enter a valid expiration date.';
+      return msg;
+    }
+  };
+
   useEffect(() => {
     if (id) {
       fetchOrder();
     }
   }, [id]);
+
+  useEffect(() => {
+    return () => {
+      photoPreviews.forEach((url) => URL.revokeObjectURL(url));
+      if (heroPhotoPreview) {
+        URL.revokeObjectURL(heroPhotoPreview);
+      }
+    };
+  }, [photoPreviews, heroPhotoPreview]);
 
   const fetchOrder = async () => {
     try {
@@ -238,6 +270,30 @@ const [config, setConfig] = useState<SiteConfig>({
           ? 'birthday'
           : 'couple';
 
+        let computedMode: '3_months'|'6_months'|'1_year'|'custom' = '6_months';
+        let computedCustomDate = '';
+
+        if (site.expires_at) {
+          const now = new Date();
+          const expires = new Date(site.expires_at);
+          if (!Number.isNaN(expires.getTime()) && expires > now) {
+            const monthsDiff = (expires.getFullYear() - now.getFullYear()) * 12 + (expires.getMonth() - now.getMonth());
+            if (monthsDiff <= 3) {
+              computedMode = '3_months';
+            } else if (monthsDiff <= 6) {
+              computedMode = '6_months';
+            } else if (monthsDiff <= 12) {
+              computedMode = '1_year';
+            } else {
+              computedMode = 'custom';
+              computedCustomDate = expires.toISOString().slice(0, 10);
+            }
+          } else {
+            computedMode = 'custom';
+            computedCustomDate = site.expires_at || '';
+          }
+        }
+
         setForm({
           website_name: site.website_name || site.slug || '',
           customer_name: customerName,
@@ -250,13 +306,19 @@ const [config, setConfig] = useState<SiteConfig>({
           song_autoplay: site.config?.media?.song_autoplay ?? false,
           photos: [],
           existingPhotos: site.config?.media?.photos || site.photos || [],
+          heroPhoto: null,
+          heroPhotoIndex: site.config?.hero?.coverPhotoIndex,
           occasion: occasionValue,
           participants: [
             { id: 'customer', name: customerName, role: 'primary' },
             { id: 'partner', name: partnerName, role: 'partner' },
           ],
           password_input: '',
+          expires_at: site.expires_at || undefined,
         });
+
+        setExpirationMode(computedMode);
+        setCustomExpirationDate(computedCustomDate);
 
         setPhotoPreviews(site.photos || []);
 
@@ -295,6 +357,11 @@ const [config, setConfig] = useState<SiteConfig>({
           timeline_events: timelineEventsValue as SiteConfig['timeline_events'],
           cover_photo_index: coverPhotoIndexValue,
           section_content: sectionContentValue,
+          hero: {
+            ...(site.config?.hero || {}),
+            coverPhotoUrl: site.config?.hero?.coverPhotoUrl,
+            coverPhotoIndex: site.config?.hero?.coverPhotoIndex,
+          },
           media: {
             ...(site.config?.media || {}),
             song_link: site.config?.media?.song_link || site.song_link || '',
@@ -302,6 +369,8 @@ const [config, setConfig] = useState<SiteConfig>({
           },
           password: site.config?.password ? { ...site.config.password } : undefined,
         });
+
+        setHeroPhotoPreview(site.config?.hero?.coverPhotoUrl || null);
         setPasswordEnabled(!!site.config?.password?.enabled);
 
         setCompletedSteps([1, 2, 3, 4, 5]);
@@ -336,30 +405,91 @@ const [config, setConfig] = useState<SiteConfig>({
   }, [form.song_link, form.song_autoplay, passwordEnabled]);
 
   const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
-      if (files.length > 15) {
-        setError('You can upload up to 15 images only.');
-        setForm({ ...form, photos: files.slice(0, 15) });
-        return;
-      }
-      const validImages = files.filter((f) => f.type.startsWith('image/'));
-      if (validImages.length !== files.length) {
-        setError('Only image files are allowed.');
-      }
-      setForm({ ...form, photos: validImages });
+    if (!e.target.files) return;
 
-      const newPreviews = validImages.map((file) => URL.createObjectURL(file));
-      setPhotoPreviews([...form.existingPhotos, ...newPreviews]);
+    const files = Array.from(e.target.files);
+    const limitedFiles = files.slice(0, 15);
 
-      if (config.cover_photo_index !== undefined && config.cover_photo_index >= validImages.length + form.existingPhotos.length) {
-        setConfig({ ...config, cover_photo_index: undefined });
-      }
+    if (files.length > 15) {
+      setError('You can upload up to 15 images only.');
+    } else {
+      setError(null);
+    }
+
+    const unsupported = limitedFiles.filter((f) => !f.type.startsWith('image/'));
+    const tooLarge = limitedFiles.filter((f) => f.size > MAX_IMAGE_UPLOAD_BYTES);
+
+    if (unsupported.length > 0) {
+      setError('Only image files are allowed.');
+      return;
+    }
+
+    if (tooLarge.length > 0) {
+      setError('Some images are larger than 12MB. They will still be optimized, but smaller files are faster.');
+    }
+
+    const validImages = limitedFiles.filter((f) => f.type.startsWith('image/') && f.size <= MAX_IMAGE_UPLOAD_BYTES);
+    setForm({ ...form, photos: validImages });
+
+    const newPreviews = validImages.map((file) => URL.createObjectURL(file));
+    setPhotoPreviews([...form.existingPhotos, ...newPreviews]);
+
+    if (config.cover_photo_index !== undefined && config.cover_photo_index >= validImages.length + form.existingPhotos.length) {
+      setConfig({ ...config, cover_photo_index: undefined });
     }
   };
 
   const handleCoverPhotoSelect = (index: number) => {
     setConfig({ ...config, cover_photo_index: index });
+  };
+
+  const handleHeroPhotoSelect = (index: number) => {
+    setConfig((prev) => ({
+      ...prev,
+      hero: {
+        ...(prev.hero || {}),
+        coverPhotoIndex: index,
+        coverPhotoUrl: undefined,
+      },
+    }));
+    setForm((prev) => ({ ...prev, heroPhotoIndex: index, heroPhoto: null }));
+    if (heroPhotoPreview) {
+      URL.revokeObjectURL(heroPhotoPreview);
+      setHeroPhotoPreview(null);
+    }
+  };
+
+  const handleHeroPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+
+    if (!file.type.startsWith('image/')) {
+      setError('Only image files are allowed for hero photo.');
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
+      setError('Hero image is larger than 12MB. It will be optimized for web but smaller original files upload faster.');
+    } else {
+      setError(null);
+    }
+
+    const preview = URL.createObjectURL(file);
+
+    if (heroPhotoPreview) {
+      URL.revokeObjectURL(heroPhotoPreview);
+    }
+
+    setHeroPhotoPreview(preview);
+    setForm((prev) => ({ ...prev, heroPhoto: file, heroPhotoIndex: undefined }));
+    setConfig((prev) => ({
+      ...prev,
+      hero: {
+        ...(prev.hero || {}),
+        coverPhotoUrl: preview,
+        coverPhotoIndex: undefined,
+      },
+    }));
   };
 
   const handleSectionContentChange = <K extends keyof SectionContentMap>(
@@ -429,10 +559,31 @@ const [config, setConfig] = useState<SiteConfig>({
 
     try {
       const normalizedConfig = { ...config };
+      if (normalizedConfig?.hero?.coverPhotoUrl?.startsWith('blob:')) {
+        delete normalizedConfig.hero.coverPhotoUrl;
+      }
       if (passwordEnabled) {
         normalizedConfig.password = { enabled: true };
       } else {
         delete normalizedConfig.password;
+      }
+      let heroPhotoBase64: string | null = null;
+      if (form.heroPhoto) {
+        heroPhotoBase64 = await new Promise<string>((resolve, reject) => {
+          const file = form.heroPhoto as File;
+          if (!file.type.startsWith('image/')) return reject('Invalid hero photo file type');
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject('Hero photo read error');
+          reader.readAsDataURL(file);
+        });
+      }
+
+      let expiresAt = form.expires_at || '';
+      try {
+        expiresAt = calculateExpirationDate(expirationMode, customExpirationDate || undefined);
+      } catch (err: any) {
+        throw new Error(err?.message || 'Invalid expiration date');
       }
 
       const res = await fetch('/api/admin', {
@@ -454,6 +605,8 @@ const [config, setConfig] = useState<SiteConfig>({
           photos: allPhotos,
           config: normalizedConfig,
           password_input: form.password_input,
+          expires_at: expiresAt,
+          hero_photo: heroPhotoBase64,
         }),
       });
 
@@ -527,6 +680,41 @@ const [config, setConfig] = useState<SiteConfig>({
                   className="w-full px-4 py-3 rounded-lg border border-slate-300 text-slate-900 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
                   onChange={handleChange}
                 />
+              </div>
+
+              <div className="mt-4 bg-white border border-slate-200 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-slate-700 mb-2">Hosting Duration</h3>
+                <div className="grid grid-cols-1 gap-2">
+                  {(['3_months','6_months','1_year','custom'] as ExpirationMode[]).map((mode) => (
+                    <label key={mode} className="flex items-center gap-3 p-2 border rounded-lg cursor-pointer">
+                      <input
+                        type="radio"
+                        name="expiration_mode"
+                        checked={expirationMode === mode}
+                        onChange={() => setExpirationMode(mode)}
+                        className="h-4 w-4"
+                      />
+                      <span className="text-sm text-slate-700">
+                        {mode === '3_months' && '3 Months'}
+                        {mode === '6_months' && '6 Months'}
+                        {mode === '1_year' && '1 Year'}
+                        {mode === 'custom' && 'Custom Expiration Date'}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                {expirationMode === 'custom' && (
+                  <div className="mt-2">
+                    <input
+                      type="date"
+                      value={customExpirationDate}
+                      onChange={(e) => setCustomExpirationDate(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg"
+                      min={new Date().toISOString().slice(0, 10)}
+                    />
+                  </div>
+                )}
+                <p className="text-xs mt-2 text-slate-500">{formatSelectedExpiration()}</p>
               </div>
 
               <div className="mt-4 bg-white border border-slate-200 rounded-lg p-4">
@@ -684,24 +872,88 @@ const [config, setConfig] = useState<SiteConfig>({
               </div>
             )}
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Photos {config.sections.includes('gallery') && <span className="text-rose-500">*</span>}
-              </label>
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+              <h3 className="text-sm font-semibold text-slate-700 mb-3">Dedicated Hero Cover Photo</h3>
+              <p className="text-xs text-slate-500 mb-2">Optional: set a hero cover photo independent from gallery photos.</p>
+
               <input
-                name="photos"
+                name="hero_photo"
                 type="file"
                 accept="image/*"
-                multiple
-                className="w-full px-4 py-3 rounded-lg border border-slate-300 bg-slate-50"
-                onChange={handlePhotos}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-800 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-rose-50 file:text-rose-600 hover:file:bg-rose-100 transition-all cursor-pointer"
+                onChange={handleHeroPhotoUpload}
               />
+              <p className="text-xs text-slate-400 mt-1">Hero images are auto-optimized (1920px max, auto format/quality). High quality remains for your main display.</p>
+
+              {heroPhotoPreview && (
+                <div className="mt-3 relative border border-slate-200 rounded-lg overflow-hidden">
+                  <img src={heroPhotoPreview} alt="Hero Preview" className="w-full h-40 object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (heroPhotoPreview) URL.revokeObjectURL(heroPhotoPreview);
+                      setHeroPhotoPreview(null);
+                      setForm((prev) => ({ ...prev, heroPhoto: null, heroPhotoIndex: undefined }));
+                      setConfig((prev) => ({
+                        ...prev,
+                        hero: {
+                          ...(prev.hero || {}),
+                          coverPhotoUrl: undefined,
+                          coverPhotoIndex: undefined,
+                        },
+                      }));
+                    }}
+                    className="absolute top-2 right-2 bg-black/40 text-white text-xs px-2 py-1 rounded"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+
               {(form.photos.length > 0 || form.existingPhotos.length > 0) && (
-                <p className="text-sm text-emerald-600 mt-2">
-                  {form.existingPhotos.length} existing + {form.photos.length} new = {form.existingPhotos.length + form.photos.length} total photo(s)
-                </p>
+                <div className="mt-3">
+                  <p className="text-xs text-slate-600 mb-2">Or select from uploaded photos</p>
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                    {photoPreviews.map((preview, index) => (
+                      <button
+                        type="button"
+                        key={index}
+                        onClick={() => handleHeroPhotoSelect(index)}
+                        className={`border rounded-lg overflow-hidden ${config.hero?.coverPhotoIndex === index ? 'border-rose-500 ring-2 ring-rose-200' : 'border-slate-200'}`}
+                      >
+                        <img src={preview} alt={`Hero option ${index + 1}`} className="w-full h-16 object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {config.hero?.coverPhotoIndex !== undefined && !heroPhotoPreview && (
+                <p className="text-xs text-emerald-600 mt-2">Hero cover currently set to photo {config.hero.coverPhotoIndex + 1}</p>
               )}
             </div>
+
+            {(config.sections.includes('gallery') || config.sections.includes('polaroid_gallery')) && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Photos <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  name="photos"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="w-full px-4 py-3 rounded-lg border border-slate-300 bg-slate-50"
+                  onChange={handlePhotos}
+                />
+                <p className="text-xs text-slate-400 mt-1">Gallery images are auto-optimized (1600px max, auto format/quality) for fast site performance.</p>
+                {(form.photos.length > 0 || form.existingPhotos.length > 0) && (
+                  <p className="text-sm text-emerald-600 mt-2">
+                    {form.existingPhotos.length} existing + {form.photos.length} new = {form.existingPhotos.length + form.photos.length} total photo(s)
+                  </p>
+                )}
+              </div>
+            )}
 
             {photoPreviews.length > 0 && (
               <div>

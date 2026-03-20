@@ -34,6 +34,12 @@ import LetterToFutureSection from '../sections/couple/LetterToFutureSection';
 import GiftSection from '../sections/couple/GiftSection';
 import SurpriseMessageSection from '../sections/couple/SurpriseMessageSection';
 import PlaylistSection from '../sections/shared/PlaylistSection';
+import BirthdayMessageSection from '../sections/birthday/BirthdayMessageSection';
+import BirthdayWishesSection from '../sections/birthday/BirthdayWishesSection';
+import BirthdayCountdownSection from '../sections/birthday/BirthdayCountdownSection';
+import BirthdayTimelineSection from '../sections/birthday/BirthdayTimelineSection';
+import PartyDetailsSection from '../sections/birthday/PartyDetailsSection';
+import GiftWishlistSection from '../sections/birthday/GiftWishlistSection';
 
 // Import backward compatibility helpers
 import { 
@@ -64,6 +70,7 @@ type Props = {
   songAutoplay?: boolean;
   qrCodeUrl?: string;
   qrDataUrl?: string;
+  heroCoverPhotoUrl?: string | null;
   timelineEvents: TimelineEvent[];
   sectionContent?: SectionContentMap;
   slug?: string;
@@ -88,6 +95,7 @@ export default function LovePageClient({
   songLink,
   qrCodeUrl,
   qrDataUrl,
+  heroCoverPhotoUrl,
   timelineEvents,
   sectionContent,
   approvedGuestMessages,
@@ -330,6 +338,74 @@ export default function LovePageClient({
             />
           );
 
+        case 'birthday_countdown':
+          if (!activeSections.includes('birthday_countdown')) return null;
+          return (
+            <BirthdayCountdownSection
+              key="birthday_countdown"
+              theme={theme}
+              birthdayDate={anniversaryDate}
+            />
+          );
+
+        case 'birthday_message':
+          if (!activeSections.includes('birthday_message')) return null;
+          return (
+            <BirthdayMessageSection
+              key="birthday_message"
+              theme={theme}
+              message={sectionContent?.birthday_message?.content || message}
+            />
+          );
+
+        case 'birthday_wishes':
+          if (!activeSections.includes('birthday_wishes')) return null;
+          return (
+            <BirthdayWishesSection
+              key="birthday_wishes"
+              theme={theme}
+              wishes={
+                (sectionContent?.birthday_wishes?.quotes || [])
+                  .map((q: any) => (q?.text || '').trim())
+                  .filter(Boolean)
+              }
+            />
+          );
+
+        case 'birthday_timeline':
+          if (!activeSections.includes('birthday_timeline')) return null;
+          return (
+            <BirthdayTimelineSection
+              key="birthday_timeline"
+              theme={theme}
+              template={timelineTemplate}
+              events={mergedTimelineEvents}
+            />
+          );
+
+        case 'party_details':
+          if (!activeSections.includes('party_details')) return null;
+          return (
+            <PartyDetailsSection
+              key="party_details"
+              theme={theme}
+              location={sectionContent?.party_details?.location}
+              date={sectionContent?.party_details?.date}
+              time={sectionContent?.party_details?.time}
+              dressCode={sectionContent?.party_details?.dressCode}
+            />
+          );
+
+        case 'gift_wishlist':
+          if (!activeSections.includes('gift_wishlist')) return null;
+          return (
+            <GiftWishlistSection
+              key="gift_wishlist"
+              theme={theme}
+              items={sectionContent?.gift_wishlist?.items}
+            />
+          );
+
         case 'future_dreams':
           return (
             <FutureDreamsSection
@@ -447,6 +523,7 @@ export default function LovePageClient({
                 tagline={tagline}
                 photos={photos}
                 coverPhotoIndex={coverPhotoIndex}
+                heroCoverPhotoUrl={heroCoverPhotoUrl}
               />
             )}
 

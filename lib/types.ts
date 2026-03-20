@@ -208,6 +208,13 @@ export interface SiteConfig {
     showNames?: boolean;
   };
 
+  // Dedicated hero cover photo settings (new)
+  hero?: {
+    coverPhotoUrl?: string;
+    publicId?: string;
+    coverPhotoIndex?: number;
+  };
+
   // Preset information selected during create flow
   preset?: {
     id: string;
@@ -283,6 +290,7 @@ export interface CreateOrderPayload {
   partner_name?: string;
   anniversary_date?: string;
   password_input?: string;
+  expires_at?: string;
 }
 
 // Admin Sidebar Types
@@ -440,6 +448,21 @@ export interface SectionContentMap {
   };
   quotes?: {
     quotes: LoveQuote[];
+  };
+  birthday_message?: {
+    content: string;
+  };
+  birthday_wishes?: {
+    quotes: LoveQuote[];
+  };
+  party_details?: {
+    location?: string;
+    date?: string;
+    time?: string;
+    dressCode?: string;
+  };
+  gift_wishlist?: {
+    items: string[];
   };
   reasons_love_you?: {
     reasons: ReasonILoveYou[];

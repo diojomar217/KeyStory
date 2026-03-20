@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { SiteConfig, CreateOrderPayload } from '@/lib/types';
+import { calculateExpirationDate, getDaysRemaining, getExpirationLabel, ExpirationMode } from '@/lib/expiration-utils';
 import { 
   WIZARD_STEPS, 
   TOTAL_STEPS, 
@@ -40,7 +41,7 @@ import {
 } from '@/components/builder/ContentInputComponents';
 import { SectionContentMap, Section } from '@/lib/types';
 
-type LocalForm = Omit<CreateOrderPayload, 'config' | 'photos'> & { photos: File[]; song_autoplay?: boolean; password_input?: string };
+type LocalForm = Omit<CreateOrderPayload, 'config' | 'photos'> & { photos: File[]; heroPhoto?: File | null; heroPhotoIndex?: number; song_autoplay?: boolean; password_input?: string };
 
 const sanitizeSlug = (value: string): string => {
   return value
@@ -50,6 +51,9 @@ const sanitizeSlug = (value: string): string => {
     .replace(/-+/g, '-')
     .trim();
 };
+
+const MAX_IMAGE_UPLOAD_BYTES = 12 * 1024 * 1024; // 12 MB; will be optimized on server
+
 
 export default function CreateWebsitePage() {
   const [form, setForm] = useState<LocalForm>({
@@ -82,6 +86,7 @@ export default function CreateWebsitePage() {
   });
 
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const [heroPhotoPreview, setHeroPhotoPreview] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
@@ -97,6 +102,21 @@ export default function CreateWebsitePage() {
   const [passwordEnabled, setPasswordEnabled] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
+  const [expirationMode, setExpirationMode] = useState<'3_months'|'6_months'|'1_year'|'custom'>('6_months');
+  const [customExpirationDate, setCustomExpirationDate] = useState<string>('');
+
+  const formatSelectedExpiration = () => {
+    try {
+      const expires = calculateExpirationDate(expirationMode, customExpirationDate || undefined);
+      const days = getDaysRemaining(expires);
+      return `Active until ${getExpirationLabel(expires)}${days !== null ? ` (${days} days remaining)` : ''}`;
+    } catch (error: unknown) {
+      const msg = error && typeof error === 'object' && 'message' in error && typeof (error as any).message === 'string'
+        ? (error as any).message
+        : 'Enter a valid expiration date.';
+      return msg;
+    }
+  };
 
   const router = useRouter();
 
@@ -113,8 +133,11 @@ export default function CreateWebsitePage() {
   useEffect(() => {
     return () => {
       photoPreviews.forEach((url) => URL.revokeObjectURL(url));
+      if (heroPhotoPreview) {
+        URL.revokeObjectURL(heroPhotoPreview);
+      }
     };
-  }, [photoPreviews]);
+  }, [photoPreviews, heroPhotoPreview]);
 
   useEffect(() => {
     setConfig((prev) => ({
@@ -178,11 +201,20 @@ export default function CreateWebsitePage() {
       setError(null);
     }
 
-    const validImages = limitedFiles.filter((f) => f.type.startsWith('image/'));
+    const unsupported = limitedFiles.filter((f) => !f.type.startsWith('image/'));
+    const tooLarge = limitedFiles.filter((f) => f.size > MAX_IMAGE_UPLOAD_BYTES);
 
-    if (validImages.length !== limitedFiles.length) {
+    if (unsupported.length > 0) {
       setError('Only image files are allowed.');
+      return;
     }
+
+    if (tooLarge.length > 0) {
+      setError('Some images are larger than 12MB. They will still be optimized, but try smaller files for faster upload.');
+      // continue with smaller files while excluding huge images
+    }
+
+    const validImages = limitedFiles.filter((f) => f.type.startsWith('image/') && f.size <= MAX_IMAGE_UPLOAD_BYTES);
 
     photoPreviews.forEach((url) => URL.revokeObjectURL(url));
     const newPreviews = validImages.map((file) => URL.createObjectURL(file));
@@ -200,6 +232,56 @@ export default function CreateWebsitePage() {
 
   const handleCoverPhotoSelect = (index: number) => {
     setConfig((prev) => ({ ...prev, cover_photo_index: index }));
+  };
+
+  const handleHeroPhotoSelect = (index: number) => {
+    setConfig((prev) => ({
+      ...prev,
+      hero: {
+        ...(prev.hero || {}),
+        coverPhotoIndex: index,
+        coverPhotoUrl: undefined,
+      },
+    }));
+    setForm((prev) => ({ ...prev, heroPhotoIndex: index, heroPhoto: null }));
+    if (heroPhotoPreview) {
+      URL.revokeObjectURL(heroPhotoPreview);
+      setHeroPhotoPreview(null);
+    }
+  };
+
+  const handleHeroPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+
+    if (!file.type.startsWith('image/')) {
+      setError('Only image files are allowed for hero photo.');
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
+      setError('Hero image is larger than 12MB. It will be optimized, but try a smaller file for faster upload.');
+      // continue as we can still optimize server-side
+    } else {
+      setError(null);
+    }
+
+    const preview = URL.createObjectURL(file);
+
+    if (heroPhotoPreview) {
+      URL.revokeObjectURL(heroPhotoPreview);
+    }
+
+    setHeroPhotoPreview(preview);
+    setForm((prev) => ({ ...prev, heroPhoto: file, heroPhotoIndex: undefined }));
+    setConfig((prev) => ({
+      ...prev,
+      hero: {
+        ...(prev.hero || {}),
+        coverPhotoUrl: preview,
+        coverPhotoIndex: undefined,
+      },
+    }));
   };
 
   const applyPreset = (presetId: string) => {
@@ -317,22 +399,54 @@ export default function CreateWebsitePage() {
         )
       );
 
+      let heroPhotoBase64: string | null = null;
+      if (form.heroPhoto) {
+        heroPhotoBase64 = await new Promise<string>((resolve, reject) => {
+          const file = form.heroPhoto as File;
+          if (!file.type.startsWith('image/')) {
+            reject(new Error('Invalid hero photo file type'));
+            return;
+          }
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(new Error('Hero photo read error'));
+          reader.readAsDataURL(file);
+        });
+      }
+
       const normalizedConfig = { ...config };
+      if (normalizedConfig.hero?.coverPhotoUrl?.startsWith('blob:')) {
+        delete normalizedConfig.hero.coverPhotoUrl;
+      }
       if (passwordEnabled) {
         normalizedConfig.password = { enabled: true };
       } else {
         delete normalizedConfig.password;
       }
 
+      // Compute expiration date
+      let expiresAt: string;
+      try {
+        expiresAt = calculateExpirationDate(expirationMode, customExpirationDate || undefined);
+      } catch (err: any) {
+        throw new Error(err?.message || 'Invalid expiration date');
+      }
+
+      const payload: any = {
+        ...form,
+        expires_at: expiresAt,
+        photos: photosBase64,
+        config: normalizedConfig,
+        password_input: form.password_input,
+      };
+      if (heroPhotoBase64) {
+        payload.hero_photo = heroPhotoBase64;
+      }
+
       const res = await fetch('/api/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          photos: photosBase64,
-          config: normalizedConfig,
-          password_input: form.password_input,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -503,6 +617,41 @@ export default function CreateWebsitePage() {
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
                   onChange={handleChange}
                 />
+              </div>
+
+              <div className="mt-6 bg-white border border-slate-200 rounded-xl p-4">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">Hosting Duration</h3>
+                <div className="grid grid-cols-1 gap-2">
+                  {(['3_months','6_months','1_year','custom'] as ExpirationMode[]).map((mode) => (
+                    <label key={mode} className="flex items-center gap-3 p-2 border rounded-lg cursor-pointer">
+                      <input
+                        type="radio"
+                        name="expiration_mode"
+                        checked={expirationMode === mode}
+                        onChange={() => setExpirationMode(mode)}
+                        className="h-4 w-4"
+                      />
+                      <span className="text-sm text-slate-700">
+                        {mode === '3_months' && '3 Months'}
+                        {mode === '6_months' && '6 Months'}
+                        {mode === '1_year' && '1 Year'}
+                        {mode === 'custom' && 'Custom Expiration Date'}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                {expirationMode === 'custom' && (
+                  <div className="mt-2">
+                    <input
+                      type="date"
+                      value={customExpirationDate}
+                      onChange={(e) => setCustomExpirationDate(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg"
+                      min={new Date().toISOString().slice(0, 10)}
+                    />
+                  </div>
+                )}
+                <p className="text-xs mt-2 text-slate-500">{formatSelectedExpiration()}</p>
               </div>
 
               <div className="mt-6 bg-white border border-slate-200 rounded-xl p-4">
@@ -746,46 +895,98 @@ export default function CreateWebsitePage() {
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
                   onChange={handleChange}
                 />
-
-                <div className="mt-3 flex items-center gap-2">
-                  <input
-                    id="song_autoplay"
-                    name="song_autoplay"
-                    type="checkbox"
-                    checked={!!form.song_autoplay}
-                    onChange={handleChange}
-                    className="h-4 w-4 rounded border-slate-300 text-rose-500 focus:ring-rose-500"
-                  />
-                  <label htmlFor="song_autoplay" className="text-sm text-slate-600">
-                    Auto-play song when page loads
-                  </label>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                    Upload Photos {(config.sections.includes('gallery') || config.sections.includes('polaroid_gallery')) && <span className="text-rose-500">*</span>}
-                  </label>
+                )}
+
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                  <h3 className="text-sm font-semibold text-slate-700 mb-3">Dedicated Hero Cover Photo</h3>
+                  <p className="text-xs text-slate-500 mb-2">Optional: set a hero cover photo independent from gallery photos.</p>
 
                   <input
-                    name="photos"
+                    name="hero_photo"
                     type="file"
                     accept="image/*"
-                    multiple
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-800 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-rose-50 file:text-rose-600 hover:file:bg-rose-100 transition-all cursor-pointer"
-                    onChange={handlePhotos}
+                    onChange={handleHeroPhotoUpload}
                   />
+                  <p className="text-xs text-slate-400 mt-1">Hero images are auto-optimized (1920px max, auto format/quality). High quality is kept for visuals.</p>
 
-                  {form.photos.length > 0 && (
-                    <p className="text-sm text-emerald-600 mt-2">
-                      {form.photos.length} photo(s) selected
-                    </p>
+                  {heroPhotoPreview && (
+                    <div className="mt-3 relative border border-slate-200 rounded-lg overflow-hidden">
+                      <img src={heroPhotoPreview} alt="Hero Preview" className="w-full h-40 object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          URL.revokeObjectURL(heroPhotoPreview);
+                          setHeroPhotoPreview(null);
+                          setForm((prev) => ({ ...prev, heroPhoto: null, heroPhotoIndex: undefined }));
+                          setConfig((prev) => ({
+                            ...prev,
+                            hero: {
+                              ...(prev.hero || {}),
+                              coverPhotoUrl: undefined,
+                              coverPhotoIndex: undefined,
+                            },
+                          }));
+                        }}
+                        className="absolute top-2 right-2 bg-black/40 text-white text-xs px-2 py-1 rounded"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   )}
 
-                  {(config.sections.includes('gallery') || config.sections.includes('polaroid_gallery')) && form.photos.length === 0 && (
-                    <p className="text-xs text-amber-600 mt-1">
-                      Gallery section requires at least one photo
-                    </p>
+                  {photoPreviews.length > 0 && (
+                    <div className="mt-3">
+                      <p className="text-xs text-slate-600 mb-2">Or select from uploaded photos</p>
+                      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                        {photoPreviews.map((preview, index) => (
+                          <button
+                            type="button"
+                            key={index}
+                            onClick={() => handleHeroPhotoSelect(index)}
+                            className={`border rounded-lg overflow-hidden ${config.hero?.coverPhotoIndex === index ? 'border-rose-500 ring-2 ring-rose-200' : 'border-slate-200'}`}
+                          >
+                            <img src={preview} alt={`Hero option ${index + 1}`} className="w-full h-16 object-cover" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {config.hero?.coverPhotoIndex !== undefined && !heroPhotoPreview && (
+                    <p className="text-xs text-emerald-600 mt-2">Hero cover currently set to photo {config.hero.coverPhotoIndex + 1}</p>
                   )}
                 </div>
+
+                { (config.sections.includes('gallery') || config.sections.includes('polaroid_gallery')) && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                      Upload Photos <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      name="photos"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-800 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-rose-50 file:text-rose-600 hover:file:bg-rose-100 transition-all cursor-pointer"
+                      onChange={handlePhotos}
+                    />
+                    <p className="text-xs text-slate-400 mt-1">Gallery images are auto-optimized (1600px max, auto format/quality) for fast site loading.</p>
+
+                    {form.photos.length > 0 && (
+                      <p className="text-sm text-emerald-600 mt-2">
+                        {form.photos.length} photo(s) selected
+                      </p>
+                    )}
+
+                    {form.photos.length === 0 && (
+                      <p className="text-xs text-amber-600 mt-1">
+                        Gallery section requires at least one photo
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {form.photos.length > 0 && (
                   <div className="mt-4 pt-4 border-t border-slate-200">
@@ -828,8 +1029,6 @@ export default function CreateWebsitePage() {
                     </div>
                   </div>
                 )}
-              </div>
-            )}
 
             {/* Timeline Events */}
             {config.sections.includes('timeline') && (

@@ -150,6 +150,7 @@ export default async function LovePage({ params }: PageProps) {
 
   // Get cover photo index from config
   const coverPhotoIndex = config.cover_photo_index;
+  const heroCoverPhotoUrl = config?.hero?.coverPhotoUrl || null;
 
   // Get QR data URL target (link to encode in styled QR)
   const qrDataUrl = config.qr_data_url || undefined;
@@ -185,6 +186,7 @@ export default async function LovePage({ params }: PageProps) {
         qrDataUrl={qrDataUrl}
         timelineEvents={timelineEvents}
         sectionContent={sectionContent}
+        heroCoverPhotoUrl={heroCoverPhotoUrl}
         approvedGuestMessages={approvedGuestMessages}
       />
   );

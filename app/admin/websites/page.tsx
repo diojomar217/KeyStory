@@ -14,14 +14,16 @@ export default function WebsitesPage() {
   const [deletingName, setDeletingName] = useState<string>('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired' | 'archived'>('all');
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [statusFilter]);
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch('/api/orders');
+      const query = statusFilter && statusFilter !== 'all' ? `?status=${statusFilter}` : '';
+      const res = await fetch(`/api/orders${query}`);
       
       if (!res.ok) {
         throw new Error(`Failed to fetch orders: ${res.status} ${res.statusText}`);
@@ -129,6 +131,9 @@ export default function WebsitesPage() {
           onDelete={handleDelete}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          onRefresh={fetchOrders}
         />
       )}
 

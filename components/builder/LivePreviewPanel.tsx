@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { SiteConfig, Theme } from '@/lib/types';
+import { resolveHeroCoverPhoto } from '@/lib/site-type-utils';
 
 const themeStyles: Record<Theme, { bg: string; text: string; accent: string; card: string; gradient: string }> = {
   romantic_classic: { bg: 'bg-gradient-to-b from-rose-50 to-pink-50', text: 'text-rose-900', accent: 'text-rose-600', card: 'bg-white/80 border-rose-200', gradient: 'from-rose-400 to-pink-500' },
@@ -100,14 +101,8 @@ export default function LivePreviewPanel({
   const theme = themeStyles[config.theme] || themeStyles.romantic_classic;
 
   const coverPhotoUrl = useMemo(() => {
-    if (config.cover_photo_index !== undefined && config.cover_photo_index < photoPreviews.length) {
-      return photoPreviews[config.cover_photo_index];
-    }
-    if (photoPreviews.length > 0) {
-      return photoPreviews[0];
-    }
-    return null;
-  }, [photoPreviews, config.cover_photo_index]);
+    return resolveHeroCoverPhoto({ hero: config.hero, cover_photo_index: config.cover_photo_index }, photoPreviews);
+  }, [photoPreviews, config.cover_photo_index, config.hero]);
 
   // Use helper functions for proper empty state handling
   const nameData = useMemo(() => getDisplayNames(form), [form.customer_name, form.partner_name]);

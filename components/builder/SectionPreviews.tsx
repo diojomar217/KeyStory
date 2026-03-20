@@ -134,30 +134,6 @@ export function HomeSectionPreview({
         </p>
       </div>
 
-      {/* Message Card */}
-      {messageData.hasContent && (
-        <div 
-          className="mx-3 -mt-6 p-3 rounded-xl shadow-sm border"
-          style={{ 
-            backgroundColor: colors.card, 
-            borderColor: colors.border,
-            borderWidth: '1px',
-            borderStyle: 'solid'
-          }}
-        >
-          <p 
-            className="text-xs leading-relaxed line-clamp-3"
-            style={{ 
-              color: colors.text,
-              opacity: 1,
-              fontStyle: 'normal'
-            }}
-          >
-            {messageData.text}
-          </p>
-        </div>
-      )}
-
       {/* Anniversary Badge */}
       {anniversaryData.hasContent && (
         <div className="flex justify-center py-2 px-4">

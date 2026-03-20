@@ -10,17 +10,78 @@ interface WebsitesTableProps {
   onDelete: (id: string) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  statusFilter: 'all' | 'active' | 'expired' | 'archived';
+  onStatusFilterChange: (status: 'all' | 'active' | 'expired' | 'archived') => void;
+  onRefresh?: () => void;
 }
 
 type ThemeFilter = 'all' | 'romantic_classic' | 'cute_pastel' | 'minimal_modern' | 'dark_elegant';
+type StatusFilter = 'all' | 'active' | 'expired' | 'archived';
+
+const getStatusFromOrder = (order: Site) => {
+  const status = (order.status || 'active').toLowerCase();
+  if (status === 'archived') return 'archived';
+  const expiresAt = order.expires_at ? new Date(order.expires_at) : null;
+  if (status === 'expired' || (expiresAt && expiresAt.getTime() < Date.now())) return 'expired';
+  return 'active';
+};
 
 export default function WebsitesTable({
   orders,
   onDelete,
   searchQuery,
   onSearchChange,
+  statusFilter,
+  onStatusFilterChange,
+  onRefresh,
 }: WebsitesTableProps) {
   const [themeFilter, setThemeFilter] = useState<ThemeFilter>('all');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const refreshData = () => {
+    if (onRefresh) onRefresh();
+  };
+
+  const isAllSelected = orders.length > 0 && selectedIds.length === orders.length;
+
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(orders.map((order) => order.id!));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const toggleSelectOne = (id: string, checked: boolean) => {
+    setSelectedIds((prev) =>
+      checked ? [...prev, id] : prev.filter((selectedId) => selectedId !== id)
+    );
+  };
+
+  const bulkRenew = async (duration: '6_months' | '1_year') => {
+    if (selectedIds.length === 0) return;
+
+    const results = await Promise.all(
+      selectedIds.map(async (id) => {
+        const res = await fetch(`/api/admin/sites/${id}/renew`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ duration }),
+        });
+        return { id, ok: res.ok, status: res.status, body: await res.text() };
+      })
+    );
+
+    const failed = results.filter((item) => !item.ok);
+    if (failed.length > 0) {
+      console.error('Bulk renew failed', failed);
+      alert(`Renew completed with ${failed.length} failures. Check console for details.`);
+    } else {
+      alert(`All selected sites renewed for ${duration === '6_months' ? '6 months' : '1 year'}.`);
+    }
+
+    refreshData();
+  };
 
   // Filter orders based on search and theme
   const filteredOrders = useMemo(() => {
@@ -37,10 +98,13 @@ export default function WebsitesTable({
       const matchesTheme = 
         themeFilter === 'all' || 
         (order.config?.theme || order.theme) === themeFilter;
+
+      const siteStatus = getStatusFromOrder(order);
+      const matchesStatus = statusFilter === 'all' || statusFilter === siteStatus;
       
-      return matchesSearch && matchesTheme;
+      return matchesSearch && matchesTheme && matchesStatus;
     });
-  }, [orders, searchQuery, themeFilter]);
+  }, [orders, searchQuery, themeFilter, statusFilter]);
 
   const clearFilters = () => {
     onSearchChange('');
@@ -55,9 +119,9 @@ export default function WebsitesTable({
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
       {/* Search and Filter Bar */}
       <div className="p-4 border-b border-slate-200 bg-slate-50/50">
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-wrap gap-3">
           {/* Search Input */}
-          <div className="flex-1 max-w-md">
+          <div className="flex-1 min-w-[220px] max-w-md">
             <SearchInput
               value={searchQuery}
               onChange={onSearchChange}
@@ -81,13 +145,54 @@ export default function WebsitesTable({
             <option value="minimal_modern">Minimal Modern</option>
             <option value="dark_elegant">Dark Elegant</option>
           </select>
+
+          {/* Status Filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => onStatusFilterChange(e.target.value as 'all' | 'active' | 'expired' | 'archived')}
+            className="
+              px-4 py-2.5 bg-white border border-slate-200 rounded-xl 
+              text-slate-700 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 
+              transition-all cursor-pointer hover:border-slate-300
+            "
+          >
+            <option value="all">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="expired">Expired</option>
+            <option value="archived">Archived</option>
+          </select>
         </div>
       </div>
 
-      {/* Results Count */}
-      <div className="px-4 py-3 bg-slate-50/50 border-b border-slate-100 text-sm text-slate-500">
-        Showing {filteredOrders.length} of {orders.length} website{orders.length !== 1 ? 's' : ''}
-        {searchQuery || themeFilter !== 'all' ? ' (filtered)' : ''}
+      {/* Bulk Action and Results Count */}
+      <div className="px-4 py-3 bg-slate-50/50 border-b border-slate-100 space-y-3 text-sm text-slate-500">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            Showing {filteredOrders.length} of {orders.length} website{orders.length !== 1 ? 's' : ''}
+            {searchQuery || themeFilter !== 'all' || statusFilter !== 'all' ? ' (filtered)' : ''}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => bulkRenew('6_months')}
+              disabled={selectedIds.length === 0}
+              className="px-3 py-1 rounded-lg text-white bg-blue-600 disabled:bg-slate-300"
+            >
+              Renew Selected 6m
+            </button>
+            <button
+              type="button"
+              onClick={() => bulkRenew('1_year')}
+              disabled={selectedIds.length === 0}
+              className="px-3 py-1 rounded-lg text-white bg-sky-600 disabled:bg-slate-300"
+            >
+              Renew Selected 1y
+            </button>
+          </div>
+        </div>
+        {selectedIds.length > 0 && (
+          <div className="text-xs text-slate-600">{selectedIds.length} selected</div>
+        )}
       </div>
 
       {/* Table or Card View */}
@@ -121,7 +226,15 @@ export default function WebsitesTable({
             <table className="w-full">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="px-4 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-20">
+                  <th className="px-4 py-4">
+                <input
+                  type="checkbox"
+                  checked={isAllSelected}
+                  onChange={(e) => toggleSelectAll(e.target.checked)}
+                  className="h-4 w-4 accent-rose-600"
+                />
+              </th>
+              <th className="px-4 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-20">
                     Cover
                   </th>
                   <th className="px-4 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
@@ -156,6 +269,10 @@ export default function WebsitesTable({
                     key={order.id}
                     order={order}
                     onDelete={onDelete}
+                    selected={selectedIds.includes(order.id || '')}
+                    onSelect={(checked) => {
+                      if (order.id) toggleSelectOne(order.id, checked);
+                    }}
                   />
                 ))}
               </tbody>
@@ -169,6 +286,10 @@ export default function WebsitesTable({
                 key={order.id}
                 order={order}
                 onDelete={onDelete}
+                selected={selectedIds.includes(order.id || '')}
+                onSelect={(checked) => {
+                  if (order.id) toggleSelectOne(order.id, checked);
+                }}
               />
             ))}
           </div>
@@ -181,10 +302,14 @@ export default function WebsitesTable({
 // Mobile Card Component
 function MobileWebsiteCard({ 
   order, 
-  onDelete 
+  onDelete,
+  selected,
+  onSelect,
 }: { 
   order: Site; 
   onDelete: (id: string) => void;
+  selected: boolean;
+  onSelect: (checked: boolean) => void;
 }) {
   const siteType = order.site_type || 'couple';
   const customerName = order.config?.people?.primary || (order as any).customer_name || '';
@@ -229,6 +354,17 @@ function MobileWebsiteCard({
 
   return (
     <div className="p-4 hover:bg-slate-50/80 transition-colors">
+      <div className="flex items-center justify-between mb-3">
+        <label className="inline-flex items-center gap-2 text-slate-600">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={(e) => onSelect(e.target.checked)}
+            className="h-4 w-4 accent-rose-600"
+          />
+          Select
+        </label>
+      </div>
       <div className="flex items-start gap-3">
         {/* Cover Photo */}
         <div className="w-12 h-12 rounded-md overflow-hidden bg-slate-100 flex-shrink-0">

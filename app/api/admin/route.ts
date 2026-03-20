@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, Site } from '@/lib/supabase';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 
 const normalizePasswordConfig = async (siteConfig: any, passwordInput?: string): Promise<any> => {
   if (!siteConfig) siteConfig = {};
@@ -67,6 +68,46 @@ export async function PUT(req: NextRequest) {
     }
 
     // Build update object with normalized config in JSONB
+    const inputPhotos = Array.isArray(updates.photos)
+      ? updates.photos
+      : Array.isArray(updates.config?.media?.photos)
+        ? updates.config.media.photos
+        : [];
+
+    const processedPhotos: string[] = [];
+    for (const photo of inputPhotos) {
+      if (typeof photo === 'string' && photo.startsWith('data:')) {
+        try {
+          const uploaded = await uploadToCloudinary(photo, { isHero: false });
+          processedPhotos.push(uploaded);
+        } catch (err) {
+          console.error('admin photo upload error', err);
+        }
+      } else if (typeof photo === 'string' && photo.trim()) {
+        processedPhotos.push(photo);
+      }
+    }
+
+    let heroCoverPhotoUrl: string | undefined = updates.config?.hero?.coverPhotoUrl;
+
+    if (updates.hero_photo) {
+      try {
+        heroCoverPhotoUrl = await uploadToCloudinary(updates.hero_photo, { isHero: true });
+      } catch (err) {
+        console.error('admin hero photo upload error', err);
+      }
+    }
+
+    const heroIndex = updates.config?.hero?.coverPhotoIndex;
+    if (typeof heroIndex === 'number' && processedPhotos[heroIndex]) {
+      heroCoverPhotoUrl = processedPhotos[heroIndex];
+    }
+
+    const legacyCoverIndex = updates.config?.cover_photo_index;
+    if (!heroCoverPhotoUrl && typeof legacyCoverIndex === 'number' && processedPhotos[legacyCoverIndex]) {
+      heroCoverPhotoUrl = processedPhotos[legacyCoverIndex];
+    }
+
     const updateObj: Partial<Site> = {
       website_name: updates.website_name,
       site_type: updates.site_type || updates.occasion,
@@ -91,7 +132,7 @@ export async function PUT(req: NextRequest) {
           timeline: updates.config?.timeline_template || updates.timeline_template,
         },
         media: {
-          photos: updates.photos || updates.config?.media?.photos || [],
+          photos: processedPhotos,
           song_link: updates.song_link || updates.config?.media?.song_link || '',
           song_autoplay: updates.song_autoplay ?? updates.config?.media?.song_autoplay ?? false,
         },
@@ -99,6 +140,11 @@ export async function PUT(req: NextRequest) {
         content: updates.config?.content || updates.config?.section_content || {},
         message: updates.message || updates.config?.message || '',
         tagline: updates.tagline || updates.config?.tagline || '',
+        hero: {
+          ...(updates.config?.hero || {}),
+          ...(heroCoverPhotoUrl ? { coverPhotoUrl: heroCoverPhotoUrl } : {}),
+          coverPhotoIndex: updates.config?.hero?.coverPhotoIndex,
+        },
       },
     };
 

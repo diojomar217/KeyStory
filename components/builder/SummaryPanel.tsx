@@ -226,6 +226,62 @@ function getSectionContentSummary(
       };
     }
 
+    case 'birthday_countdown': {
+      return {
+        label: sectionInfo?.label || 'Birthday Countdown',
+        icon: '⏳',
+        status: 'completed',
+        content: 'Auto-generated',
+      };
+    }
+
+    case 'birthday_wishes': {
+      const wishes = (content?.quotes as unknown[] | undefined) || [];
+      const wishesCount = Array.isArray(wishes) ? wishes.length : 0;
+      return {
+        label: sectionInfo?.label || 'Birthday Wishes',
+        icon: '🎈',
+        status: wishesCount > 0 ? 'completed' : 'attention',
+        content: wishesCount > 0 ? `${wishesCount} wishes` : 'No wishes added',
+      };
+    }
+
+    case 'birthday_message': {
+      const messageText = (content?.content as string) || '';
+      return {
+        label: sectionInfo?.label || 'Birthday Message',
+        icon: '🎂',
+        status: messageText.trim().length > 0 ? 'completed' : 'missing',
+        content: messageText.trim().length > 0 ? 'Message provided' : 'No message',
+      };
+    }
+
+    case 'party_details': {
+      const hasContent = !!(
+        content?.location ||
+        content?.date ||
+        content?.time ||
+        content?.dressCode
+      );
+      return {
+        label: sectionInfo?.label || 'Party Details',
+        icon: '📍',
+        status: hasContent ? 'completed' : 'missing',
+        content: hasContent ? 'Party details set' : 'No party details',
+      };
+    }
+
+    case 'gift_wishlist': {
+      const items = (content?.items as unknown[]) || [];
+      const count = Array.isArray(items) ? items.length : 0;
+      return {
+        label: sectionInfo?.label || 'Gift Wishlist',
+        icon: '🎁',
+        status: count > 0 ? 'completed' : 'missing',
+        content: count > 0 ? `${count} item${count !== 1 ? 's' : ''}` : 'No wishlist items',
+      };
+    }
+
     // Interactive sections
     case 'future_dreams': {
       const items = (content?.dreams as unknown[]) || [];
@@ -353,7 +409,7 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
   if (config.sections?.includes('song') && !form.song_link) {
     warnings.push('Song section enabled but no song link added');
   }
-  if (form.photos.length > 0 && config.cover_photo_index === undefined) {
+  if (form.photos.length > 0 && config.cover_photo_index === undefined && !config.hero?.coverPhotoUrl && config.hero?.coverPhotoIndex === undefined) {
     warnings.push('No cover photo selected - first photo will be used');
   }
 
@@ -751,9 +807,13 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
           <div>
             <p className="text-slate-500 text-xs">Cover Photo</p>
             <p className="font-medium text-slate-800">
-              {config.cover_photo_index !== undefined
-                ? `Photo ${config.cover_photo_index + 1}`
-                : 'Default'}
+              {config.hero?.coverPhotoUrl
+                ? 'Dedicated Hero Photo'
+                : config.hero?.coverPhotoIndex !== undefined
+                  ? `Photo ${config.hero.coverPhotoIndex + 1}`
+                  : config.cover_photo_index !== undefined
+                    ? `Photo ${config.cover_photo_index + 1}`
+                    : 'Default'}
             </p>
           </div>
           <div>
