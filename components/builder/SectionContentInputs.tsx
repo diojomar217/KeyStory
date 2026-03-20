@@ -51,6 +51,104 @@ export default function SectionContentInputs({
         </div>
       )}
 
+      {sections.includes('birthday_message') && (
+        <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-xl">🎂</span>
+            <h3 className="font-semibold text-slate-700">Birthday Message</h3>
+          </div>
+          <TextContentInput
+            label="Birthday Message"
+            value={section_content?.birthday_message?.content || ''}
+            onChange={(content) => onSectionContentChange('birthday_message', { content })}
+            placeholder="Share a special birthday message..."
+            rows={6}
+          />
+        </div>
+      )}
+
+      {sections.includes('birthday_wishes') && (
+        <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-xl">🎈</span>
+            <h3 className="font-semibold text-slate-700">Birthday Wishes</h3>
+          </div>
+          <QuotesInput
+            value={section_content?.birthday_wishes as any}
+            onChange={(content) => onSectionContentChange('birthday_wishes', content as any)}
+          />
+        </div>
+      )}
+
+      {sections.includes('party_details') && (
+        <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-xl">📍</span>
+            <h3 className="font-semibold text-slate-700">Party Details</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <TextContentInput
+              label="Location"
+              value={section_content?.party_details?.location || ''}
+              onChange={(location) => onSectionContentChange('party_details', {
+                ...section_content?.party_details,
+                location,
+              })}
+              placeholder="Venue name/address"
+              rows={2}
+            />
+            <TextContentInput
+              label="Date"
+              value={section_content?.party_details?.date || ''}
+              onChange={(date) => onSectionContentChange('party_details', {
+                ...section_content?.party_details,
+                date,
+              })}
+              placeholder="Event date"
+              rows={2}
+            />
+            <TextContentInput
+              label="Time"
+              value={section_content?.party_details?.time || ''}
+              onChange={(time) => onSectionContentChange('party_details', {
+                ...section_content?.party_details,
+                time,
+              })}
+              placeholder="Event time"
+              rows={2}
+            />
+            <TextContentInput
+              label="Dress Code"
+              value={section_content?.party_details?.dressCode || ''}
+              onChange={(dressCode) => onSectionContentChange('party_details', {
+                ...section_content?.party_details,
+                dressCode,
+              })}
+              placeholder="Suggested attire"
+              rows={2}
+            />
+          </div>
+        </div>
+      )}
+
+      {sections.includes('gift_wishlist') && (
+        <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-xl">🎁</span>
+            <h3 className="font-semibold text-slate-700">Gift Wishlist</h3>
+          </div>
+          <TextContentInput
+            label="Wishlist Items (comma separated)"
+            value={(section_content?.gift_wishlist?.items || []).join(', ')}
+            onChange={(value) => onSectionContentChange('gift_wishlist', {
+              items: value.split(',').map((item) => item.trim()).filter(Boolean),
+            })}
+            placeholder="List recommended gifts"
+            rows={3}
+          />
+        </div>
+      )}
+
       {sections.includes('our_story') && (
         <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
           <div className="flex items-center gap-2 mb-4">

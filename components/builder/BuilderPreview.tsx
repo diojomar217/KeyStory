@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { SiteConfig, Theme, PreviewDevice } from '@/lib/types';
 import { THEME_PRESETS, LAYOUT_PRESETS, SECTION_TOGGLES } from '@/lib/builder-constants';
+import { resolveHeroCoverPhoto } from '@/lib/site-type-utils';
 
 interface BuilderPreviewProps {
   config: SiteConfig;
@@ -88,14 +89,8 @@ export default function BuilderPreview({
 
   // Get cover photo
   const coverPhotoUrl = useMemo(() => {
-    if (config.cover_photo_index !== undefined && config.cover_photo_index < photoPreviews.length) {
-      return photoPreviews[config.cover_photo_index];
-    }
-    if (photoPreviews.length > 0) {
-      return photoPreviews[0];
-    }
-    return null;
-  }, [photoPreviews, config.cover_photo_index]);
+    return resolveHeroCoverPhoto({ hero: config.hero, cover_photo_index: config.cover_photo_index }, photoPreviews);
+  }, [photoPreviews, config.cover_photo_index, config.hero]);
 
   // Use helper functions for proper empty state handling
   const nameData = useMemo(() => getDisplayNames(form), [form.customer_name, form.partner_name]);

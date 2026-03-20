@@ -168,20 +168,39 @@ export const resolveDecorations = (siteType: OccasionType): DecoratorSet => {
   }
 };
 
+const optCloudinaryUrl = (url: string, isHero: boolean): string => {
+  if (!url || !url.includes('cloudinary.com')) return url;
+
+  // If already optimized with f_auto/q_auto, skip modification
+  if (url.includes('f_auto') || url.includes('q_auto')) {
+    return url;
+  }
+
+  const cloudinaryUploadSegment = '/upload/';
+  if (!url.includes(cloudinaryUploadSegment)) return url;
+
+  const quality = isHero ? 'auto:good' : 'auto:eco';
+  return url.replace(cloudinaryUploadSegment, `/upload/f_auto,q_${quality},`);
+};
+
 export const resolveHeroCoverPhoto = (
-  config: { hero?: { coverPhotoUrl?: string }; cover_photo_index?: number },
+  config: { hero?: { coverPhotoUrl?: string; coverPhotoIndex?: number }; cover_photo_index?: number },
   photos: string[] = []
 ): string | null => {
   if (config?.hero?.coverPhotoUrl) {
-    return config.hero.coverPhotoUrl;
+    return optCloudinaryUrl(config.hero.coverPhotoUrl, true);
+  }
+
+  if (typeof config?.hero?.coverPhotoIndex === 'number' && photos[config.hero.coverPhotoIndex]) {
+    return optCloudinaryUrl(photos[config.hero.coverPhotoIndex], true);
   }
 
   if (typeof config?.cover_photo_index === 'number' && photos[config.cover_photo_index]) {
-    return photos[config.cover_photo_index];
+    return optCloudinaryUrl(photos[config.cover_photo_index], false);
   }
 
   if (photos.length > 0) {
-    return photos[0];
+    return optCloudinaryUrl(photos[0], false);
   }
 
   return null;

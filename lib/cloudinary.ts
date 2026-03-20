@@ -17,24 +17,43 @@ if (!cloudName || !apiKey || !apiSecret) {
 
 export default cloudinary;
 
+export type CloudinaryUploadOptions = {
+  isHero?: boolean;
+  maxWidth?: number;
+  quality?: string;
+  fetchFormat?: string;
+  crop?: 'limit' | 'fill' | 'scale';
+  stripMetadata?: boolean;
+};
+
 // helper for server-side uploads
-export async function uploadToCloudinary(dataUrl: string): Promise<string> {
+export async function uploadToCloudinary(dataUrl: string, options: CloudinaryUploadOptions = {}): Promise<string> {
   if (!cloudName || !apiKey || !apiSecret) {
     throw new Error('Cloudinary is not configured. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET environment variables.');
   }
 
-  // Cost control / optimization settings:
-  // - limit max dimensions via transformation
-  // - use automatic quality and format (
-  // - avoid retaining original heavy variants where possible
+  const isHero = options.isHero ?? false;
+  const maxWidth = options.maxWidth ?? (isHero ? 1920 : 1600);
+  const quality = options.quality ?? (isHero ? 'auto:good' : 'auto:eco');
+  const fetchFormat = options.fetchFormat ?? 'auto';
+  const crop = options.crop ?? 'limit';
+  const stripMetadata = options.stripMetadata ?? true;
+
+  const transformation: any[] = [{ width: maxWidth, crop }];
+
+  // Hero uses slightly higher quality and larger width, gallery uses lighter optimization
+  transformation.push({ quality, fetch_format: fetchFormat, flags: 'progressive' });
+
+  if (stripMetadata) {
+    transformation.push({ flags: 'strip' });
+  }
+
   const res = await cloudinary.uploader.upload(dataUrl, {
     folder: 'loveqr',
-    transformation: [
-      { width: 1920, height: 1080, crop: 'limit' },
-      { quality: 'auto', fetch_format: 'auto' },
-    ],
+    transformation,
     use_filename: true,
     unique_filename: false,
   });
   return res.secure_url;
 }
+

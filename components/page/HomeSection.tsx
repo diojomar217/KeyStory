@@ -6,7 +6,7 @@ import { Theme, HomeTemplate, Participant } from '@/lib/types';
 import { useTheme } from '../builder/ThemeWrapper';
 import RelationshipTimer from './RelationshipTimer';
 import { HeroDecorations, PremiumDualCTAs } from './HeroOverlay';
-import { resolveHeroConfig } from '@/lib/site-type-utils';
+import { resolveHeroConfig, resolveHeroCoverPhoto } from '@/lib/site-type-utils';
 
 type Props = {
   theme: Theme;
@@ -21,6 +21,7 @@ type Props = {
   photos: string[];
   coverPhotoIndex?: number;
   songLink?: string;
+  heroCoverPhotoUrl?: string | null;
 };
 
 export default function HomeSection({
@@ -35,6 +36,7 @@ export default function HomeSection({
   tagline,
   photos,
   coverPhotoIndex,
+  heroCoverPhotoUrl,
 }: Props) {
   const styles = useTheme(theme);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -86,10 +88,7 @@ export default function HomeSection({
   })() : null;
 
   
-  // Use cover photo index if available, otherwise fallback to first photo
-  const heroImage = (coverPhotoIndex !== undefined && photos?.[coverPhotoIndex]) 
-    ? photos[coverPhotoIndex] 
-    : photos?.[0] || '/vercel.svg';
+  const heroImage = heroCoverPhotoUrl || resolveHeroCoverPhoto({ hero: config?.hero, cover_photo_index: coverPhotoIndex }, photos) || '/vercel.svg';
 
   // Get accent color based on theme
   const getAccentColor = () => {

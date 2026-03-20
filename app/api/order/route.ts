@@ -77,6 +77,7 @@ interface OrderRequest {
   song_link?: string;
   photos?: string[];
   config?: SiteConfig;
+  hero_photo?: string;
   password_input?: string;
   expires_at?: string;
 }
@@ -129,7 +130,7 @@ export async function POST(req: NextRequest) {
       const photosToProcess = data.photos.slice(0, MAX_SITE_IMAGES);
       for (const photo of photosToProcess) {
         try {
-          const url = await uploadToCloudinary(photo);
+          const url = await uploadToCloudinary(photo, { isHero: false });
           photoUrls.push(url);
         } catch (err) {
           console.error('cloudinary upload error', err);
@@ -146,6 +147,27 @@ export async function POST(req: NextRequest) {
     const qrCodeUrl = await generateQRCode(coupleUrl);
 
     // Build normalized site config for storage
+    let heroCoverPhotoUrl: string | undefined = data.config?.hero?.coverPhotoUrl;
+
+    if (data.hero_photo) {
+      try {
+        heroCoverPhotoUrl = await uploadToCloudinary(data.hero_photo, { isHero: true });
+      } catch (err) {
+        console.error('hero photo upload error', err);
+      }
+    }
+
+    if (
+      typeof data.config?.hero?.coverPhotoIndex === 'number' &&
+      photoUrls[data.config.hero.coverPhotoIndex]
+    ) {
+      heroCoverPhotoUrl = photoUrls[data.config.hero.coverPhotoIndex];
+    }
+
+    if (typeof data.config?.cover_photo_index === 'number' && !heroCoverPhotoUrl && photoUrls[data.config.cover_photo_index]) {
+      heroCoverPhotoUrl = photoUrls[data.config.cover_photo_index];
+    }
+
     let siteConfig = {
       ...data.config,
       people: {
@@ -171,6 +193,10 @@ export async function POST(req: NextRequest) {
       content: data.config?.section_content || {},
       message,
       tagline: data.tagline || data.config?.tagline || '',
+      hero: {
+        ...(data.config?.hero || {}),
+        ...(heroCoverPhotoUrl ? { coverPhotoUrl: heroCoverPhotoUrl } : {}),
+      },
     };
 
     siteConfig = await normalizePasswordConfig(siteConfig, data.password_input);
