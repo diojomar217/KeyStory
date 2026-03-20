@@ -1,6 +1,7 @@
 'use client';
 
 import AdminHeader from '@/components/admin/AdminHeader';
+import BusinessSettingsForm from '@/components/admin/BusinessSettingsForm';
 
 export default function SettingsPage() {
   return (
@@ -51,6 +52,16 @@ export default function SettingsPage() {
                     defaultValue="admin@keystory.com"
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
                   />
+                </div>
+              </div>
+            </div>
+
+            <div className="pb-6 border-b border-slate-200">
+              <h3 className="text-sm font-medium text-slate-700 mb-4">Business Contact Settings</h3>
+              <div>
+                <p className="text-sm text-slate-500">Manage your restore contact channels for archived/expired pages.</p>
+                <div className="mt-4">
+                  <BusinessSettingsForm />
                 </div>
               </div>
             </div>

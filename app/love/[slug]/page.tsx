@@ -86,12 +86,28 @@ export default async function LovePage({ params }: PageProps) {
 
   if (siteIsArchived) {
     const ArchivedSitePage = (await import('@/components/site/ExpiredSitePage')).default;
-    return <ArchivedSitePage websiteName={data.website_name || data.slug} status="archived" expiresAt={data.expires_at || undefined} />;
+    return (
+      <ArchivedSitePage
+        slug={slug}
+        websiteName={data.website_name || data.slug}
+        status="archived"
+        expiresAt={data.expires_at || undefined}
+        siteType={data.site_type?.toString()}
+      />
+    );
   }
 
   if (siteIsExpired) {
     const ExpiredSitePage = (await import('@/components/site/ExpiredSitePage')).default;
-    return <ExpiredSitePage websiteName={data.website_name || data.slug} status="expired" expiresAt={data.expires_at || undefined} />;
+    return (
+      <ExpiredSitePage
+        slug={slug}
+        websiteName={data.website_name || data.slug}
+        status="expired"
+        expiresAt={data.expires_at || undefined}
+        siteType={data.site_type?.toString()}
+      />
+    );
   }
 
   // Get config from data
