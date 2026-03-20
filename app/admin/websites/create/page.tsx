@@ -1100,7 +1100,7 @@ export default function CreateWebsitePage() {
 
             <div className="bg-rose-50 rounded-xl p-4 border border-rose-200">
               <p className="text-sm text-rose-700">
-                By clicking &quot;Create Your Love Website&quot;, you agree to create a beautiful
+                By clicking &quot;Create Website&quot;, you agree to create a beautiful
                 memory site for your special someone.
               </p>
             </div>
@@ -1117,7 +1117,7 @@ export default function CreateWebsitePage() {
       <div className="max-w-6xl mx-auto px-4 py-8 lg:py-10">
         <div className="text-center mb-8">
           <h1 className="text-2xl lg:text-3xl font-bold text-center mb-3 text-slate-800">
-            Create Your Love Website
+            Create Website
           </h1>
           <p className="text-slate-500 text-sm lg:text-base">
             Build a beautiful memory site for your special someone
@@ -1243,7 +1243,7 @@ export default function CreateWebsitePage() {
                               d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
                             />
                           </svg>
-                          Create Your Love Website
+                          Create Website
                         </span>
                       )}
                     </button>
