@@ -234,11 +234,22 @@ export default function LovePageClient({
   // Section divider style configuration
   const sectionDividerStyle = (config?.section_divider_style as 'none' | 'standard' | 'gradient' | 'dots') || 'standard';
 
-  const renderSectionSeparator = (key?: string) => {
+  const renderSectionSeparator = (
+    prevVariant: 'default' | 'alt',
+    nextVariant: 'default' | 'alt',
+    key?: string
+  ) => {
     if (sectionDividerStyle === 'none') return null;
     if (sectionDividerStyle === 'gradient') return <GradientSeparator key={key || 'section-sep'} theme={theme} />;
     if (sectionDividerStyle === 'dots') return <DotsSeparator key={key || 'section-sep'} theme={theme} />;
-    return <SectionSeparator key={key || 'section-sep'} theme={theme} />;
+    return (
+      <SectionSeparator
+        key={key || 'section-sep'}
+        theme={theme}
+        prevVariant={prevVariant}
+        nextVariant={nextVariant}
+      />
+    );
   };
 
   // Main content rendering with alternating backgrounds
@@ -551,7 +562,8 @@ export default function LovePageClient({
 
                 // Add separator before new section only when previous section exists
                 if (renderedSectionCount > 0) {
-                  renderedNodes.push(renderSectionSeparator(`separator-${section}`));
+                  const prevVariant = getSectionVariantLocal(renderedSectionCount - 1);
+                  renderedNodes.push(renderSectionSeparator(prevVariant, variant, `separator-${section}`));
                 }
 
                 const sectionWrapperClass = getSectionBgClass(theme, renderedSectionCount);

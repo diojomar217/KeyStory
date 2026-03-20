@@ -126,14 +126,25 @@ export async function POST(req: NextRequest) {
     const MAX_SITE_IMAGES = 18;
     // upload pictures (cost-controlled)
     const photoUrls: string[] = [];
+    const photoUploadWarnings: string[] = [];
+
     if (Array.isArray(data.photos) && data.photos.length > 0) {
       const photosToProcess = data.photos.slice(0, MAX_SITE_IMAGES);
       for (const photo of photosToProcess) {
-        try {
-          const url = await uploadToCloudinary(photo, { isHero: false });
-          photoUrls.push(url);
-        } catch (err) {
-          console.error('cloudinary upload error', err);
+        if (typeof photo === 'string' && !photo.trim()) continue;
+
+        if (typeof photo === 'string' && photo.startsWith('data:')) {
+          try {
+            const url = await uploadToCloudinary(photo, { isHero: false });
+            photoUrls.push(url);
+          } catch (err: any) {
+            console.error('cloudinary upload error', err);
+            photoUploadWarnings.push(err?.message || 'Photo upload failed');
+            // fallback to data URL to avoid dropping images
+            photoUrls.push(photo);
+          }
+        } else if (typeof photo === 'string') {
+          photoUrls.push(photo);
         }
       }
       if (data.photos.length > MAX_SITE_IMAGES) {
@@ -148,12 +159,17 @@ export async function POST(req: NextRequest) {
 
     // Build normalized site config for storage
     let heroCoverPhotoUrl: string | undefined = data.config?.hero?.coverPhotoUrl;
+    let heroUploadWarning: string | null = null;
 
     if (data.hero_photo) {
       try {
         heroCoverPhotoUrl = await uploadToCloudinary(data.hero_photo, { isHero: true });
-      } catch (err) {
+      } catch (err: any) {
         console.error('hero photo upload error', err);
+        heroUploadWarning = err?.message || 'Hero photo upload failed';
+        if (typeof data.hero_photo === 'string' && data.hero_photo.startsWith('data:')) {
+          heroCoverPhotoUrl = data.hero_photo;
+        }
       }
     }
 
@@ -242,7 +258,16 @@ export async function POST(req: NextRequest) {
       console.warn('Revalidate path failed on create site:', err);
     }
 
-    return NextResponse.json({ success: true, slug, website_name, qr_code_url: qrCodeUrl });
+    return NextResponse.json({
+      success: true,
+      slug,
+      website_name,
+      qr_code_url: qrCodeUrl,
+      warnings: [
+        ...photoUploadWarnings,
+        ...(heroUploadWarning ? [heroUploadWarning] : []),
+      ],
+    });
   } catch (err) {
     console.error('order route exception', err);
     return NextResponse.json({ success: false, message: 'Invalid request' }, { status: 400 });

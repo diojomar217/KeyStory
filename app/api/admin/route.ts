@@ -75,13 +75,18 @@ export async function PUT(req: NextRequest) {
         : [];
 
     const processedPhotos: string[] = [];
+    const photoUploadWarnings: string[] = [];
+
     for (const photo of inputPhotos) {
       if (typeof photo === 'string' && photo.startsWith('data:')) {
         try {
           const uploaded = await uploadToCloudinary(photo, { isHero: false });
           processedPhotos.push(uploaded);
-        } catch (err) {
+        } catch (err: any) {
           console.error('admin photo upload error', err);
+          photoUploadWarnings.push(err?.message || 'Photo upload failed');
+          // fallback: keep data URL so the photos are preserved in place while investigation happens
+          processedPhotos.push(photo);
         }
       } else if (typeof photo === 'string' && photo.trim()) {
         processedPhotos.push(photo);
@@ -89,12 +94,18 @@ export async function PUT(req: NextRequest) {
     }
 
     let heroCoverPhotoUrl: string | undefined = updates.config?.hero?.coverPhotoUrl;
+    let heroUploadWarning: string | null = null;
 
     if (updates.hero_photo) {
       try {
         heroCoverPhotoUrl = await uploadToCloudinary(updates.hero_photo, { isHero: true });
-      } catch (err) {
+      } catch (err: any) {
         console.error('admin hero photo upload error', err);
+        heroUploadWarning = err?.message || 'Hero photo upload failed';
+        // fallback: keep original hero_photo data URL to avoid erasing user selection until fix
+        if (typeof updates.hero_photo === 'string' && updates.hero_photo.startsWith('data:')) {
+          heroCoverPhotoUrl = updates.hero_photo;
+        }
       }
     }
 
@@ -183,10 +194,24 @@ export async function PUT(req: NextRequest) {
       console.warn('Revalidation failed in admin update:', err);
     }
 
-    return NextResponse.json({ success: true, order: data });
-  } catch (err) {
-    console.error('PUT error:', err);
-    return NextResponse.json({ message: 'Invalid request' }, { status: 400 });
+    return NextResponse.json({
+      success: true,
+      order: data,
+      warnings: [
+        ...photoUploadWarnings,
+        ...(heroUploadWarning ? [heroUploadWarning] : []),
+      ],
+    });
+  } catch (err: any) {
+    const body = req.bodyUsed ? 'body already read' : 'body not read yet';
+    console.error('PUT /api/admin failed:', { 
+      id: body !== 'body not read yet' ? (await req.json()).id : 'unknown', 
+      message: err.message, 
+      stack: err.stack 
+    });
+    return NextResponse.json({ 
+      message: err.message || 'Update failed - check image sizes and try fewer photos' 
+    }, { status: 400 });
   }
 }
 

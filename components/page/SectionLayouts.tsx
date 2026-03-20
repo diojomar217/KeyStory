@@ -8,6 +8,10 @@ import { Theme } from '@/lib/types';
 
 export type SectionLayoutType = 'card' | 'timeline' | 'grid';
 
+const SECTION_VERTICAL_PADDING = 'py-20 md:py-24';
+const SECTION_MIN_HEIGHT = 'min-h-[460px] md:min-h-[560px]';
+const SEPARATOR_VERTICAL_PADDING = 'py-8 md:py-10';
+
 export interface BaseSectionLayoutProps {
   title?: string;
   subtitle?: string;
@@ -42,7 +46,7 @@ export function CardSectionLayout({
   return (
     <section
       id={id}
-      className={`relative py-24 lg:py-32 ${bgClass}`}
+      className={`relative ${SECTION_VERTICAL_PADDING} ${SECTION_MIN_HEIGHT} ${bgClass}`}
     >
       <div className="max-w-6xl mx-auto px-6 lg:px-8">
         {/* Header ABOVE card */}
@@ -97,7 +101,7 @@ export function GridSectionLayout({
   return (
     <section
       id={id}
-      className={`relative py-24 lg:py-32 ${bgClass}`}
+      className={`relative ${SECTION_VERTICAL_PADDING} ${SECTION_MIN_HEIGHT} ${bgClass}`}
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Header ABOVE grid */}
@@ -151,7 +155,7 @@ export function NarrowSectionLayout({
   return (
     <section
       id={id}
-      className={`relative py-24 lg:py-32 ${bgClass}`}
+      className={`relative ${SECTION_VERTICAL_PADDING} ${SECTION_MIN_HEIGHT} ${bgClass}`}
     >
       <div className="max-w-4xl mx-auto px-6 lg:px-8">
         {(title || subtitle) && (
@@ -177,44 +181,75 @@ export function NarrowSectionLayout({
   );
 }
 
-// Separators
-export function SectionSeparator({ theme = 'romantic_classic' }: { theme?: Theme }) {
-  const styles = useTheme(theme);
+// Separator color mapping (light values for BG blending)
+const SECTION_BG_COLOR: Record<Theme, { default: string; alt: string }> = {
+  romantic_classic: { default: '#ffffff', alt: '#fff1f2' },
+  cute_pastel: { default: '#ffffff', alt: '#fdf7ff' },
+  minimal_modern: { default: '#ffffff', alt: '#f8fafc' },
+  dark_elegant: { default: '#111827', alt: '#1f2937' },
+  soft_pastel: { default: '#ffffff', alt: '#fff1f2' },
+  elegant_rose_gold: { default: '#ffffff', alt: '#fff1f2' },
+  vintage_love_letter: { default: '#fffdf7', alt: '#fff4de' },
+  scrapbook_memories: { default: '#ffffff', alt: '#fffbf3' },
+  wedding_style: { default: '#ffffff', alt: '#fff1f2' },
+  floral_romance: { default: '#ffffff', alt: '#fff1f2' },
+  dreamy_pink: { default: '#ffffff', alt: '#fff1f2' },
+  luxury_gold: { default: '#ffffff', alt: '#fff8eb' },
+  minimal_white: { default: '#ffffff', alt: '#f8fafc' },
+  cute_kawaii: { default: '#ffffff', alt: '#fff1f2' },
+  soft_lavender: { default: '#ffffff', alt: '#f5f3ff' },
+  colorful_celebration: { default: '#ffffff', alt: '#fff7ed' },
+  photo_focus: { default: '#ffffff', alt: '#f8fafc' },
+};
+
+const getSectionBgColor = (theme: Theme, variant: 'default' | 'alt') => {
+  const colors = SECTION_BG_COLOR[theme] || SECTION_BG_COLOR.romantic_classic;
+  return variant === 'alt' ? colors.alt : colors.default;
+};
+
+export function SectionSeparator({
+  theme = 'romantic_classic',
+  prevVariant = 'default',
+  nextVariant = 'alt',
+}: {
+  theme?: Theme;
+  prevVariant?: 'default' | 'alt';
+  nextVariant?: 'default' | 'alt';
+}) {
+  const startColor = getSectionBgColor(theme, prevVariant);
+  const endColor = getSectionBgColor(theme, nextVariant);
+  const iconColor = theme === 'dark_elegant' ? 'text-amber-300' : 'text-rose-500';
+
+  const separatorGradient =
+    startColor === endColor
+      ? `linear-gradient(to bottom, ${startColor} 0%, ${startColor} 100%)`
+      : `linear-gradient(to bottom, ${startColor} 0%, ${startColor} 44%, ${endColor} 56%, ${endColor} 100%)`;
 
   return (
-    <div className="relative py-12 lg:py-16">
-      <div className="absolute inset-x-0 -top-6 flex justify-center items-center">
-        <div 
-          className="px-8 py-3 rounded-3xl bg-gradient-to-r from-rose-100/80 to-pink-100/80 backdrop-blur-xl shadow-2xl ring-2 ring-white/50"
-          style={{ 
-            backgroundColor: theme === 'dark_elegant' ? '#18181b' : '#fff' 
-          }}
-        >
-          <span className="text-2xl md:text-3xl animate-gentle-pulse">
+    <div className="relative z-20 flex justify-center items-center -mt-6 -mb-6 md:-mt-8 md:-mb-8">
+      <div
+        className="w-full max-w-3xl relative z-10 h-20 md:h-24 rounded-xl overflow-hidden py-2 md:py-2"
+        style={{ background: separatorGradient }}
+      >
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-2 bg-white/15 backdrop-blur-sm" />
+        <div className="absolute z-30 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border shadow-lg px-4 py-1.5 bg-white/20 border-white/40 backdrop-blur-sm">
+          <span className={`text-xl ${iconColor} animate-gentle-pulse`}>
             💕
           </span>
         </div>
       </div>
-      
-      <div 
-        className="border-t-2" 
-        style={{ 
-          borderColor: theme === 'dark_elegant' ? '#3f3f46' : '#fce7f3' 
-        }} 
-      />
     </div>
   );
 }
 
 export function GradientSeparator({ theme = 'romantic_classic' }: { theme?: Theme }) {
+  const lineColor = theme === 'dark_elegant' ? '#3f3f46' : '#fce7f3';
   return (
-    <div className="relative py-12">
-      <div 
-        className="h-2 mx-auto w-32 bg-gradient-to-r from-rose-400 via-pink-500 to-rose-400 rounded-full shadow-xl blur-sm opacity-75 animate-pulse-slow"
+    <div className={`relative ${SEPARATOR_VERTICAL_PADDING} flex justify-center`}>
+      <div
+        className="h-2 w-40 rounded-full shadow-xl blur-sm opacity-90"
         style={{
-          background: theme === 'dark_elegant' 
-            ? 'linear-gradient(to right, transparent, #3f3f46, transparent)'
-            : 'linear-gradient(to right, transparent, #fce7f3, transparent)'
+          background: `linear-gradient(to right, transparent, ${lineColor}, transparent)`,
         }}
       />
     </div>
@@ -224,7 +259,7 @@ export function GradientSeparator({ theme = 'romantic_classic' }: { theme?: Them
 export function DotsSeparator({ theme = 'romantic_classic' }: { theme?: Theme }) {
   const colors = theme === 'dark_elegant' ? 'text-amber-400/60' : 'text-rose-400/70';
   return (
-    <div className="relative py-12 flex items-center justify-center">
+    <div className={`relative ${SEPARATOR_VERTICAL_PADDING} flex items-center justify-center`}>
       <div className="flex items-center gap-4">
         <span className={`text-2xl animate-pulse-slow ${colors}`}>✨</span>
         <span className={`text-xl ${colors}`}>•</span>
