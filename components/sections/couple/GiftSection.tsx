@@ -31,7 +31,7 @@ export default function GiftSection({
   const displayGifts = gifts && gifts.length > 0 ? gifts : defaultGifts;
 
   return (
-    <section className="py-20 md:py-24 bg-gradient-to-b from-rose-50/80 to-pink-50/60 backdrop-blur-lg" id="gifts">
+    <section className="relative py-20 md:py-24" id="gifts">
       <div className="max-w-6xl mx-auto px-6 lg:px-8">
         <ScrollReveal animation="fade-up">
           <SectionHeader

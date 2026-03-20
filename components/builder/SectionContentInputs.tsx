@@ -64,6 +64,9 @@ export default function SectionContentInputs({
             placeholder="Share a special birthday message..."
             rows={6}
           />
+          {!section_content?.birthday_message?.content?.trim() && (
+            <p className="text-rose-600 text-xs mt-2">This section will look best with a heartfelt message.</p>
+          )}
         </div>
       )}
 
@@ -77,6 +80,9 @@ export default function SectionContentInputs({
             value={section_content?.birthday_wishes as any}
             onChange={(content) => onSectionContentChange('birthday_wishes', content as any)}
           />
+          {(!section_content?.birthday_wishes?.quotes || section_content.birthday_wishes.quotes.length === 0) && (
+            <p className="text-amber-600 text-xs mt-2">Add at least one wish to make this section visible in preview.</p>
+          )}
         </div>
       )}
 
@@ -128,6 +134,12 @@ export default function SectionContentInputs({
               rows={2}
             />
           </div>
+          {!section_content?.party_details?.location &&
+            !section_content?.party_details?.date &&
+            !section_content?.party_details?.time &&
+            !section_content?.party_details?.dressCode && (
+            <p className="text-amber-600 text-xs mt-2">Fill at least one field so party details display on the site.</p>
+          )}
         </div>
       )}
 
@@ -146,6 +158,9 @@ export default function SectionContentInputs({
             placeholder="List recommended gifts"
             rows={3}
           />
+          {(!section_content?.gift_wishlist?.items || section_content.gift_wishlist.items.length === 0) && (
+            <p className="text-amber-600 text-xs mt-2">Add at least one wishlist item to activate this section.</p>
+          )}
         </div>
       )}
 

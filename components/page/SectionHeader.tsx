@@ -127,30 +127,34 @@ export default function SectionHeader({
 }: SectionHeaderProps) {
   const styles = useTheme(theme);
   const accents = themeAccents[theme] || themeAccents.romantic_classic;
+  
+  // Determine if this is a romantic theme for shimmer effect
+  const romanticThemes = ['romantic_classic', 'elegant_rose_gold', 'wedding_style', 'floral_romance', 'dreamy_pink', 'cute_pastel', 'soft_pastel'];
+  const isRomantic = romanticThemes.includes(theme);
 
   return (
     <div className={`text-center mb-16 lg:mb-24 max-w-3xl mx-auto ${className}`}>
       {/* Icon */}
       {icon && (
-        <div className="inline-flex items-center justify-center mb-6 p-2 rounded-2xl bg-white/80 backdrop-blur-sm shadow-2xl ring-2 ring-offset-4 ring-rose-100/50">
-          <span className={`text-3xl md:text-4xl drop-shadow-2xl ring-2 ring-offset-2 ring-white/50 shadow-lg ${accents.icon}`}>{icon}</span>
+        <div className="inline-flex items-center justify-center mb-4 p-2 rounded-2xl bg-white/90 backdrop-blur-sm shadow-xl ring-2 ring-offset-2 ring-white/70">
+          <span className={`text-4xl md:text-5xl drop-shadow-2xl ${accents.icon}`}>{icon}</span>
         </div>
       )}
 
       {/* Title */}
-      <h2 className={`${styles.heading} text-3xl md:text-4xl lg:text-5xl font-bold leading-tight tracking-tight bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent ${accents.title}`}>
-        {title}
+      <h2 className={`${styles.heading} text-5xl md:text-6xl lg:text-7xl font-black leading-relaxed tracking-tight`}>
+        <span className={`bg-gradient-to-r ${accents.line} bg-clip-text text-transparent`}>{title}</span>
       </h2>
-
-      {/* Decorative line */}
-      <div className={`w-20 h-1.5 mx-auto rounded-full bg-gradient-to-r ${accents.line} mt-4 shadow-lg`} />
 
       {/* Subtitle */}
       {subtitle && (
-        <p className={`mt-6 text-lg md:text-xl font-medium max-w-xl mx-auto text-rose-600/700 ${accents.subtitle}`}>
+        <p className={`section-subtitle mt-5 text-lg md:text-xl lg:text-2xl font-medium leading-relaxed tracking-wide max-w-xl mx-auto ${accents.subtitle}`}>
           {subtitle}
         </p>
       )}
+
+      {/* Section rule - with rose shimmer for romantic themes */}
+      <div className={`mx-auto mt-6 h-1 w-24 rounded-full bg-gradient-to-r ${accents.line} shadow-md ${isRomantic ? 'shimmer-rose' : ''}`} />
     </div>
   );
 }

@@ -25,8 +25,7 @@ const MemoryMap = dynamic(() => import('./MemoryMap'), { ssr: false });
   return (
     <section 
       id="memory-map"
-      className="py-16 px-4"
-      style={{ backgroundColor: colors.background }}
+      className="relative py-16 px-4"
     >
       <div className="max-w-4xl mx-auto">
         <SectionHeader

@@ -186,19 +186,19 @@ export function SectionCompact({
  * Section separator component for manual placement
  */
 export function SectionSeparator({ theme }: { theme?: Theme }) {
+  const borderColor = theme === 'dark_elegant' ? '#3f3f46' : '#fce7f3';
+  const iconColor = theme === 'dark_elegant' ? 'text-amber-300' : 'text-rose-500';
+
   return (
-    <div className="relative py-2">
-      {/* Hearts in the middle */}
-      <div className="absolute left-0 right-0 -top-3 flex justify-center items-center">
-        <div className={theme === 'dark_elegant' ? 'bg-zinc-900 px-3' : 'bg-white px-3'}>
-          <span className="text-rose-300 text-sm">
+    <div className="relative py-8 md:py-10 flex justify-center items-center">
+      <div className="w-full max-w-3xl relative">
+        <div className="h-px w-full rounded-full" style={{ background: `linear-gradient(to right, transparent, ${borderColor}, transparent)` }} />
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/60 shadow-lg px-4 py-1.5 bg-white">
+          <span className={`text-xl ${iconColor} animate-gentle-pulse`}>
             💕
           </span>
         </div>
       </div>
-      
-      {/* Divider */}
-      <div className="border-t border-rose-100 dark:border-zinc-800" />
     </div>
   );
 }

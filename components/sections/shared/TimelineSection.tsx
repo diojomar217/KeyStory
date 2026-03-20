@@ -12,9 +12,10 @@ type Props = {
   theme: Theme;
   template: TimelineTemplate;
   events: TimelineEvent[];
+  variant?: 'default' | 'alt';
 };
 
-export default function TimelineSection({ theme, template, events }: Props) {
+export default function TimelineSection({ theme, template, events, variant = 'default' }: Props) {
   const styles = useTheme(theme);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -406,7 +407,7 @@ export default function TimelineSection({ theme, template, events }: Props) {
   );
 
   return (
-    <section className={`py-16 md:py-24 ${styles.sectionBg}`} id="timeline">
+    <section className="relative py-16 md:py-24" id="timeline">
       <div className="max-w-5xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <ScrollReveal animation="fade-up">

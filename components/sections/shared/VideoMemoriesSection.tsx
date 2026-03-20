@@ -38,11 +38,10 @@ export default function VideoMemoriesSection({ theme, siteType = 'couple', video
   };
 
   if (videos.length === 0) {
-    return (
+  return (
       <section 
         id="video-memories"
-        className="py-16 px-4"
-        style={{ backgroundColor: colors.background }}
+        className="relative py-16 px-4"
       >
         <div className="max-w-4xl mx-auto">
         <SectionHeader
@@ -72,7 +71,6 @@ export default function VideoMemoriesSection({ theme, siteType = 'couple', video
     <section 
       id="video-memories"
       className="py-16 px-4"
-      style={{ backgroundColor: colors.background }}
     >
       <div className="max-w-4xl mx-auto">
         <SectionHeader

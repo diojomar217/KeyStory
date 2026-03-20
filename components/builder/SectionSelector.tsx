@@ -2,7 +2,7 @@
 
 import { Section } from '@/lib/types';
 import { SECTION_TOGGLES } from '@/lib/builder-constants';
-import { getSectionMetadata } from '@/lib/section-registry';
+import { getSectionMetadata, getRelatedSectionRecommendations } from '@/lib/section-registry';
 import { OccasionType } from '@/lib/occasion-registry';
 import React, { useState } from 'react';
 import {
@@ -301,6 +301,10 @@ export default function SectionSelector({ value, onChange, occasion = 'couple' }
     return !info?.required;
   });
 
+  // Recommended sections from current selections
+  const suggestedSections = getRelatedSectionRecommendations(value)
+    .filter((section) => allSections.includes(section));
+
   // Get enabled optional sections from value
   const enabledOptionalSections = value.filter(s => 
     optionalSections.includes(s)
@@ -366,7 +370,12 @@ export default function SectionSelector({ value, onChange, occasion = 'couple' }
 
     // Keep in-app valid sections only (matching current occasion)
     const sanitized = popular.filter((section) => allSections.includes(section));
-    onChange(sanitized);
+
+    // Add related suggestions as part of adaptive defaults
+    const autoSuggestions = getRelatedSectionRecommendations(sanitized)
+      .filter((section) => allSections.includes(section) && !sanitized.includes(section));
+
+    onChange([...sanitized, ...autoSuggestions]);
   };
 
   const handleSelectAll = () => {
@@ -414,6 +423,14 @@ export default function SectionSelector({ value, onChange, occasion = 'couple' }
             </button>
             <button
               type="button"
+              onClick={() => onChange([...value, ...suggestedSections])}
+              disabled={suggestedSections.length === 0}
+              className="text-xs px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-600 hover:bg-emerald-200 transition-colors font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Add Suggestions
+            </button>
+            <button
+              type="button"
               onClick={handleClearAll}
               className="text-xs px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors font-medium"
             >
@@ -427,6 +444,19 @@ export default function SectionSelector({ value, onChange, occasion = 'couple' }
               {showAllSections ? 'Show Less' : 'Show All Sections'}
             </button>
           </div>
+
+          {suggestedSections.length > 0 && (
+            <div className="p-3 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs">
+              <strong>Suggested sections:</strong> {suggestedSections.map((section) => {
+                const info = SECTION_TOGGLES.find(t => t.id === section);
+                return (
+                  <span key={section} className="inline-flex items-center px-2 py-1 mr-2 mt-1 rounded-full bg-white text-emerald-600 border border-emerald-200">
+                    {info?.icon} {info?.label}
+                  </span>
+                );
+              })}
+            </div>
+          )}
 
           {/* Drag & Drop Area */}
           <div className="bg-slate-50/50 rounded-2xl p-4 border-2 border-dashed border-slate-200">

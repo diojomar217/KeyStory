@@ -19,7 +19,6 @@ export default function PolaroidGallerySection({ theme, photos }: PolaroidGaller
   return (
     <section 
       className="py-16 px-4"
-      style={{ backgroundColor: colors.background }}
     >
       <div className="max-w-6xl mx-auto">
         <h2 

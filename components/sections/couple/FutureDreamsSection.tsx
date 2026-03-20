@@ -32,7 +32,7 @@ export default function FutureDreamsSection({
   const displayDreams = dreams && dreams.length > 0 ? dreams : defaultDreams;
 
   return (
-    <section className={`py-20 md:py-24 ${variant === 'alt' ? 'bg-gradient-to-b from-slate-50/80 to-white/60' : 'bg-gradient-to-b from-rose-50/80 to-pink-50/60'} backdrop-blur-lg`} id="future-dreams">
+    <section className="relative py-20 md:py-24" id="future-dreams">
       <div className="max-w-6xl mx-auto px-6 lg:px-8">
         <ScrollReveal animation="fade-up">
           <SectionHeader

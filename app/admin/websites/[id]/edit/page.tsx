@@ -208,6 +208,7 @@ const [config, setConfig] = useState<SiteConfig>({
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [passwordEnabled, setPasswordEnabled] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -538,6 +539,9 @@ const [config, setConfig] = useState<SiteConfig>({
     }
 
     setLoading(true);
+    setError(null);
+    setWarning(null);
+    setSuccess(false);
 
     let allPhotos = [...form.existingPhotos];
     
@@ -610,11 +614,30 @@ const [config, setConfig] = useState<SiteConfig>({
         }),
       });
 
+      const resultData = await res.json().catch((err) => {
+        console.error('Failed to parse server response as JSON', err);
+        return null;
+      });
+
       if (res.ok) {
+        if (resultData?.warnings?.length) {
+          setWarning(`Update completed with warnings: ${resultData.warnings.join('; ')}`);
+        } else {
+          setWarning(null);
+        }
         setSuccess(true);
       } else {
-        const data = await res.json();
-        throw new Error(data.message || 'Failed to update');
+        let errorMessage = res.statusText || 'Server error (500)';
+
+        if (resultData) {
+          errorMessage = resultData?.message || resultData?.error || errorMessage;
+          if (resultData?.warnings?.length) {
+            setWarning(`Upload warnings: ${resultData.warnings.join('; ')}`);
+          }
+        }
+
+        setError(`Update failed: ${errorMessage}`);
+        return;
       }
     } catch (err: any) {
       console.error(err);
@@ -1103,6 +1126,12 @@ const [config, setConfig] = useState<SiteConfig>({
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg">
           {error}
+        </div>
+      )}
+
+      {warning && (
+        <div className="p-4 bg-amber-50 border border-amber-200 text-amber-700 rounded-lg">
+          {warning}
         </div>
       )}
 

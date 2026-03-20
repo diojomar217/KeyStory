@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { Theme, GuestMessage, GuestMessageRecord } from '@/lib/types';
+import { useTheme } from '../../builder/ThemeWrapper';
 import { GridSectionLayout } from '../../page/SectionLayouts';
 import ScrollReveal from '../../ui/ScrollReveal';
 
@@ -47,6 +48,7 @@ export default function GuestMessagesSection({
     ? 'Birthday wishes from friends and family'
     : 'Messages from friends and family';
   const sectionIcon = siteType === 'birthday' ? '🥳' : '💬';
+  const styles = useTheme(theme);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -110,15 +112,16 @@ export default function GuestMessagesSection({
 
   return (
     <GridSectionLayout
+      id="guest-messages"
       title={sectionTitle}
       subtitle={sectionSubtitle}
       icon={sectionIcon}
       theme={theme}
       variant={variant}
-      id="guest-messages"
+      bgClass={variant === 'alt' ? styles.sectionBgAlt : styles.sectionBg}
       gridCols="grid-cols-1 xl:grid-cols-[1.9fr_1fr]"
       gap="gap-6"
-    >
+      >
       <div className="space-y-4">
         {guestMessages.length === 0 ? (
           <div className="bg-white dark:bg-zinc-800 rounded-2xl border border-rose-100 dark:border-zinc-700 p-6">

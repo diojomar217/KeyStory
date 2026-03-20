@@ -20,6 +20,9 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
   const styles = useTheme(theme);
   const [currentIndex, setCurrentIndex] = useState(0);
   
+  const blurPlaceholder = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxIiBoZWlnaHQ9IjEiPjxzdHlsZT5yZWN0IHdpZHRoOjEwMCU7IGhlaWdodDo1MDAlOyBmaWxsOiNkZGRkZGQ7PC9zdHlsZT48L3N2Zz4=';
+  const isShortGallery = photos.length <= 3;
+
   // Lightbox state
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -77,6 +80,10 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
               fill
               className="object-cover"
               sizes="(max-width: 768px) 50vw, 33vw"
+              quality={80}
+              placeholder="blur"
+              blurDataURL={blurPlaceholder}
+              loading={idx < 2 ? 'eager' : 'lazy'}
               priority={idx < 4}
             />
             {/* Overlay on hover */}
@@ -105,6 +112,10 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
               alt={`Photo ${currentIndex + 1}`}
               fill
               className="object-cover gallery-zoom-hover"
+              quality={80}
+              placeholder="blur"
+              blurDataURL={blurPlaceholder}
+              loading="lazy"
               priority
             />
           </div>
@@ -178,9 +189,13 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
                 fill
                 className="object-cover gallery-zoom-hover"
                 sizes="160px"
+                quality={80}
+                placeholder="blur"
+                blurDataURL={blurPlaceholder}
+                loading={idx < 2 ? 'eager' : 'lazy'}
               />
             </div>
-            <div className="text-center mt-2 text-gray-400 text-sm font-handwriting">
+            <div className="text-center mt-2 text-slate-700 dark:text-slate-200 text-sm font-handwriting">
               #{idx + 1}
             </div>
           </div>
@@ -190,7 +205,7 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
   );
 
   return (
-    <section className={`py-16 md:py-24 ${styles.sectionBg}`} id="gallery">
+    <section className="relative py-16 md:py-24" id="gallery">
       <div className="max-w-6xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <ScrollReveal animation="fade-up">
@@ -201,7 +216,31 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
             theme={theme}
           />
         </ScrollReveal>
-        
+
+        {/* CTA for short gallery */}
+        {isShortGallery && (
+          <div className="mx-auto mb-8 max-w-3xl px-2">
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white/80 p-5 text-center shadow-sm">
+              <p className="text-sm font-semibold text-slate-700">Looks like your gallery is just getting started.</p>
+              <p className="mt-1 text-xs text-slate-500">Add a few more moments to make your story shine.</p>
+              <div className="mt-4 flex flex-wrap justify-center gap-3">
+                <button
+                  onClick={(e) => e.preventDefault()}
+                  className="rounded-lg bg-teal-500 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-teal-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
+                >
+                  Add memory
+                </button>
+                <button
+                  onClick={(e) => e.preventDefault()}
+                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                >
+                  Edit this piece
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Gallery Content */}
         {template === 'grid' && renderGrid()}
         {template === 'carousel' && renderCarousel()}

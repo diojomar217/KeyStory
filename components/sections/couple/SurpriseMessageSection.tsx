@@ -27,7 +27,7 @@ export default function SurpriseMessageSection({
   const [isRevealed, setIsRevealed] = useState(false);
 
   return (
-    <section className="py-24 lg:py-32 bg-gradient-to-b from-rose-50/80 to-pink-50/60 backdrop-blur-lg" id="surprise">
+    <section className="relative py-24 lg:py-32" id="surprise">
       <div className="max-w-4xl mx-auto px-6 lg:px-8">
         <ScrollReveal animation="fade-up">
           <SectionHeader

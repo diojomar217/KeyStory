@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, ReactNode } from 'react';
 interface ScrollRevealProps {
   children: ReactNode;
   className?: string;
-  animation?: 'fade-up' | 'fade' | 'scale';
+  animation?: 'fade-up' | 'fade' | 'scale' | 'tilt';
   delay?: number;
   threshold?: number;
   once?: boolean;
@@ -62,6 +62,8 @@ export default function ScrollReveal({
         return 'reveal-fade';
       case 'scale':
         return 'reveal-scale';
+      case 'tilt':
+        return 'reveal-tilt';
       case 'fade-up':
       default:
         return 'reveal';

@@ -53,7 +53,7 @@ export default function ReasonsILoveYouSection({
   };
 
   return (
-    <section id="reasons-love-you" className={'py-24 lg:py-32 ' + (variant === 'alt' ? 'bg-gradient-to-b from-slate-50/80 to-white/60 backdrop-blur-xl' : 'bg-gradient-to-b from-pink-50/70 to-rose-50/50 backdrop-blur-xl')}>
+    <section id="reasons-love-you" className="relative py-24 lg:py-32">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <SectionHeader
           icon="💖"

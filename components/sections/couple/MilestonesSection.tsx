@@ -32,7 +32,6 @@ export default function MilestonesSection({ theme, milestones = defaultMilestone
   return (
     <section 
       className="py-16 px-4"
-      style={{ backgroundColor: colors.background }}
     >
       <div className="max-w-4xl mx-auto">
         <h2 

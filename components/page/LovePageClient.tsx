@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Theme, HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, SectionContentMap, GalleryLayout, Section, GuestMessage, GuestMessageRecord } from '@/lib/types';
 import BackgroundDecorations from './BackgroundDecorations';
-import ThemeWrapper from '../builder/ThemeWrapper';
+import ThemeWrapper, { useTheme } from '../builder/ThemeWrapper';
+import { getSectionBgClass, getSectionVariant } from '@/lib/section-utils';
 import PasswordGate from '../site/PasswordGate';
 import HomeSection from './HomeSection';
 import { getAvailableSections } from '@/lib/section-registry';
@@ -49,7 +50,7 @@ import {
 } from '@/lib/section-migration';
 
 // Import section layouts and separators
-import { SectionSeparator } from './SectionLayouts';
+import { SectionSeparator, GradientSeparator, DotsSeparator } from './SectionLayouts';
 
 type Props = {
   theme: Theme;
@@ -108,6 +109,9 @@ export default function LovePageClient({
   const [showOpening, setShowOpening] = useState(true);
   const [isRevealing, setIsRevealing] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
+
+  // Theme styles for alternating section backgrounds
+  const styles = useTheme(theme);
 
   // Use registry-based allowed sections to make site type rules data-driven
   const allowedSections = getAvailableSections(siteType);
@@ -227,15 +231,32 @@ export default function LovePageClient({
   // Show gallery if it's enabled OR if polaroid_gallery exists (for backward compat)
   const shouldShowGallery = hasGallery || hasPolaroidGallery;
 
+  // Section divider style configuration
+  const sectionDividerStyle = (config?.section_divider_style as 'none' | 'standard' | 'gradient' | 'dots') || 'standard';
+
+  const renderSectionSeparator = (
+    prevVariant: 'default' | 'alt',
+    nextVariant: 'default' | 'alt',
+    key?: string
+  ) => {
+    if (sectionDividerStyle === 'none') return null;
+    if (sectionDividerStyle === 'gradient') return <GradientSeparator key={key || 'section-sep'} theme={theme} />;
+    if (sectionDividerStyle === 'dots') return <DotsSeparator key={key || 'section-sep'} theme={theme} />;
+    return (
+      <SectionSeparator
+        key={key || 'section-sep'}
+        theme={theme}
+        prevVariant={prevVariant}
+        nextVariant={nextVariant}
+      />
+    );
+  };
+
   // Main content rendering with alternating backgrounds
   const renderMainContent = () => {
-    const getSectionVariant = (index: number) => {
-      return index % 2 === 1 ? 'alt' : 'default';
-    };
+    const getSectionVariantLocal = getSectionVariant;
 
-    const renderSection = (section: Section, index: number) => {
-      const variant = getSectionVariant(index);
-
+    const renderSection = (section: Section, index: number, variant: 'default' | 'alt') => {
       switch (section) {
         case 'home':
           return null; // Home is rendered above
@@ -272,6 +293,7 @@ export default function LovePageClient({
               theme={theme}
               template={timelineTemplate}
               events={mergedTimelineEvents}
+              variant={variant}
             />
           );
 
@@ -335,6 +357,7 @@ export default function LovePageClient({
               key="anniversary_countdown"
               theme={theme}
               anniversaryDate={anniversaryDate}
+              variant={variant}
             />
           );
 
@@ -527,8 +550,34 @@ export default function LovePageClient({
               />
             )}
 
-            {/* Render remaining sections in selected order */}
-            {remainingSections.map((section, index) => renderSection(section, index))}
+            {/* Render remaining sections in selected order (with separators only between rendered sections) */}
+            {(() => {
+              const renderedNodes: React.ReactNode[] = [];
+              let renderedSectionCount = 0;
+
+              remainingSections.forEach((section) => {
+                const variant = getSectionVariantLocal(renderedSectionCount);
+                const sectionNode = renderSection(section, renderedSectionCount, variant);
+                if (!sectionNode) return;
+
+                // Add separator before new section only when previous section exists
+                if (renderedSectionCount > 0) {
+                  const prevVariant = getSectionVariantLocal(renderedSectionCount - 1);
+                  renderedNodes.push(renderSectionSeparator(prevVariant, variant, `separator-${section}`));
+                }
+
+                const sectionWrapperClass = getSectionBgClass(theme, renderedSectionCount);
+                renderedNodes.push(
+                  <div key={`section-wrapper-${section}`} className={sectionWrapperClass}>
+                    {sectionNode}
+                  </div>
+                );
+
+                renderedSectionCount += 1;
+              });
+
+              return renderedNodes;
+            })()}
 
           {/* 16. Memory Card Section - Premium Keepsake - Only render if qr_keepsake is enabled */}
           {/* Backward compatibility: if sections array is missing, check for qrCodeUrl */}
