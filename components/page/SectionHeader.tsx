@@ -127,6 +127,10 @@ export default function SectionHeader({
 }: SectionHeaderProps) {
   const styles = useTheme(theme);
   const accents = themeAccents[theme] || themeAccents.romantic_classic;
+  
+  // Determine if this is a romantic theme for shimmer effect
+  const romanticThemes = ['romantic_classic', 'elegant_rose_gold', 'wedding_style', 'floral_romance', 'dreamy_pink', 'cute_pastel', 'soft_pastel'];
+  const isRomantic = romanticThemes.includes(theme);
 
   return (
     <div className={`text-center mb-16 lg:mb-24 max-w-3xl mx-auto ${className}`}>
@@ -138,19 +142,19 @@ export default function SectionHeader({
       )}
 
       {/* Title */}
-      <h2 className={`${styles.heading} text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight`}>
+      <h2 className={`${styles.heading} text-5xl md:text-6xl lg:text-7xl font-black leading-relaxed tracking-tight`}>
         <span className={`bg-gradient-to-r ${accents.line} bg-clip-text text-transparent`}>{title}</span>
       </h2>
 
       {/* Subtitle */}
       {subtitle && (
-        <p className={`mt-5 text-lg md:text-xl lg:text-2xl font-medium leading-relaxed tracking-wide max-w-xl mx-auto ${accents.subtitle}`}> 
+        <p className={`section-subtitle mt-5 text-lg md:text-xl lg:text-2xl font-medium leading-relaxed tracking-wide max-w-xl mx-auto ${accents.subtitle}`}>
           {subtitle}
         </p>
       )}
 
-      {/* Section rule */}
-      <div className={`mx-auto mt-6 h-1 w-24 rounded-full bg-gradient-to-r ${accents.line} shadow-md`} />
+      {/* Section rule - with rose shimmer for romantic themes */}
+      <div className={`mx-auto mt-6 h-1 w-24 rounded-full bg-gradient-to-r ${accents.line} shadow-md ${isRomantic ? 'shimmer-rose' : ''}`} />
     </div>
   );
 }
