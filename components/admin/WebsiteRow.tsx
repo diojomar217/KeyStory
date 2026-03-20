@@ -6,6 +6,8 @@ import WebsiteActions from './WebsiteActions';
 interface WebsiteRowProps {
   order: Site;
   onDelete: (id: string) => void;
+  selected: boolean;
+  onSelect: (checked: boolean) => void;
 }
 
 // Icons for placeholder
@@ -15,7 +17,7 @@ const HeartIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export default function WebsiteRow({ order, onDelete }: WebsiteRowProps) {
+export default function WebsiteRow({ order, onDelete, selected, onSelect }: WebsiteRowProps) {
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -72,10 +74,19 @@ export default function WebsiteRow({ order, onDelete }: WebsiteRowProps) {
     'bg-slate-100 text-slate-700';
 
   const daysRemaining = expiresAt ? Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : undefined;
+  const isExpiringSoon = daysRemaining !== undefined && daysRemaining >= 0 && daysRemaining <= 7;
   const expiresLabel = expiresAt ? `${formatDate(expiresAt.toISOString())}${daysRemaining !== undefined ? ` (${daysRemaining >= 0 ? `${daysRemaining}d` : `${Math.abs(daysRemaining)}d overdue`})` : ''}` : '-' ;
 
   return (
     <tr className="hover:bg-slate-50 transition-colors duration-150">
+      <td className="px-4 py-3">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={(e) => onSelect(e.target.checked)}
+          className="h-4 w-4 accent-rose-600"
+        />
+      </td>
       {/* Cover Photo */}
       <td className="px-4 py-3">
         <div className="w-12 h-12 rounded-md overflow-hidden bg-slate-100 flex-shrink-0">
@@ -130,7 +141,19 @@ export default function WebsiteRow({ order, onDelete }: WebsiteRowProps) {
 
       {/* Expires At */}
       <td className="px-4 py-3 text-slate-500">
-        {expiresAt ? expiresLabel : '—'}
+        <div className="flex items-center gap-2">
+          <span>{expiresAt ? expiresLabel : '—'}</span>
+          {isExpiringSoon && statusLabel === 'Active' && (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-amber-100 text-amber-800">
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 8v4" />
+                <circle cx="12" cy="16" r="1" />
+                <path d="M21 12A9 9 0 1 1 3 12" />
+              </svg>
+              expiring soon
+            </span>
+          )}
+        </div>
       </td>
 
       {/* Created Date */}

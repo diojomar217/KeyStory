@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { SiteConfig, CreateOrderPayload } from '@/lib/types';
+import { calculateExpirationDate, getDaysRemaining, getExpirationLabel, ExpirationMode } from '@/lib/expiration-utils';
 import { 
   WIZARD_STEPS, 
   TOTAL_STEPS, 
@@ -97,6 +98,21 @@ export default function CreateWebsitePage() {
   const [passwordEnabled, setPasswordEnabled] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
+  const [expirationMode, setExpirationMode] = useState<'3_months'|'6_months'|'1_year'|'custom'>('6_months');
+  const [customExpirationDate, setCustomExpirationDate] = useState<string>('');
+
+  const formatSelectedExpiration = () => {
+    try {
+      const expires = calculateExpirationDate(expirationMode, customExpirationDate || undefined);
+      const days = getDaysRemaining(expires);
+      return `Active until ${getExpirationLabel(expires)}${days !== null ? ` (${days} days remaining)` : ''}`;
+    } catch (error: unknown) {
+      const msg = error && typeof error === 'object' && 'message' in error && typeof (error as any).message === 'string'
+        ? (error as any).message
+        : 'Enter a valid expiration date.';
+      return msg;
+    }
+  };
 
   const router = useRouter();
 
@@ -324,11 +340,20 @@ export default function CreateWebsitePage() {
         delete normalizedConfig.password;
       }
 
+      // Compute expiration date
+      let expiresAt: string;
+      try {
+        expiresAt = calculateExpirationDate(expirationMode, customExpirationDate || undefined);
+      } catch (err: any) {
+        throw new Error(err?.message || 'Invalid expiration date');
+      }
+
       const res = await fetch('/api/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          expires_at: expiresAt,
           photos: photosBase64,
           config: normalizedConfig,
           password_input: form.password_input,
@@ -503,6 +528,41 @@ export default function CreateWebsitePage() {
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
                   onChange={handleChange}
                 />
+              </div>
+
+              <div className="mt-6 bg-white border border-slate-200 rounded-xl p-4">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">Hosting Duration</h3>
+                <div className="grid grid-cols-1 gap-2">
+                  {(['3_months','6_months','1_year','custom'] as ExpirationMode[]).map((mode) => (
+                    <label key={mode} className="flex items-center gap-3 p-2 border rounded-lg cursor-pointer">
+                      <input
+                        type="radio"
+                        name="expiration_mode"
+                        checked={expirationMode === mode}
+                        onChange={() => setExpirationMode(mode)}
+                        className="h-4 w-4"
+                      />
+                      <span className="text-sm text-slate-700">
+                        {mode === '3_months' && '3 Months'}
+                        {mode === '6_months' && '6 Months'}
+                        {mode === '1_year' && '1 Year'}
+                        {mode === 'custom' && 'Custom Expiration Date'}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                {expirationMode === 'custom' && (
+                  <div className="mt-2">
+                    <input
+                      type="date"
+                      value={customExpirationDate}
+                      onChange={(e) => setCustomExpirationDate(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg"
+                      min={new Date().toISOString().slice(0, 10)}
+                    />
+                  </div>
+                )}
+                <p className="text-xs mt-2 text-slate-500">{formatSelectedExpiration()}</p>
               </div>
 
               <div className="mt-6 bg-white border border-slate-200 rounded-xl p-4">

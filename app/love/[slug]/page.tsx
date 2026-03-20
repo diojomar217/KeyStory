@@ -155,6 +155,7 @@ export default async function LovePage({ params }: PageProps) {
   const partnerName = config?.people?.secondary || data.partner_name || '';
   const specialDateVal = config?.dates?.special_date || data.specialDate || data.anniversary_date || '';
   const message = config?.message || data.message || '';
+  const heroCoverPhotoUrl = config?.hero?.coverPhotoUrl || null;
   const songLink = config?.media?.song_link || data.song_link || '';
   const songAutoplay = config?.media?.song_autoplay ?? (data as any).song_autoplay ?? false;
 
@@ -177,6 +178,7 @@ export default async function LovePage({ params }: PageProps) {
         coverPhotoIndex={coverPhotoIndex}
         songLink={songLink}
         songAutoplay={songAutoplay}
+        heroCoverPhotoUrl={heroCoverPhotoUrl}
         qrCodeUrl={data.qr_code_url}
         qrDataUrl={qrDataUrl}
         timelineEvents={timelineEvents}

@@ -208,6 +208,12 @@ export interface SiteConfig {
     showNames?: boolean;
   };
 
+  // Dedicated hero cover photo settings (new)
+  hero?: {
+    coverPhotoUrl?: string;
+    publicId?: string;
+  };
+
   // Preset information selected during create flow
   preset?: {
     id: string;
@@ -283,6 +289,7 @@ export interface CreateOrderPayload {
   partner_name?: string;
   anniversary_date?: string;
   password_input?: string;
+  expires_at?: string;
 }
 
 // Admin Sidebar Types

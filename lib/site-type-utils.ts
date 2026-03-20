@@ -168,6 +168,25 @@ export const resolveDecorations = (siteType: OccasionType): DecoratorSet => {
   }
 };
 
+export const resolveHeroCoverPhoto = (
+  config: { hero?: { coverPhotoUrl?: string }; cover_photo_index?: number },
+  photos: string[] = []
+): string | null => {
+  if (config?.hero?.coverPhotoUrl) {
+    return config.hero.coverPhotoUrl;
+  }
+
+  if (typeof config?.cover_photo_index === 'number' && photos[config.cover_photo_index]) {
+    return photos[config.cover_photo_index];
+  }
+
+  if (photos.length > 0) {
+    return photos[0];
+  }
+
+  return null;
+};
+
 export const resolveHeroConfig = (
   siteType: OccasionType,
   participants: Participant[] = [],

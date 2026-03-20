@@ -78,6 +78,7 @@ interface OrderRequest {
   photos?: string[];
   config?: SiteConfig;
   password_input?: string;
+  expires_at?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -173,12 +174,22 @@ export async function POST(req: NextRequest) {
     };
 
     siteConfig = await normalizePasswordConfig(siteConfig, data.password_input);
+    let expiresAt = addMonths(new Date(), DEFAULT_HOSTING_MONTHS);
+    if (data.expires_at) {
+      const parsed = new Date(data.expires_at);
+      if (!Number.isNaN(parsed.getTime()) && parsed > new Date()) {
+        expiresAt = parsed.toISOString();
+      } else {
+        return NextResponse.json({ success: false, message: 'Invalid expires_at' }, { status: 400 });
+      }
+    }
+
     const insertObj: Partial<Site> = {
       slug,
       website_name,
       site_type: occasion,
       status: 'active',
-      expires_at: addMonths(new Date(), DEFAULT_HOSTING_MONTHS),
+      expires_at: expiresAt,
       archived_at: null,
       qr_code_url: qrCodeUrl,
       config: siteConfig,

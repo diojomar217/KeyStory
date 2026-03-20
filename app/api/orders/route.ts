@@ -26,11 +26,21 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: true, order: data });
     }
 
-    // Otherwise, fetch all sites
-    const { data, error } = await supabase
-      .from('sites')
-      .select('*')
-      .order('created_at', { ascending: false });
+    // Otherwise, fetch all sites (optionally filtered by status)
+    const status = searchParams.get('status')?.toLowerCase();
+    let query = supabase.from('sites').select('*');
+
+    if (status) {
+      if (status === 'archived') {
+        query = query.eq('status', 'archived');
+      } else if (status === 'expired') {
+        query = query.eq('status', 'expired');
+      } else if (status === 'active') {
+        query = query.not('status', 'in', '(archived,expired)');
+      }
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
       console.error('Failed to fetch orders:', error);

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import ThemeSelector from '@/components/builder/ThemeSelector';
 import SectionSelector from '@/components/builder/SectionSelector';
+import { calculateExpirationDate, getDaysRemaining, getExpirationLabel, ExpirationMode } from '@/lib/expiration-utils';
 import TemplateSelector from '@/components/builder/TemplateSelector';
 import TimelineEditor from '@/components/builder/TimelineEditor';
 import SectionContentInputs from '@/components/builder/SectionContentInputs';
@@ -26,6 +27,7 @@ type LocalForm = {
   occasion: 'couple' | 'birthday';
   participants: { id: string; name: string; role?: string }[];
   password_input?: string;
+  expires_at?: string;
 };
 
 const validateStep = (
@@ -205,6 +207,22 @@ const [config, setConfig] = useState<SiteConfig>({
   const [passwordEnabled, setPasswordEnabled] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const [expirationMode, setExpirationMode] = useState<'3_months'|'6_months'|'1_year'|'custom'>('6_months');
+  const [customExpirationDate, setCustomExpirationDate] = useState('');
+
+  const formatSelectedExpiration = () => {
+    try {
+      const expires = calculateExpirationDate(expirationMode, customExpirationDate || undefined);
+      const days = getDaysRemaining(expires);
+      return `Active until ${getExpirationLabel(expires)}${days !== null ? ` (${days} days remaining)` : ''}`;
+    } catch (error: unknown) {
+      const msg = error && typeof error === 'object' && 'message' in error && typeof (error as any).message === 'string'
+        ? (error as any).message
+        : 'Enter a valid expiration date.';
+      return msg;
+    }
+  };
+
   useEffect(() => {
     if (id) {
       fetchOrder();
@@ -238,6 +256,30 @@ const [config, setConfig] = useState<SiteConfig>({
           ? 'birthday'
           : 'couple';
 
+        let computedMode: '3_months'|'6_months'|'1_year'|'custom' = '6_months';
+        let computedCustomDate = '';
+
+        if (site.expires_at) {
+          const now = new Date();
+          const expires = new Date(site.expires_at);
+          if (!Number.isNaN(expires.getTime()) && expires > now) {
+            const monthsDiff = (expires.getFullYear() - now.getFullYear()) * 12 + (expires.getMonth() - now.getMonth());
+            if (monthsDiff <= 3) {
+              computedMode = '3_months';
+            } else if (monthsDiff <= 6) {
+              computedMode = '6_months';
+            } else if (monthsDiff <= 12) {
+              computedMode = '1_year';
+            } else {
+              computedMode = 'custom';
+              computedCustomDate = expires.toISOString().slice(0, 10);
+            }
+          } else {
+            computedMode = 'custom';
+            computedCustomDate = site.expires_at || '';
+          }
+        }
+
         setForm({
           website_name: site.website_name || site.slug || '',
           customer_name: customerName,
@@ -256,7 +298,11 @@ const [config, setConfig] = useState<SiteConfig>({
             { id: 'partner', name: partnerName, role: 'partner' },
           ],
           password_input: '',
+          expires_at: site.expires_at || undefined,
         });
+
+        setExpirationMode(computedMode);
+        setCustomExpirationDate(computedCustomDate);
 
         setPhotoPreviews(site.photos || []);
 
@@ -435,6 +481,13 @@ const [config, setConfig] = useState<SiteConfig>({
         delete normalizedConfig.password;
       }
 
+      let expiresAt = form.expires_at || '';
+      try {
+        expiresAt = calculateExpirationDate(expirationMode, customExpirationDate || undefined);
+      } catch (err: any) {
+        throw new Error(err?.message || 'Invalid expiration date');
+      }
+
       const res = await fetch('/api/admin', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -454,6 +507,7 @@ const [config, setConfig] = useState<SiteConfig>({
           photos: allPhotos,
           config: normalizedConfig,
           password_input: form.password_input,
+          expires_at: expiresAt,
         }),
       });
 
@@ -527,6 +581,41 @@ const [config, setConfig] = useState<SiteConfig>({
                   className="w-full px-4 py-3 rounded-lg border border-slate-300 text-slate-900 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
                   onChange={handleChange}
                 />
+              </div>
+
+              <div className="mt-4 bg-white border border-slate-200 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-slate-700 mb-2">Hosting Duration</h3>
+                <div className="grid grid-cols-1 gap-2">
+                  {(['3_months','6_months','1_year','custom'] as ExpirationMode[]).map((mode) => (
+                    <label key={mode} className="flex items-center gap-3 p-2 border rounded-lg cursor-pointer">
+                      <input
+                        type="radio"
+                        name="expiration_mode"
+                        checked={expirationMode === mode}
+                        onChange={() => setExpirationMode(mode)}
+                        className="h-4 w-4"
+                      />
+                      <span className="text-sm text-slate-700">
+                        {mode === '3_months' && '3 Months'}
+                        {mode === '6_months' && '6 Months'}
+                        {mode === '1_year' && '1 Year'}
+                        {mode === 'custom' && 'Custom Expiration Date'}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                {expirationMode === 'custom' && (
+                  <div className="mt-2">
+                    <input
+                      type="date"
+                      value={customExpirationDate}
+                      onChange={(e) => setCustomExpirationDate(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg"
+                      min={new Date().toISOString().slice(0, 10)}
+                    />
+                  </div>
+                )}
+                <p className="text-xs mt-2 text-slate-500">{formatSelectedExpiration()}</p>
               </div>
 
               <div className="mt-4 bg-white border border-slate-200 rounded-lg p-4">

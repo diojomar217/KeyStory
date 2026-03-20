@@ -14,6 +14,7 @@ export default function ArchivedSitesPage() {
   const [deletingName, setDeletingName] = useState<string>('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired' | 'archived'>('archived');
 
   useEffect(() => {
     fetchArchivedSites();
@@ -91,7 +92,15 @@ export default function ArchivedSitesPage() {
           />
         </div>
       ) : (
-        <WebsitesTable orders={sites} onDelete={handleDelete} searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+        <WebsitesTable
+          orders={sites}
+          onDelete={handleDelete}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          onRefresh={fetchArchivedSites}
+        />
       )}
 
       <ConfirmDeleteModal
