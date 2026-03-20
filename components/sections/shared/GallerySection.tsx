@@ -164,23 +164,17 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
               ${styles.card} p-3 pb-8 rounded-sm shadow-xl 
               transform hover:-translate-y-2 hover:rotate-1 
               transition-all duration-300 cursor-pointer group
-              ${idx === 0 && coverPhotoIndex !== undefined && coverPhotoIndex > 0 ? 'ring-4 ring-rose-400/30 scale-110 z-10' : ''}
             `}
             style={{
               backgroundColor: '#fff',
               transform: `rotate(${(idx % 5 - 2) * 2}deg)`,
+              border: '1px solid rgba(148,163,184,0.35)',
             }}
           >
-            {/* Cover Badge */}
-            {idx === 0 && coverPhotoIndex !== undefined && coverPhotoIndex > 0 && (
-              <div className="absolute -top-2 -right-2 px-2 py-1 bg-rose-500 text-white text-xs font-medium rounded-full">
-                Cover
-              </div>
-            )}
             <div className="relative w-32 h-32 md:w-40 md:h-40 overflow-hidden rounded-sm">
               <Image
                 src={photo}
-                alt={`Photo ${idx + 1}`}
+                alt={idx === 0 ? 'Cover photo' : `Photo ${idx + 1}`}
                 fill
                 className="object-cover gallery-zoom-hover"
                 sizes="160px"

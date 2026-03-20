@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Theme, HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, SectionContentMap, GalleryLayout, Section } from '@/lib/types';
+import { Theme, HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, SectionContentMap, GalleryLayout, Section, GuestMessage, GuestMessageRecord } from '@/lib/types';
 import BackgroundDecorations from './BackgroundDecorations';
 import ThemeWrapper from '../builder/ThemeWrapper';
+import PasswordGate from '../site/PasswordGate';
 import HomeSection from './HomeSection';
 import { getAvailableSections } from '@/lib/section-registry';
 import GallerySection from '../sections/shared/GallerySection';
@@ -66,6 +67,7 @@ type Props = {
   timelineEvents: TimelineEvent[];
   sectionContent?: SectionContentMap;
   slug?: string;
+  approvedGuestMessages?: GuestMessageRecord[];
 };
 
 export default function LovePageClient({
@@ -88,6 +90,7 @@ export default function LovePageClient({
   qrDataUrl,
   timelineEvents,
   sectionContent,
+  approvedGuestMessages,
   songAutoplay = false,
   slug,
 }: Props) {
@@ -96,6 +99,7 @@ export default function LovePageClient({
   // Romantic opening state
   const [showOpening, setShowOpening] = useState(true);
   const [isRevealing, setIsRevealing] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(false);
 
   // Use registry-based allowed sections to make site type rules data-driven
   const allowedSections = getAvailableSections(siteType);
@@ -109,6 +113,8 @@ export default function LovePageClient({
   const hasTimeline = activeSections.includes('timeline');
   const hasSong = !!songLink;
 
+  const passwordEnabled = config?.password?.enabled === true;
+  const passwordHash = config?.password?.hash;
   // Check localStorage on mount to determine if we should skip the opening
   useEffect(() => {
     if (slug) {
@@ -122,6 +128,49 @@ export default function LovePageClient({
       // If no slug, skip opening
       setShowOpening(false);
     }
+  }, [slug]);
+
+  useEffect(() => {
+    if (!passwordEnabled) {
+      setIsUnlocked(true);
+      return;
+    }
+
+    if (!slug || !passwordHash) {
+      setIsUnlocked(false);
+      return;
+    }
+
+    const storedUnlocked = typeof window !== 'undefined' ? window.localStorage.getItem(`unlocked_${slug}`) : null;
+    const storedHash = typeof window !== 'undefined' ? window.localStorage.getItem(`unlocked_hash_${slug}`) : null;
+
+    if (storedUnlocked === 'true' && storedHash === passwordHash) {
+      setIsUnlocked(true);
+    } else {
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(`unlocked_${slug}`);
+        window.localStorage.removeItem(`unlocked_hash_${slug}`);
+      }
+      setIsUnlocked(false);
+    }
+  }, [slug, passwordEnabled, passwordHash]);
+
+  useEffect(() => {
+    if (!slug) return;
+
+    if (typeof window === 'undefined') return;
+
+    const sessionKey = `analytics_page_viewed_${slug}`;
+    if (window.sessionStorage.getItem(sessionKey)) return;
+
+    window.sessionStorage.setItem(sessionKey, 'true');
+    fetch('/api/analytics/event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug, event_type: 'page_view', source: 'site' }),
+    }).catch((err) => {
+      console.warn('Analytics page_view tracking failed:', err);
+    });
   }, [slug]);
 
   // Handle reveal - called when user clicks the open button
@@ -319,6 +368,8 @@ export default function LovePageClient({
               theme={theme}
               siteType={siteType}
               messages={sectionContent?.guest_messages?.messages}
+              approvedMessages={approvedGuestMessages}
+              slug={slug}
               variant={variant}
             />
           );
@@ -372,6 +423,10 @@ export default function LovePageClient({
     };
 
     const remainingSections = activeSections.filter((section) => section !== 'home');
+
+    if (passwordEnabled && !isUnlocked) {
+      return <PasswordGate slug={slug || ''} passwordHash={passwordHash} onUnlock={() => setIsUnlocked(true)} />;
+    }
 
     return (
       <ThemeWrapper theme={theme}>

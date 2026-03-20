@@ -12,6 +12,7 @@ import {
   getStepConfig 
 } from '@/lib/builder-steps-config';
 import { getTemplateSections, getSectionMetadata, getSectionTemplates } from '@/lib/section-registry';
+import { getPresetsForOccasion, getPresetById } from '@/lib/preset-registry';
 import ThemeSelector from '@/components/builder/ThemeSelector';
 import SectionSelector from '@/components/builder/SectionSelector';
 import TemplateSelector from '@/components/builder/TemplateSelector';
@@ -39,7 +40,7 @@ import {
 } from '@/components/builder/ContentInputComponents';
 import { SectionContentMap, Section } from '@/lib/types';
 
-type LocalForm = Omit<CreateOrderPayload, 'config' | 'photos'> & { photos: File[]; song_autoplay?: boolean };
+type LocalForm = Omit<CreateOrderPayload, 'config' | 'photos'> & { photos: File[]; song_autoplay?: boolean; password_input?: string };
 
 const sanitizeSlug = (value: string): string => {
   return value
@@ -64,6 +65,7 @@ export default function CreateWebsitePage() {
     song_link: '',
     song_autoplay: false,
     photos: [],
+    password_input: '',
   });
 
   const [config, setConfig] = useState<SiteConfig>({
@@ -92,6 +94,9 @@ export default function CreateWebsitePage() {
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const [slugSanitized, setSlugSanitized] = useState(false);
   const [explicitSubmit, setExplicitSubmit] = useState(false);
+  const [passwordEnabled, setPasswordEnabled] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
 
   const router = useRouter();
 
@@ -127,6 +132,18 @@ export default function CreateWebsitePage() {
     }));
   }, [form.occasion, form.participants, form.message, form.tagline, form.specialDate, form.song_link, form.song_autoplay]);
 
+  useEffect(() => {
+    setConfig((prev) => {
+      const updated = { ...prev };
+      if (passwordEnabled) {
+        updated.password = { enabled: true };
+      } else {
+        delete updated.password;
+      }
+      return updated;
+    });
+  }, [passwordEnabled]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const name = e.target.name as keyof LocalForm;
     const value = e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value;
@@ -135,6 +152,9 @@ export default function CreateWebsitePage() {
       const sanitized = sanitizeSlug(value as string);
       setForm((prev) => ({ ...prev, [name]: sanitized }));
       setSlugSanitized(true);
+    } else if (name === 'occasion') {
+      setSelectedPresetId(null);
+      setForm((prev) => ({ ...prev, occasion: value as any, preset_id: undefined }));
     } else if (name === 'specialDate') {
       setForm((prev) => ({ ...prev, specialDate: value as string }));
     } else {
@@ -180,6 +200,35 @@ export default function CreateWebsitePage() {
 
   const handleCoverPhotoSelect = (index: number) => {
     setConfig((prev) => ({ ...prev, cover_photo_index: index }));
+  };
+
+  const applyPreset = (presetId: string) => {
+    const preset = getPresetById(presetId);
+    if (!preset) return;
+
+    setSelectedPresetId(presetId);
+    setForm((prev) => ({
+      ...prev,
+      occasion: preset.siteType,
+      preset_id: preset.id,
+      tagline: preset.defaults.copy?.tagline || prev.tagline,
+      message: preset.defaults.copy?.message || prev.message,
+    }));
+
+    setConfig((prev) => ({
+      ...prev,
+      occasion: preset.siteType,
+      preset: { id: preset.id, label: preset.label },
+      theme: preset.defaults.theme,
+      layout_preset: preset.defaults.layout_preset,
+      sections: preset.defaults.sections,
+      home_template: preset.defaults.templates.home,
+      gallery_template: preset.defaults.templates.gallery,
+      timeline_template: preset.defaults.templates.timeline,
+      song_template: preset.defaults.templates.song,
+      tagline: preset.defaults.copy?.tagline || prev.tagline,
+      message: preset.defaults.copy?.message || prev.message,
+    }));
   };
 
   // Handle section content changes for dynamic content step
@@ -268,13 +317,21 @@ export default function CreateWebsitePage() {
         )
       );
 
+      const normalizedConfig = { ...config };
+      if (passwordEnabled) {
+        normalizedConfig.password = { enabled: true };
+      } else {
+        delete normalizedConfig.password;
+      }
+
       const res = await fetch('/api/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
           photos: photosBase64,
-          config,
+          config: normalizedConfig,
+          password_input: form.password_input,
         }),
       });
 
@@ -366,6 +423,31 @@ export default function CreateWebsitePage() {
                   </select>
                 </div>
 
+                <div className="mt-4">
+                  <h3 className="text-sm font-semibold text-slate-700 mb-2">Choose a starting template</h3>
+                  <p className="text-xs text-slate-500 mb-3">Pick one and customize as needed later.</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {getPresetsForOccasion(form.occasion).map((preset) => (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => applyPreset(preset.id)}
+                        className={`text-left rounded-xl border p-3 transition hover:shadow-lg ${
+                          selectedPresetId === preset.id
+                            ? 'border-rose-500 bg-rose-50'
+                            : 'border-slate-200 bg-white'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <strong className="text-sm text-slate-800">{preset.label}</strong>
+                          <span className="text-[11px] font-medium text-slate-500">{preset.badge}</span>
+                        </div>
+                        <p className="text-xs text-slate-500">{preset.description}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                
                 <div>
                   <label className="block text-sm font-medium text-slate-600 mb-1.5">
@@ -421,6 +503,45 @@ export default function CreateWebsitePage() {
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
                   onChange={handleChange}
                 />
+              </div>
+
+              <div className="mt-6 bg-white border border-slate-200 rounded-xl p-4">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">Privacy Settings</h3>
+                <label className="flex items-center justify-between gap-3">
+                  <span className="text-sm text-slate-600">Protect this website with a password</span>
+                  <input
+                    type="checkbox"
+                    checked={passwordEnabled}
+                    onChange={(e) => setPasswordEnabled(e.target.checked)}
+                    className="h-4 w-4 text-rose-500 rounded"
+                  />
+                </label>
+
+                {passwordEnabled && (
+                  <div className="mt-3 space-y-2">
+                    <label className="block text-sm font-medium text-slate-600">Password (4-6 chars)</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        name="password_input"
+                        type={showPassword ? 'text' : 'password'}
+                        value={form.password_input || ''}
+                        minLength={4}
+                        maxLength={6}
+                        onChange={handleChange}
+                        className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                        placeholder="Enter password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="text-sm text-rose-600 hover:text-rose-700"
+                      >
+                        {showPassword ? 'Hide' : 'Show'}
+                      </button>
+                    </div>
+                    <p className="text-xs text-slate-400">Saved as an encrypted hash, never in plain text.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

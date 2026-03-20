@@ -128,7 +128,9 @@ export default function MemoryMap({ locations }: MemoryMapProps) {
             {locations.map((location) => (
               <button key={location.id} onClick={() => handleLocationClick(location)} className={`text-left p-3 rounded-xl transition-all ${selectedLocation === location.id ? 'bg-rose-50 border border-rose-200' : 'bg-slate-50 hover:bg-slate-100 border border-transparent'}`}>
                 <div className="flex items-start gap-2">
-                  <span className="text-rose-500">pin</span>
+                  <svg className="w-4 h-4 text-rose-500 mt-0.5" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C8.134 2 5 5.134 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.866-3.134-7-7-7zm0 9a2 2 0 100-4 2 2 0 000 4z" />
+                  </svg>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-slate-700 text-sm truncate">{location.name}</p>
                     {location.description && <p className="text-slate-500 text-xs truncate">{location.description}</p>}

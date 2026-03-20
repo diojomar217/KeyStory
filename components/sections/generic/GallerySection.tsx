@@ -61,15 +61,8 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
               relative aspect-square rounded-xl overflow-hidden shadow-lg 
               ${styles.cardBorder} border-2 cursor-pointer group
               gallery-zoom-hover
-              ${idx === 0 && coverPhotoIndex !== undefined && coverPhotoIndex > 0 ? 'ring-4 ring-rose-400/30 md:col-span-2 md:aspect-[2/1]' : ''}
             `}
           >
-            {/* Cover Photo Badge */}
-            {idx === 0 && coverPhotoIndex !== undefined && coverPhotoIndex > 0 && (
-              <div className="absolute top-3 left-3 z-10 px-3 py-1 bg-rose-500/90 text-white text-xs font-medium rounded-full flex items-center gap-1 shadow-lg">
-                <span>📸</span> Cover Photo
-              </div>
-            )}
             <Image
               src={photo}
               alt={`Photo ${idx + 1}`}

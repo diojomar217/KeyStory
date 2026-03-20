@@ -25,6 +25,7 @@ type LocalForm = {
   existingPhotos: string[];
   occasion: 'couple' | 'birthday';
   participants: { id: string; name: string; role?: string }[];
+  password_input?: string;
 };
 
 const validateStep = (
@@ -46,6 +47,17 @@ const validateStep = (
       if (!form.specialDate && !form.anniversary_date) {
         return { valid: false, error: config.occasion === 'couple' ? 'Anniversary date is required' : 'Birth date is required' };
       }
+
+      if (config?.password?.enabled) {
+        if (!form.password_input?.trim()) {
+          return { valid: false, error: 'Password is required when protection is enabled' };
+        }
+        const len = form.password_input.trim().length;
+        if (len < 4 || len > 6) {
+          return { valid: false, error: 'Password must be 4 to 6 characters long' };
+        }
+      }
+
       return { valid: true };
 
     case 2:
@@ -167,6 +179,7 @@ export default function EditWebsitePage() {
       { id: 'customer', name: '', role: 'primary' },
       { id: 'partner', name: '', role: 'partner' },
     ],
+    password_input: '',
   });
 
 const [config, setConfig] = useState<SiteConfig>({
@@ -189,6 +202,8 @@ const [config, setConfig] = useState<SiteConfig>({
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [passwordEnabled, setPasswordEnabled] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -240,6 +255,7 @@ const [config, setConfig] = useState<SiteConfig>({
             { id: 'customer', name: customerName, role: 'primary' },
             { id: 'partner', name: partnerName, role: 'partner' },
           ],
+          password_input: '',
         });
 
         setPhotoPreviews(site.photos || []);
@@ -284,7 +300,9 @@ const [config, setConfig] = useState<SiteConfig>({
             song_link: site.config?.media?.song_link || site.song_link || '',
             song_autoplay: site.config?.media?.song_autoplay ?? false,
           },
+          password: site.config?.password ? { ...site.config.password } : undefined,
         });
+        setPasswordEnabled(!!site.config?.password?.enabled);
 
         setCompletedSteps([1, 2, 3, 4, 5]);
       }
@@ -313,8 +331,9 @@ const [config, setConfig] = useState<SiteConfig>({
         song_link: form.song_link,
         song_autoplay: !!form.song_autoplay,
       },
+      password: passwordEnabled ? { enabled: true } : undefined,
     }));
-  }, [form.song_link, form.song_autoplay]);
+  }, [form.song_link, form.song_autoplay, passwordEnabled]);
 
   const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -409,12 +428,20 @@ const [config, setConfig] = useState<SiteConfig>({
     }
 
     try {
+      const normalizedConfig = { ...config };
+      if (passwordEnabled) {
+        normalizedConfig.password = { enabled: true };
+      } else {
+        delete normalizedConfig.password;
+      }
+
       const res = await fetch('/api/admin', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id,
-          website_name: form.website_name,          site_type: config.occasion,
+          website_name: form.website_name,
+          site_type: config.occasion,
           occasion: config.occasion,
           customer_name: form.customer_name,
           partner_name: form.partner_name,
@@ -425,7 +452,8 @@ const [config, setConfig] = useState<SiteConfig>({
           song_link: form.song_link,
           song_autoplay: form.song_autoplay,
           photos: allPhotos,
-          config,
+          config: normalizedConfig,
+          password_input: form.password_input,
         }),
       });
 
@@ -499,6 +527,43 @@ const [config, setConfig] = useState<SiteConfig>({
                   className="w-full px-4 py-3 rounded-lg border border-slate-300 text-slate-900 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
                   onChange={handleChange}
                 />
+              </div>
+
+              <div className="mt-4 bg-white border border-slate-200 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-slate-700 mb-2">Privacy Settings</h3>
+                <label className="flex items-center justify-between gap-3">
+                  <span className="text-sm text-slate-600">Protect this website with a password</span>
+                  <input
+                    type="checkbox"
+                    checked={passwordEnabled}
+                    onChange={(e) => setPasswordEnabled(e.target.checked)}
+                    className="h-4 w-4 text-rose-500 rounded"
+                  />
+                </label>
+                {passwordEnabled && (
+                  <div className="mt-3">
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Password (4-6 chars)</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        name="password_input"
+                        type={showPassword ? 'text' : 'password'}
+                        value={form.password_input || ''}
+                        minLength={4}
+                        maxLength={6}
+                        onChange={handleChange}
+                        className="flex-1 px-4 py-3 rounded-lg border border-slate-300 text-slate-900 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
+                        placeholder="Enter a password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="text-sm text-rose-600 hover:text-rose-700"
+                      >
+                        {showPassword ? 'Hide' : 'Show'}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

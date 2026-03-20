@@ -10,10 +10,27 @@ import EmptyState from '@/components/admin/EmptyState';
 export default function DashboardPage() {
   const [orders, setOrders] = useState<Site[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalVisits, setTotalVisits] = useState(0);
+  const [totalQrScans, setTotalQrScans] = useState(0);
+  const [recentActivity, setRecentActivity] = useState<Array<{event_type:string; source:string | null; created_at:string}>>([]);
 
   useEffect(() => {
     fetchOrders();
+    fetchAnalytics();
   }, []);
+
+  const fetchAnalytics = async () => {
+    try {
+      const res = await fetch('/api/admin/analytics');
+      if (!res.ok) throw new Error('Failed to fetch analytics');
+      const data = await res.json();
+      setTotalVisits(data.totalVisits || 0);
+      setTotalQrScans(data.totalQrScans || 0);
+      setRecentActivity(data.recentActivity || []);
+    } catch (error) {
+      console.error('Failed to fetch analytics:', error);
+    }
+  };
 
   const fetchOrders = async () => {
     try {
@@ -41,16 +58,32 @@ export default function DashboardPage() {
     });
   };
 
+  const now = new Date();
   const totalWebsites = orders.length;
   const thisMonthCount = orders.filter(o => {
     const created = new Date(o.created_at || '');
-    const now = new Date();
     return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
   }).length;
-  const publishedWebsites = orders.filter(o => {
-    const status = (o.status || '').toString().toLowerCase();
-    return ['published', 'live', 'active'].includes(status);
+
+  const areExpired = (site: typeof orders[number]) => {
+    const status = (site.status || 'active').toString().toLowerCase();
+    if (status === 'archived' || status === 'expired') return true;
+    if (!site.expires_at) return false;
+    return new Date(site.expires_at).getTime() < Date.now();
+  };
+
+  const activeSites = orders.filter(site => !areExpired(site)).length;
+  const expiredSites = orders.filter(areExpired).length;
+  const expiringSoon = orders.filter(site => {
+    const status = (site.status || 'active').toString().toLowerCase();
+    if (status !== 'active') return false;
+    if (!site.expires_at) return false;
+    const expires = new Date(site.expires_at).getTime();
+    const days = (expires - Date.now()) / (1000 * 60 * 60 * 24);
+    return days > 0 && days <= 30;
   }).length;
+
+  const publishedWebsites = activeSites;
   const recentWebsites = orders.slice(0, 5);
 
   if (loading) {
@@ -76,6 +109,35 @@ export default function DashboardPage() {
         <TotalWebsitesCard count={totalWebsites} />
         <WebsitesThisMonthCard count={thisMonthCount} />
         <PublishedWebsitesCard count={publishedWebsites} />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-slate-500">Expiring Soon (30d)</p>
+          <h3 className="text-3xl font-bold text-rose-900">{expiringSoon}</h3>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-slate-500">Expired Sites</p>
+          <h3 className="text-3xl font-bold text-rose-900">{expiredSites}</h3>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-slate-500">Total Visits</p>
+          <h3 className="text-3xl font-bold text-slate-900">{totalVisits}</h3>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-slate-500">Total QR Scans</p>
+          <h3 className="text-3xl font-bold text-slate-900">{totalQrScans}</h3>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-slate-500">Recent Analytics Events</p>
+          <p className="mt-3 text-sm text-slate-700">{recentActivity.slice(0, 4).map((event, idx) => (
+            <span key={idx} className="block">{new Date(event.created_at).toLocaleString()} - {event.event_type}</span>
+          ))}</p>
+        </div>
       </div>
 
       {/* Helpful Widgets */}

@@ -86,7 +86,8 @@ export type LayoutPreset =
   | 'elegant_story'
   | 'modern_romance'
   | 'soft_scrapbook'
-  | 'minimal_keepsake';
+  | 'minimal_keepsake'
+  | 'celebration_flow';
 
 // Preview Device Types
 export type PreviewDevice = 'desktop' | 'mobile';
@@ -185,8 +186,33 @@ export interface SiteConfig {
     song_link?: string;
     song_autoplay?: boolean;
   };
+  // Password protection config
+  password?: {
+    enabled: boolean;
+    hash?: string;
+  };
+  // Temporary plain password field (never persisted)
+  password_input?: string;
+
   // Dynamic section content for each enabled section
   section_content?: SectionContentMap;
+
+  // QR keepsake design configuration
+  qr?: {
+    color?: string;
+    background?: string;
+    style?: 'square' | 'dots' | 'rounded';
+    cardStyle?: 'none' | 'love_card' | 'birthday_card' | 'minimal_card' | 'polaroid';
+    title?: string;
+    subtitle?: string;
+    showNames?: boolean;
+  };
+
+  // Preset information selected during create flow
+  preset?: {
+    id: string;
+    label: string;
+  };
 }
 
 // Builder State Types
@@ -228,6 +254,7 @@ export interface BuilderFormData {
   tagline?: string;
   song_link?: string;
   photos: File[];
+  preset_id?: string;
   // Legacy for migration
   customer_name?: string;
   partner_name?: string;
@@ -255,6 +282,7 @@ export interface CreateOrderPayload {
   customer_name?: string;
   partner_name?: string;
   anniversary_date?: string;
+  password_input?: string;
 }
 
 // Admin Sidebar Types
@@ -339,6 +367,26 @@ export interface MemoryMapLocation {
   description?: string;
   date?: string;
   address?: string; // Optional formatted address from search
+}
+
+export interface GuestMessageRecord {
+  id: string;
+  site_id: string;
+  name: string;
+  message: string;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+}
+
+export interface SiteAnalyticsEvent {
+  id: string;
+  site_id: string;
+  event_type: 'page_view' | 'qr_scan';
+  source?: string | null;
+  user_agent?: string | null;
+  referrer?: string | null;
+  ip_hash?: string | null;
+  created_at: string;
 }
 
 // Gift Item

@@ -3,7 +3,17 @@ import { supabase, Site } from '@/lib/supabase';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import { generateQRCode } from '@/lib/qrcode';
 import { v4 as uuidv4 } from 'uuid';
+import bcrypt from 'bcryptjs';
 import { SiteConfig } from '@/lib/types';
+
+const addMonths = (date: Date, months: number): string => {
+  const result = new Date(date);
+  result.setMonth(result.getMonth() + months);
+  return result.toISOString();
+};
+
+const DEFAULT_HOSTING_MONTHS = 6;
+
 
 const slugify = (text: string): string =>
   text
@@ -16,6 +26,43 @@ const slugify = (text: string): string =>
     .replace(/^-+|-+$/g, '');
 
 const randomSuffix = () => Math.floor(1000 + Math.random() * 9000).toString();
+
+const normalizePasswordConfig = async (siteConfig: any, passwordInput?: string): Promise<any> => {
+  if (!siteConfig) siteConfig = {};
+
+  if (siteConfig.password?.enabled === true) {
+    if (passwordInput && passwordInput.trim()) {
+      const password = passwordInput.trim();
+      if (password.length < 4 || password.length > 6) {
+        throw new Error('Password must be 4 to 6 characters long');
+      }
+      const hash = await bcrypt.hash(password, 10);
+      return {
+        ...siteConfig,
+        password: {
+          enabled: true,
+          hash,
+        },
+      };
+    }
+
+    if (siteConfig.password.hash) {
+      return {
+        ...siteConfig,
+        password: {
+          enabled: true,
+          hash: siteConfig.password.hash,
+        },
+      };
+    }
+
+    throw new Error('Password is required when protection is enabled');
+  }
+
+  const cleanedConfig = { ...siteConfig };
+  delete cleanedConfig.password;
+  return cleanedConfig;
+};
 
 interface OrderRequest {
   website_name?: string;
@@ -30,6 +77,7 @@ interface OrderRequest {
   song_link?: string;
   photos?: string[];
   config?: SiteConfig;
+  password_input?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -73,16 +121,21 @@ export async function POST(req: NextRequest) {
     const normalized = cleanName ? slugify(cleanName) : slug;
     const website_name = cleanName ? `${normalized}-${randomSuffix()}` : slug;
 
-    // upload pictures
+    const MAX_SITE_IMAGES = 18;
+    // upload pictures (cost-controlled)
     const photoUrls: string[] = [];
     if (Array.isArray(data.photos) && data.photos.length > 0) {
-      for (const photo of data.photos) {
+      const photosToProcess = data.photos.slice(0, MAX_SITE_IMAGES);
+      for (const photo of photosToProcess) {
         try {
           const url = await uploadToCloudinary(photo);
           photoUrls.push(url);
         } catch (err) {
           console.error('cloudinary upload error', err);
         }
+      }
+      if (data.photos.length > MAX_SITE_IMAGES) {
+        console.warn(`Image limit exceeded, only storing first ${MAX_SITE_IMAGES} photos`);
       }
     }
 
@@ -92,7 +145,7 @@ export async function POST(req: NextRequest) {
     const qrCodeUrl = await generateQRCode(coupleUrl);
 
     // Build normalized site config for storage
-    const siteConfig = {
+    let siteConfig = {
       ...data.config,
       people: {
         primary: customerName,
@@ -119,11 +172,14 @@ export async function POST(req: NextRequest) {
       tagline: data.tagline || data.config?.tagline || '',
     };
 
+    siteConfig = await normalizePasswordConfig(siteConfig, data.password_input);
     const insertObj: Partial<Site> = {
       slug,
       website_name,
       site_type: occasion,
-      status: 'pending',
+      status: 'active',
+      expires_at: addMonths(new Date(), DEFAULT_HOSTING_MONTHS),
+      archived_at: null,
       qr_code_url: qrCodeUrl,
       config: siteConfig,
     };
@@ -136,8 +192,17 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error('supabase insert error', error);
-      // expose error message in development to aid debugging
       return NextResponse.json({ success: false, message: error.message || 'Database error', details: error }, { status: 500 });
+    }
+
+    try {
+      const { revalidatePath } = await import('next/cache');
+      if (site?.website_name) {
+        revalidatePath(`/site/${site.website_name}`);
+        revalidatePath(`/love/${site.website_name}`);
+      }
+    } catch (err) {
+      console.warn('Revalidate path failed on create site:', err);
     }
 
     return NextResponse.json({ success: true, slug, website_name, qr_code_url: qrCodeUrl });
