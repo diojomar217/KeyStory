@@ -9,10 +9,12 @@ import ScrollReveal from '../../ui/ScrollReveal';
 type Props = {
   message: string;
   theme: Theme;
+  variant?: 'default' | 'alt';
 };
 
-export default function LoveLetterSection({ message, theme }: Props) {
+export default function LoveLetterSection({ message, theme, variant = 'default' }: Props) {
   const styles = useTheme(theme);
+  const sectionBg = variant === 'alt' ? styles.sectionBgAlt : styles.sectionBg;
 
   // Get accent color based on theme
   const getAccentColor = () => {
@@ -27,7 +29,7 @@ export default function LoveLetterSection({ message, theme }: Props) {
   const accentColor = getAccentColor();
 
   return (
-    <section className={`py-16 md:py-24 ${styles.sectionBg}`} id="love-letter">
+    <section className={`py-16 md:py-24 ${sectionBg}`} id="love-letter">
       <div className="max-w-4xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <ScrollReveal animation="fade-up">

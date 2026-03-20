@@ -28,21 +28,10 @@ export function CardSectionLayout({
   theme,
   children,
   id,
-  variant = 'default',
+  bgClass = '',
   staggered = false,
   animationDelay = 0,
-}: BaseSectionLayoutProps & { staggered?: boolean }) {
-  const styles = useTheme(theme);
-
-  const getBackgroundClass = () => {
-    switch (variant) {
-      case 'alt':
-        return styles.sectionBgAlt || 'bg-gradient-to-b from-white/90 to-white/30 backdrop-blur-xl';
-      default:
-        return styles.sectionBg || 'bg-gradient-to-b from-rose-50/80 to-pink-50/60 backdrop-blur-lg';
-    }
-  };
-
+}: BaseSectionLayoutProps & { staggered?: boolean; bgClass?: string }) {
   const getContentAlignment = () => {
     if (staggered) {
       return 'md:text-left max-w-4xl mx-auto transform md:-skew-x-1 hover:skew-x-0 transition-transform duration-500 md:-translate-x-8 lg:-translate-x-12';
@@ -53,7 +42,7 @@ export function CardSectionLayout({
   return (
     <section
       id={id}
-      className={`py-24 lg:py-32 ${getBackgroundClass()}`}
+      className={`relative py-24 lg:py-32 ${bgClass}`}
     >
       <div className="max-w-6xl mx-auto px-6 lg:px-8">
         {/* Header ABOVE card */}
@@ -98,26 +87,17 @@ export function GridSectionLayout({
   theme,
   children,
   id,
-  variant = 'default',
   gridCols = 'grid-cols-1 md:grid-cols-2 lg:grid-cols-2',
   gap = 'gap-8 lg:gap-10',
+  bgClass = '',
   animationDelay = 0,
-}: BaseSectionLayoutProps & { gridCols?: string; gap?: string }) {
+}: BaseSectionLayoutProps & { gridCols?: string; gap?: string; bgClass?: string }) {
   const styles = useTheme(theme);
-
-  const getBackgroundClass = () => {
-    switch (variant) {
-      case 'alt':
-        return styles.sectionBgAlt || 'bg-gradient-to-b from-slate-50/80 to-white/60 backdrop-blur-lg';
-      default:
-        return styles.sectionBg || 'bg-gradient-to-b from-pink-50/70 to-rose-50/50 backdrop-blur-xl';
-    }
-  };
 
   return (
     <section
       id={id}
-      className={`py-24 lg:py-32 ${getBackgroundClass()}`}
+      className={`relative py-24 lg:py-32 ${bgClass}`}
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Header ABOVE grid */}
@@ -165,24 +145,13 @@ export function NarrowSectionLayout({
   theme,
   children,
   id,
-  variant = 'default',
+  bgClass = '',
   animationDelay = 0,
-}: BaseSectionLayoutProps) {
-  const styles = useTheme(theme);
-
-  const getBackgroundClass = () => {
-    switch (variant) {
-      case 'alt':
-        return styles.sectionBgAlt || 'bg-gradient-to-b from-white/90 to-white/40 backdrop-blur-lg';
-      default:
-        return styles.sectionBg || 'bg-gradient-to-b from-rose-50/80 to-pink-50/60 backdrop-blur-xl';
-    }
-  };
-
+}: BaseSectionLayoutProps & { bgClass?: string }) {
   return (
     <section
       id={id}
-      className={`py-24 lg:py-32 ${getBackgroundClass()}`}
+      className={`relative py-24 lg:py-32 ${bgClass}`}
     >
       <div className="max-w-4xl mx-auto px-6 lg:px-8">
         {(title || subtitle) && (

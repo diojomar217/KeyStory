@@ -32,6 +32,8 @@ export interface SectionMetadata {
   icon: string;
   // NEW: Occasion compatibility
   supportedOccasions?: OccasionType[]; 
+  // Related sections for smarter suggestions
+  relatedSections?: Section[];
   // Requirements
   requiresPhotos: boolean;
   requiresTimeline: boolean;
@@ -366,6 +368,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     description: 'Warm birthday wishes and heartfelt messages',
     icon: '🎂',
     supportedOccasions: ['birthday'],
+    relatedSections: ['birthday_wishes', 'party_details', 'gift_wishlist', 'birthday_countdown', 'birthday_timeline'],
     requiresPhotos: false,
     requiresTimeline: false,
     requiresSong: false,
@@ -382,6 +385,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     description: 'A section to display birthday greetings from friends and family',
     icon: '🎈',
     supportedOccasions: ['birthday'],
+    relatedSections: ['birthday_message', 'birthday_timeline', 'gift_wishlist'],
     requiresPhotos: false,
     requiresTimeline: false,
     requiresSong: false,
@@ -398,6 +402,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     description: 'Countdown to the birthday celebration',
     icon: '⏳',
     supportedOccasions: ['birthday'],
+    relatedSections: ['birthday_message', 'birthday_wishes'],
     requiresPhotos: false,
     requiresTimeline: false,
     requiresSong: false,
@@ -415,6 +420,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     description: 'Chronicle life milestones and memorable moments for the celebrant',
     icon: '🎂',
     supportedOccasions: ['birthday'],
+    relatedSections: ['birthday_message', 'birthday_wishes', 'party_details'],
     requiresPhotos: false,
     requiresTimeline: true,
     requiresSong: false,
@@ -431,6 +437,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     description: 'Event location, time, and dress code for the birthday party',
     icon: '📍',
     supportedOccasions: ['birthday'],
+    relatedSections: ['birthday_message', 'birthday_wishes', 'gift_wishlist', 'birthday_timeline'],
     requiresPhotos: false,
     requiresTimeline: false,
     requiresSong: false,
@@ -447,6 +454,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     description: 'Let guests know the perfect gift ideas for the celebrant',
     icon: '🎁',
     supportedOccasions: ['birthday'],
+    relatedSections: ['birthday_message', 'birthday_wishes', 'party_details'],
     requiresPhotos: false,
     requiresTimeline: false,
     requiresSong: false,
@@ -824,6 +832,26 @@ export const SECTION_TEMPLATES: Record<Section, SectionTemplate[]> = {
  */
 export const getSectionMetadata = (section: Section): SectionMetadata | undefined => {
   return SECTION_REGISTRY[section];
+};
+
+/**
+ * Get related section recommendations based on selected sections
+ */
+export const getRelatedSectionRecommendations = (selectedSections: Section[]): Section[] => {
+  const recommended = new Set<Section>();
+
+  selectedSections.forEach((section) => {
+    const metadata = SECTION_REGISTRY[section];
+    if (!metadata?.relatedSections) return;
+
+    metadata.relatedSections.forEach((related) => {
+      if (!selectedSections.includes(related)) {
+        recommended.add(related);
+      }
+    });
+  });
+
+  return Array.from(recommended);
 };
 
 /**

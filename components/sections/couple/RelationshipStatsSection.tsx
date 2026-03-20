@@ -62,7 +62,6 @@ export default function RelationshipStatsSection({ theme, anniversaryDate }: Rel
     <section 
       id="relationship-stats"
       className="py-16 px-4"
-      style={{ backgroundColor: colors.background }}
     >
       <div className="max-w-4xl mx-auto">
         <SectionHeader

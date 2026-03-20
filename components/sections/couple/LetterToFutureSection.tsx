@@ -80,7 +80,7 @@ export default function LetterToFutureSection({
     : getDateKey(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000 * 3));
 
   return (
-    <section className="py-24 lg:py-32 bg-gradient-to-b from-rose-50/80 to-pink-50/60 backdrop-blur-lg" id="letter-future">
+    <section className="relative py-24 lg:py-32" id="letter-future">
       <div className="max-w-4xl mx-auto px-6 lg:px-8">
         <ScrollReveal animation="fade-up">
           <SectionHeader

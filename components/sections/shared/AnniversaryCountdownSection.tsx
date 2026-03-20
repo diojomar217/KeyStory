@@ -8,6 +8,7 @@ interface AnniversaryCountdownSectionProps {
   theme: Theme;
   anniversaryDate: string;
   yearsTogether?: number;
+  variant?: 'default' | 'alt';
 }
 
 interface Countdown {
@@ -20,10 +21,12 @@ interface Countdown {
 export default function AnniversaryCountdownSection({ 
   theme, 
   anniversaryDate,
-  yearsTogether = 1
+  yearsTogether = 1,
+  variant = 'default',
 }: AnniversaryCountdownSectionProps) {
   const themeConfig = THEME_PRESETS[theme];
   const { colors, typography } = themeConfig;
+  const sectionBackground = variant === 'alt' ? colors.secondary : colors.background;
   
   const [countdown, setCountdown] = useState<Countdown>({
     days: 0,
@@ -65,8 +68,7 @@ export default function AnniversaryCountdownSection({
 
   return (
     <section 
-      className="py-16 px-4"
-      style={{ backgroundColor: colors.background }}
+      className="relative py-16 px-4"
     >
       <div className="max-w-4xl mx-auto text-center">
         <h2 
@@ -84,7 +86,7 @@ export default function AnniversaryCountdownSection({
           className="text-lg mb-8"
           style={{ color: colors.text }}
         >
-          Every second counts when we're together 💕
+          Every second counts when we're together
         </p>
         
         <div className="flex justify-center gap-4 flex-wrap">

@@ -41,7 +41,6 @@ export default function PlaylistSection({ theme, siteType = 'couple', songLink }
     <section 
       id="playlist"
       className="py-16 px-4"
-      style={{ backgroundColor: colors.background }}
     >
       <div className="max-w-4xl mx-auto">
         <SectionHeader

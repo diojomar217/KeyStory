@@ -1,40 +1,38 @@
-# Keystory Landing Page Builder - Implementation TODO
+# Section Background Alternation Refactor TODO
+Current Working Directory: c:/Users/diojo/OneDrive/Documents/keystory
 
-**Status: 🚀 In Progress** | **Plan Approved: ✅**
+## Plan Summary
+Refactor public site (/site/[slug]) for dynamic rendered-index section bg alternation. Centralize in lib/section-utils.ts, fix double-bg in sections/layouts.
 
-## Implementation Steps (from approved plan)
+## Steps (to be checked off as completed)
 
-### 1. **Create TODO.md** ✅ **Completed**
-   - Track progress of landing page builder implementation
+### 1. Create central helper ✅
+- Created lib/section-utils.ts with getSectionBgClass/useSectionBg/getSectionVariant
 
-### 2. **Update BuilderForm.tsx** ✅ **Completed**
-   - Added `onFormChange` callback with `FormPreviewState`
-   - Live photo preview URLs via FileReader
-   - Added tagline/song_link inputs
-   - TS fixes (any[] casts, null safety)
+### 2. Update SectionLayouts.tsx ✅
+- Removed getBackgroundClass from all 3 layouts, added bgClass?: string prop
+- Layouts now padding-only (`relative py-24 lg:py-32 ${bgClass}`)
+- Fixed remaining TS errors (styles in GridSectionLayout)
 
-### 3. **Major: Rewrite app/page.tsx** ✅ **Completed**
-   - Full responsive landing: Hero + HowItWorks + 2-col Builder|Preview
-   - Live sync: Form → KeychainInsertPreview updates instantly
-   - Success modal with final QR, download, view website
-   - All animations, Tailwind responsive (lg:grid-cols-2)
+### 3. Minor polish LovePageClient.tsx ✅
+- Imported helpers from lib/section-utils.ts
+- Wrapper now uses useSectionBg(theme)(renderedSectionCount)
+- Removed local getSectionVariant (uses imported)
 
-### 4. **Test Implementation** ✅ **Completed**
-   - Dev server running on :3001
-   - Form → live preview sync ✓
-   - Responsive design perfect ✓
-   - Submit → success modal + QR ✓
-   - Multi-occasion/participants ✓
-   - Edge cases handled ✓
+### 4. Identify hardcoded bg sections ✅
+- search_files + manual: Found & fixed OurStory/Quotes/FutureDreams/ReasonsILoveYou + others via pattern.
 
-### 5. **Final Updates** ✅ **Completed**
-   - TODO_LANDING_PAGE.md updated
-   - All TODOs marked ✅
+### 5. Batch update sections ✅
+- For each: remove hardcoded bg/variant from <section>, keep py-*/content/inner styling.
+- e.g. OurStorySection: <section id="our-story" className="relative">
 
-### 6. **Demo & Deploy** ✅ **Ready**
-   - /love/demo verified
-   - `npm run build` → Compiled successfully!
-   - Deploy: `vercel --prod`
+### 6. Test [ ]
+- Manually verify alternation on /site/[slug]
+- Reorder sections, disable some → confirm dynamic.
+- Check all themes.
 
-**🎉 LANDING PAGE COMPLETE!**
+### 7. Cleanup [ ]
+- Update TODO.md complete ✅
+- attempt_completion
 
+**Progress: 3/7**

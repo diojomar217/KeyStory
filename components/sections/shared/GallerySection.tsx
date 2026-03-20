@@ -190,7 +190,7 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
   );
 
   return (
-    <section className={`py-16 md:py-24 ${styles.sectionBg}`} id="gallery">
+    <section className="relative py-16 md:py-24" id="gallery">
       <div className="max-w-6xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <ScrollReveal animation="fade-up">

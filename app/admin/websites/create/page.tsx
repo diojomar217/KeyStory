@@ -22,6 +22,7 @@ import TimelineEditor from '@/components/builder/TimelineEditor';
 import LivePreview from '@/components/builder/LivePreview';
 import StepNavigator from '@/components/builder/StepNavigator';
 import SummaryPanel from '@/components/builder/SummaryPanel';
+import SectionContentInputs from '@/components/builder/SectionContentInputs';
 import {
   TextContentInput,
   UrlContentInput,
@@ -720,6 +721,21 @@ export default function CreateWebsitePage() {
               onChange={(theme) => handleConfigChange({ theme })}
             />
 
+            <div className="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <label className="block text-sm font-medium text-slate-700 mb-2">Section Divider Style</label>
+              <select
+                value={config.section_divider_style || 'standard'}
+                onChange={(e) => handleConfigChange({ section_divider_style: e.target.value as 'none' | 'standard' | 'gradient' | 'dots' })}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+              >
+                <option value="standard">Standard (Heart line)</option>
+                <option value="gradient">Gradient bar</option>
+                <option value="dots">Dots & sparkle</option>
+                <option value="none">No separator</option>
+              </select>
+              <p className="text-xs text-slate-500 mt-2">Premium site divider style between sections. Try gradient for a polished look.</p>
+            </div>
+
             <div className="mt-8 pt-6 border-t border-slate-200">
               <LayoutPresetSelector
                 value={config.layout_preset}
@@ -1052,213 +1068,10 @@ export default function CreateWebsitePage() {
               </div>
             )}
 
-            {/* Text Content Sections */}
-            {config.sections.includes('love_letter') && (
-              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">💌</span>
-                  <h3 className="font-semibold text-slate-700">Love Letter</h3>
-                </div>
-                <TextContentInput
-                  label="Your Love Letter"
-                  value={config.section_content?.love_letter?.content || ''}
-                  onChange={(content) => handleSectionContentChange('love_letter', { content })}
-                  placeholder="Write your heartfelt love letter here..."
-                  rows={6}
-                />
-              </div>
-            )}
-
-            {config.sections.includes('our_story') && (
-              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">📖</span>
-                  <h3 className="font-semibold text-slate-700">Our Story</h3>
-                </div>
-                <TextContentInput
-                  label="Your Love Story"
-                  value={config.section_content?.our_story?.content || ''}
-                  onChange={(content) => handleSectionContentChange('our_story', { content })}
-                  placeholder="Share your relationship story..."
-                  rows={6}
-                />
-              </div>
-            )}
-
-            {config.sections.includes('first_date') && (
-              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">🌹</span>
-                  <h3 className="font-semibold text-slate-700">First Date</h3>
-                </div>
-                <FirstDateInput
-                  value={config.section_content?.first_date}
-                  onChange={(content) => handleSectionContentChange('first_date', content)}
-                />
-              </div>
-            )}
-
-            {/* List/Repeater Sections */}
-            {config.sections.includes('reasons_love_you') && (
-              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">💖</span>
-                  <h3 className="font-semibold text-slate-700">Reasons I Love You</h3>
-                  <span className="text-rose-500">*</span>
-                </div>
-                <ReasonsILoveYouInput
-                  value={config.section_content?.reasons_love_you}
-                  onChange={(content) => handleSectionContentChange('reasons_love_you', content)}
-                />
-              </div>
-            )}
-
-            {config.sections.includes('future_dreams') && (
-              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">💭</span>
-                  <h3 className="font-semibold text-slate-700">Future Dreams</h3>
-                  <span className="text-rose-500">*</span>
-                </div>
-                <FutureDreamsInput
-                  value={config.section_content?.future_dreams}
-                  onChange={(content) => handleSectionContentChange('future_dreams', content)}
-                />
-              </div>
-            )}
-
-            {config.sections.includes('special_moments') && (
-              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">⭐</span>
-                  <h3 className="font-semibold text-slate-700">Special Moments</h3>
-                </div>
-                <SpecialMomentsInput
-                  value={config.section_content?.special_moments}
-                  onChange={(content) => handleSectionContentChange('special_moments', content)}
-                />
-              </div>
-            )}
-
-            {config.sections.includes('milestones') && (
-              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">🏆</span>
-                  <h3 className="font-semibold text-slate-700">Milestones</h3>
-                </div>
-                <MilestonesInput
-                  value={config.section_content?.milestones}
-                  onChange={(content) => handleSectionContentChange('milestones', content)}
-                />
-              </div>
-            )}
-
-            {config.sections.includes('video_memories') && (
-              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">🎬</span>
-                  <h3 className="font-semibold text-slate-700">Video Memories</h3>
-                  <span className="text-rose-500">*</span>
-                </div>
-                <VideoMemoriesInput
-                  value={config.section_content?.video_memories}
-                  onChange={(content) => handleSectionContentChange('video_memories', content)}
-                />
-              </div>
-            )}
-
-            {/* Media Links */}
-            {config.sections.includes('playlist') && (
-              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">🎶</span>
-                  <h3 className="font-semibold text-slate-700">Playlist</h3>
-                  <span className="text-rose-500">*</span>
-                </div>
-                <PlaylistInput
-                  value={config.section_content?.playlist}
-                  onChange={(content) => handleSectionContentChange('playlist', content)}
-                />
-              </div>
-            )}
-
-            {/* Interactive Sections */}
-            {config.sections.includes('quotes') && (
-              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">💕</span>
-                  <h3 className="font-semibold text-slate-700">Love Quotes</h3>
-                </div>
-                <QuotesInput
-                  value={config.section_content?.quotes}
-                  onChange={(content) => handleSectionContentChange('quotes', content)}
-                />
-              </div>
-            )}
-
-            {config.sections.includes('memory_map') && (
-              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">🗺️</span>
-                  <h3 className="font-semibold text-slate-700">Memory Map</h3>
-                </div>
-                <MemoryMapInput
-                  value={config.section_content?.memory_map}
-                  onChange={(content) => handleSectionContentChange('memory_map', content)}
-                />
-              </div>
-            )}
-
-            {config.sections.includes('letter_future') && (
-              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">📮</span>
-                  <h3 className="font-semibold text-slate-700">Letter to the Future</h3>
-                </div>
-                <LetterToFutureInput
-                  value={config.section_content?.letter_future}
-                  onChange={(content) => handleSectionContentChange('letter_future', content)}
-                />
-              </div>
-            )}
-
-            {config.sections.includes('surprise_message') && (
-              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">🎉</span>
-                  <h3 className="font-semibold text-slate-700">Surprise Message</h3>
-                </div>
-                <SurpriseMessageInput
-                  value={config.section_content?.surprise_message}
-                  onChange={(content) => handleSectionContentChange('surprise_message', content)}
-                />
-              </div>
-            )}
-
-            {config.sections.includes('gift_section') && (
-              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">🎁</span>
-                  <h3 className="font-semibold text-slate-700">Gift Section</h3>
-                </div>
-                <GiftSectionInput
-                  value={config.section_content?.gift_section}
-                  onChange={(content) => handleSectionContentChange('gift_section', content)}
-                />
-              </div>
-            )}
-
-            {config.sections.includes('guest_messages') && (
-              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">💬</span>
-                  <h3 className="font-semibold text-slate-700">Guest Messages</h3>
-                </div>
-                <GuestMessagesInput
-                  value={config.section_content?.guest_messages}
-                />
-              </div>
-            )}
+            <SectionContentInputs
+              config={config}
+              onSectionContentChange={handleSectionContentChange}
+            />
               </>
             )}
           </div>

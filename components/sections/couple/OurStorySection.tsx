@@ -1,6 +1,7 @@
 'use client';
 
 import type { Theme } from '@/lib/types';
+import { useTheme } from '../../builder/ThemeWrapper';
 import SectionHeader from '../../page/SectionHeader';
 import ScrollReveal from '../../ui/ScrollReveal';
 
@@ -19,6 +20,8 @@ export default function OurStorySection({
   story,
   variant = 'default'
 }: OurStorySectionProps) {
+  const styles = useTheme(theme);
+  const sectionBg = variant === 'alt' ? styles.sectionBgAlt : styles.sectionBg;
   const defaultStory = `This is the story of ${customerName} and ${partnerName}...
 
 Every love story is beautiful, but theirs is their favorite. From the moment they met, something special began. It was like finding the missing piece of a puzzle they didn't know was incomplete.
@@ -28,7 +31,7 @@ Through sunny days and rainy afternoons, through laughter and tears, their bond 
 This is just the beginning of their forever.`;
 
   return (
-    <section className={`py-20 md:py-24 ${variant === 'alt' ? 'bg-gradient-to-b from-slate-50/80 to-white/60' : 'bg-gradient-to-b from-rose-50/80 to-pink-50/60'} backdrop-blur-lg`} id="our-story">
+    <section className={`relative py-20 md:py-24 ${sectionBg}`} id="our-story">
       <div className="max-w-6xl mx-auto px-6 lg:px-8">
         <ScrollReveal animation="fade-up">
           <SectionHeader

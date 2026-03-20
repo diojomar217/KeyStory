@@ -208,6 +208,9 @@ export interface SiteConfig {
     showNames?: boolean;
   };
 
+  // Premium section divider style (site-level)
+  section_divider_style?: 'none' | 'standard' | 'gradient' | 'dots';
+
   // Dedicated hero cover photo settings (new)
   hero?: {
     coverPhotoUrl?: string;
