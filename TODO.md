@@ -1,20 +1,22 @@
-# Fix Edit Page Error - Console Error on handleSubmit
+# Edit Website Steps Advanced Stepper (BLACKBOXAI)
 
-## Plan Steps:
-- [x] Step 1: Fix client error handling in app/admin/websites/[id]/edit/page.tsx handleSubmit
-- [x] Step 2: Improve server error logging in app/api/admin/route.ts PUT handler  
-- [x] Step 3: Fixed TypeScript scope error in server catch block (body accessible)
-- [ ] Step 4: Test form submission  
-- [ ] Step 5: Complete ✅
+## Status: IN PROGRESS
 
-**Status:** Complete! ✅
+**Goal:** Replace simple edit steps buttons with advanced responsive stepper matching create flow design (rose active, emerald progress, mobile scroller + desktop bar).
 
-Console crash fully resolved:
-- Replaced `throw new Error()` with `setError()` + `return` 
-- No more unhandled exceptions/500s from client
-- Form shows user-friendly error message instead
+**Plan Breakdown:**
+1. ✅ **Plan approved** by user
+2. ✅ **Created** `components/builder/EditStepNav.tsx` - responsive stepper matching create HTML (rose active step 1, emerald progress/completed, mobile scroller + desktop bar)
+3. ✅ **Updated** `app/admin/websites/[id]/edit/page.tsx` - replaced inline simple buttons with EditStepNav component + import
+4. ✅ **Verified** TypeScript compilation (edit/page.tsx compiles clean)
+5. ⏳ **Final test** & complete
 
-**Next**: Check server terminal logs for actual cause (Cloudinary, bcrypt, Supabase). Update without photos to test.
+**Current Step:** Step 2 - Creating EditStepNav component
 
-Run `npm run dev` → edit form → check Network tab + terminal.
+---
+
+**Previous Tasks (Complete):**
+- [x] Locate exact edit steps HTML location
+- [x] Analyze create StepNavigator structure
+- [x] Confirm step labels/logic matches (Info/Theme/Sections/Templates/Content/Review)
 

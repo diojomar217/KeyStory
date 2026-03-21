@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import EditStepNav from '@/components/builder/EditStepNav';
 import ThemeSelector from '@/components/builder/ThemeSelector';
 import SectionSelector from '@/components/builder/SectionSelector';
 import { calculateExpirationDate, getDaysRemaining, getExpirationLabel, ExpirationMode } from '@/lib/expiration-utils';
@@ -1089,39 +1090,17 @@ const [config, setConfig] = useState<SiteConfig>({
         </a>
       </div>
 
-      {/* Step Indicator */}
-      <div className="flex items-center gap-2">
-        {[1, 2, 3, 4, 5, 6].map((step) => (
-          <button
-            key={step}
-            onClick={() => {
-              if (step < currentStep || completedSteps.includes(step - 1)) {
-                setCurrentStep(step);
-                setError(null);
-              }
-            }}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
-              step === currentStep
-                ? 'bg-rose-600 text-white'
-                : completedSteps.includes(step)
-                ? 'bg-emerald-100 text-emerald-700'
-                : 'bg-slate-100 text-slate-600'
-            }`}
-          >
-            {step === 1
-              ? 'Info'
-              : step === 2
-              ? 'Theme'
-              : step === 3
-              ? 'Sections'
-              : step === 4
-              ? 'Templates'
-              : step === 5
-              ? 'Content'
-              : 'Review'}
-          </button>
-        ))}
-      </div>
+{/* Edit Steps Navigation */}
+      <EditStepNav 
+        currentStep={currentStep} 
+        completedSteps={completedSteps} 
+        onStepClick={(step) => {
+          if (step < currentStep || completedSteps.includes(step - 1)) {
+            setCurrentStep(step);
+            setError(null);
+          }
+        }} 
+      />
 
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg">
