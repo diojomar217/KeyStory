@@ -786,6 +786,7 @@ export default function KeychainPrintPage({ params }: PageProps) {
             <KeychainInsertPreview
               widthMm={widthMm}
               heightMm={heightMm}
+              shape={activeConfig.size.shape}
               qrDataUrl={qrDataUrl}
               qrCodeUrl={qrCodeUrl}
               coverPhotoUrl={activePhotoUrl}
@@ -805,6 +806,7 @@ export default function KeychainPrintPage({ params }: PageProps) {
                   key={idx}
                   widthMm={cfgWidth}
                   heightMm={cfgHeight}
+                  shape={cfg.size.shape}
                   qrDataUrl={qrDataUrl}
                   qrCodeUrl={qrCodeUrl}
                   coverPhotoUrl={photoUrl}
@@ -844,6 +846,7 @@ export default function KeychainPrintPage({ params }: PageProps) {
               key={idx}
               widthMm={cfgWidth}
               heightMm={cfgHeight}
+              shape={cfg.size.shape}
               qrDataUrl={qrDataUrl}
               qrCodeUrl={qrCodeUrl}
               coverPhotoUrl={photoUrl}

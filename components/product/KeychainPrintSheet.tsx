@@ -2,11 +2,12 @@
 
 import KeychainInsertQR from './KeychainInsertQR';
 import KeychainInsertPhoto from './KeychainInsertPhoto';
-import { mmToPx } from './KeychainSizeConfig';
+import { mmToPx, type KeychainShape } from './KeychainSizeConfig';
 
 interface KeychainPrintSheetProps {
   widthMm: number;
   heightMm: number;
+  shape?: KeychainShape;
   qrDataUrl?: string;
   qrCodeUrl?: string;
   coverPhotoUrl?: string;
@@ -33,6 +34,7 @@ function InsertPair({
   index,
   widthMm,
   heightMm,
+  shape = 'rectangle',
   qrDataUrl,
   qrCodeUrl,
   coverPhotoUrl,
@@ -46,6 +48,7 @@ function InsertPair({
   index: number;
   widthMm: number;
   heightMm: number;
+  shape?: KeychainShape;
   qrDataUrl?: string;
   qrCodeUrl?: string;
   coverPhotoUrl?: string;
@@ -89,6 +92,7 @@ function InsertPair({
         <KeychainInsertQR
           widthMm={widthMm}
           heightMm={heightMm}
+          shape={shape}
           qrDataUrl={qrDataUrl}
           qrCodeUrl={qrCodeUrl}
           caption={caption}
@@ -104,6 +108,7 @@ function InsertPair({
         <KeychainInsertPhoto
           widthMm={widthMm}
           heightMm={heightMm}
+          shape={shape}
           coverPhotoUrl={coverPhotoUrl}
           coupleNames={coupleNames}
           scale={1}
@@ -118,6 +123,7 @@ function InsertPair({
 export default function KeychainPrintSheet({
   widthMm,
   heightMm,
+  shape = 'rectangle',
   qrDataUrl,
   qrCodeUrl,
   coverPhotoUrl,
@@ -207,7 +213,8 @@ export default function KeychainPrintSheet({
               key={`insert-pair-${index}`} 
               index={index} 
               widthMm={insertWidth} 
-              heightMm={insertHeight} 
+              heightMm={insertHeight}
+              shape={shape} 
               qrDataUrl={qrDataUrl} 
               qrCodeUrl={qrCodeUrl}
               coverPhotoUrl={coverPhotoUrl} 

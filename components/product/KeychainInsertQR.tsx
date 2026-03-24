@@ -2,11 +2,16 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import QRCodeStyling from 'qr-code-styling';
-import { getInsertDimensions } from './KeychainSizeConfig';
+import {
+  getInsertDimensions,
+  type KeychainShape,
+  getSafeAreaScale,
+} from './KeychainSizeConfig';
 
 interface KeychainInsertQRProps {
   widthMm: number;
   heightMm: number;
+  shape?: KeychainShape;
   qrDataUrl?: string;
   qrCodeUrl?: string;
   caption?: string;
@@ -25,9 +30,37 @@ interface KeychainInsertQRProps {
   };
 }
 
+const HEART_CLIP_PATH = `polygon(
+  50% 94%,
+  44% 88%,
+  37% 81%,
+  28% 72%,
+  19% 62%,
+  12% 51%,
+  9% 40%,
+  9% 28%,
+  13% 18%,
+  21% 10%,
+  31% 8%,
+  40% 11%,
+  50% 20%,
+  60% 11%,
+  69% 8%,
+  79% 10%,
+  87% 18%,
+  91% 28%,
+  91% 40%,
+  88% 51%,
+  81% 62%,
+  72% 72%,
+  63% 81%,
+  56% 88%
+)`;
+
 export default function KeychainInsertQR({
   widthMm,
   heightMm,
+  shape = 'rectangle',
   qrDataUrl,
   qrCodeUrl,
   caption = 'Scan our love story',
@@ -38,31 +71,31 @@ export default function KeychainInsertQR({
   qrDesign,
 }: KeychainInsertQRProps) {
   const qrRef = useRef<HTMLDivElement>(null);
-  const qrCodeInstanceRef = useRef<QRCodeStyling | null>(null);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Calculate dimensions
   const dimensions = getInsertDimensions(widthMm, heightMm, scale);
-  
-  // Strong clamp: keep the QR scaling tightly controlled.
+  const widthPx = Number(dimensions.width.replace('px', ''));
+  const heightPx = Number(dimensions.height.replace('px', ''));
+
   const rawScale = qrScale ?? 1;
-  const MIN_QR_SCALE = 0.97;
-  const MAX_QR_SCALE = 1.03;
-  const clampedScale = Math.max(MIN_QR_SCALE, Math.min(MAX_QR_SCALE, rawScale));
-  const effectiveQrScale = clampedScale;
-  const qrSize = Math.min(
-    Number(dimensions.width.replace('px', '')) * 0.817,
-    Number(dimensions.height.replace('px', '')) * 0.741
-  ) * effectiveQrScale;
+  const clampedScale = Math.max(0.92, Math.min(1.08, rawScale));
+  const safeAreaScale = getSafeAreaScale(shape);
 
-    const shouldUseStyledQr = isClient && !!qrDataUrl;
+  const shouldUseStyledQr = isClient && !!qrDataUrl;
 
-  // Generate QR code
-    useEffect(() => {
+  const heartCaptionFont = Math.max(6, Math.min(8, widthMm * 0.14));
+  const defaultCaptionFont = Math.max(7, Math.min(11, widthMm * 0.22));
+
+  const qrSize =
+    shape === 'heart'
+      ? Math.min(widthPx, heightPx) * safeAreaScale * 0.55 * clampedScale
+      : Math.min(widthPx * 0.817, heightPx * 0.741) * clampedScale;
+
+  useEffect(() => {
     if (!shouldUseStyledQr || !qrRef.current) return;
 
     const defaultDesign = {
@@ -74,13 +107,14 @@ export default function KeychainInsertQR({
       cornersDotType: 'dot' as const,
       logoUrl: '/heart-icon.svg',
     };
+
     const design = qrDesign || defaultDesign;
 
     const qrCode = new QRCodeStyling({
       width: qrSize,
       height: qrSize,
       type: 'canvas',
-            data: qrDataUrl!,
+      data: qrDataUrl!,
       imageOptions: {
         crossOrigin: 'anonymous',
         margin: 4,
@@ -100,15 +134,12 @@ export default function KeychainInsertQR({
         color: design.cornersColor,
         type: design.cornersDotType,
       },
-      image: design.logoUrl,
       qrOptions: {
         errorCorrectionLevel: 'H',
       },
-      // only include logo if provided (prevents invalid URL from breaking QR render)
       ...(design.logoUrl ? { image: design.logoUrl } : {}),
     });
 
-    // Clear the container and append the new QR code
     qrRef.current.innerHTML = '';
     qrCode.append(qrRef.current);
 
@@ -117,9 +148,75 @@ export default function KeychainInsertQR({
         qrRef.current.innerHTML = '';
       }
     };
-    }, [shouldUseStyledQr, qrDataUrl, qrSize, qrDesign]);
+  }, [shouldUseStyledQr, qrDataUrl, qrSize, qrDesign]);
 
-  const polaroidContainerStyle: CSSProperties = {
+  const heartOuterStyle: CSSProperties = {
+    width: dimensions.width,
+    height: dimensions.height,
+    position: 'relative',
+    overflow: 'visible',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+
+  const heartGuideStyle: CSSProperties = {
+    position: 'absolute',
+    inset: 0,
+    clipPath: HEART_CLIP_PATH,
+    border: showGuides ? '2px dashed rgba(0,0,0,0.45)' : 'none',
+    background: 'transparent',
+    pointerEvents: 'none',
+    zIndex: 2,
+  };
+
+  const heartBodyStyle: CSSProperties = {
+    position: 'absolute',
+    inset: 0,
+    clipPath: HEART_CLIP_PATH,
+    backgroundColor: '#fdf9f3',
+    border: printMode ? 'none' : '2px solid #e8d7c5',
+    boxShadow: printMode ? 'none' : '0 10px 24px rgba(0,0,0,0.08)',
+    overflow: 'hidden',
+    zIndex: 1,
+  };
+
+  const heartSafeAreaStyle: CSSProperties = {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    width: `${safeAreaScale * 100}%`,
+    height: `${safeAreaScale * 100}%`,
+    transform: 'translate(-50%, -50%)',
+    zIndex: 3,
+  };
+
+  const heartCaptionWrapStyle: CSSProperties = {
+    position: 'absolute',
+    top: '14%',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: '56%',
+    textAlign: 'center',
+    padding: '2px 4px',
+  };
+
+  const heartQrWrapStyle: CSSProperties = {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: `${qrSize}px`,
+    height: `${qrSize}px`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: '#ffffff',
+    borderRadius: '10px',
+    boxShadow: '0 4px 10px rgba(0,0,0,0.06)',
+  };
+
+  const rectContainerStyle: CSSProperties = {
     width: dimensions.width,
     height: dimensions.height,
     backgroundColor: '#ffffff',
@@ -137,7 +234,7 @@ export default function KeychainInsertQR({
     overflow: 'hidden',
   };
 
-  const frameStyle: CSSProperties = {
+  const rectFrameStyle: CSSProperties = {
     width: '100%',
     height: '100%',
     backgroundColor: '#fdf9f3',
@@ -152,70 +249,145 @@ export default function KeychainInsertQR({
     justifyContent: 'space-between',
   };
 
-  return (
-    <div style={polaroidContainerStyle}>
-      <div style={frameStyle}>
-      {/* QR Code */}
-      <div className="flex-shrink-0" style={{ width: '100%', height: '78%', padding: '2px', backgroundColor: '#ffffff', border: '1px solid #d8cfc3', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {qrDataUrl ? (
-          <div
-            key={`${qrDataUrl}-${qrDesign?.dotsColor}-${qrDesign?.backgroundColor}-${qrDesign?.cornersColor}-${qrDesign?.dotsType}-${qrDesign?.cornersType}-${qrDesign?.cornersDotType}-${qrDesign?.logoUrl}`}
-            ref={qrRef}
-            className="mx-auto"
-            style={{ width: qrSize, height: qrSize }}
-          />
-        ) : qrCodeUrl ? (
-          <div
-            className="relative mx-auto bg-white"
-            style={{ width: qrSize, height: qrSize }}
-          >
-            <img
-              src={qrCodeUrl}
-              alt="QR Code"
-              className="w-full h-full object-contain"
-            />
-          </div>
-        ) : (
-          <div
-            className="flex items-center justify-center bg-slate-100 rounded"
-            style={{ width: qrSize, height: qrSize }}
-          >
-            <span className="text-slate-400 text-xs">No QR</span>
-          </div>
-        )}
-      </div>
+  if (shape === 'heart') {
+    return (
+      <div style={heartOuterStyle}>
+        <div style={heartBodyStyle} />
+        {showGuides && <div style={heartGuideStyle} />}
 
-      {/* Caption */}
-      {caption && (
-        <div style={{
-          width: '100%',
-          textAlign: 'center' as const,
-          marginTop: '6px',
-          padding: '8px 10px',
-          backgroundColor: '#fffefb',
-          borderBottomLeftRadius: '0.55rem',
-          borderBottomRightRadius: '0.55rem',
-          minHeight: '22%',
-          boxSizing: 'border-box',
-        }}>
-          <p
-            className="text-slate-900 font-semibold"
+        <div style={heartSafeAreaStyle}>
+          {caption && (
+            <div style={heartCaptionWrapStyle}>
+              <p
+                className="text-slate-900 font-semibold"
+                style={{
+                  fontFamily: 'Georgia, "Times New Roman", serif',
+                  letterSpacing: '0.03em',
+                  fontSize: `${heartCaptionFont}px`,
+                  lineHeight: 1.15,
+                  margin: 0,
+                  color: '#1f2937',
+                  textShadow: '0 1px 0 rgba(255,255,255,0.7)',
+                  wordBreak: 'break-word',
+                }}
+              >
+                {caption}
+              </p>
+            </div>
+          )}
+
+          <div style={heartQrWrapStyle}>
+            {shouldUseStyledQr ? (
+              <div
+                ref={qrRef}
+                style={{
+                  width: qrSize,
+                  height: qrSize,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              />
+            ) : qrCodeUrl ? (
+              <div
+                className="relative bg-white"
+                style={{ width: qrSize, height: qrSize }}
+              >
+                <img
+                  src={qrCodeUrl}
+                  alt="QR Code"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            ) : (
+              <div
+                className="flex items-center justify-center bg-slate-100 rounded"
+                style={{ width: qrSize, height: qrSize }}
+              >
+                <span className="text-slate-400 text-xs">No QR</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={rectContainerStyle}>
+      <div style={rectFrameStyle}>
+        <div
+          className="flex-shrink-0"
+          style={{
+            width: '100%',
+            height: '78%',
+            padding: '2px',
+            backgroundColor: '#ffffff',
+            border: '1px solid #d8cfc3',
+            borderRadius: '4px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {shouldUseStyledQr ? (
+            <div
+              ref={qrRef}
+              className="mx-auto"
+              style={{ width: qrSize, height: qrSize }}
+            />
+          ) : qrCodeUrl ? (
+            <div
+              className="relative mx-auto bg-white"
+              style={{ width: qrSize, height: qrSize }}
+            >
+              <img
+                src={qrCodeUrl}
+                alt="QR Code"
+                className="w-full h-full object-contain"
+              />
+            </div>
+          ) : (
+            <div
+              className="flex items-center justify-center bg-slate-100 rounded"
+              style={{ width: qrSize, height: qrSize }}
+            >
+              <span className="text-slate-400 text-xs">No QR</span>
+            </div>
+          )}
+        </div>
+
+        {caption && (
+          <div
             style={{
-              fontFamily: 'Georgia, "Times New Roman", serif',
-              letterSpacing: '0.04em',
-              fontSize: Math.max(7, Math.min(11, widthMm * 0.22)) + 'px',
-              lineHeight: 1.25,
-              maxWidth: '100%',
-              margin: 0,
-              textShadow: '0 1px 0 rgba(255,255,255,0.65)',
+              width: '100%',
+              textAlign: 'center',
+              marginTop: '6px',
+              padding: '8px 10px',
+              backgroundColor: '#fffefb',
+              borderBottomLeftRadius: '0.55rem',
+              borderBottomRightRadius: '0.55rem',
+              minHeight: '22%',
+              boxSizing: 'border-box',
             }}
           >
-            {caption}
-          </p>
-        </div>
-      )}
+            <p
+              className="text-slate-900 font-semibold"
+              style={{
+                fontFamily: 'Georgia, "Times New Roman", serif',
+                letterSpacing: '0.04em',
+                fontSize: `${defaultCaptionFont}px`,
+                lineHeight: 1.25,
+                maxWidth: '100%',
+                margin: 0,
+                textShadow: '0 1px 0 rgba(255,255,255,0.65)',
+              }}
+            >
+              {caption}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
 }
-

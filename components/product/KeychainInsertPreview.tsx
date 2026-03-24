@@ -1,12 +1,14 @@
 'use client';
 
 import type { CSSProperties } from 'react';
+import type { KeychainShape } from './KeychainSizeConfig';
 import KeychainInsertQR from './KeychainInsertQR';
 import KeychainInsertPhoto from './KeychainInsertPhoto';
 
 interface KeychainInsertPreviewProps {
   widthMm: number;
   heightMm: number;
+  shape?: KeychainShape;
   qrDataUrl?: string;
   qrCodeUrl?: string;
   coverPhotoUrl?: string;
@@ -27,6 +29,7 @@ interface KeychainInsertPreviewProps {
 export default function KeychainInsertPreview({
   widthMm,
   heightMm,
+  shape = 'rectangle',
   qrDataUrl,
   qrCodeUrl,
   coverPhotoUrl,
@@ -91,6 +94,7 @@ export default function KeychainInsertPreview({
             <KeychainInsertQR
               widthMm={widthMm}
               heightMm={heightMm}
+              shape={shape}
               qrDataUrl={qrDataUrl}
               qrCodeUrl={qrCodeUrl}
               caption={caption}
@@ -117,6 +121,7 @@ export default function KeychainInsertPreview({
             <KeychainInsertPhoto
               widthMm={widthMm}
               heightMm={heightMm}
+              shape={shape}
               coverPhotoUrl={coverPhotoUrl}
               coupleNames={coupleNames}
               scale={2}
@@ -127,7 +132,7 @@ export default function KeychainInsertPreview({
 
       {/* Size Indicator */}
       <p className="text-center text-xs text-slate-500 mt-4">
-        Actual size: {widthMm}mm × {heightMm}mm
+        Actual size: {widthMm}mm × {heightMm}mm ({shape === 'heart' ? 'Heart' : shape === 'square' ? 'Square' : 'Rectangle'})
       </p>
     </div>
   );
