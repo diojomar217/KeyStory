@@ -534,20 +534,22 @@ export default function LovePageClient({
           <div className="relative z-10">
             {/* Home Section - Hero */}
             {activeSections.includes('home') && (
-              <HomeSection
-                theme={theme}
-                siteType={siteType}
-                config={config}
-                template={homeTemplate}
-                customerName={customerName}
-                partnerName={partnerName}
-                anniversaryDate={anniversaryDate}
-                message={message}
-                tagline={tagline}
-                photos={photos}
-                coverPhotoIndex={coverPhotoIndex}
-                heroCoverPhotoUrl={heroCoverPhotoUrl}
-              />
+              <div className={getSectionBgClass(theme, 0)}>
+                <HomeSection
+                  theme={theme}
+                  siteType={siteType}
+                  config={config}
+                  template={homeTemplate}
+                  customerName={customerName}
+                  partnerName={partnerName}
+                  anniversaryDate={anniversaryDate}
+                  message={message}
+                  tagline={tagline}
+                  photos={photos}
+                  coverPhotoIndex={coverPhotoIndex}
+                  heroCoverPhotoUrl={heroCoverPhotoUrl}
+                />
+              </div>
             )}
 
             {/* Render remaining sections in selected order (with separators only between rendered sections) */}
@@ -566,7 +568,7 @@ export default function LovePageClient({
                   renderedNodes.push(renderSectionSeparator(prevVariant, variant, `separator-${section}`));
                 }
 
-                const sectionWrapperClass = getSectionBgClass(theme, renderedSectionCount);
+                const sectionWrapperClass = `${getSectionBgClass(theme, renderedSectionCount)} py-16`;
                 renderedNodes.push(
                   <div key={`section-wrapper-${section}`} className={sectionWrapperClass}>
                     {sectionNode}
@@ -589,14 +591,16 @@ export default function LovePageClient({
             // Show if: (qr_keepsake section is enabled) OR (legacy website with qrCodeUrl)
             if (isQrKeepsakeEnabled || (isLegacyWebsite && hasQrCode)) {
               return (
-                <MemoryCardSection
-                  theme={theme}
-                  customerName={customerName}
-                  partnerName={partnerName}
-                  qrCodeUrl={qrCodeUrl}
-                  qrDataUrl={qrDataUrl}
-                  slug={slug}
-                />
+                <div className={`${getSectionBgClass(theme, 0)} py-16`}>
+                  <MemoryCardSection
+                    theme={theme}
+                    customerName={customerName}
+                    partnerName={partnerName}
+                    qrCodeUrl={qrCodeUrl}
+                    qrDataUrl={qrDataUrl}
+                    slug={slug}
+                  />
+                </div>
               );
             }
             return null;

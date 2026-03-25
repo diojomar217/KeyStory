@@ -70,38 +70,35 @@ export function HomeSectionPreview({
     ? { hasContent: true, text: tagline } 
     : { hasContent: false, text: 'Your tagline will appear here' };
 
-  const isBirthday = siteType === 'birthday';
-
-  const dateString = specialDate || anniversary_date;
+  const isBirthday = siteType === 'birthday';  const dateLabel = isBirthday ? 'Birthday' : 'Anniversary';
+const dateString = specialDate || anniversary_date || '';
   const anniversaryData = dateString
     ? { hasContent: true, text: new Date(dateString).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }
     : { hasContent: false, text: isBirthday ? 'Add your birthday date' : 'Add your special date' };
 
-  const messageData = message?.trim() 
-    ? { hasContent: true, text: message }
-    : { hasContent: false, text: isBirthday ? 'Your birthday message will appear here' : 'Your love message will appear here' };
-
   const heroTitle = isBirthday && customerName?.trim()
     ? `${customerName}'s Birthday`
-    : isBirthday
-      ? 'Birthday Celebration'
-      : nameData.primary;
+    : nameData.primary;
 
   const heroTagline = taglineData.hasContent ? taglineData.text : '';
-  const dateLabel = isBirthday ? '🎂 Birthday' : '💍 Since';
 
   return (
-    <div 
-      className="relative rounded-xl overflow-hidden border border-dashed"
-      style={{ 
-        backgroundColor: colors.background,
-        borderColor: colors.muted.replace('99', '50'),
-        opacity: nameData.hasContent || taglineData.hasContent ? 1 : 0.7
-      }}
-    >
+    <div className="group relative rounded-xl overflow-hidden border border-dashed hover:border-solid cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02]" style={{ 
+      backgroundColor: colors.background,
+      borderColor: colors.muted.replace('99', '50'),
+      opacity: nameData.hasContent || taglineData.hasContent ? 1 : 0.7
+    }}>
+      {/* Parallax background demo */}
+      <div className="absolute inset-0 parallax-bg opacity-20 group-hover:opacity-30 transition-opacity bg-gradient-to-r from-blue-400/20 to-purple-400/20" />
+      
+      {/* Particles mock */}
+      <div className="absolute top-2 right-2 particles-canvas-demo opacity-0 group-hover:opacity-100 w-12 h-12 bg-gradient-to-br from-white/20 to-transparent rounded-full backdrop-blur-sm flex items-center justify-center">
+        <span className="text-lg animate-float">✨</span>
+      </div>
+      
       {/* Hero Area */}
       <div 
-        className="h-24 flex flex-col items-center justify-center text-center px-4 py-2"
+        className="h-24 flex flex-col items-center justify-center text-center px-4 py-2 relative z-10"
         style={{ 
           background: hasCoverPhoto 
             ? `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.4)), url('/placeholder-cover.jpg')`
@@ -113,13 +110,14 @@ export function HomeSectionPreview({
         </div>
         
         <h2 
-          className={`text-sm font-bold leading-tight line-clamp-1 mb-1 transition-opacity ${(nameData.hasContent || isBirthday) ? '' : 'italic'}`}
+          className={`text-sm font-bold leading-tight line-clamp-1 mb-1 transition-opacity typewriter-text-demo ${(!nameData.hasContent && !isBirthday) ? 'italic' : ''}`}
           style={{ 
             color: colors.text,
-            opacity: (nameData.hasContent || isBirthday) ? 1 : 0.5
+            opacity: nameData.hasContent || isBirthday ? 1 : 0.5
           }}
         >
           {heroTitle}
+          <span className="blinking-cursor-demo ml-1 hidden group-hover:block">|</span>
         </h2>
         
         <p 
@@ -138,7 +136,7 @@ export function HomeSectionPreview({
       {anniversaryData.hasContent && (
         <div className="flex justify-center py-2 px-4">
           <span 
-            className="text-xs px-3 py-1.5 rounded-full font-medium transition-all"
+            className="text-xs px-3 py-1.5 rounded-full font-medium transition-all hover-lift"
             style={{ 
               backgroundColor: colors.secondary,
               color: colors.primary,
@@ -150,9 +148,15 @@ export function HomeSectionPreview({
           </span>
         </div>
       )}
+
+      {/* Demo labels */}
+      <div className="absolute bottom-1 right-1 text-[8px] opacity-50 flex gap-1">
+        <span>✨ Parallax + Particles</span>
+      </div>
     </div>
   );
 }
+
 
 // ============================================
 // GALLERY SECTION PREVIEW
@@ -163,7 +167,7 @@ interface GallerySectionPreviewProps {
   photoCount: number;
 }
 
-export function GallerySectionPreview({
+function GallerySectionPreview({
   theme,
   photoCount,
 }: GallerySectionPreviewProps) {
@@ -232,7 +236,7 @@ interface TimelineSectionPreviewProps {
   eventCount: number;
 }
 
-export function TimelineSectionPreview({
+function TimelineSectionPreview({
   theme,
   eventCount,
 }: TimelineSectionPreviewProps) {

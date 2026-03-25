@@ -142,13 +142,13 @@ export default function SectionHeader({
       )}
 
       {/* Title */}
-      <h2 className={`${styles.heading} text-5xl md:text-6xl lg:text-7xl font-black leading-relaxed tracking-tight`}>
+      <h2 className={`${styles.heading} text-4xl md:text-5xl lg:text-6xl font-black leading-relaxed tracking-tight`}>
         <span className={`bg-gradient-to-r ${accents.line} bg-clip-text text-transparent`}>{title}</span>
       </h2>
 
       {/* Subtitle */}
       {subtitle && (
-        <p className={`section-subtitle mt-5 text-lg md:text-xl lg:text-2xl font-medium leading-relaxed tracking-wide max-w-xl mx-auto ${accents.subtitle}`}>
+        <p className={`section-subtitle mt-5 text-base md:text-lg lg:text-xl font-medium leading-relaxed tracking-wide max-w-xl mx-auto ${accents.subtitle}`}>
           {subtitle}
         </p>
       )}

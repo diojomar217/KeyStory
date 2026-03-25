@@ -1,6 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { motion, useMotionValue } from 'framer-motion';
+import { useMouseParallax } from './useMouseParallax';
+import ParticlesCanvas from './ParticlesCanvas';
+import { useTypewriter } from './useTypewriter';
 import Image from 'next/image';
 import { Theme, HomeTemplate, Participant } from '@/lib/types';
 import { useTheme } from '../builder/ThemeWrapper';
@@ -102,10 +106,19 @@ export default function HomeSection({
   
   const accentColor = getAccentColor();
 
-  // Trigger animations on mount
+// Trigger animations on mount
   useEffect(() => {
     setIsLoaded(true);
   }, []);
+
+  // Enhanced parallax for all templates
+const sectionRef = useRef<HTMLDivElement>(null!);
+  useMouseParallax(sectionRef, 25);
+
+  // Typewriter for names and tagline
+  const customerTypewriter = useTypewriter(customerName || 'Your Name');
+  const partnerTypewriter = useTypewriter(partnerName || 'Partner Name');
+  const taglineTypewriter = useTypewriter(tagline || '', 80);
 
   // Premium Hero Centered Template - Compact version that fits in one screen
   const renderHeroCentered = () => {
@@ -115,10 +128,13 @@ export default function HomeSection({
     const hasValidNames = customerName && partnerName;
     
     return (
-      <div className={`${styles.heroBg} min-h-[85vh] flex flex-col items-center justify-center py-8 w-full relative`}>
+<div ref={sectionRef} className={`${styles.heroBg} parallax-bg min-h-[85vh] flex flex-col items-center justify-center py-8 w-full relative`}>
+        {/* Particles overlay */}
+        <ParticlesCanvas theme={theme} />
+        
         {/* Background Glow Effect - More compact */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-gradient-to-b from-rose-500/15 via-pink-500/10 to-transparent rounded-full blur-3xl opacity-50" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-gradient-to-b from-rose-500/15 via-pink-500/10 to-transparent rounded-full blur-3xl opacity-50 animate-drift" />
         </div>
         
         {/* Floating decorations, now siteType-aware */}
@@ -187,15 +203,26 @@ export default function HomeSection({
               flex flex-wrap items-center justify-center gap-x-3 gap-y-1
             `}>
               {isBirthday ? (
-                <span className="inline-block">{celebrantName}</span>
+                <motion.span 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="inline-block"
+                  transition={{ delay: 0.5 }}
+                >
+                  {celebrantName}
+                </motion.span>
               ) : (
                 <>
-                  <span className="inline-block">{displayCustomerName}</span>
-                  <span className={`
-                    text-xl md:text-2xl lg:text-3xl
-                    ${theme === 'dark_elegant' ? 'text-amber-400/80' : theme === 'cute_pastel' ? 'text-purple-400' : theme === 'minimal_modern' ? 'text-slate-400' : 'text-rose-400'}
-                    font-light italic
-                  `}>
+                  <motion.span 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="inline-block typewriter-text"
+                    transition={{ delay: 0.6 }}
+                  >
+                    {customerTypewriter.isComplete ? customerName : customerTypewriter.displayText}
+                    <span className="blinking-cursor">|</span>
+                  </motion.span>
+                  <span className={`text-xl md:text-2xl lg:text-3xl ${theme === 'dark_elegant' ? 'text-amber-400/80' : theme === 'cute_pastel' ? 'text-purple-400' : theme === 'minimal_modern' ? 'text-slate-400' : 'text-rose-400'} font-light italic`}>
                     <span className="inline-block animate-fade-in-scale" style={{ animationDelay: '0.3s' }}>&</span>
                   </span>
                   <span className="inline-block">{displayPartnerName}</span>
@@ -273,7 +300,8 @@ export default function HomeSection({
                 ${theme === 'dark_elegant' ? 'text-white/70' : 'text-gray-500'}
                 font-light italic
               `}>
-                &ldquo;{tagline}&rdquo;
+&ldquo;{taglineTypewriter.isComplete ? tagline : taglineTypewriter.displayText}&rdquo;
+                <span className="ml-1 blinking-cursor">|</span>
               </p>
             </div>
           )}

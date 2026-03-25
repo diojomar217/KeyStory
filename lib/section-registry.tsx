@@ -589,6 +589,38 @@ export const SECTION_TEMPLATES: Record<Section, SectionTemplate[]> = {
         </div>
       )
     },
+    {
+      key: 'parallax_immersive',
+      label: 'Parallax Immersive',
+      description: 'Interactive parallax hero with mouse movement and particles',
+      preview: (
+        <div className="w-full h-full bg-gradient-to-r from-rose-400 via-pink-400 to-purple-400 rounded-lg p-2 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('/parallax-pattern.svg')] opacity-20 animate-drift parallax-bg" />
+          <div className="relative z-10 flex flex-col items-center justify-end h-full p-2">
+            <div className="w-10 h-10 bg-white/60 rounded-full shadow-lg glow-rose mb-1 animate-float" />
+            <div className="w-12 h-6 bg-white/80 rounded shimmer animate-shimmer" />
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'particles_fullscreen',
+      label: 'Particles Fullscreen',
+      description: 'Full immersive hero with floating particles and typewriter effects',
+      preview: (
+        <div className="w-full h-full bg-gradient-to-b from-indigo-900 via-purple-900 to-rose-900 rounded-lg relative">
+          <div className="absolute inset-0 particles-canvas opacity-30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+          <div className="relative z-10 flex flex-col items-center justify-center h-full text-white text-center px-4">
+            <div className="text-2xl mb-2 animate-gentle-pulse">✨💕✨</div>
+            <div className="w-20 h-1 bg-gradient-to-r from-transparent via-white to-transparent rounded-full mb-2 animate-shimmer" />
+            <div className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full animate-fade-in-blur typewriter-text">
+              Your names here<span className="ml-1">|</span>
+            </div>
+          </div>
+        </div>
+      )
+    },
   ],
   gallery: [
     { 

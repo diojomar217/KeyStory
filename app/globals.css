@@ -98,6 +98,21 @@ body {
     transform: translateY(-4px);
   }
 
+  /* Blinking cursor for typewriter effect */
+  .blinking-cursor {
+    animation: blink 1s infinite;
+  }
+
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  .typewriter-text .blinking-cursor {
+    display: inline-block;
+    margin-left: 2px;
+  }
+
   /* Stagger delay utilities */
   .delay-75 { animation-delay: 75ms; }
   .delay-150 { animation-delay: 150ms; }
