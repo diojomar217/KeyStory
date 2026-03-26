@@ -6,24 +6,24 @@ import { useTheme } from '../../builder/ThemeWrapper';
 import dynamic from 'next/dynamic';
 import { THEME_PRESETS } from '@/lib/builder-constants';
 
-
 interface MemoryMapSectionProps {
   theme: Theme;
   locations?: MemoryMapLocation[];
 }
+
+const MemoryMap = dynamic(() => import('./MemoryMap'), {
+  ssr: false,
+});
 
 export default function MemoryMapSection({ theme, locations }: MemoryMapSectionProps) {
   const styles = useTheme(theme);
   const themeConfig = THEME_PRESETS[theme];
   const { colors, typography } = themeConfig;
 
-  // Use provided locations or empty array (MemoryMap handles empty state)
-const displayLocations = locations || [];
-const MemoryMap = dynamic(() => import('./MemoryMap'), { ssr: false });
-
+  const displayLocations = locations || [];
 
   return (
-    <section 
+    <section
       id="memory-map"
       className="relative py-16 px-4"
     >
@@ -34,8 +34,7 @@ const MemoryMap = dynamic(() => import('./MemoryMap'), { ssr: false });
           subtitle="Places that hold special memories in our relationship"
           theme={theme}
         />
-        
-        {/* Interactive Map */}
+
         <MemoryMap locations={displayLocations} />
       </div>
     </section>

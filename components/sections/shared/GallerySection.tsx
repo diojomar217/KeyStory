@@ -19,7 +19,7 @@ type Props = {
 export default function GallerySection({ theme, template, photos, coverPhotoIndex, siteType = 'couple' }: Props) {
   const styles = useTheme(theme);
   const [currentIndex, setCurrentIndex] = useState(0);
-  
+
   const blurPlaceholder = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxIiBoZWlnaHQ9IjEiPjxzdHlsZT5yZWN0IHdpZHRoOjEwMCU7IGhlaWdodDo1MDAlOyBmaWxsOiNkZGRkZGQ7PC9zdHlsZT48L3N2Zz4=';
   const isShortGallery = photos.length <= 3;
 
@@ -102,24 +102,20 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
   const renderCarousel = () => (
     <div className="relative px-4">
       <ScrollReveal animation="fade-up">
-        <div 
+        <div
           className="relative h-[300px] md:h-[400px] lg:h-[600px] w-full max-w-7xl mx-auto cursor-pointer"
           onClick={() => openLightbox(currentIndex)}
         >
-          <div className="absolute inset-0 rounded-2xl overflow-hidden shadow-2xl">
-            <Image
-              src={photos[currentIndex]}
-              alt={`Photo ${currentIndex + 1}`}
-              fill
-              className="object-cover gallery-zoom-hover"
-              quality={80}
-              placeholder="blur"
-              blurDataURL={blurPlaceholder}
-              loading="lazy"
-              priority
-            />
-          </div>
-          
+          <Image
+            src={photos[currentIndex]}
+            alt={`Photo ${currentIndex + 1}`}
+            fill
+            className="object-cover gallery-zoom-hover"
+            quality={80}
+            placeholder="blur"
+            blurDataURL={blurPlaceholder}
+            priority={currentIndex === 0}
+          />
           {/* Navigation Arrows */}
           {photos.length > 1 && (
             <>
@@ -153,9 +149,8 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
             <button
               key={idx}
               onClick={() => setCurrentIndex(idx)}
-              className={`w-3 h-3 rounded-full transition-all ${
-                idx === currentIndex ? `${styles.accentBg} w-8` : 'bg-gray-300 dark:bg-gray-600'
-              }`}
+              className={`w-3 h-3 rounded-full transition-all ${idx === currentIndex ? `${styles.accentBg} w-8` : 'bg-gray-300 dark:bg-gray-600'
+                }`}
               aria-label={`Go to photo ${idx + 1}`}
             />
           ))}

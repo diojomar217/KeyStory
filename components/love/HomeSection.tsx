@@ -35,10 +35,10 @@ export default function HomeSection({
 }: Props) {
   const styles = useTheme(theme);
   const [isLoaded, setIsLoaded] = useState(false);
-  
+
   // Use cover photo index if available, otherwise fallback to first photo
-  const heroImage = (coverPhotoIndex !== undefined && photos?.[coverPhotoIndex]) 
-    ? photos[coverPhotoIndex] 
+  const heroImage = (coverPhotoIndex !== undefined && photos?.[coverPhotoIndex])
+    ? photos[coverPhotoIndex]
     : photos?.[0] || '/vercel.svg';
 
   // Get accent color based on theme
@@ -50,7 +50,7 @@ export default function HomeSection({
       default: return 'rose';
     }
   };
-  
+
   const accentColor = getAccentColor();
 
   // Trigger animations on mount
@@ -64,22 +64,22 @@ export default function HomeSection({
     const displayCustomerName = customerName || 'Your Name';
     const displayPartnerName = partnerName || 'Partner Name';
     const hasValidNames = customerName && partnerName;
-    
+
     return (
       <div className={`${styles.heroBg} min-h-[85vh] flex flex-col items-center justify-center py-8 w-full relative`}>
         {/* Background Glow Effect - More compact */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-gradient-to-b from-rose-500/15 via-pink-500/10 to-transparent rounded-full blur-3xl opacity-50" />
         </div>
-        
+
         {/* Floating decoration - siteType-aware */}
         <HeroDecorations theme={theme} siteType={siteType} variant="centered" />
-        
+
         <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center w-full relative z-10">
-          
+
           {/* Decorative badge at top - Smaller */}
           <div className={`mb-4 transition-all duration-500 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
-            <span 
+            <span
               className={`
                 inline-flex items-center gap-1.5 
                 px-3 py-1.5 rounded-full 
@@ -91,10 +91,10 @@ export default function HomeSection({
               <span>{siteType === 'birthday' ? 'Happy Birthday' : 'Our Love Story'}</span>
               <span className="animate-pulse">{siteType === 'birthday' ? '🎈' : '💕'}</span>
             </span>
-            </div>
+          </div>
 
-            {/* Image container - Smaller */}
-            <div className={`
+          {/* Image container - Smaller */}
+          <div className={`
               relative w-40 h-40 md:w-48 md:h-48 lg:w-52 lg:h-52
               mx-auto rounded-full overflow-hidden 
               shadow-[0_15px_40px_rgba(0,0,0,0.25)] 
@@ -103,18 +103,18 @@ export default function HomeSection({
               hover:scale-105 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)]
               group
             `}>
-              <Image
-                src={heroImage}
-                alt={`${displayCustomerName} and ${displayPartnerName}`}
-                fill
-                className="object-cover"
-                priority
-              />
-              {/* Gradient overlay for depth */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-black/5 pointer-events-none" />
-              {/* Inner ring effect */}
-              <div className="absolute inset-0 rounded-full ring-1 ring-white/20 pointer-events-none" />
-            </div>
+            <Image
+              src={heroImage}
+              alt={`${displayCustomerName} and ${displayPartnerName}`}
+              fill
+              className="object-cover"
+              priority
+            />
+            {/* Gradient overlay for depth */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-black/5 pointer-events-none" />
+            {/* Inner ring effect */}
+            <div className="absolute inset-0 rounded-full ring-1 ring-white/20 pointer-events-none" />
+          </div>
 
           {/* Couple Names - IN ONE ROW on desktop */}
           <div className={`mb-3 transition-all duration-500 delay-200 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
@@ -243,7 +243,7 @@ export default function HomeSection({
                 active:scale-95
                 no-underline
               "
-              style={{ 
+              style={{
                 backgroundColor: theme === 'dark_elegant' ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.7)',
                 borderColor: theme === 'dark_elegant' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
                 color: theme === 'dark_elegant' ? 'white' : theme === 'cute_pastel' ? '#be185d' : theme === 'minimal_modern' ? '#475569' : '#be185d'
@@ -254,7 +254,7 @@ export default function HomeSection({
               <span className="transition-transform group-hover:translate-x-0.5">→</span>
             </a>
           </div>
-          
+
           {/* Minimal scroll hint - Only visible when there's room */}
           <div className="mt-4 animate-bounce-subtle">
             <span className="text-lg opacity-30">💕</span>
@@ -269,7 +269,7 @@ export default function HomeSection({
     const isDark = theme === 'dark_elegant';
     const isPastel = theme === 'cute_pastel';
     const isMinimal = theme === 'minimal_modern';
-    
+
     // Get accent color for buttons
     const getAccentColor = () => {
       switch (theme) {
@@ -280,12 +280,12 @@ export default function HomeSection({
       }
     };
     const accentColor = getAccentColor();
-    
+
     return (
       <div className={`${styles.heroBg} min-h-screen relative`}>
         {/* Use CSS Grid for balanced 50/50 layout */}
         <div className="grid lg:grid-cols-2 min-h-screen">
-          
+
           {/* Left Side - Image with premium presentation */}
           <div className="relative h-[40vh] lg:h-auto min-h-[50vh] lg:min-h-screen overflow-hidden order-1 lg:order-1">
             <Image
@@ -298,15 +298,15 @@ export default function HomeSection({
             {/* Gradient overlay - subtle transition from dark to transparent */}
             <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/20 to-transparent lg:hidden" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20 hidden lg:block" />
-            
+
             {/* Soft vignette effect */}
             <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.3) 100%)' }} />
-            
+
             {/* Decorative heart element */}
             <div className="absolute bottom-6 left-6 lg:bottom-10 lg:left-10">
               <span className="text-3xl lg:text-4xl animate-pulse">💕</span>
             </div>
-            
+
             {/* Floating hearts/birthday decoration */}
             <HeroDecorations theme={theme} siteType={siteType} variant="full" />
           </div>
@@ -321,7 +321,7 @@ export default function HomeSection({
           `}>
             {/* Vertically center content with max-width for readability */}
             <div className="max-w-lg mx-auto lg:mx-0 w-full">
-              
+
               {/* Decorative element */}
               <div className="mb-6 lg:mb-8">
                 <span className={`text-4xl lg:text-5xl ${accentColor === 'amber' ? 'text-amber-300' : accentColor === 'purple' ? 'text-purple-400' : accentColor === 'slate' ? 'text-slate-400' : 'text-rose-400'}`}>
@@ -341,14 +341,14 @@ export default function HomeSection({
                 `}>
                   {customerName}
                 </h1>
-                
+
                 <p className={`
                   text-2xl md:text-3xl lg:text-4xl 
                   ${styles.accent}
                   font-light
                   py-1
                 `}>&</p>
-                
+
                 <h1 className={`
                   ${styles.heading} 
                   text-4xl md:text-5xl lg:text-6xl xl:text-7xl
@@ -444,7 +444,7 @@ export default function HomeSection({
                     active:scale-95
                     no-underline
                   "
-                  style={{ 
+                  style={{
                     backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.6)',
                     borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
                     color: isDark ? 'white' : isPastel ? '#be185d' : isMinimal ? '#475569' : '#be185d'
@@ -483,7 +483,7 @@ export default function HomeSection({
   // Fullscreen Banner Template - Enhanced with dual CTAs
   const renderFullscreenBanner = () => {
     const isDark = theme === 'dark_elegant';
-    
+
     return (
       <div className={`relative min-h-screen flex items-center justify-center ${styles.heroBg}`}>
         {/* Background Image - Premium styling with enhanced cinematic overlays */}
@@ -507,11 +507,11 @@ export default function HomeSection({
         {/* Decorative elements - subtle floating hearts */}
         <HeroDecorations theme={theme} siteType={siteType} variant="full" />
 
-{/* Content Overlay - Centered with improved layout */}
+        {/* Content Overlay - Centered with improved layout */}
         <div className="relative z-10 text-center text-white px-4 
           flex flex-col items-center justify-center
           max-w-3xl mx-auto">
-          
+
           {/* Decorative element at top */}
           <div className="mb-8">
             <span className="text-5xl md:text-6xl animate-pulse inline-block">💕</span>
@@ -527,8 +527,8 @@ export default function HomeSection({
             leading-tight
             tracking-wide
           `}>
-            {customerName} 
-            <span className="block md:inline mx-0 md:mx-4 text-3xl md:text-4xl text-rose-300/80 font-light">&</span> 
+            {customerName}
+            <span className="block md:inline mx-0 md:mx-4 text-3xl md:text-4xl text-rose-300/80 font-light">&</span>
             {partnerName}
           </h1>
 
@@ -558,12 +558,12 @@ export default function HomeSection({
             </div>
           )}
         </div>
-        
+
         {/* Premium Dual CTAs - NEW ENHANCEMENT */}
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2">
-          <PremiumDualCTAs 
-            primaryTarget="love-letter" 
-            secondaryTarget="gallery" 
+          <PremiumDualCTAs
+            primaryTarget="love-letter"
+            secondaryTarget="gallery"
           />
         </div>
       </div>

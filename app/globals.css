@@ -807,6 +807,17 @@ body {
   }
 }
 
+/* Section scroll snap + smooth progress bar */
+html {
+  scroll-behavior: smooth;
+  scroll-snap-type: y proximity;
+}
+
+.section-snap {
+  scroll-snap-align: start;
+}
+
+
 /* ============================================
    ROMANTIC OPENING EXPERIENCE
    Full-screen romantic intro before main content

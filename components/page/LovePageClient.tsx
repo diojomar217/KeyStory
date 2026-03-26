@@ -43,10 +43,10 @@ import PartyDetailsSection from '../sections/birthday/PartyDetailsSection';
 import GiftWishlistSection from '../sections/birthday/GiftWishlistSection';
 
 // Import backward compatibility helpers
-import { 
-  convertToTimelineEvents, 
+import {
+  convertToTimelineEvents,
   getGalleryLayout,
-  sortSectionsByDisplayOrder 
+  sortSectionsByDisplayOrder
 } from '@/lib/section-migration';
 
 // Import section layouts and separators
@@ -105,6 +105,9 @@ export default function LovePageClient({
 }: Props) {
   const isBirthday = siteType === 'birthday';
 
+  // Visual progress + transition state
+  const [scrollProgress, setScrollProgress] = useState(0);
+
   // Romantic opening state
   const [showOpening, setShowOpening] = useState(true);
   const [isRevealing, setIsRevealing] = useState(false);
@@ -132,7 +135,7 @@ export default function LovePageClient({
     if (slug) {
       const storageKey = `love_story_opened_${slug}`;
       const hasOpened = localStorage.getItem(storageKey);
-      
+
       if (hasOpened) {
         setShowOpening(false);
       }
@@ -141,6 +144,20 @@ export default function LovePageClient({
       setShowOpening(false);
     }
   }, [slug]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const scrollY = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight;
+      const winHeight = window.innerHeight;
+      const progress = (scrollY / Math.max(docHeight - winHeight, 1)) * 100;
+      setScrollProgress(Math.max(0, Math.min(progress, 100)));
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     if (!passwordEnabled) {
@@ -188,13 +205,13 @@ export default function LovePageClient({
   // Handle reveal - called when user clicks the open button
   const handleReveal = useCallback(() => {
     setIsRevealing(true);
-    
+
     // Set localStorage to remember this visit
     if (slug) {
       const storageKey = `love_story_opened_${slug}`;
       localStorage.setItem(storageKey, 'true');
     }
-    
+
     // Wait for animation to complete, then show main content
     setTimeout(() => {
       setShowOpening(false);
@@ -206,13 +223,13 @@ export default function LovePageClient({
   const { effectiveGalleryLayout, mergedTimelineEvents } = useMemo(() => {
     // Determine gallery layout - handle polaroid_gallery backward compat
     const layout = getGalleryLayout(
-      sections as any, 
+      sections as any,
       { gallery_template: galleryTemplate } as any
     );
-    
+
     // Convert deprecated story sections to timeline events
     const mergedEvents = convertToTimelineEvents(timelineEvents, sectionContent);
-    
+
     return {
       effectiveGalleryLayout: layout,
       mergedTimelineEvents: mergedEvents,
@@ -224,10 +241,10 @@ export default function LovePageClient({
   const hasSpecialMoments = activeSections.includes('special_moments');
   const hasMilestones = activeSections.includes('milestones');
   const hasPolaroidGallery = activeSections.includes('polaroid_gallery');
-  
+
   // Show timeline if it's enabled OR if deprecated story sections exist
   const shouldShowTimeline = hasTimeline || hasFirstDate || hasSpecialMoments || hasMilestones;
-  
+
   // Show gallery if it's enabled OR if polaroid_gallery exists (for backward compat)
   const shouldShowGallery = hasGallery || hasPolaroidGallery;
 
@@ -534,22 +551,29 @@ export default function LovePageClient({
           <div className="relative z-10">
             {/* Home Section - Hero */}
             {activeSections.includes('home') && (
-              <div className={getSectionBgClass(theme, 0)}>
-                <HomeSection
-                  theme={theme}
-                  siteType={siteType}
-                  config={config}
-                  template={homeTemplate}
-                  customerName={customerName}
-                  partnerName={partnerName}
-                  anniversaryDate={anniversaryDate}
-                  message={message}
-                  tagline={tagline}
-                  photos={photos}
-                  coverPhotoIndex={coverPhotoIndex}
-                  heroCoverPhotoUrl={heroCoverPhotoUrl}
+              <div className="fixed inset-x-0 top-0 z-50 h-1 bg-transparent">
+                <div
+                  className="h-full bg-rose-500 dark:bg-rose-300 transition-all duration-300 ease-out"
+                  style={{ width: `${scrollProgress}%` }}
                 />
               </div>
+            )}
+
+            {activeSections.includes('home') && (
+              <HomeSection
+                theme={theme}
+                siteType={siteType}
+                config={config}
+                template={homeTemplate}
+                customerName={customerName}
+                partnerName={partnerName}
+                anniversaryDate={anniversaryDate}
+                message={message}
+                tagline={tagline}
+                photos={photos}
+                coverPhotoIndex={coverPhotoIndex}
+                heroCoverPhotoUrl={heroCoverPhotoUrl}
+              />
             )}
 
             {/* Render remaining sections in selected order (with separators only between rendered sections) */}
@@ -568,9 +592,14 @@ export default function LovePageClient({
                   renderedNodes.push(renderSectionSeparator(prevVariant, variant, `separator-${section}`));
                 }
 
-                const sectionWrapperClass = `${getSectionBgClass(theme, renderedSectionCount)} py-16`;
+                const sectionWrapperClass = `${getSectionBgClass(theme, renderedSectionCount)} py-16 animate-fade-in-up section-snap`;
+                const sectionAnimationDelay = Math.min(0.25 + renderedSectionCount * 0.08, 0.9);
                 renderedNodes.push(
-                  <div key={`section-wrapper-${section}`} className={sectionWrapperClass}>
+                  <div
+                    key={`section-wrapper-${section}`}
+                    className={sectionWrapperClass}
+                    style={{ animationDelay: `${sectionAnimationDelay}s` }}
+                  >
                     {sectionNode}
                   </div>
                 );
@@ -581,46 +610,46 @@ export default function LovePageClient({
               return renderedNodes;
             })()}
 
-          {/* 16. Memory Card Section - Premium Keepsake - Only render if qr_keepsake is enabled */}
-          {/* Backward compatibility: if sections array is missing, check for qrCodeUrl */}
-          {(() => {
-            const isQrKeepsakeEnabled = Array.isArray(sections) && activeSections.includes('qr_keepsake');
-            const hasQrCode = !!qrCodeUrl;
-            const isLegacyWebsite = !Array.isArray(sections);
-            
-            // Show if: (qr_keepsake section is enabled) OR (legacy website with qrCodeUrl)
-            if (isQrKeepsakeEnabled || (isLegacyWebsite && hasQrCode)) {
-              return (
-                <div className={`${getSectionBgClass(theme, 0)} py-16`}>
-                  <MemoryCardSection
-                    theme={theme}
-                    customerName={customerName}
-                    partnerName={partnerName}
-                    qrCodeUrl={qrCodeUrl}
-                    qrDataUrl={qrDataUrl}
-                    slug={slug}
-                  />
-                </div>
-              );
-            }
-            return null;
-          })()}
+            {/* 16. Memory Card Section - Premium Keepsake - Only render if qr_keepsake is enabled */}
+            {/* Backward compatibility: if sections array is missing, check for qrCodeUrl */}
+            {(() => {
+              const isQrKeepsakeEnabled = Array.isArray(sections) && activeSections.includes('qr_keepsake');
+              const hasQrCode = !!qrCodeUrl;
+              const isLegacyWebsite = !Array.isArray(sections);
 
-          {/* 17. Footer */}
-          <FooterSection
-            theme={theme}
-            siteType={siteType}
-            config={config}
-            customerName={customerName}
-            partnerName={partnerName}
-            qrCodeUrl={qrCodeUrl}
-            qrDataUrl={qrDataUrl}
-          />
+              // Show if: (qr_keepsake section is enabled) OR (legacy website with qrCodeUrl)
+              if (isQrKeepsakeEnabled || (isLegacyWebsite && hasQrCode)) {
+                return (
+                  <div className={`${getSectionBgClass(theme, 0)} py-16`}>
+                    <MemoryCardSection
+                      theme={theme}
+                      customerName={customerName}
+                      partnerName={partnerName}
+                      qrCodeUrl={qrCodeUrl}
+                      qrDataUrl={qrDataUrl}
+                      slug={slug}
+                    />
+                  </div>
+                );
+              }
+              return null;
+            })()}
 
-          {/* Back to Top Button */}
-          <BackToTop />
+            {/* 17. Footer */}
+            <FooterSection
+              theme={theme}
+              siteType={siteType}
+              config={config}
+              customerName={customerName}
+              partnerName={partnerName}
+              qrCodeUrl={qrCodeUrl}
+              qrDataUrl={qrDataUrl}
+            />
+
+            {/* Back to Top Button */}
+            <BackToTop />
+          </div>
         </div>
-      </div>
       </ThemeWrapper>
     );
   };
@@ -630,19 +659,19 @@ export default function LovePageClient({
     return (
       <>
         {/* Occasion-aware Opening Screen */}
-        <RomanticOpening 
+        <RomanticOpening
           theme={theme}
           siteType={siteType}
           customerName={customerName}
           partnerName={partnerName}
           tagline={tagline}
-          onReveal={handleReveal} 
+          onReveal={handleReveal}
         />
-        
+
         {/* Main content (hidden during opening) */}
-        <div 
+        <div
           className={`main-content-wrapper ${isRevealing ? 'hidden' : ''}`}
-          style={{ 
+          style={{
             opacity: isRevealing ? 0 : 1,
             transition: 'opacity 0.8s ease-out'
           }}
