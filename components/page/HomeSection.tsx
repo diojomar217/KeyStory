@@ -1,18 +1,20 @@
-'use client';
+// Unique Parallax Immersive Layout
 
-import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { useMouseParallax } from './useMouseParallax';
-import ParticlesCanvas from './ParticlesCanvas';
-import { useTypewriter } from './useTypewriter';
-import Image from 'next/image';
-import { Theme, HomeTemplate } from '@/lib/types';
-import { useTheme } from '../builder/ThemeWrapper';
-import RelationshipTimer from './RelationshipTimer';
-import { HeroDecorations, PremiumDualCTAs } from './HeroOverlay';
-import { resolveHeroConfig, resolveHeroCoverPhoto } from '@/lib/site-type-utils';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { motion, useAnimation, useInView } from 'framer-motion';
+import type { OccasionType, Theme, HomeTemplate } from '@/lib/types';
 
-type Props = {
+interface ParallaxImmersiveProps {
+  heroImage: string;
+  tagline?: string;
+  normalizedDate?: string;
+  theme: Theme;
+  siteType?: string;
+  customerName: string;
+  partnerName: string;
+}
+
+interface HomeSectionProps {
   theme: Theme;
   siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
   config?: any;
@@ -26,7 +28,177 @@ type Props = {
   coverPhotoIndex?: number;
   songLink?: string;
   heroCoverPhotoUrl?: string | null;
-};
+}
+function FloatingHearts() {
+  const [hearts, setHearts] = useState<Array<{
+    left: number;
+    size: number;
+    delay: number;
+    duration: number;
+  }>>([]);
+
+  useEffect(() => {
+    // Only run on client
+    const generated = Array.from({ length: 10 }).map(() => ({
+      left: Math.random() * 90 + 2, // 2% - 92%
+      size: Math.random() * 32 + 24, // 24px - 56px
+      delay: Math.random() * 6,
+      duration: Math.random() * 8 + 10, // 10s - 18s
+    }));
+    setHearts(generated);
+  }, []);
+
+  return (
+    <>
+      {hearts.map((h, i) => (
+        <motion.span
+          key={i}
+          initial={{ y: '100vh', opacity: 0 }}
+          animate={{ y: '-10vh', opacity: [0, 0.7, 0] }}
+          transition={{
+            duration: h.duration,
+            delay: h.delay,
+            repeat: Infinity,
+            repeatType: 'loop',
+            ease: 'easeInOut',
+          }}
+          className="absolute text-pink-300/60 select-none pointer-events-none"
+          style={{ left: `${h.left}%`, fontSize: h.size }}
+        >
+          ♥
+        </motion.span>
+      ))}
+    </>
+  );
+}
+
+function renderParallaxImmersive({
+  heroImage,
+  tagline,
+  normalizedDate,
+  theme,
+  siteType,
+  customerName,
+  partnerName
+}: ParallaxImmersiveProps) {
+  // Parallax scroll effect
+  const bgRef = useRef<HTMLDivElement>(null);
+  const midRef = useRef<HTMLDivElement>(null);
+  const fgRef = useRef<HTMLDivElement>(null);
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Fade-in for text
+  const fgInView = useInView(fgRef, { once: true, margin: '-100px' });
+  const fgControls = useAnimation();
+  useEffect(() => {
+    if (fgInView) fgControls.start('visible');
+  }, [fgInView, fgControls]);
+
+  return (
+    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-pink-100 via-pink-200 to-rose-200">
+      {/* Background Layer: Floating Hearts */}
+      <motion.div
+        ref={bgRef}
+        className="absolute inset-0 z-0 pointer-events-none"
+        style={{
+          transform: `translateY(${scrollY * 0.15}px)`
+        }}
+      >
+        <FloatingHearts />
+      </motion.div>
+
+      {/* Mid Layer: Couple Image with Glow and Parallax */}
+      <motion.div
+        ref={midRef}
+        className="relative z-10 flex items-center justify-center w-full mt-24 mb-8"
+        style={{
+          transform: `translateY(${scrollY * 0.08}px)`
+        }}
+      >
+        <motion.div
+          className="relative w-40 h-40 md:w-56 md:h-56 lg:w-64 lg:h-64 rounded-3xl overflow-hidden shadow-2xl bg-white/40 flex items-center justify-center aspect-square group"
+          whileHover={{ scale: 1.045, rotate: -3 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 18 }}
+        >
+          <img
+            src={heroImage}
+            alt="Jomar & Aki"
+            className="object-cover w-full h-full rounded-3xl shadow-xl group-hover:shadow-2xl"
+            style={{ boxShadow: '0 8px 40px 0 rgba(255, 0, 128, 0.10)' }}
+            loading="eager"
+          />
+          <div className="absolute inset-0 rounded-3xl bg-gradient-to-t from-pink-200/40 via-transparent to-white/10 pointer-events-none" />
+          <div className="absolute -inset-3 rounded-3xl blur-2xl bg-pink-300/30 opacity-60 pointer-events-none" />
+        </motion.div>
+      </motion.div>
+
+      {/* Foreground Layer: Text Content */}
+      <motion.div
+        ref={fgRef}
+        className="relative z-20 flex flex-col items-center justify-center w-full px-4"
+        initial="hidden"
+        animate={fgControls}
+        variants={{
+          hidden: { opacity: 0, y: 40 },
+          visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: 'easeOut' } }
+        }}
+      >
+        {/* Names with gradient text */}
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-2 text-center bg-gradient-to-r from-pink-500 via-rose-400 to-fuchsia-500 bg-clip-text text-transparent drop-shadow-lg">
+          {customerName} & {partnerName}
+        </h1>
+        {/* Subtitle (tagline) */}
+        {tagline && (
+          <p className="text-lg md:text-xl font-light italic text-gray-700 mb-6 text-center max-w-2xl">
+            {tagline}
+          </p>
+        )}
+        {/* Timer Card (glassmorphism) */}
+        <motion.div
+          className="mb-7 px-7 py-4 rounded-full bg-white/30 backdrop-blur-md shadow-lg flex items-center gap-3 border border-white/40"
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: [0.95, 1.03, 1], opacity: 1 }}
+          transition={{ duration: 1.2, delay: 0.3, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
+        >
+          <span className="text-xl text-pink-400 animate-pulse">💕</span>
+          <div className="text-center">
+            <div className="font-medium text-base text-gray-800">Together since 2022-02-14</div>
+            <div className="text-xs text-gray-600">2 years • 1 month • 13 days</div>
+          </div>
+          <span className="text-xl text-pink-400 animate-pulse">💕</span>
+        </motion.div>
+        {/* CTA Button */}
+        <motion.a
+          href="#our-story"
+          className="mt-2 px-8 py-3 rounded-full bg-gradient-to-r from-pink-500 to-rose-400 text-white font-semibold text-base shadow-xl hover:scale-105 hover:shadow-2xl transition-transform duration-300"
+          whileHover={{ scale: 1.07 }}
+        >
+          View Our Story
+        </motion.a>
+      </motion.div>
+    </div>
+  );
+}
+
+
+// Removed duplicate React import
+import { useMouseParallax } from './useMouseParallax';
+import ParticlesCanvas from './ParticlesCanvas';
+import { useTypewriter } from './useTypewriter';
+import Image from 'next/image';
+// HomeTemplate imported above
+import { useTheme } from '../builder/ThemeWrapper';
+import RelationshipTimer from './RelationshipTimer';
+import { HeroDecorations, PremiumDualCTAs } from './HeroOverlay';
+import { resolveHeroConfig, resolveHeroCoverPhoto } from '@/lib/site-type-utils';
 
 export default function HomeSection({
   theme,
@@ -41,8 +213,13 @@ export default function HomeSection({
   photos,
   coverPhotoIndex,
   heroCoverPhotoUrl,
-}: Props) {
+}: HomeSectionProps) {
   const styles = useTheme(theme);
+  // DEBUG: Print config.hero to inspect crop values
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('DEBUG: config.hero', config?.hero);
+  }, [config]);
   const [isLoaded, setIsLoaded] = useState(false);
   const isBirthday = siteType === 'birthday';
 
@@ -107,6 +284,9 @@ export default function HomeSection({
     resolveHeroCoverPhoto({ hero: config?.hero, cover_photo_index: coverPhotoIndex }, photos) ||
     '/vercel.svg';
 
+  // Crop settings from config
+  const crop = config?.hero?.crop;
+
   const getAccentColor = () => {
     switch (theme) {
       case 'dark_elegant':
@@ -126,8 +306,7 @@ export default function HomeSection({
     setIsLoaded(true);
   }, []);
 
-  const sectionRef = useRef<HTMLDivElement>(null!);
-  useMouseParallax(sectionRef, 25);
+  // Parallax effect removed for stability
 
   const customerTypewriter = useTypewriter(customerName || 'Your Name');
   const partnerTypewriter = useTypewriter(partnerName || 'Partner Name');
@@ -154,319 +333,170 @@ export default function HomeSection({
     return templateAliases[raw] || 'hero_centered';
   }, [template]);
 
-  const renderHeroCentered = () => {
-    const displayCustomerName = customerName || 'Your Name';
-    const displayPartnerName = partnerName || 'Partner Name';
-    const hasValidNames = customerName && partnerName;
 
+  // --- Premium Romantic Centered Hero Section (Dynamic, Database-Driven) ---
+  interface SiteData {
+    website_name?: string;
+    coupleNames?: string;
+    tagline?: string;
+    start_date?: string;
+    cover_photo?: string;
+    slug: string;
+    cta_primary?: { label: string; link: string };
+    cta_secondary?: { label: string; link: string };
+    theme?: string;
+  }
+
+  function RelationshipDuration({ startDate }: { startDate: string }) {
+    const [now, setNow] = useState<Date>(() => new Date());
+    useEffect(() => {
+      const interval = setInterval(() => setNow(new Date()), 1000 * 60); // update every minute
+      return () => clearInterval(interval);
+    }, []);
+    const start = useMemo(() => new Date(startDate), [startDate]);
+    const diffMs = now.getTime() - start.getTime();
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const months = Math.floor(days / 30);
+    const remDays = days - months * 30;
+    const hours = now.getHours();
     return (
-      <div
-        ref={sectionRef}
-        className={`${styles.heroBg} parallax-bg min-h-[85vh] flex flex-col items-center justify-center py-8 w-full relative`}
+      <motion.div
+        className="px-7 py-3 rounded-full bg-white/30 backdrop-blur-md shadow-lg flex items-center gap-3 border border-white/40 animate-pulse"
+        initial={{ scale: 0.97, opacity: 0 }}
+        animate={{ scale: [0.97, 1.03, 1], opacity: 1 }}
+        transition={{ duration: 1.2, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
       >
-        <ParticlesCanvas theme={theme} />
-
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute inset-0 bg-black/20" />
-          <div className="absolute inset-0 backdrop-blur-[1px]" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] bg-gradient-to-b from-rose-500/18 via-pink-500/10 to-transparent rounded-full blur-3xl opacity-55 animate-drift" />
+        <span className="text-xl text-pink-400">💕</span>
+        <div className="text-center">
+          <div className="font-medium text-base text-gray-800">
+            Together since {start.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+          </div>
+          <div className="text-xs text-gray-600">
+            {months} months • {remDays} days • {hours} hours together
+          </div>
         </div>
+        <span className="text-xl text-pink-400">💕</span>
+      </motion.div>
+    );
+  }
 
-        <HeroDecorations theme={theme} siteType={siteType} variant="centered" />
-
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center w-full relative z-10">
-          <div
-            className={`mb-4 transition-all duration-500 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
-              }`}
+  function FloatingHearts() {
+    const [hearts, setHearts] = useState<Array<{ left: number; size: number; delay: number; duration: number }>>([]);
+    useEffect(() => {
+      setHearts(Array.from({ length: 8 }).map(() => ({
+        left: Math.random() * 90 + 2,
+        size: Math.random() * 24 + 18,
+        delay: Math.random() * 6,
+        duration: Math.random() * 8 + 10,
+      })));
+    }, []);
+    return (
+      <>
+        {hearts.map((h, i) => (
+          <motion.span
+            key={i}
+            initial={{ y: '100vh', opacity: 0 }}
+            animate={{ y: '-10vh', opacity: [0, 0.5, 0] }}
+            transition={{ duration: h.duration, delay: h.delay, repeat: Infinity, repeatType: 'loop', ease: 'easeInOut' }}
+            className="absolute text-pink-200/60 select-none pointer-events-none"
+            style={{ left: `${h.left}%`, fontSize: h.size }}
           >
-            <span
-              className={`
-                inline-flex items-center gap-1.5
-                px-3 py-1.5 rounded-full
-                text-[10px] font-semibold uppercase tracking-widest
-                ${accentColor === 'amber'
-                  ? 'bg-amber-400/20 text-amber-300'
-                  : accentColor === 'purple'
-                    ? 'bg-purple-100 text-purple-600'
-                    : accentColor === 'slate'
-                      ? 'bg-slate-100 text-slate-600'
-                      : 'bg-rose-100 text-rose-600'
-                }
-              `}
-            >
-              <span className="animate-pulse">{heroConfig.decorations.badge}</span>
-              <span>{heroConfig.title}</span>
-              <span className="animate-pulse">{heroConfig.cta.endIcon}</span>
-            </span>
-          </div>
+            ♥
+          </motion.span>
+        ))}
+      </>
+    );
+  }
 
-          <div
-            className={`relative mx-auto mb-5 transition-all duration-500 delay-100 ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
-              }`}
+  function DynamicHeroSection({ site }: { site: SiteData }) {
+    return (
+      <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-pink-100 via-pink-200 to-rose-200">
+        {/* Background: Floating Hearts */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <FloatingHearts />
+          <div className="absolute inset-0 bg-gradient-radial from-pink-200/60 via-white/0 to-transparent" />
+        </div>
+        {/* Hero Image with Glow */}
+        <div className="relative z-10 flex flex-col items-center justify-center w-full mt-24 mb-8">
+          <motion.div
+            className="relative w-40 h-40 md:w-56 md:h-56 lg:w-64 lg:h-64 rounded-full overflow-hidden shadow-2xl bg-white/40 flex items-center justify-center aspect-square group animate-float"
+            whileHover={{ scale: 1.045, rotate: -2 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 18 }}
           >
-            <div
-              className={`
-                absolute -inset-3 rounded-full blur-lg opacity-30
-                ${accentColor === 'amber'
-                  ? 'bg-amber-400'
-                  : accentColor === 'purple'
-                    ? 'bg-purple-400'
-                    : accentColor === 'slate'
-                      ? 'bg-slate-400'
-                      : 'bg-rose-400'
-                }
-              `}
+            <img
+              src={site.cover_photo}
+              alt={site.website_name || site.coupleNames || 'Couple'}
+              className="object-cover w-full h-full rounded-full shadow-xl group-hover:shadow-2xl"
+              style={{ boxShadow: '0 8px 40px 0 rgba(255, 0, 128, 0.10)' }}
+              loading="eager"
             />
-
-            <div
-              className={`
-                relative w-40 h-40 md:w-48 md:h-48 lg:w-52 lg:h-52
-                mx-auto rounded-full overflow-hidden
-                shadow-[0_15px_40px_rgba(0,0,0,0.25)]
-                ring-3 ring-white/40
-                transform transition-all duration-300
-                hover:scale-105 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)]
-                group
-              `}
-            >
-              <Image
-                src={heroImage}
-                alt={`${displayCustomerName} and ${displayPartnerName}`}
-                fill
-                className="object-cover"
-                priority
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-black/5 pointer-events-none" />
-              <div className="absolute inset-0 rounded-full ring-1 ring-white/20 pointer-events-none" />
-            </div>
-          </div>
-
-          <div
-            className={`mb-3 transition-all duration-500 delay-200 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
-              }`}
+            <div className="absolute inset-0 rounded-full bg-gradient-to-t from-pink-200/40 via-transparent to-white/10 pointer-events-none" />
+            <div className="absolute -inset-3 rounded-full blur-2xl bg-pink-300/30 opacity-60 pointer-events-none" />
+          </motion.div>
+        </div>
+        {/* Names Heading */}
+        <motion.h1
+          className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-2 text-center bg-gradient-to-r from-pink-500 via-rose-400 to-fuchsia-500 bg-clip-text text-transparent drop-shadow-lg"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+        >
+          {site.website_name || site.coupleNames}
+        </motion.h1>
+        {/* Tagline */}
+        {site.tagline && (
+          <motion.p
+            className="text-lg md:text-xl font-light italic text-gray-700 mb-6 text-center max-w-2xl"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, delay: 0.2, ease: 'easeOut' }}
           >
-            <h1
-              className={`
-                ${styles.heading}
-                text-3xl md:text-4xl lg:text-5xl
-                font-bold
-                ${styles.text}
-                leading-tight
-                tracking-tight
-                drop-shadow-[0_4px_20px_rgba(0,0,0,0.45)]
-                flex flex-wrap items-center justify-center gap-x-3 gap-y-1
-              `}
+            {site.tagline}
+          </motion.p>
+        )}
+        {/* Timer Card */}
+        {site.start_date && <RelationshipDuration startDate={site.start_date} />}
+        {/* CTAs */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-7">
+          {site.cta_primary && (
+            <motion.a
+              href={site.cta_primary.link.replace('[slug]', site.slug)}
+              className="px-8 py-3 rounded-full bg-gradient-to-r from-pink-500 to-rose-400 text-white font-semibold text-base shadow-xl hover:scale-105 hover:shadow-2xl transition-transform duration-300"
+              whileHover={{ scale: 1.07 }}
             >
-              {isBirthday ? (
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="inline-block"
-                  transition={{ delay: 0.5 }}
-                >
-                  {celebrantName}
-                </motion.span>
-              ) : (
-                <>
-                  <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="inline-block typewriter-text"
-                    transition={{ delay: 0.6 }}
-                  >
-                    {customerTypewriter.isComplete ? customerName : customerTypewriter.displayText}
-                    <span className="blinking-cursor">|</span>
-                  </motion.span>
-                  <span
-                    className={`text-xl md:text-2xl lg:text-3xl ${theme === 'dark_elegant'
-                        ? 'text-amber-400/80'
-                        : theme === 'cute_pastel'
-                          ? 'text-purple-400'
-                          : theme === 'minimal_modern'
-                            ? 'text-slate-400'
-                            : 'text-rose-400'
-                      } font-light italic`}
-                  >
-                    <span className="inline-block animate-fade-in-scale" style={{ animationDelay: '0.3s' }}>
-                      &
-                    </span>
-                  </span>
-                  <span className="inline-block">
-                    {partnerTypewriter.isComplete ? partnerName : partnerTypewriter.displayText}
-                    {!partnerTypewriter.isComplete && <span className="blinking-cursor">|</span>}
-                  </span>
-                </>
-              )}
-            </h1>
-          </div>
-
-          {(normalizedDate || (isBirthday && celebrantName) || hasValidNames) && (
-            <p
-              className={`
-                text-sm md:text-base
-                ${styles.textMuted}
-                mb-2
-                font-light
-                tracking-wide
-                transition-all duration-500 delay-300
-                ${isLoaded ? 'opacity-75 translate-y-0' : 'opacity-0 translate-y-2'}
-              `}
-            >
-              {isBirthday ? (
-                birthdayStats ? (
-                  <>
-                    Turning <span className={`font-semibold ${styles.text}`}>{birthdayStats.ageTurning}</span> on{' '}
-                    <span className={`font-semibold ${styles.text}`}>{birthdayStats.eventDate}</span>
-                  </>
-                ) : (
-                  <span className="opacity-60">Let’s celebrate your special day</span>
-                )
-              ) : normalizedDate ? (
-                <>
-                  Together since <span className={`font-semibold ${styles.text}`}>{normalizedDate}</span>
-                </>
-              ) : (
-                <span className="opacity-60">Started our journey</span>
-              )}
-            </p>
+              {site.cta_primary.label}
+            </motion.a>
           )}
-
-          <p
-            className={`text-xs md:text-sm mb-4 italic transition-all duration-500 delay-350 ${isLoaded ? 'opacity-70 translate-y-0' : 'opacity-0 translate-y-2'
-              } ${theme === 'dark_elegant' ? 'text-white/70' : 'text-white/80'}`}
-          >
-            {isBirthday ? 'A page made to celebrate your special day ✨' : 'A little space on the internet made just for us 💕'}
-          </p>
-
-          {isBirthday ? (
-            birthdayStats && (
-              <div
-                className={`
-                  mb-4
-                  transition-all duration-500 delay-400
-                  ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}
-                `}
-              >
-                <div
-                  className={`
-                    ${styles.timerBg} ${styles.timerBorder} border rounded-full px-5 py-2.5 md:px-7 md:py-3 inline-flex items-center gap-2 md:gap-3 shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm
-                  `}
-                >
-                  <span className="text-xl">✨</span>
-                  <div className="text-center">
-                    <div className={`${styles.text} font-medium text-sm md:text-base`}>Countdown to the celebration</div>
-                    <div className="text-xs md:text-sm text-white/80">{birthdayStats.countdown}</div>
-                  </div>
-                  <span className="text-xl">🎉</span>
-                </div>
-              </div>
-            )
-          ) : (
-            normalizedDate && (
-              <div
-                className={`
-                  mb-4 transition-all duration-500 delay-400
-                  ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}
-                `}
-              >
-                <div className="scale-95 opacity-90">
-                  <RelationshipTimer anniversary={normalizedDate} theme={theme} />
-                </div>
-              </div>
-            )
-          )}
-
-          {tagline && (
-            <div
-              className={`
-                mb-5 max-w-xl mx-auto
-                transition-all duration-500 delay-500
-                ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}
-              `}
+          {site.cta_secondary && (
+            <motion.a
+              href={site.cta_secondary.link.replace('[slug]', site.slug)}
+              className="px-8 py-3 rounded-full bg-white/30 text-pink-600 font-semibold text-base shadow-xl hover:scale-105 hover:shadow-2xl transition-transform duration-300 border border-pink-200"
+              whileHover={{ scale: 1.07 }}
             >
-              <p
-                className={`
-                  text-sm md:text-base lg:text-lg
-                  leading-relaxed
-                  ${theme === 'dark_elegant' ? 'text-white/70' : 'text-gray-200'}
-                  font-light italic
-                `}
-              >
-                &ldquo;{taglineTypewriter.isComplete ? tagline : taglineTypewriter.displayText}&rdquo;
-                <span className="ml-1 blinking-cursor">|</span>
-              </p>
-            </div>
+              {site.cta_secondary.label}
+            </motion.a>
           )}
-
-          <div
-            className={`
-              flex flex-col sm:flex-row items-center justify-center gap-3
-              transition-all duration-500 delay-600
-              ${isLoaded ? 'opacity-100' : 'opacity-0'}
-            `}
-          >
-            <a
-              href="#love-letter"
-              className="
-                group
-                flex items-center justify-center gap-2
-                min-w-[160px]
-                px-6 py-2.5
-                bg-gradient-to-r from-rose-500 to-pink-500
-                hover:from-rose-400 hover:to-pink-400
-                text-white
-                font-medium text-xs
-                rounded-full
-                transition-all duration-300
-                hover:scale-105 hover:shadow-lg hover:shadow-rose-500/25
-                active:scale-95
-                no-underline
-              "
-            >
-              <span className="transition-transform group-hover:animate-pulse">{heroConfig.cta.startIcon}</span>
-              {heroConfig.cta.primary}
-              <span className="transition-transform group-hover:translate-y-0.5">{heroConfig.cta.endIcon}</span>
-            </a>
-
-            {!isBirthday && (
-              <a
-                href="#gallery"
-                className="
-                  group
-                  flex items-center justify-center gap-2
-                  min-w-[160px]
-                  px-6 py-2.5
-                  bg-white/10 backdrop-blur-sm
-                  border border-white/20
-                  hover:bg-white/20 hover:border-white/35
-                  text-white
-                  font-medium text-xs
-                  rounded-full
-                  transition-all duration-300
-                  hover:scale-105 hover:shadow-lg
-                  active:scale-95
-                  no-underline
-                "
-                style={{
-                  backgroundColor: theme === 'dark_elegant' ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.16)',
-                  borderColor: theme === 'dark_elegant' ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.24)',
-                  color: 'white',
-                }}
-              >
-                <span>{heroConfig.cta.endIcon}</span>
-                {heroConfig.cta.secondary}
-                <span className="transition-transform group-hover:translate-x-0.5">→</span>
-              </a>
-            )}
-          </div>
-
-          <div className="mt-4 animate-bounce-subtle">
-            <span className="text-lg opacity-30">{isBirthday ? '🎉' : '💕'}</span>
-          </div>
         </div>
       </div>
     );
+  }
+
+  const renderHeroCentered = () => {
+    // Compose site data from props
+    const site: SiteData = {
+      website_name: config?.website_name,
+      coupleNames: customerName && partnerName ? `${customerName} & ${partnerName}` : undefined,
+      tagline: tagline,
+      start_date: anniversaryDate,
+      cover_photo: heroCoverPhotoUrl || (photos && photos[0]),
+      slug: config?.slug || '',
+      cta_primary: config?.cta_primary || { label: 'View Our Story', link: `/site/[slug]#story` },
+      cta_secondary: config?.cta_secondary || { label: 'See Memories', link: `/site/[slug]#memories` },
+      theme: theme,
+    };
+    return <DynamicHeroSection site={site} />;
   };
+
 
   const renderSplitLayout = () => {
     const isDark = theme === 'dark_elegant';
@@ -882,7 +912,15 @@ export default function HomeSection({
     case 'fullscreen_banner':
       return renderFullscreenBanner();
     case 'parallax_immersive':
-      return renderHeroCentered();
+      return renderParallaxImmersive({
+        heroImage,
+        tagline,
+        normalizedDate,
+        theme,
+        siteType,
+        customerName,
+        partnerName
+      });
     case 'particles_fullscreen':
       return renderFullscreenBanner();
     case 'hero_centered':

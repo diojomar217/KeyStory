@@ -1,3 +1,6 @@
+// Simple in-memory cache (per server instance)
+const ordersCache: Record<string, { data: any; cachedAt: number }> = {};
+const CACHE_TTL = 10 * 1000; // 10 seconds
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, Site } from '@/lib/supabase';
 
@@ -26,31 +29,79 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: true, order: data });
     }
 
-    // Otherwise, fetch all sites (optionally filtered by status)
+    // Otherwise, fetch all sites (optionally filtered by status), with pagination and column selection
     const status = searchParams.get('status')?.toLowerCase();
-    let query = supabase.from('sites').select('*');
+    const limit = parseInt(searchParams.get('limit') || '20', 10);
+    const offset = parseInt(searchParams.get('offset') || '0', 10);
+    const search = searchParams.get('search')?.trim();
+    const sortBy = searchParams.get('sortBy') || 'created_at';
+    const sortDirection = (searchParams.get('sortDirection') === 'asc' ? 'asc' : 'desc');
+
+    // Build cache key from query params (after all are defined)
+    const cacheKey = JSON.stringify({ limit, offset, status, search, sortBy, sortDirection });
+    const now = Date.now();
+    if (ordersCache[cacheKey] && now - ordersCache[cacheKey].cachedAt < CACHE_TTL) {
+      return NextResponse.json(ordersCache[cacheKey].data);
+    }
+
+    // Build base query for data
+    let dataQuery = supabase
+      .from('sites')
+      .select('id,slug,website_name,site_type,status,expires_at,created_at')
+      .order(sortBy, { ascending: sortDirection === 'asc' })
+      .range(offset, offset + limit - 1);
+
+    // Build base query for count
+    let countQuery = supabase
+      .from('sites')
+      .select('id', { count: 'exact', head: true });
 
     if (status) {
       if (status === 'archived') {
-        query = query.eq('status', 'archived');
+        dataQuery = dataQuery.eq('status', 'archived');
+        countQuery = countQuery.eq('status', 'archived');
       } else if (status === 'expired') {
-        query = query.eq('status', 'expired');
+        dataQuery = dataQuery.eq('status', 'expired');
+        countQuery = countQuery.eq('status', 'expired');
       } else if (status === 'active') {
-        query = query.not('status', 'in', '(archived,expired)');
+        dataQuery = dataQuery.not('status', 'in', '(archived,expired)');
+        countQuery = countQuery.not('status', 'in', '(archived,expired)');
       }
     }
 
-    const { data, error } = await query.order('created_at', { ascending: false });
+    // Add search filter (website_name, slug, or customer)
+    if (search) {
+      // Use ilike for case-insensitive partial match
+      dataQuery = dataQuery.or(`website_name.ilike.%${search}%,slug.ilike.%${search}%`);
+      countQuery = countQuery.or(`website_name.ilike.%${search}%,slug.ilike.%${search}%`);
+      // If you have a customer field, add it here as well:
+      // .or(`website_name.ilike.%${search}%,slug.ilike.%${search}%,customer.ilike.%${search}%`)
+    }
 
-    if (error) {
-      console.error('Failed to fetch orders:', error);
+    // Fetch data and count in parallel
+    const [dataRes, countRes] = await Promise.all([
+      dataQuery,
+      countQuery
+    ]);
+
+    if (dataRes.error) {
+      console.error('Failed to fetch orders:', dataRes.error);
       return NextResponse.json(
-        { success: false, message: error.message },
+        { success: false, message: dataRes.error.message },
+        { status: 500 }
+      );
+    }
+    if (countRes.error) {
+      console.error('Failed to fetch orders count:', countRes.error);
+      return NextResponse.json(
+        { success: false, message: countRes.error.message },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ success: true, orders: data });
+    const responseData = { success: true, orders: dataRes.data, total: countRes.count };
+    ordersCache[cacheKey] = { data: responseData, cachedAt: now };
+    return NextResponse.json(responseData);
   } catch (err) {
     console.error('orders route exception:', err);
     return NextResponse.json(
@@ -59,4 +110,5 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
 

@@ -105,7 +105,7 @@ export default function TimelineSection({ theme, template, events, variant = 'de
         <div className="absolute left-5 top-5 z-10">
           <div className={`
             w-7 h-7 rounded-full flex items-center justify-center
-            ${styles.bg.split(' ')[0]} border-4 border-white/20 ${accents.dot}
+            ${(styles && styles.bg ? styles.bg.split(' ')[0] : '')} border-4 border-white/20 ${accents.dot}
             ${isSpecial ? accents.dotGlow : 'shadow-lg'}
             transition-all duration-300
             ${isSpecial ? 'scale-115' : 'hover:scale-115'}

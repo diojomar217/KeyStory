@@ -1,7 +1,7 @@
 'use client';
 
 import { Theme } from '@/lib/types';
-import { THEME_PRESETS } from '@/lib/builder-constants';
+import { THEME_CONFIG } from '@/config/themeConfig';
 
 interface FirstDateSectionProps {
   theme: Theme;
@@ -21,7 +21,7 @@ export default function FirstDateSection({
   partnerName,
   firstDateInfo 
 }: FirstDateSectionProps) {
-  const themeConfig = THEME_PRESETS[theme];
+  const themeConfig = THEME_CONFIG[theme];
   const { colors, typography } = themeConfig;
 
   return (

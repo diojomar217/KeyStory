@@ -1,6 +1,6 @@
 'use client';
 import { Theme } from '@/lib/types';
-import { THEME_PRESETS } from '@/lib/builder-constants';
+import { THEME_CONFIG } from '@/config/themeConfig';
 
 type Props = {
   value?: Theme;
@@ -8,7 +8,7 @@ type Props = {
 };
 
 export default function ThemeSelector({ value, onChange }: Props) {
-  const themeKeys = Object.keys(THEME_PRESETS) as Theme[];
+  const themeKeys = Object.keys(THEME_CONFIG) as Theme[];
 
   return (
     <div className="space-y-4">
@@ -18,7 +18,7 @@ export default function ThemeSelector({ value, onChange }: Props) {
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {themeKeys.map((themeKey, index) => {
-          const theme = THEME_PRESETS[themeKey];
+          const theme = THEME_CONFIG[themeKey];
           const isSelected = value === themeKey;
           return (
             <button
@@ -48,7 +48,7 @@ export default function ThemeSelector({ value, onChange }: Props) {
 
               {/* Color Palette Preview */}
               <div className="flex gap-1.5 mb-3">
-                {theme.preview.map((color, idx) => (
+                {theme.preview.map((color: string, idx: number) => (
                   <div
                     key={idx}
                     className="w-6 h-6 rounded-full shadow-sm border border-slate-200/50 transform group-hover:scale-110 transition-transform duration-300"

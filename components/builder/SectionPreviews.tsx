@@ -1,7 +1,7 @@
 'use client';
 
 import { SiteConfig, Theme, OccasionType } from '@/lib/types';
-import { THEME_PRESETS } from '@/lib/builder-constants';
+import { THEME_CONFIG } from '@/config/themeConfig';
 
 // ============================================
 // THEME STYLES - Theme-specific styling
@@ -19,7 +19,7 @@ type ThemeColors = {
 };
 
 const getThemeColors = (theme: Theme): ThemeColors => {
-  const preset = THEME_PRESETS[theme] || THEME_PRESETS.romantic_classic;
+  const preset = THEME_CONFIG[theme] || THEME_CONFIG.romantic_classic;
   return {
     primary: preset.colors.primary,
     secondary: preset.colors.secondary,

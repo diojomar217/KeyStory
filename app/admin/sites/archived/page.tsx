@@ -94,12 +94,21 @@ export default function ArchivedSitesPage() {
       ) : (
         <WebsitesTable
           orders={sites}
+          total={sites.length}
+          page={1}
+          limit={sites.length}
+          onPageChange={() => {}}
+          onLimitChange={() => {}}
           onDelete={handleDelete}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}
           onRefresh={fetchArchivedSites}
+          sortBy={"created_at"}
+          sortDirection={"desc"}
+          onSortChange={() => {}}
+          loading={loading}
         />
       )}
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Theme } from '@/lib/types';
-import { THEME_PRESETS } from '@/lib/builder-constants';
+import { THEME_CONFIG } from '@/config/themeConfig';
 import SectionHeader from '../../page/SectionHeader';
 
 interface AnniversaryCountdownSectionProps {
@@ -27,7 +27,7 @@ export default function AnniversaryCountdownSection({
   yearsTogether = 1,
   variant = 'default',
 }: AnniversaryCountdownSectionProps) {
-  const themeConfig = THEME_PRESETS[theme];
+  const themeConfig = THEME_CONFIG[theme];
   const { colors, typography } = themeConfig;
 
   const [mode, setMode] = useState<Mode>('countdown');

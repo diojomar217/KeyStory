@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Section } from '@/lib/types';
-import { SECTION_TOGGLES } from '@/lib/builder-constants';
+import { SECTION_CONFIG } from '@/config/sectionConfig';
 
 interface SectionTogglePanelProps {
   toggles: Record<Section, boolean>;
@@ -11,7 +11,7 @@ interface SectionTogglePanelProps {
 
 export default function SectionTogglePanel({ toggles, onChange }: SectionTogglePanelProps) {
   const handleToggle = (section: Section) => {
-    const toggle = SECTION_TOGGLES.find(t => t.id === section);
+    const toggle = SECTION_CONFIG.find(t => t.key === section);
     if (toggle?.required) return; // Cannot toggle required sections
     
     onChange({
@@ -30,13 +30,13 @@ export default function SectionTogglePanel({ toggles, onChange }: SectionToggleP
       </div>
 
       <div className="grid gap-3">
-        {SECTION_TOGGLES.map((section) => {
-          const isEnabled = toggles[section.id] ?? section.defaultEnabled;
+        {SECTION_CONFIG.map((section) => {
+          const isEnabled = toggles[section.key as Section] ?? section.defaultEnabled;
           const isRequired = section.required;
           
           return (
             <div
-              key={section.id}
+              key={section.key}
               className={`
                 relative flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-200
                 ${isEnabled 
@@ -45,7 +45,7 @@ export default function SectionTogglePanel({ toggles, onChange }: SectionToggleP
                 }
                 ${isRequired ? 'opacity-75' : 'cursor-pointer hover:border-rose-300'}
               `}
-              onClick={() => !isRequired && handleToggle(section.id)}
+              onClick={() => !isRequired && handleToggle(section.key as Section)}
             >
               {/* Icon */}
               <div className={`
@@ -101,7 +101,7 @@ export default function SectionTogglePanel({ toggles, onChange }: SectionToggleP
           </span>
           <span className="text-slate-400">•</span>
           <span className="text-slate-600">
-            {SECTION_TOGGLES.filter(s => !s.required).length} optional
+            {SECTION_CONFIG.filter(s => !s.required).length} optional
           </span>
         </div>
       </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { Theme } from '@/lib/types';
-import { THEME_PRESETS } from '@/lib/builder-constants';
+import { THEME_CONFIG } from '@/config/themeConfig';
 
 interface Milestone {
   id: string;
@@ -26,7 +26,7 @@ const defaultMilestones: Milestone[] = [
 ];
 
 export default function MilestonesSection({ theme, milestones = defaultMilestones }: MilestonesSectionProps) {
-  const themeConfig = THEME_PRESETS[theme];
+  const themeConfig = THEME_CONFIG[theme];
   const { colors, typography } = themeConfig;
 
   return (

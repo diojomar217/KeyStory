@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Couple QR Website",
+  title: "KeyStory",
   description: "Create a personalized love website with QR code",
 };
 

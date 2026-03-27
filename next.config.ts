@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  reactStrictMode: true,
   images: {
     qualities: [75, 80],
     remotePatterns: [
@@ -18,7 +18,9 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+    domains: [], // Add custom image domains here if needed
   },
+  // Add more config options as needed (rewrites, redirects, i18n, etc.)
 };
 
 export default nextConfig;

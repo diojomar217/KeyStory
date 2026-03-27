@@ -26,6 +26,7 @@ export interface WizardStepConfig {
   key: string;
   title: string;
   subtitle: string;
+  helpText?: string;
   validate: ValidationFunction;
 }
 
@@ -211,9 +212,12 @@ export const validateContentStep = (
     return { valid: false, error: 'Love message is required when Love Letter section is selected' };
   }
 
-  // Song requires song link (from form)
-  if (sections.includes('song') && !form.song_link?.trim()) {
-    return { valid: false, error: 'Song section requires a song link' };
+  // Song requires song link (from section_content)
+  if (sections.includes('song')) {
+    const songLink = sectionContent.song?.song_link || '';
+    if (!songLink.trim()) {
+      return { valid: false, error: 'Song section requires a song link' };
+    }
   }
 
   // Birthday Message requires content
@@ -315,6 +319,7 @@ export const WIZARD_STEPS: WizardStepConfig[] = [
     key: 'occasion-participants',
     title: 'Occasion & Participants',
     subtitle: 'Choose occasion and names',
+    helpText: 'Select the type of occasion (e.g., birthday, wedding, anniversary) and enter the names of the main participants. This information will personalize your website and help generate the right sections.',
     validate: validateDetailsStep,
   },
   {
@@ -322,6 +327,7 @@ export const WIZARD_STEPS: WizardStepConfig[] = [
     key: 'style',
     title: 'Choose Style',
     subtitle: 'Pick the mood',
+    helpText: 'Select a theme that matches the vibe of your occasion. You can preview different color schemes and font styles to see what fits best.',
     validate: validateStyleStep,
   },
   {
@@ -329,6 +335,7 @@ export const WIZARD_STEPS: WizardStepConfig[] = [
     key: 'layout',
     title: 'Page Layout',
     subtitle: 'Select sections',
+    helpText: 'Choose which sections to include on your website (e.g., gallery, timeline, guestbook). You can reorder or remove sections to customize the flow.',
     validate: validateLayoutStep,
   },
   {
@@ -336,6 +343,7 @@ export const WIZARD_STEPS: WizardStepConfig[] = [
     key: 'templates',
     title: 'Templates',
     subtitle: 'Design picks',
+    helpText: 'Pick templates for each section. Templates control the layout and style of content blocks like your gallery, timeline, or love letter.',
     validate: validateTemplateStep,
   },
   {
@@ -343,6 +351,7 @@ export const WIZARD_STEPS: WizardStepConfig[] = [
     key: 'content',
     title: 'Content',
     subtitle: 'Fill in your sections',
+    helpText: 'Add your story, upload photos, and personalize each section. You can save your progress and come back anytime.',
     validate: validateContentStep,
   },
   {
@@ -350,6 +359,7 @@ export const WIZARD_STEPS: WizardStepConfig[] = [
     key: 'review',
     title: 'Review',
     subtitle: 'Almost done!',
+    helpText: 'Review all your details and make sure everything looks perfect. When you’re ready, submit to publish your website!',
     validate: validateReviewStep,
   },
 ];
@@ -459,5 +469,5 @@ export const canNavigateToStep = (
 // ============================================
 
 // Re-export section toggles for convenience
-export { SECTION_TOGGLES, THEME_PRESETS, LAYOUT_PRESETS } from './builder-constants';
+// No longer re-export from builder-constants; use /config files directly
 

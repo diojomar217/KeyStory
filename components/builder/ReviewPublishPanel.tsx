@@ -2,7 +2,9 @@
 
 import React from 'react';
 import { SiteConfig, Theme, LayoutPreset, Section } from '@/lib/types';
-import { THEME_PRESETS, LAYOUT_PRESETS, SECTION_TOGGLES } from '@/lib/builder-constants';
+import { THEME_CONFIG } from '@/config/themeConfig';
+import { LAYOUT_CONFIG } from '@/config/layoutConfig';
+import { SECTION_CONFIG } from '@/config/sectionConfig';
 
 interface ReviewPublishPanelProps {
   form: {
@@ -29,8 +31,8 @@ export default function ReviewPublishPanel({
   onPublish,
   isPublishing = false,
 }: ReviewPublishPanelProps) {
-  const themePreset = THEME_PRESETS[config.theme];
-  const layoutPreset = LAYOUT_PRESETS.find(p => p.key === config.layout_preset);
+  const themePreset = THEME_CONFIG[config.theme];
+  const layoutPreset = LAYOUT_CONFIG.find(p => p.key === config.layout_preset);
   
   // Get enabled sections
   const enabledSections: Section[] = Object.entries(config.section_toggles || {})
@@ -111,7 +113,7 @@ export default function ReviewPublishPanel({
             <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Theme</span>
             <div className="flex items-center gap-3 mt-2">
               <div className="flex gap-1">
-                {themePreset.preview.map((color, i) => (
+                {themePreset.preview.map((color: string, i: number) => (
                   <div
                     key={i}
                     className="w-5 h-5 rounded-full border border-black/10"
@@ -143,7 +145,7 @@ export default function ReviewPublishPanel({
         
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {sections.map((section) => {
-            const toggle = SECTION_TOGGLES.find(t => t.id === section);
+            const toggle = SECTION_CONFIG.find(t => t.key === section);
             return (
               <div 
                 key={section}

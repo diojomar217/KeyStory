@@ -2,7 +2,9 @@
 
 import { useMemo } from 'react';
 import { SiteConfig, Theme, PreviewDevice } from '@/lib/types';
-import { THEME_PRESETS, LAYOUT_PRESETS, SECTION_TOGGLES } from '@/lib/builder-constants';
+import { THEME_CONFIG } from '@/config/themeConfig';
+import { LAYOUT_CONFIG } from '@/config/layoutConfig';
+import { SECTION_CONFIG } from '@/config/sectionConfig';
 import { resolveHeroCoverPhoto } from '@/lib/site-type-utils';
 
 interface BuilderPreviewProps {
@@ -74,8 +76,8 @@ export default function BuilderPreview({
   isMobileOpen,
   onMobileClose,
 }: BuilderPreviewProps) {
-  const themePreset = THEME_PRESETS[config.theme];
-  const layoutPreset = LAYOUT_PRESETS.find(p => p.key === config.layout_preset);
+  const themePreset = THEME_CONFIG[config.theme];
+  const layoutPreset = LAYOUT_CONFIG.find(p => p.key === config.layout_preset);
   
   // Get enabled sections
   const enabledSections = useMemo(() => {
@@ -309,7 +311,7 @@ className={`rounded-xl p-4 mb-4 shadow-md border-dashed ${nameData.hasContent ? 
             </p>
           ) : (
             enabledSections.map((section) => {
-              const toggle = SECTION_TOGGLES.find(t => t.id === section);
+              const toggle = SECTION_CONFIG.find(t => t.key === section);
               return (
                 <div 
                   key={section}
@@ -359,7 +361,7 @@ className={`rounded-xl p-4 mb-4 shadow-md border-dashed ${nameData.hasContent ? 
             🎨 {themePreset.label}
           </span>
           <div className="flex gap-1">
-            {themePreset.preview.map((color, i) => (
+            {themePreset.preview.map((color: string, i: number) => (
               <div
                 key={i}
                 className="w-4 h-4 rounded-full border border-black/10"

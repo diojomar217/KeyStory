@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Cropper from 'react-easy-crop';
+import type { Area } from 'react-easy-crop';
 import { useRouter } from 'next/navigation';
 
-import { SiteConfig, CreateOrderPayload } from '@/lib/types';
+import { SiteConfig, CreateOrderPayload, OccasionType, Theme } from '@/lib/types';
 import { calculateExpirationDate, getDaysRemaining, getExpirationLabel, ExpirationMode } from '@/lib/expiration-utils';
 import { 
   WIZARD_STEPS, 
@@ -13,6 +15,7 @@ import {
   getStepConfig 
 } from '@/lib/builder-steps-config';
 import { getTemplateSections, getSectionMetadata, getSectionTemplates } from '@/lib/section-registry';
+import { getDefaultSelections } from '@/lib/config-helpers';
 import { getPresetsForOccasion, getPresetById } from '@/lib/preset-registry';
 import ThemeSelector from '@/components/builder/ThemeSelector';
 import SectionSelector from '@/components/builder/SectionSelector';
@@ -42,7 +45,8 @@ import {
 } from '@/components/builder/ContentInputComponents';
 import { SectionContentMap, Section } from '@/lib/types';
 
-type LocalForm = Omit<CreateOrderPayload, 'config' | 'photos'> & { photos: File[]; heroPhoto?: File | null; heroPhotoIndex?: number; song_autoplay?: boolean; password_input?: string };
+
+type LocalForm = Omit<CreateOrderPayload, 'config' | 'photos'> & { occasion: OccasionType; photos: File[]; heroPhoto?: File | null; heroPhotoIndex?: number; song_autoplay?: boolean; password_input?: string };
 
 const sanitizeSlug = (value: string): string => {
   return value
@@ -56,10 +60,47 @@ const sanitizeSlug = (value: string): string => {
 const MAX_IMAGE_UPLOAD_BYTES = 12 * 1024 * 1024; // 12 MB; will be optimized on server
 
 
-export default function CreateWebsitePage() {
-  const [form, setForm] = useState<LocalForm>({
+const DRAFT_KEY = 'create-website-draft-v1';
+
+function getInitialDraft(): { form: LocalForm; config: SiteConfig; currentStep: number; completedSteps: number[] } {
+  const validOccasions: OccasionType[] = ['couple', 'wedding', 'birthday', 'proposal', 'anniversary'];
+  if (typeof window === 'undefined') {
+    return {
+      form: {
+        website_name: '',
+        occasion: 'couple' as OccasionType,
+        participants: [
+          { id: 'customer', name: '', role: 'primary' },
+          { id: 'partner', name: '', role: 'partner' }
+        ],
+        specialDate: '',
+        message: '',
+        tagline: '',
+        song_link: '',
+        song_autoplay: false,
+        photos: [],
+        password_input: '',
+      },
+      config: {
+        occasion: 'couple' as OccasionType,
+        theme: 'romantic_classic',
+        sections: [],
+        home_template: undefined,
+        gallery_template: undefined,
+        timeline_template: undefined,
+        song_template: undefined,
+        timeline_events: [],
+        cover_photo_index: undefined,
+        section_content: {},
+      },
+      currentStep: 1,
+      completedSteps: [],
+    };
+  }
+  const draft = window.localStorage.getItem(DRAFT_KEY);
+  let initialForm: LocalForm = {
     website_name: '',
-    occasion: 'couple',
+    occasion: 'couple' as OccasionType,
     participants: [
       { id: 'customer', name: '', role: 'primary' },
       { id: 'partner', name: '', role: 'partner' }
@@ -71,11 +112,16 @@ export default function CreateWebsitePage() {
     song_autoplay: false,
     photos: [],
     password_input: '',
-  });
-
-  const [config, setConfig] = useState<SiteConfig>({
-    occasion: 'couple' as const,
-    theme: 'romantic_classic',
+  };
+  const validThemes: Theme[] = [
+    'romantic_classic', 'cute_pastel', 'minimal_modern', 'dark_elegant', 'soft_pastel',
+    'elegant_rose_gold', 'vintage_love_letter', 'scrapbook_memories', 'wedding_style',
+    'floral_romance', 'dreamy_pink', 'luxury_gold', 'minimal_white', 'cute_kawaii',
+    'soft_lavender', 'photo_focus', 'colorful_celebration'
+  ];
+  let initialConfig: SiteConfig = {
+    occasion: 'couple',
+    theme: 'romantic_classic' as Theme,
     sections: [],
     home_template: undefined,
     gallery_template: undefined,
@@ -84,20 +130,163 @@ export default function CreateWebsitePage() {
     timeline_events: [],
     cover_photo_index: undefined,
     section_content: {},
-  });
+  };
+  let initialStep = 1;
+  let initialCompleted: number[] = [];
+  if (draft) {
+    try {
+      const parsed = JSON.parse(draft);
+      if (parsed.form) initialForm = { ...initialForm, ...parsed.form };
+      if (parsed.config) {
+        let parsedTheme = parsed.config.theme;
+        if (!validThemes.includes(parsedTheme)) {
+          console.warn('Invalid theme in draft, falling back to romantic_classic:', parsedTheme);
+          parsedTheme = 'romantic_classic';
+        }
+        const parsedConfig: SiteConfig = {
+          occasion: validOccasions.includes(parsed.config.occasion) ? parsed.config.occasion : 'couple',
+          theme: parsedTheme as Theme,
+          sections: Array.isArray(parsed.config.sections) ? parsed.config.sections : [],
+          home_template: parsed.config.home_template,
+          gallery_template: parsed.config.gallery_template,
+          timeline_template: parsed.config.timeline_template,
+          song_template: parsed.config.song_template,
+          timeline_events: Array.isArray(parsed.config.timeline_events) ? parsed.config.timeline_events : [],
+          cover_photo_index: parsed.config.cover_photo_index,
+          section_content: parsed.config.section_content || {},
+        };
+        initialConfig = parsedConfig;
+      }
+      if (parsed.currentStep) initialStep = parsed.currentStep;
+      if (parsed.completedSteps) initialCompleted = parsed.completedSteps;
+    } catch {}
+  }
+  // Ensure occasion is a valid OccasionType
+  if (!validOccasions.includes(initialForm.occasion as OccasionType)) {
+    initialForm.occasion = 'couple';
+  }
+  initialForm.occasion = initialForm.occasion as OccasionType;
+  if (!validOccasions.includes(initialConfig.occasion as OccasionType)) {
+    initialConfig.occasion = 'couple';
+  }
+  initialConfig.occasion = initialConfig.occasion as OccasionType;
+  return {
+    form: initialForm,
+    config: initialConfig as SiteConfig,
+    currentStep: initialStep,
+    completedSteps: initialCompleted,
+  };
+}
 
-  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
-  const [heroPhotoPreview, setHeroPhotoPreview] = useState<string | null>(null);
-  const [currentStep, setCurrentStep] = useState(1);
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export default function CreateWebsitePage() {
+    // Draft detection for UI
+    const [draftExists, setDraftExists] = useState(false);
+    useEffect(() => {
+      if (typeof window !== 'undefined') {
+        const draftRaw = window.localStorage.getItem(DRAFT_KEY);
+        if (!draftRaw) {
+          setDraftExists(false);
+          return;
+        }
+        try {
+          const draft = JSON.parse(draftRaw);
+          // Check for meaningful user input (not just default/empty draft)
+          const hasInput = (
+            (draft.form && (
+              draft.form.website_name?.trim() ||
+              draft.form.message?.trim() ||
+              draft.form.tagline?.trim() ||
+              draft.form.song_link?.trim() ||
+              (Array.isArray(draft.form.participants) && draft.form.participants.some((p: any) => p.name?.trim())) ||
+              draft.form.specialDate?.trim()
+            )) ||
+            (draft.config && Array.isArray(draft.config.sections) && draft.config.sections.length > 0)
+          );
+          setDraftExists(!!hasInput);
+        } catch {
+          setDraftExists(false);
+        }
+      }
+    }, []);
+
+    // Handler to clear draft and reload page
+    const handleClearDraft = () => {
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(DRAFT_KEY);
+        setDraftExists(false);
+        // Optionally, also reset form/config/step state to initial if you want a true fresh start:
+        // const { form: freshForm, config: freshConfig, currentStep: freshStep, completedSteps: freshCompleted } = getInitialDraft();
+        // setForm(freshForm);
+        // setConfig(freshConfig);
+        // setCurrentStep(freshStep);
+        // setCompletedSteps(freshCompleted);
+      }
+    };
   const [result, setResult] = useState<{
     slug: string;
     website_name: string;
     qr_code_url: string;
   } | null>(null);
+  const { form: initialForm, config: initialConfig, currentStep: initialStep, completedSteps: initialCompleted } = getInitialDraft();
+  const [form, setForm] = useState<LocalForm>(initialForm);
+  const [config, setConfig] = useState<SiteConfig>(initialConfig);
+  // ...existing code...
+  // ...existing code...
+  const [currentStep, setCurrentStep] = useState(initialStep);
+  const [completedSteps, setCompletedSteps] = useState<number[]>(initialCompleted);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    // Don't save photos or previews (too large)
+    const { photos, heroPhoto, ...formRest } = form;
+    window.localStorage.setItem(
+      DRAFT_KEY,
+      JSON.stringify({
+        form: formRest,
+        config,
+        currentStep,
+        completedSteps,
+      })
+    );
+  }, [form, config, currentStep, completedSteps]);
+
+  // Clear draft on successful submit
+  useEffect(() => {
+    if (result && typeof window !== 'undefined') {
+      window.localStorage.removeItem(DRAFT_KEY);
+    }
+  }, [result]);
+
+  // ...existing code...
+
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const [heroPhotoPreview, setHeroPhotoPreview] = useState<string | null>(null);
+  // ...existing code...
+  // ...existing code...
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
+  // Crop state for hero photo
+  const [crop, setCrop] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+    // When crop changes, update config.hero.crop
+    useEffect(() => {
+      if (heroPhotoPreview && croppedAreaPixels) {
+        setConfig((prev) => ({
+          ...prev,
+          hero: {
+            ...(prev.hero || {}),
+            crop: {
+              x: crop.x,
+              y: crop.y,
+              zoom,
+              width: croppedAreaPixels.width,
+              height: croppedAreaPixels.height,
+            },
+          },
+        }));
+      }
+    }, [crop, zoom, croppedAreaPixels, heroPhotoPreview]);
   const [slugSanitized, setSlugSanitized] = useState(false);
   const [explicitSubmit, setExplicitSubmit] = useState(false);
   const [passwordEnabled, setPasswordEnabled] = useState(false);
@@ -105,6 +294,10 @@ export default function CreateWebsitePage() {
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
   const [expirationMode, setExpirationMode] = useState<'3_months'|'6_months'|'1_year'|'custom'>('6_months');
   const [customExpirationDate, setCustomExpirationDate] = useState<string>('');
+
+  // Review step validation state
+  const [reviewBlocked, setReviewBlocked] = useState(false);
+  const [reviewBlockReasons, setReviewBlockReasons] = useState<string[]>([]);
 
   const formatSelectedExpiration = () => {
     try {
@@ -179,6 +372,15 @@ export default function CreateWebsitePage() {
     } else if (name === 'occasion') {
       setSelectedPresetId(null);
       setForm((prev) => ({ ...prev, occasion: value as any, preset_id: undefined }));
+      // Set config defaults for new site type
+      const defaults = getDefaultSelections(value as string);
+      setConfig((prev) => ({
+        ...prev,
+        occasion: value as any,
+        theme: defaults.defaultTheme || prev.theme,
+        sections: defaults.defaultSections || [],
+        ...defaults.defaultTemplates,
+      }));
     } else if (name === 'specialDate') {
       setForm((prev) => ({ ...prev, specialDate: value as string }));
     } else {
@@ -187,7 +389,19 @@ export default function CreateWebsitePage() {
   };
 
   const handleConfigChange = (newConfig: Partial<SiteConfig>) => {
-    setConfig((prev) => ({ ...prev, ...newConfig }));
+    setConfig((prev) => {
+      const merged = { ...prev, ...newConfig };
+      // If section_content.song exists, sync to media
+      const songContent = merged.section_content?.song;
+      if (songContent) {
+        merged.media = {
+          ...(merged.media || {}),
+          song_link: songContent.song_link || '',
+          song_autoplay: !!songContent.song_autoplay,
+        };
+      }
+      return merged;
+    });
   };
 
   const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -314,19 +528,17 @@ export default function CreateWebsitePage() {
     }));
   };
 
+
   // Handle section content changes for dynamic content step
-  const handleSectionContentChange = <K extends keyof SectionContentMap>(
-    section: K,
-    content: SectionContentMap[K]
-  ) => {
+  function handleSectionContentChange(sectionKey: string, content: any) {
     setConfig((prev) => ({
       ...prev,
       section_content: {
         ...prev.section_content,
-        [section]: content,
+        [sectionKey]: content,
       },
     }));
-  };
+  }
 
   const handleNext = () => {
     const validation = validateStep(currentStep, form, config);
@@ -497,78 +709,85 @@ export default function CreateWebsitePage() {
                   />
                 </svg>
               </div>
-              <h2 className="text-xl font-bold text-slate-800">
-                {stepInfo?.title || 'Your Details'}
-              </h2>
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">
+                  {stepInfo?.title || 'Your Details'}
+                </h2>
+                {stepInfo?.helpText && (
+                  <div className="mt-1 text-slate-500 text-sm max-w-xl">
+                    {stepInfo.helpText}
+                  </div>
+                )}
+              </div>
             </div>
 
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                    Website Name (used in URL)
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-400 text-sm">yoursite.com/</span>
-                    <input
-                      name="website_name"
-                      required
-                      placeholder="john-birthday"
-                      value={form.website_name}
-                      className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Only letters, numbers, and hyphens allowed
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                    Occasion Type
-                  </label>
-                  <select
-                    name="occasion"
-                    value={form.occasion}
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                  Website Name (used in URL)
+                </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-400 text-sm">yoursite.com/</span>
+                  <input
+                    name="website_name"
+                    required
+                    placeholder="john-birthday"
+                    value={form.website_name}
+                    className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
                     onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
-                  >
-                    <option value="couple">💕 Romantic Couple</option>
-                    <option value="birthday">🎂 Birthday Celebration</option>
-                  </select>
+                  />
                 </div>
+                <p className="text-xs text-slate-400 mt-1">
+                  Only letters, numbers, and hyphens allowed
+                </p>
+              </div>
 
-                <div className="mt-4">
-                  <h3 className="text-sm font-semibold text-slate-700 mb-2">Choose a starting template</h3>
-                  <p className="text-xs text-slate-500 mb-3">Pick one and customize as needed later.</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {getPresetsForOccasion(form.occasion).map((preset) => (
-                      <button
-                        key={preset.id}
-                        type="button"
-                        onClick={() => applyPreset(preset.id)}
-                        className={`text-left rounded-xl border p-3 transition hover:shadow-lg ${
-                          selectedPresetId === preset.id
-                            ? 'border-rose-500 bg-rose-50'
-                            : 'border-slate-200 bg-white'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <strong className="text-sm text-slate-800">{preset.label}</strong>
-                          <span className="text-[11px] font-medium text-slate-500">{preset.badge}</span>
-                        </div>
-                        <p className="text-xs text-slate-500">{preset.description}</p>
-                      </button>
-                    ))}
-                  </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                  Occasion Type
+                </label>
+                <select
+                  name="occasion"
+                  value={form.occasion}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                >
+                  <option value="couple">💕 Romantic Couple</option>
+                  <option value="birthday">🎂 Birthday Celebration</option>
+                </select>
+              </div>
+
+              <div className="mt-4">
+                <h3 className="text-sm font-semibold text-slate-700 mb-2">Choose a starting template</h3>
+                <p className="text-xs text-slate-500 mb-3">Pick one and customize as needed later.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {getPresetsForOccasion(form.occasion).map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => applyPreset(preset.id)}
+                      className={`text-left rounded-xl border p-3 transition hover:shadow-lg ${
+                        selectedPresetId === preset.id
+                          ? 'border-rose-500 bg-rose-50'
+                          : 'border-slate-200 bg-white'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <strong className="text-sm text-slate-800">{preset.label}</strong>
+                        <span className="text-[11px] font-medium text-slate-500">{preset.badge}</span>
+                      </div>
+                      <p className="text-xs text-slate-500">{preset.description}</p>
+                    </button>
+                  ))}
                 </div>
+              </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                
                 <div>
                   <label className="block text-sm font-medium text-slate-600 mb-1.5">
                     {form.occasion === 'couple' ? 'Your Name' : 'Celebrant Name'}
                   </label>
-<input
+                  <input
                     name="participants.0.name"
                     required
                     placeholder={form.occasion === 'couple' ? 'Your name' : 'Celebrant name'}
@@ -583,25 +802,25 @@ export default function CreateWebsitePage() {
                 </div>
 
                 <div>
-{form.occasion === 'couple' && (
-                  <>
-                    <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                      Partner&apos;s Name
-                    </label>
-                    <input
-                      name="participants.1.name"
-                      required
-                      placeholder="Partner's name"
-                      value={form.participants?.[1]?.name || ''}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
-                      onChange={(e) => {
-                        const newParticipants = [...(form.participants || [{id: '0', name: ''}, {id: '1', name: ''}])];
-                        newParticipants[1] = { ...newParticipants[1], name: e.target.value };
-                        setForm({...form, participants: newParticipants});
-                      }}
-                    />
-                  </>
-                )}
+                  {form.occasion === 'couple' && (
+                    <>
+                      <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                        Partner&apos;s Name
+                      </label>
+                      <input
+                        name="participants.1.name"
+                        required
+                        placeholder="Partner's name"
+                        value={form.participants?.[1]?.name || ''}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                        onChange={(e) => {
+                          const newParticipants = [...(form.participants || [{id: '0', name: ''}, {id: '1', name: ''}])];
+                          newParticipants[1] = { ...newParticipants[1], name: e.target.value };
+                          setForm({...form, participants: newParticipants});
+                        }}
+                      />
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -609,8 +828,7 @@ export default function CreateWebsitePage() {
                 <label className="block text-sm font-medium text-slate-600 mb-1.5">
                   {form.occasion === 'couple' ? 'Anniversary Date' : 'Birth Date'}
                 </label>
-
-<input
+                <input
                   name="specialDate"
                   required
                   type="date"
@@ -620,78 +838,83 @@ export default function CreateWebsitePage() {
                 />
               </div>
 
-              <div className="mt-6 bg-white border border-slate-200 rounded-xl p-4">
-                <h3 className="text-sm font-semibold text-slate-700 mb-3">Hosting Duration</h3>
-                <div className="grid grid-cols-1 gap-2">
-                  {(['3_months','6_months','1_year','custom'] as ExpirationMode[]).map((mode) => (
-                    <label key={mode} className="flex items-center gap-3 p-2 border rounded-lg cursor-pointer">
-                      <input
-                        type="radio"
-                        name="expiration_mode"
-                        checked={expirationMode === mode}
-                        onChange={() => setExpirationMode(mode)}
-                        className="h-4 w-4"
-                      />
-                      <span className="text-sm text-slate-700">
-                        {mode === '3_months' && '3 Months'}
-                        {mode === '6_months' && '6 Months'}
-                        {mode === '1_year' && '1 Year'}
-                        {mode === 'custom' && 'Custom Expiration Date'}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-                {expirationMode === 'custom' && (
-                  <div className="mt-2">
-                    <input
-                      type="date"
-                      value={customExpirationDate}
-                      onChange={(e) => setCustomExpirationDate(e.target.value)}
-                      className="w-full px-3 py-2 border rounded-lg"
-                      min={new Date().toISOString().slice(0, 10)}
-                    />
-                  </div>
-                )}
-                <p className="text-xs mt-2 text-slate-500">{formatSelectedExpiration()}</p>
-              </div>
-
-              <div className="mt-6 bg-white border border-slate-200 rounded-xl p-4">
-                <h3 className="text-sm font-semibold text-slate-700 mb-3">Privacy Settings</h3>
-                <label className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-slate-600">Protect this website with a password</span>
-                  <input
-                    type="checkbox"
-                    checked={passwordEnabled}
-                    onChange={(e) => setPasswordEnabled(e.target.checked)}
-                    className="h-4 w-4 text-rose-500 rounded"
-                  />
-                </label>
-
-                {passwordEnabled && (
-                  <div className="mt-3 space-y-2">
-                    <label className="block text-sm font-medium text-slate-600">Password (4-6 chars)</label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        name="password_input"
-                        type={showPassword ? 'text' : 'password'}
-                        value={form.password_input || ''}
-                        minLength={4}
-                        maxLength={6}
-                        onChange={handleChange}
-                        className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
-                        placeholder="Enter password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="text-sm text-rose-600 hover:text-rose-700"
-                      >
-                        {showPassword ? 'Hide' : 'Show'}
-                      </button>
+              {/* Advanced Options Collapsible */}
+              <div className="mt-6">
+                <details className="bg-white border border-slate-200 rounded-xl p-4 group" style={{ transition: 'box-shadow 0.2s' }}>
+                  <summary className="cursor-pointer text-sm font-semibold text-slate-700 mb-3 outline-none focus:ring-2 focus:ring-rose-400 rounded-xl">
+                    Show Advanced Options
+                  </summary>
+                  <div className="mt-3 space-y-6">
+                    {/* Hosting Duration */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-700 mb-3">Hosting Duration</h3>
+                      <div>
+                        <select
+                          className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                          value={expirationMode}
+                          onChange={e => setExpirationMode(e.target.value as '3_months'|'6_months'|'1_year'|'custom')}
+                        >
+                          <option value="3_months">3 Months</option>
+                          <option value="6_months">6 Months</option>
+                          <option value="1_year">1 Year</option>
+                          <option value="custom">Custom Expiration Date</option>
+                        </select>
+                      </div>
+                      {expirationMode === 'custom' && (
+                        <div className="mt-2">
+                          <input
+                            type="date"
+                            value={customExpirationDate}
+                            onChange={(e) => setCustomExpirationDate(e.target.value)}
+                            className="w-full px-3 py-2 border rounded-lg"
+                            min={new Date().toISOString().slice(0, 10)}
+                          />
+                        </div>
+                      )}
+                      <p className="text-xs mt-2 text-slate-500">{formatSelectedExpiration()}</p>
                     </div>
-                    <p className="text-xs text-slate-400">Saved as an encrypted hash, never in plain text.</p>
+
+                    {/* Privacy Settings */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-700 mb-3">Privacy Settings</h3>
+                      <label className="flex items-center justify-between gap-3">
+                        <span className="text-sm text-slate-600">Protect this website with a password</span>
+                        <input
+                          type="checkbox"
+                          checked={passwordEnabled}
+                          onChange={(e) => setPasswordEnabled(e.target.checked)}
+                          className="h-4 w-4 text-rose-500 rounded"
+                        />
+                      </label>
+
+                      {passwordEnabled && (
+                        <div className="mt-3 space-y-2">
+                          <label className="block text-sm font-medium text-slate-600">Password (4-6 chars)</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              name="password_input"
+                              type={showPassword ? 'text' : 'password'}
+                              value={form.password_input || ''}
+                              minLength={4}
+                              maxLength={6}
+                              onChange={handleChange}
+                              className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                              placeholder="Enter password"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="text-sm text-rose-600 hover:text-rose-700"
+                            >
+                              {showPassword ? 'Hide' : 'Show'}
+                            </button>
+                          </div>
+                          <p className="text-xs text-slate-400">Saved as an encrypted hash, never in plain text.</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
+                </details>
               </div>
             </div>
           </div>
@@ -721,26 +944,38 @@ export default function CreateWebsitePage() {
               onChange={(theme) => handleConfigChange({ theme })}
             />
 
-            <div className="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
-              <label className="block text-sm font-medium text-slate-700 mb-2">Section Divider Style</label>
-              <select
-                value={config.section_divider_style || 'standard'}
-                onChange={(e) => handleConfigChange({ section_divider_style: e.target.value as 'none' | 'standard' | 'gradient' | 'dots' })}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
-              >
-                <option value="standard">Standard (Heart line)</option>
-                <option value="gradient">Gradient bar</option>
-                <option value="dots">Dots & sparkle</option>
-                <option value="none">No separator</option>
-              </select>
-              <p className="text-xs text-slate-500 mt-2">Premium site divider style between sections. Try gradient for a polished look.</p>
-            </div>
+            {/* Advanced Options Collapsible */}
+            <div className="mt-6">
+              <details className="bg-white border border-slate-200 rounded-xl p-4 group" style={{ transition: 'box-shadow 0.2s' }}>
+                <summary className="cursor-pointer text-sm font-semibold text-slate-700 mb-3 outline-none focus:ring-2 focus:ring-rose-400 rounded-xl">
+                  Show Advanced Options
+                </summary>
+                <div className="mt-3 space-y-6">
+                  {/* Section Divider Style */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Section Divider Style</label>
+                    <select
+                      value={config.section_divider_style || 'standard'}
+                      onChange={(e) => handleConfigChange({ section_divider_style: e.target.value as 'none' | 'standard' | 'gradient' | 'dots' })}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                    >
+                      <option value="standard">Standard (Heart line)</option>
+                      <option value="gradient">Gradient bar</option>
+                      <option value="dots">Dots & sparkle</option>
+                      <option value="none">No separator</option>
+                    </select>
+                    <p className="text-xs text-slate-500 mt-2">Premium site divider style between sections. Try gradient for a polished look.</p>
+                  </div>
 
-            <div className="mt-8 pt-6 border-t border-slate-200">
-              <LayoutPresetSelector
-                value={config.layout_preset}
-                onChange={(layout_preset) => handleConfigChange({ layout_preset })}
-              />
+                  {/* Site Layout */}
+                  <div className="pt-6 border-t border-slate-200">
+                    <LayoutPresetSelector
+                      value={config.layout_preset}
+                      onChange={(layout_preset) => handleConfigChange({ layout_preset })}
+                    />
+                  </div>
+                </div>
+              </details>
             </div>
           </div>
         );
@@ -766,8 +1001,20 @@ export default function CreateWebsitePage() {
 
             <SectionSelector
               value={config.sections}
-              occasion={config.occasion || 'couple'}
-              onChange={(sections: import('@/lib/types').Section[]) => handleConfigChange({ sections })}
+              siteType={config.occasion || 'couple'}
+              onChange={(sections: import('@/lib/types').Section[]) => {
+                // When sections change, reset templates for removed sections
+                const prevSections = config.sections || [];
+                const removedSections = prevSections.filter((s) => !sections.includes(s));
+                const newConfig = { ...config, sections };
+                removedSections.forEach((sectionKey) => {
+                  const key = `${sectionKey}_template` as keyof typeof newConfig;
+                  if (newConfig[key] !== undefined) {
+                    delete newConfig[key];
+                  }
+                });
+                handleConfigChange(newConfig);
+              }}
             />
           </div>
         );
@@ -797,45 +1044,24 @@ export default function CreateWebsitePage() {
               </p>
             ) : (
               <div className="space-y-6">
-                {config.sections.includes('home') && (
-                  <TemplateSelector
-                    section="home"
-                    value={config.home_template}
-                    onChange={(home_template) =>
-                      handleConfigChange({ home_template: home_template as any })
-                    }
-                  />
-                )}
-
-                {config.sections.includes('gallery') && (
-                  <TemplateSelector
-                    section="gallery"
-                    value={config.gallery_template}
-                    onChange={(gallery_template) =>
-                      handleConfigChange({ gallery_template: gallery_template as any })
-                    }
-                  />
-                )}
-
-                {config.sections.includes('timeline') && (
-                  <TemplateSelector
-                    section="timeline"
-                    value={config.timeline_template}
-                    onChange={(timeline_template) =>
-                      handleConfigChange({ timeline_template: timeline_template as any })
-                    }
-                  />
-                )}
-
-                {config.sections.includes('song') && (
-                  <TemplateSelector
-                    section="song"
-                    value={config.song_template}
-                    onChange={(song_template) =>
-                      handleConfigChange({ song_template: song_template as any })
-                    }
-                  />
-                )}
+                {config.sections.map((sectionKey) => {
+                  // Only render TemplateSelector if templates exist for this section
+                  // Import getTemplatesForSection from config/templateConfig
+                  // (import at top if not already)
+                  const { getTemplatesForSection } = require('@/config/templateConfig');
+                  const templates = getTemplatesForSection(sectionKey);
+                  if (!templates.length) return null;
+                  return (
+                    <TemplateSelector
+                      key={sectionKey}
+                      section={sectionKey}
+                      value={config[`${sectionKey}_template` as keyof typeof config] as string}
+                      onChange={(templateKey: string) =>
+                        handleConfigChange({ [`${sectionKey}_template`]: templateKey })
+                      }
+                    />
+                  );
+                })}
               </div>
             )}
           </div>
@@ -870,208 +1096,64 @@ export default function CreateWebsitePage() {
               </div>
             ) : (
               <>
-                {config.sections.includes('home') && (
-                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                    <h3 className="text-sm font-semibold text-slate-700 mb-3">Hero Content</h3>
-                    <label className="block text-sm font-medium text-slate-600 mb-1.5">Hero Tagline</label>
-                    <input
-                      name="tagline"
-                      maxLength={120}
-                      placeholder="Every love story is beautiful, but ours is my favorite."
-                      value={form.tagline}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
-                      onChange={handleChange}
-                    />
-                    <p className="text-xs text-slate-400 mt-1">A short romantic line shown in the hero section. (Max 120 characters)</p>
-                  </div>
-                )}
 
-                {config.sections.includes('love_letter') && (
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700 mb-3">Your Love Message</h3>
-                <textarea
-                  name="message"
-                  rows={4}
-                  placeholder="Write a heartfelt message for your partner..."
-                  value={form.message}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all resize-none"
-                  onChange={handleChange}
+                <SectionContentInputs
+                  config={config}
+                  onSectionContentChange={handleSectionContentChange}
+                  validationErrors={(() => {
+                    // Compute validation errors for required sections
+                    const errors: Record<string, boolean> = {};
+                    const { sections = [], section_content = {} } = config;
+                    // Use SECTION_CONFIG for required info
+                    const sectionMeta: Record<string, any> = {};
+                    require('@/config/sectionConfig').SECTION_CONFIG.forEach((s: any) => (sectionMeta[s.key] = s));
+                    sections.forEach((key: string) => {
+                      const meta = sectionMeta[key];
+                      if (meta?.required) {
+                        // Gallery: must have at least 1 photo (use config.photos)
+                        if (key === 'gallery' && (!form.photos || !Array.isArray(form.photos) || form.photos.length === 0)) {
+                          errors[key] = true;
+                        }
+                        // Timeline: must have at least 1 event (use config.timeline_events)
+                        else if (key === 'timeline' && (!config.timeline_events || !Array.isArray(config.timeline_events) || config.timeline_events.length === 0)) {
+                          errors[key] = true;
+                        }
+                        // Love Letter: must have content
+                        else if (key === 'love_letter' && (!section_content.love_letter || !section_content.love_letter.content || !section_content.love_letter.content.trim())) {
+                          errors[key] = true;
+                        }
+                        // Home: always considered complete (no input required)
+                      }
+                    });
+                    return errors;
+                  })()}
+                  heroPhotoPreview={heroPhotoPreview}
+                  crop={crop}
+                  zoom={zoom}
+                  setCrop={setCrop}
+                  setZoom={setZoom}
+                  setCroppedAreaPixels={setCroppedAreaPixels}
+                  handleHeroPhotoUpload={handleHeroPhotoUpload}
+                  handleHeroPhotoSelect={handleHeroPhotoSelect}
+                  handleRemoveHeroPhoto={() => {
+                    if (heroPhotoPreview) {
+                      URL.revokeObjectURL(heroPhotoPreview);
+                      setHeroPhotoPreview(null);
+                      setForm((prev) => ({ ...prev, heroPhoto: null, heroPhotoIndex: undefined }));
+                      setConfig((prev) => ({
+                        ...prev,
+                        hero: {
+                          ...(prev.hero || {}),
+                          coverPhotoUrl: undefined,
+                          coverPhotoIndex: undefined,
+                          crop: undefined,
+                        },
+                      }));
+                    }
+                  }}
+                  photoPreviews={photoPreviews}
+                  handlePhotos={handlePhotos}
                 />
-              </div>
-            )}
-
-            {config.sections.includes('song') && (
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700 mb-3">Song</h3>
-                <label className="block text-sm font-medium text-slate-600 mb-1.5">Song Link (Optional)</label>
-                <input
-                  name="song_link"
-                  placeholder="Spotify or YouTube link"
-                  value={form.song_link}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
-                  onChange={handleChange}
-                />
-                </div>
-                )}
-
-                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                  <h3 className="text-sm font-semibold text-slate-700 mb-3">Dedicated Hero Cover Photo</h3>
-                  <p className="text-xs text-slate-500 mb-2">Optional: set a hero cover photo independent from gallery photos.</p>
-
-                  <input
-                    name="hero_photo"
-                    type="file"
-                    accept="image/*"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-800 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-rose-50 file:text-rose-600 hover:file:bg-rose-100 transition-all cursor-pointer"
-                    onChange={handleHeroPhotoUpload}
-                  />
-                  <p className="text-xs text-slate-400 mt-1">Hero images are auto-optimized (1920px max, auto format/quality). High quality is kept for visuals.</p>
-
-                  {heroPhotoPreview && (
-                    <div className="mt-3 relative border border-slate-200 rounded-lg overflow-hidden">
-                      <img src={heroPhotoPreview} alt="Hero Preview" className="w-full h-40 object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          URL.revokeObjectURL(heroPhotoPreview);
-                          setHeroPhotoPreview(null);
-                          setForm((prev) => ({ ...prev, heroPhoto: null, heroPhotoIndex: undefined }));
-                          setConfig((prev) => ({
-                            ...prev,
-                            hero: {
-                              ...(prev.hero || {}),
-                              coverPhotoUrl: undefined,
-                              coverPhotoIndex: undefined,
-                            },
-                          }));
-                        }}
-                        className="absolute top-2 right-2 bg-black/40 text-white text-xs px-2 py-1 rounded"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  )}
-
-                  {photoPreviews.length > 0 && (
-                    <div className="mt-3">
-                      <p className="text-xs text-slate-600 mb-2">Or select from uploaded photos</p>
-                      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                        {photoPreviews.map((preview, index) => (
-                          <button
-                            type="button"
-                            key={index}
-                            onClick={() => handleHeroPhotoSelect(index)}
-                            className={`border rounded-lg overflow-hidden ${config.hero?.coverPhotoIndex === index ? 'border-rose-500 ring-2 ring-rose-200' : 'border-slate-200'}`}
-                          >
-                            <img src={preview} alt={`Hero option ${index + 1}`} className="w-full h-16 object-cover" />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {config.hero?.coverPhotoIndex !== undefined && !heroPhotoPreview && (
-                    <p className="text-xs text-emerald-600 mt-2">Hero cover currently set to photo {config.hero.coverPhotoIndex + 1}</p>
-                  )}
-                </div>
-
-                { (config.sections.includes('gallery') || config.sections.includes('polaroid_gallery')) && (
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                      Upload Photos <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      name="photos"
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-800 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-rose-50 file:text-rose-600 hover:file:bg-rose-100 transition-all cursor-pointer"
-                      onChange={handlePhotos}
-                    />
-                    <p className="text-xs text-slate-400 mt-1">Gallery images are auto-optimized (1600px max, auto format/quality) for fast site loading.</p>
-
-                    {form.photos.length > 0 && (
-                      <p className="text-sm text-emerald-600 mt-2">
-                        {form.photos.length} photo(s) selected
-                      </p>
-                    )}
-
-                    {form.photos.length === 0 && (
-                      <p className="text-xs text-amber-600 mt-1">
-                        Gallery section requires at least one photo
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {form.photos.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-slate-200">
-                    <div className="flex items-center gap-2 mb-3">
-                      <svg className="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <label className="block font-semibold text-slate-700">
-                        Select Cover Photo
-                      </label>
-                    </div>
-
-                    <p className="text-sm text-slate-500 mb-4">
-                      Choose which photo to display in the hero section of your website.
-                    </p>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                      {photoPreviews.map((preview, index) => (
-                        <div
-                          key={index}
-                          className={`relative group cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-                            config.cover_photo_index === index
-                              ? 'border-rose-500 ring-2 ring-rose-200 shadow-md'
-                              : 'border-slate-200 hover:border-rose-300'
-                          }`}
-                          onClick={() => handleCoverPhotoSelect(index)}
-                        >
-                          <div className="aspect-square relative">
-                            <img src={preview} alt={`Photo ${index + 1}`} className="w-full h-full object-cover" />
-                            {config.cover_photo_index === index && (
-                              <div className="absolute top-2 right-2 bg-rose-500 text-white rounded-full p-1 shadow-md">
-                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-            {/* Timeline Events */}
-            {config.sections.includes('timeline') && (
-              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">📅</span>
-                  <h3 className="font-semibold text-slate-700">Timeline Events</h3>
-                  <span className="text-rose-500">*</span>
-                </div>
-
-                <TimelineEditor
-                  events={config.timeline_events || []}
-                  onChange={(timeline_events) => handleConfigChange({ timeline_events })}
-                />
-
-                {config.timeline_events && config.timeline_events.length === 0 && (
-                  <p className="text-xs text-amber-600 mt-2">
-                    Timeline section requires at least one event
-                  </p>
-                )}
-              </div>
-            )}
-
-            <SectionContentInputs
-              config={config}
-              onSectionContentChange={handleSectionContentChange}
-            />
               </>
             )}
           </div>
@@ -1096,13 +1178,39 @@ export default function CreateWebsitePage() {
               </h2>
             </div>
 
-            <SummaryPanel config={config} form={form} onEditSection={handleEditSection} />
+            {/* Only show song summary if song section is selected */}
+
+            {/* Review summary with validation state reporting */}
+            <SummaryPanel
+              config={{
+                ...config,
+                song_template: config.sections.includes('song') ? config.song_template : undefined,
+              }}
+              form={form}
+              onEditSection={handleEditSection}
+              showValidationSummary={true}
+              onValidationStateChange={({ isBlocked, reasons }) => {
+                setReviewBlocked(isBlocked);
+                setReviewBlockReasons(reasons);
+              }}
+            />
 
             <div className="bg-rose-50 rounded-xl p-4 border border-rose-200">
-              <p className="text-sm text-rose-700">
-                By clicking &quot;Create Website&quot;, you agree to create a beautiful
-                memory site for your special someone.
-              </p>
+              {reviewBlocked && reviewBlockReasons.length > 0 ? (
+                <div className="text-rose-700 text-sm">
+                  <strong>Cannot submit:</strong>
+                  <ul className="list-disc ml-5 mt-1">
+                    {reviewBlockReasons.map((reason, i) => (
+                      <li key={i}>{reason}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <p className="text-sm text-rose-700">
+                  By clicking &quot;Create Website&quot;, you agree to create a beautiful
+                  memory site for your special someone.
+                </p>
+              )}
             </div>
           </div>
         );
@@ -1114,6 +1222,20 @@ export default function CreateWebsitePage() {
 
   return (
     <div className="bg-gradient-to-b from-[#FFF7FB] to-[#FDF2F8] min-h-screen">
+      {/* Draft warning and controls */}
+      {draftExists && (
+        <div className="max-w-2xl mx-auto mt-6 mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl flex flex-col sm:flex-row sm:items-center gap-4 shadow">
+          <span className="text-amber-700 font-medium text-center sm:text-left flex-1">A draft was detected. You can continue editing, or start from new.</span>
+          <div className="flex justify-center sm:justify-end w-full sm:w-auto">
+            <button
+              onClick={handleClearDraft}
+              className="px-4 py-2 bg-white border border-amber-300 rounded-lg text-amber-700 font-semibold hover:bg-amber-100 transition shadow-sm"
+            >
+              Start from New (Drop Draft)
+            </button>
+          </div>
+        </div>
+      )}
       <div className="max-w-6xl mx-auto px-4 py-8 lg:py-10">
         <div className="text-center mb-8">
           <h1 className="text-2xl lg:text-3xl font-bold text-center mb-3 text-slate-800">
@@ -1212,7 +1334,8 @@ export default function CreateWebsitePage() {
                         handleSubmit();
                       }}
                       className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
-                      disabled={loading}
+                      disabled={loading || reviewBlocked}
+                      title={reviewBlocked && reviewBlockReasons.length > 0 ? reviewBlockReasons.join('\n') : undefined}
                     >
                       {loading ? (
                         <span className="flex items-center justify-center gap-2">

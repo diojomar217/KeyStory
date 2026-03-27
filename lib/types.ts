@@ -446,6 +446,10 @@ export interface SectionContentMap {
   video_memories?: {
     videos: VideoMemory[];
   };
+  song?: {
+    song_link: string;
+    song_autoplay?: boolean;
+  };
   future_dreams?: {
     dreams: FutureDream[];
   };

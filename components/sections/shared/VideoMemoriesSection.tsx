@@ -3,7 +3,7 @@
 import { Theme } from '@/lib/types';
 import SectionHeader from '../../page/SectionHeader';
 import { useTheme } from '../../builder/ThemeWrapper';
-import { THEME_PRESETS } from '@/lib/builder-constants';
+import { THEME_CONFIG } from '@/config/themeConfig';
 
 interface VideoMemory {
   id: string;
@@ -21,7 +21,7 @@ interface VideoMemoriesSectionProps {
 
 export default function VideoMemoriesSection({ theme, siteType = 'couple', videos = [] }: VideoMemoriesSectionProps) {
   const styles = useTheme(theme);
-  const themeConfig = THEME_PRESETS[theme];
+  const themeConfig = THEME_CONFIG[theme];
   const { colors, typography } = themeConfig;
 
   // Extract YouTube/Vimeo ID from URL

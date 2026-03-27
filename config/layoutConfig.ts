@@ -1,0 +1,43 @@
+// Layout config for the website builder
+export const LAYOUT_CONFIG = [
+  {
+    key: 'elegant_story',
+    label: 'Elegant Story',
+    description: 'Timeless layout with generous spacing and elegant typography',
+    sectionSpacing: 'spacious',
+    headingTreatment: 'elegant',
+    cardShapes: 'rounded',
+    contentFlow: 'stacked',
+    previewEmoji: '✨',
+  },
+  {
+    key: 'modern_romance',
+    label: 'Modern Romance',
+    description: 'Contemporary design with bold elements and grid layouts',
+    sectionSpacing: 'normal',
+    headingTreatment: 'bold',
+    cardShapes: 'square',
+    contentFlow: 'grid',
+    previewEmoji: '💖',
+  },
+  {
+    key: 'soft_scrapbook',
+    label: 'Soft Scrapbook',
+    description: 'Nostalgic feel with polaroid frames and decorative elements',
+    sectionSpacing: 'spacious',
+    headingTreatment: 'decorative',
+    cardShapes: 'rounded',
+    contentFlow: 'masonry',
+    previewEmoji: '📖',
+  },
+  {
+    key: 'minimal_keepsake',
+    label: 'Minimal Keepsake',
+    description: 'Clean and focused on your precious memories',
+    sectionSpacing: 'compact',
+    headingTreatment: 'minimal',
+    cardShapes: 'square',
+    contentFlow: 'carousel',
+    previewEmoji: '💎',
+  },
+];

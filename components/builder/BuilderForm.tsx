@@ -21,7 +21,7 @@ type Props = {
 
 export default function BuilderForm({ 
   onCreated, 
-  onFormChange, 
+  onFormChange = () => {}, 
   initialForm = {}
 }: Props) {
   const [form, setForm] = useState<Partial<CreateOrderPayload>>({
@@ -135,19 +135,19 @@ export default function BuilderForm({
   };
 
   // Live preview state for parent component
-  const previewState: FormPreviewState = {
-    website_name: form.website_name || '',
-    coupleNames: form.participants?.map(p => p.name || '').filter(Boolean).join(' & ') || '',
-    coverPhotoPreviewUrl: photoPreviews[0],
-    occasion: form.occasion || 'couple',
-    participants: form.participants || [],
-    photosPreview: photoPreviews,
-  };
-
   // Notify parent of form changes for live preview
   useEffect(() => {
-    onFormChange?.(previewState);
-  }, [previewState, onFormChange]);
+    if (!onFormChange) return;
+    const previewState: FormPreviewState = {
+      website_name: form.website_name || '',
+      coupleNames: form.participants?.map(p => p.name || '').filter(Boolean).join(' & ') || '',
+      coverPhotoPreviewUrl: photoPreviews[0],
+      occasion: form.occasion || 'couple',
+      participants: form.participants || [],
+      photosPreview: photoPreviews,
+    };
+    onFormChange(previewState);
+  }, [form, photoPreviews]);
 
   const isValid = form.website_name?.trim() &&
     (form.participants?.length || 0) >= minParticipants &&

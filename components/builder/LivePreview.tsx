@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { SiteConfig, Theme, Section, OccasionType } from '@/lib/types';
-import { THEME_PRESETS, SECTION_TOGGLES } from '@/lib/builder-constants';
+import { THEME_CONFIG } from '@/config/themeConfig';
+import { LAYOUT_CONFIG } from '@/config/layoutConfig';
 import { SectionRenderer } from '@/components/builder/SectionPreviews';
 
 // ============================================
@@ -295,7 +296,7 @@ export default function LivePreview({ config, occasion, isMobileOpen, onMobileCl
   const sections = config.sections || [];
   
   // Get theme colors for previews
-  const themePreset = THEME_PRESETS[themeKey] || THEME_PRESETS.romantic_classic;
+  const themePreset = THEME_CONFIG[themeKey] || THEME_CONFIG.romantic_classic;
 
   useEffect(() => {
     setMounted(true);

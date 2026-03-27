@@ -202,8 +202,8 @@ export async function POST(req: NextRequest) {
       },
       media: {
         photos: photoUrls,
-        song_link: data.song_link || '',
-        song_autoplay: (data as any).song_autoplay ?? false,
+        song_link: data.config?.media?.song_link || '',
+        song_autoplay: data.config?.media?.song_autoplay ?? false,
       },
       timeline: data.config?.timeline_events || [],
       content: data.config?.section_content || {},

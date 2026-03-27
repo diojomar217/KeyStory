@@ -1,5 +1,6 @@
 'use client';
 
+
 import { useEffect, useState } from 'react';
 import { Site } from '@/lib/supabase';
 import WebsitesTable from '@/components/admin/WebsitesTable';
@@ -8,6 +9,7 @@ import ConfirmDeleteModal from '@/components/admin/ConfirmDeleteModal';
 
 export default function WebsitesPage() {
   const [orders, setOrders] = useState<Site[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -15,22 +17,29 @@ export default function WebsitesPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired' | 'archived'>('all');
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
     fetchOrders();
-  }, [statusFilter]);
+  }, [statusFilter, page, limit, searchQuery, sortBy, sortDirection]);
 
   const fetchOrders = async () => {
     try {
-      const query = statusFilter && statusFilter !== 'all' ? `?status=${statusFilter}` : '';
+      let query = `?limit=${limit}&offset=${(page - 1) * limit}`;
+      if (statusFilter && statusFilter !== 'all') query += `&status=${statusFilter}`;
+      if (searchQuery) query += `&search=${encodeURIComponent(searchQuery.trim())}`;
+      if (sortBy) query += `&sortBy=${encodeURIComponent(sortBy)}`;
+      if (sortDirection) query += `&sortDirection=${sortDirection}`;
       const res = await fetch(`/api/orders${query}`);
-      
       if (!res.ok) {
         throw new Error(`Failed to fetch orders: ${res.status} ${res.statusText}`);
       }
-      
       const data = await res.json();
       setOrders(data.orders || []);
+      setTotal(data.total || 0);
     } catch (error) {
       console.error('Failed to fetch orders:', error);
     } finally {
@@ -128,12 +137,28 @@ export default function WebsitesPage() {
       ) : (
         <WebsitesTable
           orders={orders}
+          total={total}
+          page={page}
+          limit={limit}
+          onPageChange={setPage}
+          onLimitChange={setLimit}
           onDelete={handleDelete}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}
           onRefresh={fetchOrders}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onSortChange={(column: string) => {
+            if (sortBy === column) {
+              setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+            } else {
+              setSortBy(column);
+              setSortDirection('asc');
+            }
+          }}
+          loading={loading}
         />
       )}
 

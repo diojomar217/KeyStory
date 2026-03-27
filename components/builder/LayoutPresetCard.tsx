@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { LayoutPreset } from '@/lib/types';
-import { LAYOUT_PRESETS } from '@/lib/builder-constants';
+import { LAYOUT_CONFIG } from '@/config/layoutConfig';
 
 interface LayoutPresetCardProps {
   layout: LayoutPreset;
@@ -11,7 +11,7 @@ interface LayoutPresetCardProps {
 }
 
 export default function LayoutPresetCard({ layout, isSelected, onSelect }: LayoutPresetCardProps) {
-  const preset = LAYOUT_PRESETS.find(p => p.key === layout);
+  const preset = LAYOUT_CONFIG.find(p => p.key === layout);
   
   if (!preset) return null;
 
@@ -69,5 +69,5 @@ export default function LayoutPresetCard({ layout, isSelected, onSelect }: Layou
 }
 
 // Export all layout presets
-export { LAYOUT_PRESETS };
+export { LAYOUT_CONFIG };
 

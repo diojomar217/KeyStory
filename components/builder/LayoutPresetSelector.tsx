@@ -1,6 +1,6 @@
 'use client';
 import { LayoutPreset } from '@/lib/types';
-import { LAYOUT_PRESETS } from '@/lib/builder-constants';
+import { LAYOUT_CONFIG } from '@/config/layoutConfig';
 import React from 'react';
 
 type Props = {
@@ -22,13 +22,13 @@ export default function LayoutPresetSelector({ value, onChange }: Props) {
       </p>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {LAYOUT_PRESETS.map((preset, index) => {
+        {LAYOUT_CONFIG.map((preset, index) => {
           const isSelected = value === preset.key;
           return (
             <button
               key={preset.key}
               type="button"
-              onClick={() => onChange(preset.key)}
+              onClick={() => onChange(preset.key as LayoutPreset)}
               className={`
                 group relative flex flex-col p-4 rounded-2xl border-2 text-left
                 transition-all duration-300 ease-out

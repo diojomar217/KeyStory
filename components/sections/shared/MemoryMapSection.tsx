@@ -4,7 +4,7 @@ import { Theme, MemoryMapLocation } from '@/lib/types';
 import SectionHeader from '../../page/SectionHeader';
 import { useTheme } from '../../builder/ThemeWrapper';
 import dynamic from 'next/dynamic';
-import { THEME_PRESETS } from '@/lib/builder-constants';
+import { THEME_CONFIG } from '@/config/themeConfig';
 
 interface MemoryMapSectionProps {
   theme: Theme;
@@ -17,7 +17,7 @@ const MemoryMap = dynamic(() => import('./MemoryMap'), {
 
 export default function MemoryMapSection({ theme, locations }: MemoryMapSectionProps) {
   const styles = useTheme(theme);
-  const themeConfig = THEME_PRESETS[theme];
+  const themeConfig = THEME_CONFIG[theme];
   const { colors, typography } = themeConfig;
 
   const displayLocations = locations || [];

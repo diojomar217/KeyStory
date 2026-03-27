@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Theme } from '@/lib/types';
 import SectionHeader from '../../page/SectionHeader';
 import { useTheme } from '../../builder/ThemeWrapper';
-import { THEME_PRESETS } from '@/lib/builder-constants';
+import { THEME_CONFIG } from '@/config/themeConfig';
 
 interface RelationshipStatsSectionProps {
   theme: Theme;
@@ -20,7 +20,7 @@ interface Stats {
 }
 
 export default function RelationshipStatsSection({ theme, anniversaryDate }: RelationshipStatsSectionProps) {
-  const themeConfig = THEME_PRESETS[theme];
+  const themeConfig = THEME_CONFIG[theme];
   const { colors, typography } = themeConfig;
   
   const [stats, setStats] = useState<Stats>({
