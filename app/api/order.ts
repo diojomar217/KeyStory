@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
       song_link: data.song_link || '',
     },
     timeline: data.config?.timeline_events || [],
-    content: data.config?.section_content || {},
+    section_content: data.config?.section_content || {},
     message: data.message || '',
     tagline: data.tagline || data.config?.tagline || '',
   };

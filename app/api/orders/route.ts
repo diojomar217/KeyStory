@@ -80,10 +80,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(ordersCache[cacheKey].data);
     }
 
-    // Build base query for data
-    // Use shared getSites for now (filters/pagination can be added to utility if needed)
+    // Efficient DB-level filtering, searching, sorting, and pagination
     try {
-      const orders = await getSites();
+      const { data: orders, total } = await getSites({
+        limit,
+        offset,
+        status,
+        search,
+        sortBy,
+        sortDirection,
+      });
       // Flatten theme to top-level for each order (for admin table display)
       const ordersWithTheme = (orders || []).map((order: any) => {
         let theme = undefined;
@@ -92,7 +98,7 @@ export async function GET(req: NextRequest) {
         }
         return { ...order, theme };
       });
-      const responseData = { success: true, orders: ordersWithTheme, total: ordersWithTheme.length };
+      const responseData = { success: true, orders: ordersWithTheme, total };
       ordersCache[cacheKey] = { data: responseData, cachedAt: now };
       return NextResponse.json(responseData);
     } catch (error: any) {

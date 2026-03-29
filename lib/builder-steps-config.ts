@@ -133,19 +133,16 @@ export const validateTemplateStep = (
 ): ValidationResult => {
   const sections = config.sections || [];
   
-  if (sections.includes('home') && !config.home_template) {
+  if (sections.includes('home') && !(config.templates && config.templates.home)) {
     return { valid: false, error: 'Please select a home template' };
   }
-  
-  if (sections.includes('gallery') && !config.gallery_template) {
+  if (sections.includes('gallery') && !(config.templates && config.templates.gallery)) {
     return { valid: false, error: 'Please select a gallery template' };
   }
-  
-  if (sections.includes('timeline') && !config.timeline_template) {
+  if (sections.includes('timeline') && !(config.templates && config.templates.timeline)) {
     return { valid: false, error: 'Please select a timeline template' };
   }
-  
-  if (sections.includes('song') && !config.song_template) {
+  if (sections.includes('song') && !(config.templates && config.templates.song)) {
     return { valid: false, error: 'Please select a song template' };
   }
   
@@ -170,7 +167,7 @@ export const validateContentStep = (
   // Timeline requires events
   if (
     sections.includes('timeline') &&
-    (!config.timeline_events || config.timeline_events.length === 0)
+    (!config.section_content?.timeline || config.section_content.timeline.length === 0)
   ) {
     return { valid: false, error: 'Timeline section requires at least one event' };
   }

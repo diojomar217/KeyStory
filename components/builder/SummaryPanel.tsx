@@ -446,7 +446,7 @@ export default function SummaryPanel({ config, form, onEditSection, showValidati
       missingRequired.push({ section: 'Gallery', message: 'At least 1 photo required' });
     }
     // Timeline events
-    if (config.sections?.includes('timeline') && (!config.timeline_events || config.timeline_events.length === 0)) {
+    if (config.sections?.includes('timeline') && (!config.section_content?.timeline || config.section_content.timeline.length === 0)) {
       missingRequired.push({ section: 'Timeline', message: 'At least 1 event required' });
     }
     // Hero message
@@ -530,7 +530,7 @@ export default function SummaryPanel({ config, form, onEditSection, showValidati
   if (config.sections?.includes('gallery') && form.photos.length > 0 && form.photos.length < 3) {
     warnings.push('Consider adding more photos for a better gallery');
   }
-  if (config.sections?.includes('timeline') && (!config.timeline_events || config.timeline_events.length < 2)) {
+  if (config.sections?.includes('timeline') && (!config.section_content?.timeline || config.section_content.timeline.length < 2)) {
     warnings.push('Timeline section needs at least 2 events');
   }
   if (config.sections?.includes('song') && !config.section_content?.song?.song_link?.trim()) {
@@ -585,7 +585,7 @@ export default function SummaryPanel({ config, form, onEditSection, showValidati
   const photosComplete = !hasGallerySection || form.photos.length > 0;
   
   // Check timeline events (only required if timeline is enabled)
-  const timelineComplete = !hasTimelineSection || (config.timeline_events && config.timeline_events.length > 0);
+  const timelineComplete = !hasTimelineSection || (config.section_content?.timeline && config.section_content.timeline.length > 0);
   
   // Check dynamic section content
   // sectionContent already declared above if needed
@@ -907,7 +907,7 @@ export default function SummaryPanel({ config, form, onEditSection, showValidati
           <div>
             <p className="text-slate-500 text-xs">Timeline Events</p>
             <p className="font-medium text-slate-800">
-              {config.timeline_events?.length || 0} events
+              {config.section_content?.timeline?.length || 0} events
             </p>
           </div>
         </div>

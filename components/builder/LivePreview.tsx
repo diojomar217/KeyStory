@@ -178,7 +178,7 @@ export default function LivePreview({ config, occasion, isMobileOpen, onMobileCl
     config.message?.trim() ||
     specialDate ||
     config.specialDate ||
-    (config.timeline_events?.length ?? 0) > 0 ||
+    (config.section_content?.timeline?.length ?? 0) > 0 ||
     (config.section_content && Object.keys(config.section_content).length > 0)
   );
 

@@ -184,28 +184,27 @@ export function getSectionValidationStatus(
   };
   
   // Check gallery
-  if (config.sections.includes('gallery')) {
-    if (photos.length === 0) {
-      status.gallery = 'invalid';
-    } else if (photos.length < 3) {
-      status.gallery = 'warning';
-    }
-  }
-  
-  // Check timeline
-  if (config.sections.includes('timeline')) {
-    if (!config.timeline_events || config.timeline_events.length === 0) {
-      status.timeline = 'invalid';
-    } else if (config.timeline_events.length < 3) {
-      status.timeline = 'warning';
-    }
-  }
-  
-  // Check song
-  if (config.sections.includes('song')) {
-    if (songLink.trim()) {
-      const isValidYouTube = songLink.includes('youtube.com') || songLink.includes('youtu.be');
-      const isValidSpotify = songLink.includes('spotify.com');
+      if (config.sections.includes('timeline')) {
+        const timeline = config.section_content?.timeline || [];
+        if (!timeline.length) {
+          return {
+            section: 'timeline',
+            message: 'Timeline section requires at least one event',
+            field: 'timeline',
+          };
+        }
+        // Check if all events have required fields
+        const invalidEvents = timeline.filter(
+          (event) => !event.title?.trim() || !event.date
+        );
+        if (invalidEvents.length > 0) {
+          return {
+            section: 'timeline',
+            message: 'All timeline events must have a title and date',
+            field: 'timeline',
+          };
+        }
+      }
       if (!isValidYouTube && !isValidSpotify) {
         status.song = 'invalid';
       }

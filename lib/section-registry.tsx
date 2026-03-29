@@ -998,7 +998,7 @@ export const validateSectionRequirements = (
     };
   }
   
-  if (metadata.requiresEvents && (!config.timeline_events || config.timeline_events.length === 0)) {
+  if (metadata.requiresEvents && (!config.section_content?.timeline || config.section_content.timeline.length === 0)) {
     return { 
       valid: false, 
       error: `${metadata.title} section requires at least one event` 

@@ -836,7 +836,7 @@ export function SectionRenderer({ sectionId, config, occasion, coupleNames, tagl
   const siteType = occasion || config.occasion || 'couple';
   const hasCoverPhoto = config.cover_photo_index !== undefined;
   const photoCount = config.cover_photo_index !== undefined ? 5 : 0;
-  const eventCount = config.timeline_events?.length || 0;
+  const eventCount = config.section_content?.timeline?.length || 0;
   const hasSong = !!config.sections?.includes('song');
 
   switch (sectionId) {

@@ -1,6 +1,7 @@
 
 import { NextResponse } from 'next/server';
-import { supabase, getSites } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import { listWebsites as getSites } from '@/lib/db/websites';
 
 // Simple in-memory cache (per server instance)
 let cachedData: any = null;

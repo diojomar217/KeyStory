@@ -90,10 +90,7 @@ function getInitialDraft(): { form: LocalForm; config: SiteConfig; currentStep: 
         occasion: 'couple' as OccasionType,
         theme: DEFAULT_THEME,
         sections: [],
-        home_template: undefined,
-        gallery_template: undefined,
-        timeline_template: undefined,
-        song_template: undefined,
+        templates: { home: undefined, gallery: undefined },
         timeline_events: [],
         cover_photo_index: undefined,
         section_content: {},
@@ -128,10 +125,7 @@ function getInitialDraft(): { form: LocalForm; config: SiteConfig; currentStep: 
     occasion: 'couple',
     theme: DEFAULT_THEME as ThemeKey,
     sections: [],
-    home_template: undefined,
-    gallery_template: undefined,
-    timeline_template: undefined,
-    song_template: undefined,
+    templates: { home: undefined, gallery: undefined },
     timeline_events: [],
     cover_photo_index: undefined,
     section_content: {},
@@ -152,11 +146,8 @@ function getInitialDraft(): { form: LocalForm; config: SiteConfig; currentStep: 
           occasion: validOccasions.includes(parsed.config.occasion) ? parsed.config.occasion : 'couple',
           theme: parsedTheme as ThemeKey,
           sections: Array.isArray(parsed.config.sections) ? parsed.config.sections : [],
-          home_template: parsed.config.home_template,
-          gallery_template: parsed.config.gallery_template,
-          timeline_template: parsed.config.timeline_template,
-          song_template: parsed.config.song_template,
-          timeline_events: Array.isArray(parsed.config.timeline_events) ? parsed.config.timeline_events : [],
+          templates: parsed.config.templates || { home: parsed.config.home_template, gallery: parsed.config.gallery_template },
+          // timeline_events removed, use section_content.timeline
           cover_photo_index: parsed.config.cover_photo_index,
           section_content: parsed.config.section_content || {},
         };
@@ -340,6 +331,7 @@ export default function CreateWebsitePage() {
   useEffect(() => {
     setConfig((prev) => ({
       ...prev,
+      ...prev,
       occasion: form.occasion,
       participants: form.participants,
       message: form.message,
@@ -512,25 +504,27 @@ export default function CreateWebsitePage() {
     if (!preset) return;
 
     setSelectedPresetId(presetId);
-    setForm((prev) => ({
-      ...prev,
-      occasion: preset.siteType,
-      preset_id: preset.id,
-      tagline: preset.defaults.copy?.tagline || prev.tagline,
-      message: preset.defaults.copy?.message || prev.message,
-    }));
-
     setConfig((prev) => ({
       ...prev,
-      occasion: preset.siteType,
-      preset: { id: preset.id, label: preset.label },
-      theme: preset.defaults.theme,
-      layout_preset: preset.defaults.layout_preset,
-      sections: preset.defaults.sections,
-      home_template: preset.defaults.templates.home,
-      gallery_template: preset.defaults.templates.gallery,
-      timeline_template: preset.defaults.templates.timeline,
-      song_template: preset.defaults.templates.song,
+      occasion: form.occasion,
+      message: form.message,
+      tagline: form.tagline,
+      specialDate: form.specialDate,
+      hero: {
+        ...(prev.hero || {}),
+        coverPhotoIndex: typeof form.heroPhotoIndex === 'number' ? form.heroPhotoIndex : prev.hero?.coverPhotoIndex,
+      },
+      media: {
+        ...(prev.media || {}),
+        song_link: form.song_link,
+        song_autoplay: !!form.song_autoplay,
+      },
+      templates: {
+        home: preset.defaults.templates.home,
+        gallery: preset.defaults.templates.gallery,
+        timeline: preset.defaults.templates.timeline,
+        song: preset.defaults.templates.song,
+      },
       tagline: preset.defaults.copy?.tagline || prev.tagline,
       message: preset.defaults.copy?.message || prev.message,
     }));
@@ -1035,9 +1029,8 @@ export default function CreateWebsitePage() {
                 const removedSections = prevSections.filter((s) => !sections.includes(s));
                 const newConfig = { ...config, sections };
                 removedSections.forEach((sectionKey) => {
-                  const key = `${sectionKey}_template` as keyof typeof newConfig;
-                  if (newConfig[key] !== undefined) {
-                    delete newConfig[key];
+                  if (newConfig.templates && newConfig.templates[sectionKey]) {
+                    delete newConfig.templates[sectionKey];
                   }
                 });
                 handleConfigChange(newConfig);
@@ -1072,9 +1065,6 @@ export default function CreateWebsitePage() {
             ) : (
               <div className="space-y-6">
                 {config.sections.map((sectionKey) => {
-                  // Only render TemplateSelector if templates exist for this section
-                  // Import getTemplatesForSection from config/templateConfig
-                  // (import at top if not already)
                   const { getTemplatesForSection } = require('@/config/templateConfig');
                   const templates = getTemplatesForSection(sectionKey);
                   if (!templates.length) return null;
@@ -1082,9 +1072,9 @@ export default function CreateWebsitePage() {
                     <TemplateSelector
                       key={sectionKey}
                       section={sectionKey}
-                      value={config[`${sectionKey}_template` as keyof typeof config] as string}
+                      value={config.templates?.[sectionKey] as string}
                       onChange={(templateKey: string) =>
-                        handleConfigChange({ [`${sectionKey}_template`]: templateKey })
+                        handleConfigChange({ templates: { ...config.templates, [sectionKey]: templateKey } })
                       }
                     />
                   );
@@ -1142,7 +1132,7 @@ export default function CreateWebsitePage() {
                           errors[key] = true;
                         }
                         // Timeline: must have at least 1 event (use config.timeline_events)
-                        else if (key === 'timeline' && (!config.timeline_events || !Array.isArray(config.timeline_events) || config.timeline_events.length === 0)) {
+                        else if (key === 'timeline' && (!config.section_content?.timeline || !Array.isArray(config.section_content.timeline) || config.section_content.timeline.length === 0)) {
                           errors[key] = true;
                         }
                         // Love Letter: must have content
@@ -1202,7 +1192,7 @@ export default function CreateWebsitePage() {
         const templateDisplay = [
           ...keyTemplates.map((key) =>
             (config.sections as import('@/lib/types').Section[]).includes(key)
-              ? `${toLabel(key)}: ${(config as any)[`${key}_template`] || 'Default'}`
+              ? `${toLabel(key)}: ${config.templates?.[key] || 'Default'}`
               : null
           ).filter(Boolean),
         ];
@@ -1332,7 +1322,7 @@ export default function CreateWebsitePage() {
                         return (
                           <li key={key} className="flex items-center gap-1">
                             {meta?.icon && <span className="mr-1">{meta.icon}</span>}
-                            <span>{meta?.title || toLabel(key)}: <span className="text-slate-500">{(config as any)[`${key}_template`] || 'Default'}</span></span>
+                            <span>{meta?.title || toLabel(key)}: <span className="text-slate-500">{config.templates?.[key] || 'Default'}</span></span>
                           </li>
                         );
                       })}

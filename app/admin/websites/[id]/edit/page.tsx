@@ -89,9 +89,7 @@ export default function EditWebsitePage() {
       occasion: 'couple',
       theme: DEFAULT_THEME,
       sections: ['home'],
-      home_template: undefined,
-      gallery_template: undefined,
-      timeline_template: undefined,
+      templates: { home: undefined, gallery: undefined, timeline: undefined, song: undefined },
       timeline_events: [],
       cover_photo_index: undefined,
       section_content: {},
@@ -253,30 +251,20 @@ export default function EditWebsitePage() {
         const sectionsValue: Section[] = rawSections as Section[];
         
         // Safely extract template values with proper type assertions
-        const homeTemplateValue = site.config?.home_template || siteAny.home_template;
-        const galleryTemplateValue = site.config?.gallery_template || siteAny.gallery_template;
-        const timelineTemplateValue = site.config?.timeline_template || siteAny.timeline_template;
-        // Fallback: If song_template is missing, try playlist_template (legacy/old data)
-        let songTemplateValue = site.config?.song_template || siteAny.song_template;
-        if (!songTemplateValue && (site.config?.playlist_template || siteAny.playlist_template)) {
-          songTemplateValue = site.config?.playlist_template || siteAny.playlist_template;
-        }
+        const templates = site.config?.templates || {};
 
         // Debug: Log loaded config and template values
         console.log('[EditWebsitePage] Loaded config from DB:', {
-          homeTemplateValue,
-          galleryTemplateValue,
-          timelineTemplateValue,
-          songTemplateValue,
+          templates,
           config: site.config,
           siteAny,
           sectionsValue,
         });
 
-        // Safely extract timeline events
-        const timelineEventsValue = Array.isArray(site.config?.timeline_events)
-          ? site.config.timeline_events
-          : (Array.isArray(siteAny.timeline_events) ? siteAny.timeline_events : []);
+        // Safely extract timeline events from section_content.timeline
+        const timelineEventsValue = Array.isArray(site.config?.section_content?.timeline)
+          ? site.config.section_content.timeline
+          : (Array.isArray(siteAny.section_content?.timeline) ? siteAny.section_content.timeline : []);
         // Safely extract cover photo index (only from config)
         const coverPhotoIndexValue = typeof site.config?.cover_photo_index === 'number'
           ? site.config.cover_photo_index
@@ -296,10 +284,7 @@ export default function EditWebsitePage() {
           occasion: loadedOccasion as 'couple' | 'birthday',
           theme: (site.config?.theme || siteAny.theme) as ThemeKey || DEFAULT_THEME,
           sections: sectionsValue,
-          home_template: homeTemplateValue as SiteConfig['home_template'],
-          gallery_template: galleryTemplateValue as SiteConfig['gallery_template'],
-          timeline_template: timelineTemplateValue as SiteConfig['timeline_template'],
-          song_template: songTemplateValue as SiteConfig['song_template'],
+          templates,
           timeline_events: timelineEventsValue as SiteConfig['timeline_events'],
           cover_photo_index: coverPhotoIndexValue,
           section_content: sectionContentValue,
@@ -318,9 +303,6 @@ export default function EditWebsitePage() {
           },
           password: site.config?.password ? { ...site.config.password } : undefined,
         };
-        if (sectionsValue.includes('playlist')) {
-          configPatch.playlist_template = songTemplateValue;
-        }
 
         // Only set selectedPresetId if it matches a valid preset for the loaded occasion
         const { getPresetsForOccasion } = require('@/lib/preset-registry');
@@ -343,10 +325,10 @@ export default function EditWebsitePage() {
             const layoutMatch = preset.defaults.layout_preset === configPatch.layout_preset;
             const templates = preset.defaults.templates || {};
             const templatesMatch =
-              (!templates.home || templates.home === configPatch.home_template) &&
-              (!templates.gallery || templates.gallery === configPatch.gallery_template) &&
-              (!templates.timeline || templates.timeline === configPatch.timeline_template) &&
-              (!templates.song || templates.song === configPatch.song_template);
+              (!templates.home || templates.home === configPatch.templates?.home) &&
+              (!templates.gallery || templates.gallery === configPatch.templates?.gallery) &&
+              (!templates.timeline || templates.timeline === configPatch.templates?.timeline) &&
+              (!templates.song || templates.song === configPatch.templates?.song);
             return sectionsMatch && themeMatch && layoutMatch && templatesMatch;
           });
           if (match) {
@@ -716,10 +698,12 @@ export default function EditWebsitePage() {
             theme: preset.defaults.theme,
             layout_preset: preset.defaults.layout_preset,
             sections: preset.defaults.sections,
-            home_template: preset.defaults.templates.home,
-            gallery_template: preset.defaults.templates.gallery,
-            timeline_template: preset.defaults.templates.timeline,
-            song_template: preset.defaults.templates.song,
+            templates: {
+              home: preset.defaults.templates.home,
+              gallery: preset.defaults.templates.gallery,
+              timeline: preset.defaults.templates.timeline,
+              song: preset.defaults.templates.song,
+            },
             tagline: preset.defaults.copy?.tagline || prev.tagline,
             message: preset.defaults.copy?.message || prev.message,
           }));
@@ -1022,9 +1006,9 @@ export default function EditWebsitePage() {
                     <TemplateSelector
                       key={sectionKey}
                       section={sectionKey}
-                      value={config[`${sectionKey}_template` as keyof typeof config] as string}
+                      value={config.templates?.[sectionKey] as string}
                       onChange={(templateKey: string) =>
-                        handleConfigChange({ [`${sectionKey}_template`]: templateKey })
+                        handleConfigChange({ templates: { ...config.templates, [sectionKey]: templateKey } })
                       }
                     />
                   );

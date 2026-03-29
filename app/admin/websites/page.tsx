@@ -1,7 +1,7 @@
 'use client';
 
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Site } from '@/lib/supabase';
 import WebsitesTable from '@/components/admin/WebsitesTable';
 import EmptyState from '@/components/admin/EmptyState';
@@ -21,12 +21,16 @@ export default function WebsitesPage() {
   const [limit, setLimit] = useState(20);
   const [sortBy, setSortBy] = useState('created_at');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const isFetching = useRef(false);
 
   useEffect(() => {
     fetchOrders();
   }, [statusFilter, page, limit, searchQuery, sortBy, sortDirection]);
 
   const fetchOrders = async () => {
+    if (isFetching.current) return; // Prevent overlapping calls
+    isFetching.current = true;
+    setLoading(true);
     try {
       let query = `?limit=${limit}&offset=${(page - 1) * limit}`;
       if (statusFilter && statusFilter !== 'all') query += `&status=${statusFilter}`;
@@ -44,6 +48,7 @@ export default function WebsitesPage() {
       console.error('Failed to fetch orders:', error);
     } finally {
       setLoading(false);
+      isFetching.current = false;
     }
   };
 

@@ -34,8 +34,34 @@ export async function deleteWebsite(id: string) {
   return true;
 }
 
-export async function listWebsites() {
-  const { data, error } = await supabase.from('sites').select('*').order('created_at', { ascending: false });
+export interface ListWebsitesOptions {
+  limit?: number;
+  offset?: number;
+  status?: string;
+  search?: string;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
+}
+
+export async function listWebsites(options: ListWebsitesOptions = {}) {
+  let query = supabase.from('sites').select('*', { count: 'exact' });
+  if (options.status && options.status !== 'all') {
+    query = query.eq('status', options.status);
+  }
+  if (options.search) {
+    query = query.ilike('website_name', `%${options.search}%`);
+  }
+  if (options.sortBy) {
+    query = query.order(options.sortBy, { ascending: options.sortDirection === 'asc' });
+  } else {
+    query = query.order('created_at', { ascending: false });
+  }
+  if (typeof options.offset === 'number') {
+    query = query.range(options.offset, (options.offset || 0) + (options.limit || 20) - 1);
+  } else if (typeof options.limit === 'number') {
+    query = query.limit(options.limit);
+  }
+  const { data, error, count } = await query;
   if (error) throw error;
-  return data || [];
+  return { data: data || [], total: count || 0 };
 }

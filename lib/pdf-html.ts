@@ -21,7 +21,7 @@ const escapeHtml = (text: string) =>
 
 function getSectionContent(site: Site) {
   const cfg = site.config || {};
-  const sectionContent = (cfg.content as Record<string, any>) || (cfg.section_content as Record<string, any>) || {};
+  const sectionContent = (cfg.section_content as Record<string, any>) || {};
 
   return {
     loveLetter: cfg.message || site.message || sectionContent.love_letter || sectionContent.loveLetter || '',

@@ -1,6 +1,6 @@
 import { DEFAULT_THEME } from '@/config/defaults';
 import { NextRequest, NextResponse } from 'next/server';
-import { insertSite, updateSite, deleteSite, getSites, getSiteById, Site } from '@/lib/supabase';
+import { createWebsite as insertSite, updateWebsite as updateSite, deleteWebsite as deleteSite, listWebsites as getSites, getWebsiteById as getSiteById } from '@/lib/db/websites';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 
 const normalizePasswordConfig = async (siteConfig: any, passwordInput?: string): Promise<any> => {
@@ -149,7 +149,7 @@ export async function PUT(req: NextRequest) {
           song_autoplay: updates.song_autoplay ?? updates.config?.media?.song_autoplay ?? false,
         },
         timeline: updates.config?.timeline || updates.config?.timeline_events || updates.timeline_events || [],
-        content: updates.config?.content || updates.config?.section_content || {},
+        section_content: updates.config?.section_content || {},
         message: updates.message || updates.config?.message || '',
         tagline: updates.tagline || updates.config?.tagline || '',
         hero: {

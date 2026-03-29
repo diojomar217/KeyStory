@@ -127,16 +127,14 @@ export default async function LovePage({ params }: PageProps) {
   const timelineTemplate: TimelineTemplate = (config.timeline_template as TimelineTemplate) || 'vertical_timeline';
   
   // Get timeline events
-  const timelineEvents: TimelineEvent[] = Array.isArray(config.timeline) 
-    ? config.timeline 
-    : Array.isArray(config.timeline_events) 
-      ? config.timeline_events 
+  const timelineEvents: TimelineEvent[] = Array.isArray(config.timeline)
+    ? config.timeline
+    : Array.isArray(config.section_content?.timeline)
+      ? config.section_content.timeline
       : [];
 
   // Get section content (new feature for dynamic content)
-  const sectionContent = config.content 
-    ? (config.content as Record<string, unknown>) 
-    : (config.section_content as Record<string, unknown>) || undefined;
+  const sectionContent = (config.section_content as Record<string, unknown>) || undefined;
 
   // Get photos - from config.media or fallback older fields
   const photos = Array.isArray(config?.media?.photos)

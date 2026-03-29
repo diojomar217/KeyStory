@@ -85,10 +85,10 @@ export default function SectionContentInputs({
 					       const count = Array.isArray(photoPreviews) ? photoPreviews.length : 0;
 					       isComplete = count > 0;
 					       label = count > 0 ? `${count} photo${count > 1 ? 's' : ''}` : (isRequired ? 'Missing' : 'Empty');
-				       } else if (key === 'timeline') {
-					       const count = Array.isArray(config.timeline_events) ? config.timeline_events.length : 0;
-					       isComplete = count > 0;
-					       label = count > 0 ? `${count} event${count > 1 ? 's' : ''}` : (isRequired ? 'Missing' : 'Empty');
+					       } else if (key === 'timeline') {
+						       const count = Array.isArray(config.section_content?.timeline) ? config.section_content.timeline.length : 0;
+						       isComplete = count > 0;
+						       label = count > 0 ? `${count} event${count > 1 ? 's' : ''}` : (isRequired ? 'Missing' : 'Empty');
 					       } else if (key === 'playlist') {
 						       const val = section_content[key];
 						       const hasUrl = val && typeof val.playlistUrl === 'string' && val.playlistUrl.trim().length > 0;
@@ -302,10 +302,10 @@ export default function SectionContentInputs({
 							   <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 max-h-[70vh] overflow-y-auto">
 								   <span className="font-semibold text-lg">Timeline Events</span>
 								   <TimelineEditor
-									   events={config.timeline_events || []}
-									   onChange={timeline_events => onSectionContentChange('timeline', timeline_events)}
+									   events={config.section_content?.timeline || []}
+									   onChange={timeline => onSectionContentChange('timeline', timeline)}
 								   />
-								   {(!config.timeline_events || config.timeline_events.length === 0) && (
+								   {(!config.section_content?.timeline || config.section_content.timeline.length === 0) && (
 									   <p className="text-xs text-amber-600 mt-2">
 										   Timeline section requires at least one event
 									   </p>

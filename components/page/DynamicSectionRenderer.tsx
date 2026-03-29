@@ -191,7 +191,7 @@ const buildProps = (section: Section, props: DynamicSectionRendererProps): Recor
       return {
         theme: mergedConfig.theme,
         template: getTemplate('timeline'),
-        events: mergedConfig.timelineEvents || mergedConfig.timeline_events,
+        events: mergedConfig.timelineEvents || mergedConfig.section_content?.timeline,
       };
 
     case 'song':

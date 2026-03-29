@@ -28,6 +28,7 @@ interface KeychainPrintSheetProps {
     logoUrl?: string;
   };
   qrScale?: number;
+  fullPrint?: boolean;
 }
 
 function InsertPair({
@@ -40,7 +41,7 @@ function InsertPair({
   coverPhotoUrl,
   coupleNames,
   caption,
-  gap,
+    gap = 0, // Default gap to 0
   qrDesign,
   showGuides,
   qrScale,
@@ -54,7 +55,7 @@ function InsertPair({
   coverPhotoUrl?: string;
   coupleNames: string;
   caption?: string;
-  gap: number;
+    gap?: number; // Make gap optional
   qrScale?: number;
   qrDesign?: {
     dotsColor: string;
@@ -75,20 +76,20 @@ function InsertPair({
         flexDirection: 'row',
         alignItems: 'stretch',
         justifyContent: 'stretch',
-        gap: `${gap}mm`,
+        gap: '0', // Set gap to 0
         backgroundColor: 'transparent',
         border: 'none',
         boxShadow: 'none',
-        borderRadius: '3mm',
+        borderRadius: '0',
         padding: '0',
-        width: `${widthMm * 2 + gap + 1}mm`,
+        width: `${widthMm * 2 + 1}mm`, // Adjust width calculation
         height: `${heightMm + 3}mm`,
         boxSizing: 'border-box',
         breakInside: 'avoid',
         pageBreakInside: 'avoid',
       }}
     >
-      <div style={{ width: `${widthMm}mm`, height: `${heightMm}mm`, border: 'none', borderRadius: '3mm', padding: '0', backgroundColor: 'transparent', boxSizing: 'border-box' }}>
+      <div style={{ width: `${widthMm}mm`, height: `${heightMm}mm`, border: 'none', borderRadius: '0', padding: '0', backgroundColor: 'transparent', boxSizing: 'border-box' }}>
         <KeychainInsertQR
           widthMm={widthMm}
           heightMm={heightMm}
@@ -104,7 +105,7 @@ function InsertPair({
         />
       </div>
 
-      <div style={{ width: `${widthMm}mm`, height: `${heightMm}mm`, border: 'none', borderRadius: '3mm', padding: '0', backgroundColor: 'transparent', boxSizing: 'border-box' }}>
+      <div style={{ width: `${widthMm}mm`, height: `${heightMm}mm`, border: 'none', borderRadius: '0', padding: '0', backgroundColor: 'transparent', boxSizing: 'border-box' }}>
         <KeychainInsertPhoto
           widthMm={widthMm}
           heightMm={heightMm}
@@ -136,17 +137,18 @@ export default function KeychainPrintSheet({
   accentColor = '#e11d48',
   qrScale = 1,
   qrDesign,
+  fullPrint = false,
 }: KeychainPrintSheetProps) {
   const numCopies = copies;
   const insertWidth = widthMm;
   const insertHeight = heightMm;
-  const gap = 1; // Reduced from 2mm for tighter print layout
+  // If fullPrint, remove all gaps and margins
+  const gap = fullPrint ? 0 : 1;
 
   // Pair width = QR side + Photo side
   const pairWidth = insertWidth * 2 + gap;
   const rowWidth = pairWidth * pairsPerRow + gap;
 
-  // Print page size (A4 width minus margins)
   const pageWidthMm = 210 - 5; // 5mm total margin (2.5mm each side)
   const scale = autoFit ? Math.min(1, pageWidthMm / rowWidth) : 1;
 
@@ -157,10 +159,10 @@ export default function KeychainPrintSheet({
   const rowHeight = insertHeight + gap + 0.5; // Added 0.5mm for card bottom margin
 
   return (
-    <div className="Print-sheet" style={{ padding: '0' }}>
+    <div className="Print-sheet" style={{ padding: fullPrint ? 0 : undefined }}>
       <style jsx global>{`
         @media print {
-          @page { margin: 2mm; } /* Reduced from 5mm */
+          @page { margin: ${fullPrint ? '0' : '0 0 0 2mm'}; }
           html, body { margin: 0; padding: 0; }
           .Print-sheet { width: 100% !important; padding: 0 !important; margin: 0 !important; }
           .Print-page { height: auto !important; overflow: visible !important; }
@@ -168,42 +170,41 @@ export default function KeychainPrintSheet({
             display: grid !important;
             grid-template-columns: repeat(${pairsPerRow}, minmax(0, 1fr)) !important;
             grid-auto-rows: auto !important;
-            gap: 1mm !important; /* Gap for cards */
+            gap: ${fullPrint ? '0' : '1mm'} !important;
             width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
             overflow: visible !important;
-            border: none !important; /* Remove grid border, use individual card borders */
-            box-sizing: border-box !important;
+            border: none !important;
           }
-              .Print-card { 
+          .Print-card { 
             page-break-inside: avoid !important; 
             break-inside: avoid !important; 
-            margin: 0 0 0.5mm 0 !important; /* Add bottom margin for border visibility */
-            padding: 0 !important; /* Remove padding to maximize printable area */
-            width: ${widthMm * 2 + gap}mm !important; /* Exact width matching print size */
-            height: ${heightMm}mm !important; /* Exact height matching print size */
-            background-color: #ffffff !important; /* Fill to avoid gray non-ink boundary */
-            box-shadow: none !important; /* Remove drop shadow for cut-ready print */
+            margin: 0 !important;
+            padding: 0 !important;
+            width: ${widthMm * 2 + gap}mm !important;
+            height: ${heightMm}mm !important;
+            background-color: #ffffff !important;
+            box-shadow: none !important;
             border: none !important;
-            box-sizing: border-box !important; /* Border included in dimensions */
+            box-sizing: border-box !important;
           }
           .Print-card > div {
             border: none !important;
-            border-radius: 3mm !important;
-            padding: 2mm !important;
+            border-radius: 0 !important;
+            padding: ${fullPrint ? '0' : '2mm'} !important;
             box-sizing: border-box !important;
           }
           .no-print { display: none !important; }
         }
       `}</style>
       <div className="Print-page">
-        <div className="Print-grid" style={{ 
-          display: 'grid', 
-          gridTemplateColumns: `repeat(${pairsPerRow}, minmax(0, 1fr))`, 
+        <div className="Print-grid" style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${pairsPerRow}, minmax(0, 1fr))`,
           gridAutoRows: `${rowHeight}mm`,
-          gap: `${gap}mm`, 
-          width: '100%', 
+          gap: fullPrint ? 0 : `${gap}mm`,
+          width: '100%',
           justifyContent: 'center',
           margin: 0,
           padding: 0,

@@ -142,11 +142,8 @@ export interface SiteConfig {
   sections: Section[];
   section_toggles?: Record<Section, boolean>;
   section_templates?: Record<Section, string>;
-  home_template?: HomeTemplate;
-  gallery_template?: GalleryTemplate;
+  templates?: Record<Section, string>;
   gallery_layout?: GalleryLayout;
-  timeline_template?: TimelineTemplate;
-  song_template?: SongTemplate;
   timeline_events?: TimelineEvent[];
   cover_photo_index?: number;
   tagline?: string;
@@ -382,10 +379,10 @@ export interface RelationshipStats {
 
 export interface SectionContentMap {
   love_letter?: {
-    content: string;
+    text: string;
   };
   our_story?: {
-    content: string;
+    text: string;
   };
   first_date?: {
     title: string;
@@ -417,7 +414,7 @@ export interface SectionContentMap {
     quotes: LoveQuote[];
   };
   birthday_message?: {
-    content: string;
+    text: string;
   };
   birthday_wishes?: {
     quotes: LoveQuote[];

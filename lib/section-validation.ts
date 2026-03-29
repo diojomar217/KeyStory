@@ -72,7 +72,7 @@ export const getValidationRules = (): ValidationRule[] => {
         id: `${section}-events`,
         section,
         check: (config, data) => {
-          const events = config.timeline_events || [];
+          const events = config.section_content?.timeline || [];
           return events.length > 0;
         },
         message: `${metadata.title} section requires at least one event`,
@@ -170,7 +170,7 @@ export const getSectionWarnings = (
 
   // Check timeline events
   if (metadata.requiresEvents) {
-    const events = config.timeline_events || [];
+    const events = config.section_content?.timeline || [];
     if (events.length === 0) {
       warnings.push(`${metadata.title} enabled but no events added`);
     } else if (events.length < 2) {
@@ -322,7 +322,7 @@ export const getLegacyWarnings = (
 
   // Timeline warnings
   if (sections.includes('timeline')) {
-    const events = config.timeline_events || [];
+    const events = config.section_content?.timeline || [];
     if (events.length === 0) {
       warnings.push('Timeline enabled but no events added');
     } else if (events.length < 2) {

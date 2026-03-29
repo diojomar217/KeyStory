@@ -77,6 +77,8 @@ export default function KeychainPrintPage({ params }: PageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Full Print option state
+  const [fullPrint, setFullPrint] = useState(false);
   // Multi-insert config state
   type QrPreset = 'classic' | 'modern' | 'minimal' | 'elegant' | 'bold';
 
@@ -352,6 +354,7 @@ export default function KeychainPrintPage({ params }: PageProps) {
               {coupleNames} • {activeConfig.size.label} ({widthMm}mm × {heightMm}mm)
             </p>
           </div>
+                  
           <div className="flex items-center gap-3">
             <a href={`/admin/websites/${id}/qr-card`} className="text-rose-600 hover:text-rose-700 font-medium">
               ← QR Card
@@ -753,6 +756,15 @@ export default function KeychainPrintPage({ params }: PageProps) {
                     />
                   </div>
                   <div className="flex items-center justify-between gap-3">
+                    <label className="text-sm font-semibold text-slate-700">Full Print (maximize paper usage)</label>
+                    <input
+                      type="checkbox"
+                      checked={fullPrint}
+                      onChange={e => setFullPrint(e.target.checked)}
+                      className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
                     <label className="text-sm font-semibold text-slate-700">Auto-fit to page</label>
                     <input
                       type="checkbox"
@@ -861,6 +873,30 @@ export default function KeychainPrintPage({ params }: PageProps) {
             />
           );
         })}
+              {insertConfigs.map((cfg, idx) => {
+                const { widthMm: cfgWidth, heightMm: cfgHeight } = getActualDimensions(cfg);
+                const photoUrl = photos[cfg.photoIndex] || '';
+                return (
+                  <KeychainPrintSheet
+                    key={idx}
+                    widthMm={cfgWidth}
+                    heightMm={cfgHeight}
+                    shape={cfg.size.shape}
+                    qrDataUrl={qrDataUrl}
+                    qrCodeUrl={qrCodeUrl}
+                    coverPhotoUrl={photoUrl}
+                    coupleNames={coupleNames}
+                    caption={cfg.caption}
+                    copies={cfg.copies}
+                    pairsPerRow={pairsPerRow}
+                    showGuides={showGuides}
+                    autoFit={autoFit}
+                    qrScale={qrScale}
+                    qrDesign={cfg.useCustomQr ? cfg.qrDesign : undefined}
+                    fullPrint={fullPrint}
+                  />
+                );
+              })}
       </div>
     </>
   );

@@ -332,9 +332,9 @@ className={`rounded-xl p-4 mb-4 shadow-md border-dashed ${nameData.hasContent ? 
                       • {photoPreviews.length} photos
                     </span>
                   )}
-                  {section === 'timeline' && config.timeline_events && config.timeline_events.length > 0 && (
+                  {section === 'timeline' && config.section_content?.timeline && config.section_content.timeline.length > 0 && (
                     <span style={{ color: themePreset.colors.text, opacity: 0.6 }}>
-                      • {config.timeline_events.length} events
+                      • {config.section_content.timeline.length} events
                     </span>
                   )}
                   {section === 'song' && form.song_link && (

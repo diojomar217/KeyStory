@@ -23,9 +23,7 @@ export type Site = {
   config?: any;
   theme?: string;
   sections?: string[];
-  home_template?: string;
-  gallery_template?: string;
-  timeline_template?: string;
+  templates?: Record<string, string>;
   timeline_events?: any[];
   created_at?: string;
 

@@ -104,8 +104,8 @@ home: {
     getProps: (config) => ({
       theme: config.theme,
       template: config.section_templates?.home || config.home_template || 'hero_centered',
-      customerName: config.customerName || config.participants?.[0]?.name || '',
-      partnerName: config.partnerName || config.participants?.[1]?.name || '',
+      customerName: config.customerName || '',
+      partnerName: config.partnerName || '',
       anniversaryDate: config.anniversaryDate || config.specialDate || '',
       message: config.message,
       tagline: config.tagline,
@@ -129,7 +129,7 @@ home: {
     getProps: (config) => ({
       theme: config.theme,
       template: config.section_templates?.timeline || config.timeline_template || 'vertical_timeline',
-      events: config.timelineEvents || config.timeline_events || [],
+      events: config.timelineEvents || config.section_content?.timeline || [],
     }),
   },
   
@@ -155,7 +155,7 @@ home: {
     component: OurStorySection,
     getProps: (config) => ({
       theme: config.theme,
-      participants: config.participants || [{name: config.customerName || ''}, {name: config.partnerName || '', role: 'partner'}],
+      participants: [{name: config.customerName || ''}, {name: config.partnerName || '', role: 'partner'}],
     }),
   },
   
@@ -281,7 +281,7 @@ home: {
     getProps: (config) => ({
       theme: config.theme,
       template: config.section_templates?.timeline || config.timeline_template || 'vertical_timeline',
-      events: config.timelineEvents || config.timeline_events || [],
+      events: config.timelineEvents || config.section_content?.timeline || [],
     }),
   },
   party_details: {

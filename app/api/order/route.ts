@@ -185,8 +185,22 @@ export async function POST(req: NextRequest) {
       heroCoverPhotoUrl = photoUrls[data.config.cover_photo_index];
     }
 
+    // Remove duplicate template fields and only keep templates object
+    const templates = data.config?.templates || {
+      home: data.config?.home_template,
+      gallery: data.config?.gallery_template,
+      timeline: data.config?.timeline_template,
+      song: data.config?.song_template,
+    };
+    // Remove config.participants if present
+    let { participants, ...configWithoutParticipants } = data.config || {};
     let siteConfig = {
-      ...data.config,
+      ...configWithoutParticipants,
+      home_template: undefined,
+      gallery_template: undefined,
+      timeline_template: undefined,
+      song_template: undefined,
+      templates,
       people: {
         primary: customerName,
         secondary: partnerName,
@@ -196,18 +210,13 @@ export async function POST(req: NextRequest) {
       },
       theme: data.config?.theme || data.config?.theme || DEFAULT_THEME,
       sections: data.config?.sections || [],
-      templates: {
-        home: data.config?.home_template,
-        gallery: data.config?.gallery_template,
-        timeline: data.config?.timeline_template,
-      },
       media: {
         photos: photoUrls,
         song_link: data.config?.media?.song_link || '',
         song_autoplay: data.config?.media?.song_autoplay ?? false,
       },
       timeline: data.config?.timeline_events || [],
-      content: data.config?.section_content || {},
+      section_content: data.config?.section_content || {},
       message,
       tagline: data.tagline || data.config?.tagline || '',
       hero: {
