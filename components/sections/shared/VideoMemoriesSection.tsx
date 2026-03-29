@@ -1,8 +1,8 @@
 'use client';
 
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import SectionHeader from '../../page/SectionHeader';
-import { useTheme } from '../../builder/ThemeWrapper';
+import { getThemeStyles } from '@/config/themeStyles';
 import { THEME_CONFIG } from '@/config/themeConfig';
 
 interface VideoMemory {
@@ -14,13 +14,13 @@ interface VideoMemory {
 }
 
 interface VideoMemoriesSectionProps {
-  theme: Theme;
+  theme: ThemeKey;
   siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
   videos?: VideoMemory[];
 }
 
-export default function VideoMemoriesSection({ theme, siteType = 'couple', videos = [] }: VideoMemoriesSectionProps) {
-  const styles = useTheme(theme);
+export default function VideoMemoriesSection({ theme, siteType, videos = [] }: VideoMemoriesSectionProps) {
+  const styles = getThemeStyles(theme);
   const themeConfig = THEME_CONFIG[theme];
   const { colors, typography } = themeConfig;
 
@@ -38,7 +38,7 @@ export default function VideoMemoriesSection({ theme, siteType = 'couple', video
   };
 
   if (videos.length === 0) {
-  return (
+    return (
       <section 
         id="video-memories"
         className="relative py-16 px-4"
@@ -81,7 +81,7 @@ export default function VideoMemoriesSection({ theme, siteType = 'couple', video
         />
         
         <div className="grid gap-8">
-          {videos.map((video) => (
+          {videos.map((video: VideoMemory) => (
             <div
               key={video.id}
               className="rounded-2xl overflow-hidden"

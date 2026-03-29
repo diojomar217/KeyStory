@@ -1,7 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Section, Theme, SiteConfig, TimelineEvent } from '@/lib/types';
+import { Section, SiteConfig, TimelineEvent } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
+
+import { DEFAULT_THEME } from '@/config/defaults';
 
 // Import section components for direct rendering
 import HomeSection from '@/components/page/HomeSection';
@@ -35,7 +38,7 @@ export interface DynamicSectionRendererProps {
   section: Section;
   config: SiteConfig;
   // Individual props for flexibility
-  theme?: Theme;
+  theme?: ThemeKey;
   customerName?: string;
   partnerName?: string;
   anniversaryDate?: string;
@@ -53,7 +56,7 @@ export interface DynamicSectionRendererProps {
 // ============================================
 
 interface InternalConfig {
-  theme: Theme;
+  theme: ThemeKey;
   customerName: string;
   partnerName: string;
   anniversaryDate: string;
@@ -119,7 +122,7 @@ const buildProps = (section: Section, props: DynamicSectionRendererProps): Recor
   
   // Merge config with individual props (individual props take precedence)
   const mergedConfig: InternalConfig = {
-    theme: props.theme || config.theme || 'romantic_classic',
+    theme: (props.theme as ThemeKey) || (config.theme as ThemeKey) || (DEFAULT_THEME as ThemeKey),
     customerName: props.customerName || '',
     partnerName: props.partnerName || '',
     anniversaryDate: props.anniversaryDate || '',

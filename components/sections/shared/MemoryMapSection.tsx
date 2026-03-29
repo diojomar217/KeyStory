@@ -1,13 +1,14 @@
 'use client';
 
-import { Theme, MemoryMapLocation } from '@/lib/types';
+import type { MemoryMapLocation } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import SectionHeader from '../../page/SectionHeader';
 import { useTheme } from '../../builder/ThemeWrapper';
 import dynamic from 'next/dynamic';
 import { THEME_CONFIG } from '@/config/themeConfig';
 
 interface MemoryMapSectionProps {
-  theme: Theme;
+  theme: ThemeKey;
   locations?: MemoryMapLocation[];
 }
 

@@ -2,14 +2,15 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Theme, TimelineTemplate, TimelineEvent } from '@/lib/types';
+import type { TimelineTemplate, TimelineEvent } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../../builder/ThemeWrapper';
 import SectionHeader from '../../page/SectionHeader';
 import ScrollReveal from '../../ui/ScrollReveal';
 import Lightbox from '../../ui/Lightbox';
 
 type Props = {
-  theme: Theme;
+  theme: ThemeKey;
   template: TimelineTemplate;
   events: TimelineEvent[];
   variant?: 'default' | 'alt';
@@ -315,7 +316,7 @@ export default function TimelineSection({ theme, template, events, variant = 'de
               <div className="absolute -left-[14px] top-0">
                 <div className={`
                   w-7 h-7 rounded-full flex items-center justify-center
-                  ${styles.bg.split(' ')[0]} border-4 border-white/20 ${accents.dot}
+                  ${styles && styles.bg ? styles.bg.split(' ')[0] : (() => { console.warn('[TimelineSection] styles.bg is undefined', { styles }); return ''; })()} border-4 border-white/20 ${accents.dot}
                   ${event.isSpecial ? accents.dotGlow : 'shadow-lg'}
                   transition-all duration-300
                   ${event.isSpecial ? 'scale-115' : 'hover:scale-115'}

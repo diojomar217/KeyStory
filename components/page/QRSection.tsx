@@ -3,11 +3,11 @@
 import { useEffect, useRef, useState } from 'react';
 import QRCodeStyling from 'qr-code-styling';
 import Image from 'next/image';
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../builder/ThemeWrapper';
 
 type Props = {
-  theme: Theme;
+  theme: ThemeKey;
   qrCodeUrl?: string;
   qrDataUrl?: string;
   coupleNames?: string;

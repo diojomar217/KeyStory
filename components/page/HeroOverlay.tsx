@@ -1,13 +1,13 @@
 'use client';
 
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../builder/ThemeWrapper';
 import { useState } from 'react';
 import { resolveDecorations, resolveDefaultCTA } from '@/lib/site-type-utils';
 import { OccasionType } from '@/lib/occasion-registry';
 
 type Props = {
-  theme: Theme;
+  theme: ThemeKey;
   variant?: 'full' | 'top-bottom' | 'vignette' | 'cinematic';
 };
 
@@ -63,7 +63,7 @@ export function HeroDecorations({
   theme,
   siteType = 'couple',
   variant = 'centered',
-}: { theme: Theme; siteType?: OccasionType; variant?: 'centered' | 'full' }) {
+}: { theme: ThemeKey; siteType?: OccasionType; variant?: 'centered' | 'full' }) {
   const isBirthday = siteType === 'birthday';
   const decorations = resolveDecorations(siteType);
   const iconColorClass = decorations.themeTone === 'romantic' ? 'text-rose-400' : decorations.themeTone === 'celebration' ? 'text-yellow-300' : 'text-sky-300';

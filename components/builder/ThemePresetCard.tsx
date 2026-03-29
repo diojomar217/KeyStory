@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { Theme, ThemePresetConfig } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { THEME_CONFIG } from '@/config/themeConfig';
 
 interface ThemePresetCardProps {
-  theme: Theme;
+  theme: ThemeKey;
   isSelected: boolean;
-  onSelect: (theme: Theme) => void;
+  onSelect: (theme: ThemeKey) => void;
 }
 
 export default function ThemePresetCard({ theme, isSelected, onSelect }: ThemePresetCardProps) {

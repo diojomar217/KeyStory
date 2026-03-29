@@ -5,6 +5,7 @@ import { generateQRCode } from '@/lib/qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import { SiteConfig } from '@/lib/types';
+import { DEFAULT_THEME } from '@/config/defaults';
 
 const addMonths = (date: Date, months: number): string => {
   const result = new Date(date);
@@ -193,7 +194,7 @@ export async function POST(req: NextRequest) {
       dates: {
         special_date: specialDate,
       },
-      theme: data.config?.theme || data.config?.theme || 'romantic_classic',
+      theme: data.config?.theme || data.config?.theme || DEFAULT_THEME,
       sections: data.config?.sections || [],
       templates: {
         home: data.config?.home_template,

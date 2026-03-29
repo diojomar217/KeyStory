@@ -1,14 +1,14 @@
 'use client';
-
+import { DEFAULT_THEME } from '@/config/defaults';
 import { useEffect, useState, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import QRCard from '@/components/ui/QRCard';
-import QrKeepsakeCard, { QrConfig } from '@/components/qr/QrKeepsakeCard';
+import { QrKeepsakeCard, QrConfig } from '@/components/qr/QrKeepsakeCard';
 import PrintableCardLayout from '@/components/product/PrintableCardLayout';
 import PrintActions from '@/components/product/PrintActions';
 import { toPng } from 'html-to-image';
 import { Site } from '@/lib/supabase';
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -100,7 +100,7 @@ export default function QRCardPage({ params }: PageProps) {
 
   // Get theme from site config
   const config = order.config || {};
-  const theme: Theme = (config.theme as Theme) || 'romantic_classic';
+  const theme: ThemeKey = (config.theme as ThemeKey) || DEFAULT_THEME;
 
   const customerName = config?.people?.primary || order.customer_name || 'Your Name';
   const partnerName = config?.people?.secondary || order.partner_name || 'Partner Name';

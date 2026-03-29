@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import SectionHeader from '../../page/SectionHeader';
 import ScrollReveal from '../../ui/ScrollReveal';
 import { useTheme } from '../../builder/ThemeWrapper';
 
 interface SurpriseMessageSectionProps {
-  theme: Theme;
+  theme: ThemeKey;
   customerName: string;
   partnerName: string;
   message?: string;

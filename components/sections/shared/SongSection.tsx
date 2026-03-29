@@ -1,34 +1,38 @@
 'use client';
 
+
 import { useState } from 'react';
-import { Theme } from '@/lib/types';
-import { useTheme } from '../../builder/ThemeWrapper';
+import type { ThemeKey } from '@/config/themeConfig';
+import { getThemeStyles } from '@/config/themeStyles';
 import { getMusicEmbedInfo } from '@/lib/musicEmbed';
 import SectionHeader from '../../page/SectionHeader';
 import ScrollReveal from '../../ui/ScrollReveal';
 
-type Props = {
-  theme: Theme;
+interface SongSectionProps {
+  theme: ThemeKey;
   songLink?: string;
   autoplay?: boolean;
-};
-
-// Helper function to get theme accent colors
-function getThemeAccents(theme: Theme) {
-  switch (theme) {
-    case 'dark_elegant':
-      return { bg: 'bg-amber-500/20', text: 'text-amber-400', glow: 'shadow-amber-500/30' };
-    case 'cute_pastel':
-      return { bg: 'bg-purple-100', text: 'text-purple-600', glow: 'shadow-purple-500/20' };
-    case 'minimal_modern':
-      return { bg: 'bg-slate-100', text: 'text-slate-600', glow: 'shadow-slate-500/20' };
-    default:
-      return { bg: 'bg-rose-100', text: 'text-rose-600', glow: 'shadow-rose-500/20' };
-  }
 }
 
-export default function SongSection({ theme, songLink, autoplay = false }: Props) {
-  const styles = useTheme(theme);
+const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
+
+
+  // Helper function to get theme accent colors
+  function getThemeAccents(theme: ThemeKey) {
+    switch (theme) {
+      case 'dark_elegant':
+        return { bg: 'bg-amber-500/20', text: 'text-amber-400', glow: 'shadow-amber-500/30' };
+      case 'cute_pastel':
+        return { bg: 'bg-purple-100', text: 'text-purple-600', glow: 'shadow-purple-500/20' };
+      case 'minimal_modern':
+        return { bg: 'bg-slate-100', text: 'text-slate-600', glow: 'shadow-slate-500/20' };
+      default:
+        return { bg: 'bg-rose-100', text: 'text-rose-600', glow: 'shadow-rose-500/20' };
+    }
+  }
+
+
+  const styles = getThemeStyles(theme);
   const accent = getThemeAccents(theme);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -186,5 +190,7 @@ export default function SongSection({ theme, songLink, autoplay = false }: Props
       </div>
     </section>
   );
-}
+};
+
+export default SongSection;
 

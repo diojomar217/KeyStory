@@ -4,7 +4,9 @@ import React from 'react';
 import { useTheme } from '../builder/ThemeWrapper';
 import SectionHeader from './SectionHeader';
 import ScrollReveal from '../ui/ScrollReveal';
-import { Theme } from '@/lib/types';
+
+import { ThemeKey } from '@/config/themeConfig';
+import { cardSections, timelineSections, gridSections, gridConfigs } from '@/config/sectionLayoutConfig';
 
 export type SectionLayoutType = 'card' | 'timeline' | 'grid';
 
@@ -17,7 +19,7 @@ export interface BaseSectionLayoutProps {
   title?: string;
   subtitle?: string;
   icon?: string;
-  theme: Theme;
+  theme: ThemeKey;
   children: React.ReactNode;
   id?: string;
   variant?: 'default' | 'alt';
@@ -200,43 +202,21 @@ export function NarrowSectionLayout({
   );
 }
 
-// Separator color mapping (light values for BG blending)
-const SECTION_BG_COLOR: Record<Theme, { default: string; alt: string }> = {
-  romantic_classic: { default: '#ffffff', alt: '#fff1f2' },
-  cute_pastel: { default: '#ffffff', alt: '#fdf7ff' },
-  minimal_modern: { default: '#ffffff', alt: '#f8fafc' },
-  dark_elegant: { default: '#111827', alt: '#1f2937' },
-  soft_pastel: { default: '#ffffff', alt: '#fff1f2' },
-  elegant_rose_gold: { default: '#ffffff', alt: '#fff1f2' },
-  vintage_love_letter: { default: '#fffdf7', alt: '#fff4de' },
-  scrapbook_memories: { default: '#ffffff', alt: '#fffbf3' },
-  wedding_style: { default: '#ffffff', alt: '#fff1f2' },
-  floral_romance: { default: '#ffffff', alt: '#fff1f2' },
-  dreamy_pink: { default: '#ffffff', alt: '#fff1f2' },
-  luxury_gold: { default: '#ffffff', alt: '#fff8eb' },
-  minimal_white: { default: '#ffffff', alt: '#f8fafc' },
-  cute_kawaii: { default: '#ffffff', alt: '#fff1f2' },
-  soft_lavender: { default: '#ffffff', alt: '#f5f3ff' },
-  colorful_celebration: { default: '#ffffff', alt: '#fff7ed' },
-  photo_focus: { default: '#ffffff', alt: '#f8fafc' },
-};
 
-const getSectionBgColor = (theme: Theme, variant: 'default' | 'alt') => {
-  const colors = SECTION_BG_COLOR[theme] || SECTION_BG_COLOR.romantic_classic;
-  return variant === 'alt' ? colors.alt : colors.default;
-};
+
+import { getSectionBgColor } from '@/config/sectionBgColors';
 
 export function SectionSeparator({
   theme = 'romantic_classic',
   prevVariant = 'default',
   nextVariant = 'alt',
 }: {
-  theme?: Theme;
+  theme?: ThemeKey;
   prevVariant?: 'default' | 'alt';
   nextVariant?: 'default' | 'alt';
 }) {
-  const startColor = getSectionBgColor(theme, prevVariant);
-  const endColor = getSectionBgColor(theme, nextVariant);
+  const startColor = getSectionBgColor(theme ?? 'romantic_classic').default;
+  const endColor = getSectionBgColor(theme ?? 'romantic_classic').alt;
   const iconColor = theme === 'dark_elegant' ? 'text-amber-300' : 'text-rose-500';
 
   const separatorGradient =
@@ -273,19 +253,19 @@ export function SectionSeparator({
   );
 }
 
-export function GradientSeparator({ theme = 'romantic_classic' }: { theme?: Theme }) {
+export function GradientSeparator({ theme = 'romantic_classic' }: { theme?: ThemeKey }) {
   const lineColor = theme === 'dark_elegant' ? '#3f3f46' : '#fce7f3';
   return (
     <div className={`relative ${SEPARATOR_VERTICAL_PADDING} flex justify-center`}>
       <div
         className="h-2 w-40 rounded-full shadow-xl blur-sm opacity-90"
-        
+        style={{ background: lineColor }}
       />
     </div>
   );
 }
 
-export function DotsSeparator({ theme = 'romantic_classic' }: { theme?: Theme }) {
+export function DotsSeparator({ theme = 'romantic_classic' }: { theme?: ThemeKey }) {
   const colors = theme === 'dark_elegant' ? 'text-amber-400/60' : 'text-rose-400/70';
   return (
     <div className={`relative ${SEPARATOR_VERTICAL_PADDING} flex items-center justify-center`}>
@@ -302,29 +282,6 @@ export function DotsSeparator({ theme = 'romantic_classic' }: { theme?: Theme })
 
 // Section Layout Helpers
 export function getSectionLayoutType(sectionKey: string): SectionLayoutType {
-  const cardSections = [
-    'love_letter',
-    'future_dreams',
-    'quotes',
-    'letter_future',
-    'gift_section',
-    'surprise_message',
-  ];
-  
-  const timelineSections = [
-    'timeline',
-    'our_story',
-  ];
-  
-  const gridSections = [
-    'reasons_love_you',
-    'gallery',
-    'special_moments',
-    'video_memories',
-    'milestones',
-    'guest_messages',
-  ];
-  
   if (cardSections.includes(sectionKey)) return 'card';
   if (timelineSections.includes(sectionKey)) return 'timeline';
   if (gridSections.includes(sectionKey)) return 'grid';
@@ -332,15 +289,6 @@ export function getSectionLayoutType(sectionKey: string): SectionLayoutType {
 }
 
 export function getGridConfig(sectionKey: string): { gridCols: string; gap: string } {
-  const gridConfigs: Record<string, { gridCols: string; gap: string }> = {
-    reasons_love_you: { gridCols: 'grid-cols-1 md:grid-cols-2', gap: 'gap-6 lg:gap-8' },
-    gallery: { gridCols: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4', gap: 'gap-6 lg:gap-8' },
-    special_moments: { gridCols: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3', gap: 'gap-8 lg:gap-10' },
-    video_memories: { gridCols: 'grid-cols-1 md:grid-cols-2', gap: 'gap-8 lg:gap-10' },
-    milestones: { gridCols: 'grid-cols-1 md:grid-cols-2', gap: 'gap-6 lg:gap-8' },
-    guest_messages: { gridCols: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3', gap: 'gap-8 lg:gap-10' },
-  };
-  
   return gridConfigs[sectionKey] || { gridCols: 'grid-cols-1 md:grid-cols-2', gap: 'gap-8 lg:gap-10' };
 }
 

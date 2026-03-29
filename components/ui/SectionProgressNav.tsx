@@ -1,17 +1,18 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
+import { getThemeStyles } from '@/config/themeStyles';
 import { motion, AnimatePresence } from 'framer-motion'; // Note: install framer-motion if needed
 
 interface Props {
-  theme: Theme;
+  theme: ThemeKey;
   sections: string[];
   activeSection: string;
 }
 
-export default function SectionProgressNav({ theme, sections, activeSection }: Props) {
   const [scrolledSections, setScrolledSections] = useState<Set<string>>(new Set());
+  const styles = getThemeStyles(theme);
 
   const updateActiveSection = useCallback(() => {
     const scrollY = window.scrollY;
@@ -43,15 +44,15 @@ export default function SectionProgressNav({ theme, sections, activeSection }: P
 
   const getDotColor = (section: string) => {
     if (scrolledSections.has(section)) {
-      return theme === 'dark_elegant' ? 'bg-amber-400' : 'bg-rose-500';
+      return styles.progressDotActive;
     }
-    return theme === 'dark_elegant' ? 'bg-amber-300/50' : 'bg-rose-400/50';
+    return styles.progressDotInactive;
   };
 
   const getLabelColor = (section: string) => {
-    return scrolledSections.has(section) ? 
-      (theme === 'dark_elegant' ? 'text-amber-300' : 'text-rose-600') : 
-      (theme === 'dark_elegant' ? 'text-amber-400/60' : 'text-rose-400/60');
+    return scrolledSections.has(section)
+      ? styles.progressLabelActive
+      : styles.progressLabelInactive;
   };
 
   return (

@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { OccasionType, Participant, CreateOrderPayload } from '@/lib/types';
+import { DEFAULT_THEME } from '@/config/defaults';
 import { OCCASION_REGISTRY, getProductionReadyOccasions } from '@/lib/occasion-registry';
 import { getParticipantLabel } from '@/lib/occasion-registry';
 
@@ -101,7 +102,7 @@ export default function BuilderForm({
       photos: [],
       config: {
         occasion: form.occasion!,
-        theme: 'romantic_classic', // default
+        theme: DEFAULT_THEME, // default
         sections: occasionMeta.defaultSections,
       },
       // Legacy compat

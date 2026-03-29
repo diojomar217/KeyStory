@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Theme, HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, SectionContentMap, GalleryLayout, Section, GuestMessage, GuestMessageRecord } from '@/lib/types';
+import { HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, SectionContentMap, GalleryLayout, Section, GuestMessage, GuestMessageRecord } from '@/lib/types';
+import { ThemeKey } from '@/config/themeConfig';
 import BackgroundDecorations from './BackgroundDecorations';
 import ThemeWrapper, { useTheme } from '../builder/ThemeWrapper';
 import { getSectionBgClass, getSectionVariant } from '@/lib/section-utils';
@@ -14,7 +15,7 @@ import SongSection from '../sections/shared/SongSection';
 import FooterSection from './FooterSection';
 import LoveLetterSection from '../sections/couple/LoveLetterSection';
 import BackToTop from '../ui/BackToTop';
-import MemoryCardSection from '../ui/MemoryCardSection';
+import MemoryCardSection from '../sections/shared/MemoryCardSection';
 import RomanticOpening from './RomanticOpening';
 
 // Import new section components
@@ -53,7 +54,7 @@ import {
 import { SectionSeparator, GradientSeparator, DotsSeparator } from './SectionLayouts';
 
 type Props = {
-  theme: Theme;
+  theme: ThemeKey;
   siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
   config?: any; // optional, new site config object (for footer and future sections)
   sections: Section[];
@@ -78,7 +79,7 @@ type Props = {
   approvedGuestMessages?: GuestMessageRecord[];
 };
 
-export default function LovePageClient({
+export default function ClientPage({
   theme,
   siteType = 'couple',
   config,

@@ -1,11 +1,16 @@
+
 'use client';
+import React from 'react';
 
 import { useState, useEffect } from 'react';
+import bcrypt from 'bcryptjs';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
 import { useRouter } from 'next/navigation';
 
-import { SiteConfig, CreateOrderPayload, OccasionType, Theme } from '@/lib/types';
+import type { SiteConfig, CreateOrderPayload, OccasionType } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
+import { DEFAULT_THEME } from '@/config/defaults';
 import { calculateExpirationDate, getDaysRemaining, getExpirationLabel, ExpirationMode } from '@/lib/expiration-utils';
 import { 
   WIZARD_STEPS, 
@@ -83,7 +88,7 @@ function getInitialDraft(): { form: LocalForm; config: SiteConfig; currentStep: 
       },
       config: {
         occasion: 'couple' as OccasionType,
-        theme: 'romantic_classic',
+        theme: DEFAULT_THEME,
         sections: [],
         home_template: undefined,
         gallery_template: undefined,
@@ -113,7 +118,7 @@ function getInitialDraft(): { form: LocalForm; config: SiteConfig; currentStep: 
     photos: [],
     password_input: '',
   };
-  const validThemes: Theme[] = [
+  const validThemes: ThemeKey[] = [
     'romantic_classic', 'cute_pastel', 'minimal_modern', 'dark_elegant', 'soft_pastel',
     'elegant_rose_gold', 'vintage_love_letter', 'scrapbook_memories', 'wedding_style',
     'floral_romance', 'dreamy_pink', 'luxury_gold', 'minimal_white', 'cute_kawaii',
@@ -121,7 +126,7 @@ function getInitialDraft(): { form: LocalForm; config: SiteConfig; currentStep: 
   ];
   let initialConfig: SiteConfig = {
     occasion: 'couple',
-    theme: 'romantic_classic' as Theme,
+    theme: DEFAULT_THEME as ThemeKey,
     sections: [],
     home_template: undefined,
     gallery_template: undefined,
@@ -140,12 +145,12 @@ function getInitialDraft(): { form: LocalForm; config: SiteConfig; currentStep: 
       if (parsed.config) {
         let parsedTheme = parsed.config.theme;
         if (!validThemes.includes(parsedTheme)) {
-          console.warn('Invalid theme in draft, falling back to romantic_classic:', parsedTheme);
-          parsedTheme = 'romantic_classic';
+          console.warn('Invalid theme in draft, falling back to DEFAULT_THEME:', parsedTheme);
+          parsedTheme = DEFAULT_THEME;
         }
         const parsedConfig: SiteConfig = {
           occasion: validOccasions.includes(parsed.config.occasion) ? parsed.config.occasion : 'couple',
-          theme: parsedTheme as Theme,
+          theme: parsedTheme as ThemeKey,
           sections: Array.isArray(parsed.config.sections) ? parsed.config.sections : [],
           home_template: parsed.config.home_template,
           gallery_template: parsed.config.gallery_template,
@@ -230,7 +235,6 @@ export default function CreateWebsitePage() {
   const { form: initialForm, config: initialConfig, currentStep: initialStep, completedSteps: initialCompleted } = getInitialDraft();
   const [form, setForm] = useState<LocalForm>(initialForm);
   const [config, setConfig] = useState<SiteConfig>(initialConfig);
-  // ...existing code...
   // ...existing code...
   const [currentStep, setCurrentStep] = useState(initialStep);
   const [completedSteps, setCompletedSteps] = useState<number[]>(initialCompleted);
@@ -341,13 +345,17 @@ export default function CreateWebsitePage() {
       message: form.message,
       tagline: form.tagline,
       specialDate: form.specialDate,
+      hero: {
+        ...(prev.hero || {}),
+        coverPhotoIndex: typeof form.heroPhotoIndex === 'number' ? form.heroPhotoIndex : prev.hero?.coverPhotoIndex,
+      },
       media: {
         ...(prev.media || {}),
         song_link: form.song_link,
         song_autoplay: !!form.song_autoplay,
       },
     }));
-  }, [form.occasion, form.participants, form.message, form.tagline, form.specialDate, form.song_link, form.song_autoplay]);
+  }, [form.occasion, form.participants, form.message, form.tagline, form.specialDate, form.song_link, form.song_autoplay, form.heroPhotoIndex]);
 
   useEffect(() => {
     setConfig((prev) => {
@@ -531,13 +539,26 @@ export default function CreateWebsitePage() {
 
   // Handle section content changes for dynamic content step
   function handleSectionContentChange(sectionKey: string, content: any) {
-    setConfig((prev) => ({
-      ...prev,
-      section_content: {
-        ...prev.section_content,
-        [sectionKey]: content,
-      },
-    }));
+    setConfig((prev) => {
+      // Special handling for timeline: update both section_content and timeline_events
+      if (sectionKey === 'timeline') {
+        return {
+          ...prev,
+          section_content: {
+            ...prev.section_content,
+            [sectionKey]: content,
+          },
+          timeline_events: content,
+        };
+      }
+      return {
+        ...prev,
+        section_content: {
+          ...prev.section_content,
+          [sectionKey]: content,
+        },
+      };
+    });
   }
 
   const handleNext = () => {
@@ -632,7 +653,12 @@ export default function CreateWebsitePage() {
         delete normalizedConfig.hero.coverPhotoUrl;
       }
       if (passwordEnabled) {
-        normalizedConfig.password = { enabled: true };
+        let hash = undefined;
+        if (form.password_input && form.password_input.trim().length >= 4 && form.password_input.trim().length <= 6) {
+          // Synchronously hash password (bcryptjs supports sync)
+          hash = bcrypt.hashSync(form.password_input.trim(), 8);
+        }
+        normalizedConfig.password = { enabled: true, ...(hash ? { hash } : {}) };
       } else {
         delete normalizedConfig.password;
       }
@@ -691,6 +717,7 @@ export default function CreateWebsitePage() {
     }
   };
 
+  // Removed duplicate showPassword state declaration. Only top-level remains.
   const renderStepContent = () => {
     const stepInfo = WIZARD_STEPS.find((s) => s.id === currentStep);
 
@@ -940,7 +967,7 @@ export default function CreateWebsitePage() {
             </div>
 
             <ThemeSelector
-              value={config.theme}
+              value={config.theme as ThemeKey}
               onChange={(theme) => handleConfigChange({ theme })}
             />
 
@@ -1160,42 +1187,239 @@ export default function CreateWebsitePage() {
         );
 
       case 6:
+        // --- Helper functions for formatting ---
+        const toLabel = (key: string) => key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const sectionLabels = config.sections.map((key: import('@/lib/types').Section) => {
+          const meta = getSectionMetadata ? getSectionMetadata(key) : undefined;
+          return meta?.title || toLabel(key);
+        });
+        const sectionIcons = config.sections.map((key: import('@/lib/types').Section) => {
+          const meta = getSectionMetadata ? getSectionMetadata(key) : undefined;
+          return meta?.icon || '';
+        });
+        // --- Style grouping ---
+        const keyTemplates: import('@/lib/types').Section[] = ['home', 'timeline', 'gallery'];
+        const templateDisplay = [
+          ...keyTemplates.map((key) =>
+            (config.sections as import('@/lib/types').Section[]).includes(key)
+              ? `${toLabel(key)}: ${(config as any)[`${key}_template`] || 'Default'}`
+              : null
+          ).filter(Boolean),
+        ];
+        const otherTemplates = (config.sections as import('@/lib/types').Section[]).filter((key) => !keyTemplates.includes(key));
+        if (otherTemplates.length > 0) {
+          templateDisplay.push(`Other Sections: Default`);
+        }
+        // --- Sections summary ---
+        let sectionsSummary = '';
+        if (sectionLabels.length > 5) {
+          sectionsSummary = `${sectionLabels.slice(0, 5).join(', ')} +${sectionLabels.length - 5} more sections`;
+        } else {
+          sectionsSummary = sectionLabels.join(', ');
+        }
+        // --- Content grouping ---
+        const completed: { label: string; icon?: string }[] = [];
+        const needsAttention: { label: string; icon?: string }[] = [];
+        const autoGenerated: { label: string; icon?: string }[] = [];
+        (config.sections as import('@/lib/types').Section[]).forEach((key) => {
+          const meta = getSectionMetadata ? getSectionMetadata(key) : undefined;
+          const label = meta?.title || toLabel(key);
+          const sectionContent = (config.section_content && (config.section_content as any)[key]) || undefined;
+          if ([
+            'relationship_stats',
+            'anniversary_countdown',
+            'birthday_countdown',
+            'guest_messages',
+            'qr_keepsake',
+          ].includes(key)) {
+            autoGenerated.push({ label, icon: meta?.icon });
+          } else if (
+            (key === 'home' && (config.tagline && config.tagline.trim() || (config.hero && typeof config.hero.coverPhotoIndex === 'number'))) ||
+            (key === 'gallery' && form.photos && form.photos.length > 0) ||
+            (key === 'timeline' && Array.isArray((config as any).timeline_events) && (config as any).timeline_events.length > 0) ||
+            (sectionContent && (
+              (Array.isArray(sectionContent.gifts) && sectionContent.gifts.length > 0) ||
+              (Array.isArray(sectionContent.reasons) && sectionContent.reasons.length > 0) ||
+              (Array.isArray(sectionContent.quotes) && sectionContent.quotes.length > 0) ||
+              (Array.isArray(sectionContent.dreams) && sectionContent.dreams.length > 0) ||
+              (Array.isArray(sectionContent.videos) && sectionContent.videos.length > 0) ||
+              (Array.isArray(sectionContent.locations) && sectionContent.locations.length > 0) ||
+              (typeof sectionContent.content === 'string' && sectionContent.content.trim()) ||
+              (typeof sectionContent.letter === 'string' && sectionContent.letter.trim()) ||
+              (typeof sectionContent.message === 'string' && sectionContent.message.trim()) ||
+              (typeof sectionContent.playlistUrl === 'string' && sectionContent.playlistUrl.trim())
+            ))
+          ) {
+            completed.push({ label, icon: meta?.icon });
+          } else {
+            needsAttention.push({ label, icon: meta?.icon });
+          }
+        });
         return (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/50 p-6 md:p-8 space-y-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-pink-500 text-white font-bold text-sm">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
+          <div className="bg-gradient-to-br from-white via-slate-50 to-rose-50/60 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-200/60 p-8 md:p-12 space-y-10 transition-all duration-300">
+            {/* --- Summary Section --- */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Basic Info */}
+              <div className="rounded-2xl border border-slate-200/70 bg-white/90 shadow-sm p-6 group transition-all duration-200 hover:shadow-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-bold text-lg text-slate-800 tracking-tight">Basic Info</h3>
+                  <button type="button" className="text-xs px-3 py-1 rounded-full bg-gradient-to-r from-rose-100 to-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-50 font-semibold shadow-sm transition-all duration-150" onClick={() => handleEditSection(1)}>Edit</button>
+                </div>
+                <div className="text-base text-slate-700 space-y-2">
+                  <div><span className="font-medium">Website Name:</span> {form.website_name}</div>
+                  <div>
+                    <span className="font-medium">Names:</span> {
+                      Array.isArray(form.participants) && form.participants.length > 0
+                        ? form.participants.map((p: any) => p.name).filter(Boolean).join(' & ') || <span className="text-slate-400">Not set</span>
+                        : <span className="text-slate-400">Not set</span>
+                    }
+                  </div>
+                  <div>
+                    <span className="font-medium">Special Date:</span> {form.specialDate ? new Date(form.specialDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : <span className="text-slate-400">Not set</span>}
+                  </div>
+                  <div><span className="font-medium">Slug:</span> {'slug' in form && typeof (form as any).slug === 'string' ? (form as any).slug : '(auto-generated)'}</div>
+                  <div><span className="font-medium">Occasion:</span> {toLabel(form.occasion)}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Password:</span>
+                    {form.password_input ? (
+                      <>
+                        <span className="tracking-widest select-all">
+                          {showPassword ? form.password_input : '••••••••'}
+                        </span>
+                        <button
+                          type="button"
+                          className="ml-2 text-xs px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 hover:bg-slate-200 font-medium transition-all duration-150"
+                          onClick={() => setShowPassword((v) => !v)}
+                          aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                          {showPassword ? 'Hide' : 'Show'}
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-slate-400">Not set</span>
+                    )}
+                  </div>
+                  <div>
+                    <span className="font-medium">Hosting Duration:</span> {
+                      expirationMode === '3_months' ? '3 months'
+                      : expirationMode === '6_months' ? '6 months'
+                      : expirationMode === '1_year' ? '12 months'
+                      : expirationMode === 'custom' && customExpirationDate ? (() => {
+                          const now = new Date();
+                          const custom = new Date(customExpirationDate);
+                          const months = (custom.getFullYear() - now.getFullYear()) * 12 + (custom.getMonth() - now.getMonth());
+                          return months > 0 ? `${months} month${months > 1 ? 's' : ''}` : '<1 month';
+                        })()
+                      : <span className="text-slate-400">Not set</span>
+                    }
+                  </div>
+                </div>
               </div>
-              <h2 className="text-xl font-bold text-slate-800">
-                {stepInfo?.title || 'Review'}
-              </h2>
+              {/* Style */}
+              <div className="rounded-2xl border border-slate-200/70 bg-white/90 shadow-sm p-6 group transition-all duration-200 hover:shadow-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-bold text-lg text-slate-800 tracking-tight">Style</h3>
+                  <button type="button" className="text-xs px-3 py-1 rounded-full bg-gradient-to-r from-rose-100 to-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-50 font-semibold shadow-sm transition-all duration-150" onClick={() => handleEditSection(2)}>Edit</button>
+                </div>
+                <div className="text-base text-slate-700 space-y-2">
+                  <div><span className="font-medium">Theme:</span> {toLabel(config.theme)}</div>
+                  <div className="mt-1">
+                    <span className="font-medium">Templates:</span>
+                    <ul className="list-disc ml-6 mt-1 space-y-0.5">
+                      {keyTemplates.map((key) => {
+                        if (!(config.sections as import('@/lib/types').Section[]).includes(key)) return null;
+                        const meta = getSectionMetadata ? getSectionMetadata(key) : undefined;
+                        return (
+                          <li key={key} className="flex items-center gap-1">
+                            {meta?.icon && <span className="mr-1">{meta.icon}</span>}
+                            <span>{meta?.title || toLabel(key)}: <span className="text-slate-500">{(config as any)[`${key}_template`] || 'Default'}</span></span>
+                          </li>
+                        );
+                      })}
+                      {otherTemplates.length > 0 && (
+                        <li className="flex items-center gap-1">
+                          <span className="text-slate-500">Other Sections: Default</span>
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              {/* Sections */}
+              <div className="rounded-2xl border border-slate-200/70 bg-white/90 shadow-sm p-6 group transition-all duration-200 hover:shadow-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-bold text-lg text-slate-800 tracking-tight">Sections</h3>
+                  <button type="button" className="text-xs px-3 py-1 rounded-full bg-gradient-to-r from-rose-100 to-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-50 font-semibold shadow-sm transition-all duration-150" onClick={() => handleEditSection(4)}>Edit</button>
+                </div>
+                <div className="text-base text-slate-700">
+                  {sectionLabels.length > 0 ? (
+                    <span>{sectionsSummary}</span>
+                  ) : (
+                    <span>No sections selected</span>
+                  )}
+                </div>
+              </div>
+              {/* Content Summary */}
+              <div className="rounded-2xl border border-slate-200/70 bg-white/90 shadow-sm p-6 group transition-all duration-200 hover:shadow-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-bold text-lg text-slate-800 tracking-tight">Content Summary</h3>
+                  <button type="button" className="text-xs px-3 py-1 rounded-full bg-gradient-to-r from-rose-100 to-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-50 font-semibold shadow-sm transition-all duration-150" onClick={() => handleEditSection(5)}>Edit</button>
+                </div>
+                <div className="text-base text-slate-700 space-y-3">
+                  {completed.length > 0 && (
+                    <div>
+                      <span className="font-medium text-emerald-700">Completed:</span>
+                      <ul className="list-disc ml-6 mt-1 space-y-0.5">
+                        {completed.map((item, i) => (
+                          <li key={i} className="flex items-center gap-1">
+                            {typeof item === 'object' && item.icon && <span className="mr-1">{item.icon}</span>}
+                            <span>{typeof item === 'object' ? item.label : item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {needsAttention.length > 0 && (
+                    <div>
+                      <span className="font-medium text-rose-700">Needs Attention:</span>
+                      <ul className="list-disc ml-6 mt-1 space-y-0.5">
+                        {needsAttention.map((item, i) => (
+                          <li key={i} className="flex items-center gap-1">
+                            {typeof item === 'object' && item.icon && <span className="mr-1">{item.icon}</span>}
+                            <span>{typeof item === 'object' ? item.label : item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {autoGenerated.length > 0 && (
+                    <div>
+                      <span className="font-medium text-slate-500">Auto-generated:</span>
+                      <ul className="list-disc ml-6 mt-1 space-y-0.5">
+                        {autoGenerated.map((item, i) => (
+                          <li key={i} className="flex items-center gap-1">
+                            {typeof item === 'object' && item.icon && <span className="mr-1">{item.icon}</span>}
+                            <span>{typeof item === 'object' ? item.label : item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {completed.length === 0 && needsAttention.length === 0 && autoGenerated.length === 0 && (
+                    <span className="text-slate-400">No content sections</span>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Only show song summary if song section is selected */}
-
-            {/* Review summary with validation state reporting */}
-            <SummaryPanel
-              config={{
-                ...config,
-                song_template: config.sections.includes('song') ? config.song_template : undefined,
-              }}
-              form={form}
-              onEditSection={handleEditSection}
-              showValidationSummary={true}
-              onValidationStateChange={({ isBlocked, reasons }) => {
-                setReviewBlocked(isBlocked);
-                setReviewBlockReasons(reasons);
-              }}
-            />
-
-            <div className="bg-rose-50 rounded-xl p-4 border border-rose-200">
+            {/* --- Validation Status & Helper Message --- */}
+            <div className={
+              reviewBlocked && reviewBlockReasons.length > 0
+                ? "bg-gradient-to-r from-rose-50 to-white rounded-2xl p-5 border border-rose-200 shadow"
+                : needsAttention.length > 0
+                  ? "bg-gradient-to-r from-amber-50 to-white rounded-2xl p-5 border border-amber-200 shadow"
+                  : "bg-gradient-to-r from-emerald-50 to-white rounded-2xl p-5 border border-emerald-200 shadow"
+            }>
               {reviewBlocked && reviewBlockReasons.length > 0 ? (
                 <div className="text-rose-700 text-sm">
                   <strong>Cannot submit:</strong>
@@ -1204,12 +1428,19 @@ export default function CreateWebsitePage() {
                       <li key={i}>{reason}</li>
                     ))}
                   </ul>
+                  <div className="mt-2 text-xs text-rose-500">Complete the missing sections to continue</div>
+                </div>
+              ) : needsAttention.length > 0 ? (
+                <div className="text-amber-700 text-sm font-medium flex items-center gap-2">
+                  <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01" /></svg>
+                  Some required sections need attention. Complete the missing sections to continue.
                 </div>
               ) : (
-                <p className="text-sm text-rose-700">
-                  By clicking &quot;Create Website&quot;, you agree to create a beautiful
-                  memory site for your special someone.
-                </p>
+                <div className="text-emerald-700 text-sm font-medium flex items-center gap-2">
+                  <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  Your website is ready to go!
+                  <span className="ml-2 text-xs text-emerald-600">You're one step away from creating your website 💕</span>
+                </div>
               )}
             </div>
           </div>
@@ -1222,20 +1453,66 @@ export default function CreateWebsitePage() {
 
   return (
     <div className="bg-gradient-to-b from-[#FFF7FB] to-[#FDF2F8] min-h-screen">
-      {/* Draft warning and controls */}
-      {draftExists && (
-        <div className="max-w-2xl mx-auto mt-6 mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl flex flex-col sm:flex-row sm:items-center gap-4 shadow">
-          <span className="text-amber-700 font-medium text-center sm:text-left flex-1">A draft was detected. You can continue editing, or start from new.</span>
-          <div className="flex justify-center sm:justify-end w-full sm:w-auto">
-            <button
-              onClick={handleClearDraft}
-              className="px-4 py-2 bg-white border border-amber-300 rounded-lg text-amber-700 font-semibold hover:bg-amber-100 transition shadow-sm"
-            >
-              Start from New (Drop Draft)
-            </button>
+      {/* Centered Draft Resume Card */}
+      {draftExists && (() => {
+        let draftMeta = null;
+        if (typeof window !== 'undefined') {
+          try {
+            const draftRaw = window.localStorage.getItem(DRAFT_KEY);
+            if (draftRaw) {
+              const parsed = JSON.parse(draftRaw);
+              draftMeta = {
+                websiteName: parsed.form?.website_name || '',
+                lastEdited: parsed.lastEdited || parsed.updatedAt || null,
+                sectionCount: Array.isArray(parsed.config?.sections) ? parsed.config.sections.length : 0,
+              };
+            }
+          } catch {}
+        }
+        return (
+          <div className="w-full flex justify-center mt-6 mb-2">
+            <div className="relative max-w-xl w-full bg-white/95 border border-slate-100 rounded-2xl shadow-sm flex flex-col sm:flex-row items-stretch px-6 py-5 gap-4" style={{ boxShadow: '0 2px 8px 0 rgba(236, 72, 153, 0.04)' }}>
+              <button
+                aria-label="Dismiss draft card"
+                onClick={() => setDraftExists(false)}
+                className="absolute top-2 right-2 text-slate-400 hover:text-rose-400 focus:outline-none"
+                style={{ fontSize: 18, lineHeight: 1 }}
+              >
+                ×
+              </button>
+              {/* Left: Title and Metadata */}
+              <div className="flex-1 flex flex-col justify-center gap-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <svg className="w-6 h-6 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                  <span className="text-lg font-bold text-slate-800">Continue your website <span className="align-middle">💕</span></span>
+                </div>
+                {draftMeta?.websiteName && <div className="text-xs text-slate-500"><span className="font-semibold">Website:</span> {draftMeta.websiteName}</div>}
+                {draftMeta && draftMeta.sectionCount > 0 && (
+                  <div className="text-xs text-slate-500">
+                    You’ve completed <span className="font-semibold">{draftMeta.sectionCount}</span> section{draftMeta.sectionCount > 1 ? 's' : ''}
+                  </div>
+                )}
+                {draftMeta?.lastEdited && <div className="text-xs text-slate-500">Last edited: {new Date(draftMeta.lastEdited).toLocaleString()}</div>}
+              </div>
+              {/* Right: Actions */}
+              <div className="flex flex-col justify-center gap-2 sm:items-end sm:justify-center">
+                <button
+                  onClick={() => setDraftExists(false)}
+                  className="px-5 py-2 rounded-xl bg-rose-500 text-white font-semibold shadow-sm hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-400"
+                >
+                  Continue Editing
+                </button>
+                <button
+                  onClick={handleClearDraft}
+                  className="px-5 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold border border-slate-200 shadow-sm hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                >
+                  Start New
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
       <div className="max-w-6xl mx-auto px-4 py-8 lg:py-10">
         <div className="text-center mb-8">
           <h1 className="text-2xl lg:text-3xl font-bold text-center mb-3 text-slate-800">

@@ -1,14 +1,14 @@
 'use client';
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { THEME_CONFIG } from '@/config/themeConfig';
 
 type Props = {
-  value?: Theme;
-  onChange: (theme: Theme) => void;
+  value?: ThemeKey;
+  onChange: (theme: ThemeKey) => void;
 };
 
 export default function ThemeSelector({ value, onChange }: Props) {
-  const themeKeys = Object.keys(THEME_CONFIG) as Theme[];
+  const themeKeys = Object.keys(THEME_CONFIG) as ThemeKey[];
 
   return (
     <div className="space-y-4">

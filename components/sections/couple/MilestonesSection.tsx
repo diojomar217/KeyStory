@@ -1,6 +1,6 @@
 'use client';
 
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { THEME_CONFIG } from '@/config/themeConfig';
 
 interface Milestone {
@@ -12,7 +12,7 @@ interface Milestone {
 }
 
 interface MilestonesSectionProps {
-  theme: Theme;
+  theme: ThemeKey;
   milestones?: Milestone[];
 }
 

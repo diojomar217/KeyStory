@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { THEME_CONFIG } from '@/config/themeConfig';
 import SectionHeader from '../../page/SectionHeader';
 
 interface AnniversaryCountdownSectionProps {
-  theme: Theme;
+  theme: ThemeKey;
   anniversaryDate: string;
   yearsTogether?: number;
   variant?: 'default' | 'alt';

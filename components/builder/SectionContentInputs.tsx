@@ -41,6 +41,8 @@ import {
 	GuestMessagesInput,
 } from './ContentInputComponents';
 
+import React, { useState } from 'react';
+
 export default function SectionContentInputs({
 	config,
 	onSectionContentChange,
@@ -58,17 +60,129 @@ export default function SectionContentInputs({
 	handlePhotos,
 }: SectionContentInputsProps) {
 	const { sections = [], section_content = {} } = config || {};
+
+	// Accordion state: openSectionKey is the key of the currently open section
+	const [openSectionKey, setOpenSectionKey] = useState<string | null>(sections?.[0] || null);
 	const enabledSections = Array.isArray(sections)
 		? sections
 				.map((key) => SECTION_CONFIG.find((s) => s.key === key))
 				.filter((s): s is typeof SECTION_CONFIG[number] => Boolean(s))
 		: [];
 
-	return (
-		<div>
-			{enabledSections.map((section) => {
-				let content = null;
-				switch (section.key) {
+		       // Helper: compute section status
+			       // Enhanced: compute section status and label
+			       function getSectionStatusAndLabel(section: typeof SECTION_CONFIG[number]): { status: 'error' | 'complete' | 'default', label: string } {
+				       const key = section.key;
+				       const isRequired = !!section.required;
+				       const hasError = validationErrors && validationErrors[key];
+				       let isComplete = false;
+				       let label = '';
+				       // Section-specific logic for label
+				       if (key === 'home') {
+					       isComplete = Boolean(config.tagline && config.tagline.trim()) || (config.hero && typeof config.hero.coverPhotoIndex === 'number');
+					       label = isComplete ? 'Filled' : (isRequired ? 'Missing' : 'Empty');
+				       } else if (key === 'gallery') {
+					       const count = Array.isArray(photoPreviews) ? photoPreviews.length : 0;
+					       isComplete = count > 0;
+					       label = count > 0 ? `${count} photo${count > 1 ? 's' : ''}` : (isRequired ? 'Missing' : 'Empty');
+				       } else if (key === 'timeline') {
+					       const count = Array.isArray(config.timeline_events) ? config.timeline_events.length : 0;
+					       isComplete = count > 0;
+					       label = count > 0 ? `${count} event${count > 1 ? 's' : ''}` : (isRequired ? 'Missing' : 'Empty');
+					       } else if (key === 'playlist') {
+						       const val = section_content[key];
+						       const hasUrl = val && typeof val.playlistUrl === 'string' && val.playlistUrl.trim().length > 0;
+						       isComplete = hasUrl;
+						       label = hasUrl ? 'Filled' : (isRequired ? 'Missing' : 'Empty');
+				       } else if (key === 'quotes') {
+					       const val = section_content[key];
+					       const count = val && Array.isArray(val.quotes) ? val.quotes.length : 0;
+					       isComplete = count > 0;
+					       label = count > 0 ? `${count} quote${count > 1 ? 's' : ''}` : (isRequired ? 'Missing' : 'Empty');
+				       } else if (key === 'reasons_love_you') {
+					       const val = section_content[key];
+					       const count = val && Array.isArray(val.reasons) ? val.reasons.length : 0;
+					       isComplete = count > 0;
+					       label = count > 0 ? `${count} reason${count > 1 ? 's' : ''}` : (isRequired ? 'Missing' : 'Empty');
+				       } else if (key === 'guest_messages') {
+					       const val = section_content[key];
+					       const count = val && Array.isArray(val.messages) ? val.messages.length : 0;
+					       isComplete = count > 0;
+					       label = count > 0 ? `${count} message${count > 1 ? 's' : ''}` : (isRequired ? 'Missing' : 'Empty');
+				       } else if (key === 'video_memories') {
+					       const val = section_content[key];
+					       const count = val && Array.isArray(val.videos) ? val.videos.length : 0;
+					       isComplete = count > 0;
+					       label = count > 0 ? `${count} video${count > 1 ? 's' : ''}` : (isRequired ? 'Missing' : 'Empty');
+				       } else if (key === 'future_dreams') {
+					       const val = section_content[key];
+					       const count = val && Array.isArray(val.dreams) ? val.dreams.length : 0;
+					       isComplete = count > 0;
+					       label = count > 0 ? `${count} dream${count > 1 ? 's' : ''}` : (isRequired ? 'Missing' : 'Empty');
+				       } else if (key === 'memory_map') {
+					       const val = section_content[key];
+					       const count = val && Array.isArray(val.locations) ? val.locations.length : 0;
+					       isComplete = count > 0;
+					       label = count > 0 ? `${count} location${count > 1 ? 's' : ''}` : (isRequired ? 'Missing' : 'Empty');
+					       } else if (key === 'love_letter') {
+						       const val = section_content[key];
+						       isComplete = val && typeof val.content === 'string' ? !!val.content.trim() : false;
+						       label = isComplete ? 'Filled' : (isRequired ? 'Missing' : 'Empty');
+					       } else if (key === 'surprise_message') {
+						       const val = section_content[key];
+						       isComplete = val && typeof val.message === 'string' ? !!val.message.trim() : false;
+						       label = isComplete ? 'Filled' : (isRequired ? 'Missing' : 'Empty');
+					       } else if (key === 'letter_future') {
+						       const val = section_content[key];
+						       isComplete = val && typeof val.letter === 'string' ? !!val.letter.trim() : false;
+						       label = isComplete ? 'Filled' : (isRequired ? 'Missing' : 'Empty');
+					       } else if (key === 'gift_section') {
+						       const val = section_content[key];
+						       const count = val && Array.isArray(val.gifts) ? val.gifts.length : 0;
+						       isComplete = count > 0;
+						       label = count > 0 ? `${count} gift${count > 1 ? 's' : ''}` : (isRequired ? 'Missing' : 'Empty');
+					       } else if (key === 'relationship_stats' || key === 'anniversary_countdown' || key === 'qr_keepsake') {
+						       // Auto-generated
+						       isComplete = true;
+						       label = 'Auto-generated';
+				       } else {
+					       const val = section_content[key];
+					       if (val && typeof val === 'object') {
+						       isComplete = typeof val.content === 'string' ? !!val.content.trim() : Object.keys(val).length > 0;
+					       } else if (typeof val === 'string') {
+						       isComplete = !!val.trim();
+					       }
+					       label = isComplete ? 'Filled' : (isRequired ? 'Missing' : 'Empty');
+				       }
+				       if (isRequired && hasError) return { status: 'error', label: 'Missing' };
+				       if (isRequired && isComplete) return { status: 'complete', label: 'Complete' };
+				       if (!isRequired && isComplete) return { status: 'complete', label };
+				       if (!isRequired && !isComplete) return { status: 'default', label };
+				       return { status: 'default', label };
+			       }
+
+		       // Status color mapping
+		       const statusColors = {
+			       error: {
+				       border: 'border-rose-300',
+				       icon: 'text-rose-400',
+			       },
+			       complete: {
+				       border: 'border-emerald-300',
+				       icon: 'text-emerald-400',
+			       },
+			       default: {
+				       border: 'border-slate-200',
+				       icon: 'text-slate-400',
+			       },
+		       };
+
+		       return (
+			       <div>
+					       {enabledSections.map((section) => {
+						       const { status, label: statusLabel } = getSectionStatusAndLabel(section);
+						       let content = null;
+						       switch (section.key) {
 					case 'home':
 						content = (
 							<div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-4">
@@ -177,22 +291,22 @@ export default function SectionContentInputs({
 							</div>
 						);
 						break;
-					case 'timeline':
-						content = (
-							<div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-								<span className="font-semibold text-lg">Timeline Events</span>
-								<TimelineEditor
-									events={config.timeline_events || []}
-									onChange={timeline_events => onSectionContentChange('timeline', timeline_events)}
-								/>
-								{(!config.timeline_events || config.timeline_events.length === 0) && (
-									<p className="text-xs text-amber-600 mt-2">
-										Timeline section requires at least one event
-									</p>
-								)}
-							</div>
-						);
-						break;
+					   case 'timeline':
+						   content = (
+							   <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 max-h-[70vh] overflow-y-auto">
+								   <span className="font-semibold text-lg">Timeline Events</span>
+								   <TimelineEditor
+									   events={config.timeline_events || []}
+									   onChange={timeline_events => onSectionContentChange('timeline', timeline_events)}
+								   />
+								   {(!config.timeline_events || config.timeline_events.length === 0) && (
+									   <p className="text-xs text-amber-600 mt-2">
+										   Timeline section requires at least one event
+									   </p>
+								   )}
+							   </div>
+						   );
+						   break;
 					case 'love_letter':
 						content = (
 							<TextContentInput
@@ -276,31 +390,111 @@ export default function SectionContentInputs({
 							/>
 						);
 						break;
-					case 'guest_messages':
-						content = (
-							<GuestMessagesInput
-								value={section_content?.guest_messages}
-							/>
-						);
-						break;
-					default:
-						// Only render fallback/info for sections without custom UI
-						content = (
-							<span className="text-slate-400">Section key: {section.key}</span>
-						);
+					       case 'guest_messages': {
+						       const val = section_content?.guest_messages;
+						       const count = val && Array.isArray(val.messages) ? val.messages.length : 0;
+						       if (!count) {
+							       content = (
+								       <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+									       <div className="flex items-center gap-2 mb-2">
+										       <span className="font-semibold text-slate-700">Guest Messages</span>
+									       </div>
+									       <div className="text-slate-600 text-sm mb-1">This feature allows friends and family to leave messages for you. Messages will be collected and displayed on your website.</div>
+								       </div>
+							       );
+						       } else {
+							       content = (
+								       <GuestMessagesInput
+									       value={val}
+								       />
+							       );
+						       }
+						       break;
+					       }
+						       case 'relationship_stats':
+							       content = (
+								       <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+									       <div className="flex items-center gap-2 mb-2">
+										       <span className="font-semibold text-slate-700">Relationship Stats</span>
+										       <span className="ml-2 text-xs font-medium bg-sky-100 text-sky-600 rounded-full px-2 py-0.5">Auto-generated</span>
+									       </div>
+									       <div className="text-slate-600 text-sm mb-1">This section is generated automatically from your anniversary/start date and timeline data.</div>
+									       <ul className="text-xs text-slate-400 list-disc pl-5">
+										       <li>Depends on: anniversary/start date</li>
+										       <li>Depends on: timeline events</li>
+									       </ul>
+								       </div>
+							       );
+							       break;
+						       case 'anniversary_countdown':
+							       content = (
+								       <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+									       <div className="flex items-center gap-2 mb-2">
+										       <span className="font-semibold text-slate-700">Anniversary Countdown</span>
+										       <span className="ml-2 text-xs font-medium bg-sky-100 text-sky-600 rounded-full px-2 py-0.5">Auto-generated</span>
+									       </div>
+									       <div className="text-slate-600 text-sm mb-1">This section automatically counts down to your next anniversary based on your anniversary date.</div>
+									       <ul className="text-xs text-slate-400 list-disc pl-5">
+										       <li>Depends on: anniversary/start date</li>
+									       </ul>
+								       </div>
+							       );
+							       break;
+						       case 'qr_keepsake':
+							       content = (
+								       <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+									       <div className="flex items-center gap-2 mb-2">
+										       <span className="font-semibold text-slate-700">QR Keepsake</span>
+										       <span className="ml-2 text-xs font-medium bg-sky-100 text-sky-600 rounded-full px-2 py-0.5">Auto-generated</span>
+									       </div>
+									       <div className="text-slate-600 text-sm mb-1">This section automatically generates a QR code for your website keepsake.</div>
+									       <ul className="text-xs text-slate-400 list-disc pl-5">
+										       <li>Depends on: website URL</li>
+									       </ul>
+								       </div>
+							       );
+							       break;
+					       default:
+						       // Only render fallback/info for sections without custom UI
+						       content = (
+							       <span className="text-slate-400">Section key: {section.key}</span>
+						       );
 				}
-				return (
-					<div key={section.key} className="mb-6">
-						<div className="flex items-center gap-2 mb-2">
-							<span className="text-xl">{section.icon}</span>
-							<span className="font-semibold text-slate-700">{section.label}</span>
-							{validationErrors && validationErrors[section.key as string] && (
-								<span className="ml-2 text-xs text-rose-500">Required</span>
-							)}
-						</div>
-						<div>{content}</div>
-					</div>
-				);
+						       // Determine if this is an auto-generated section
+								   const isAutoGenerated = section.key === 'relationship_stats' || section.key === 'anniversary_countdown' || section.key === 'qr_keepsake';
+							       return (
+								       <div key={section.key} className={`mb-4 border rounded-xl overflow-hidden bg-white ${statusColors[status].border}`} style={{ borderLeftWidth: 6 }}>
+									       {/* Accordion Header */}
+									       <button
+										       type="button"
+										       className={`w-full flex items-center justify-between px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-400 transition-all ${openSectionKey === section.key ? 'bg-rose-50' : 'bg-slate-50 hover:bg-slate-100'}`}
+										       aria-expanded={openSectionKey === section.key}
+										       aria-controls={`section-panel-${section.key}`}
+										       onClick={() => setOpenSectionKey(openSectionKey === section.key ? null : section.key)}
+									       >
+										       <div className="flex items-center gap-2">
+											       <span className={`text-xl ${statusColors[status].icon}`}>{section.icon}</span>
+											       <span className="font-semibold text-slate-700">{section.label}</span>
+											       {/* Status badge */}
+											       <span className={`ml-2 text-xs font-medium rounded-full px-2 py-0.5 ${isAutoGenerated ? 'bg-sky-100 text-sky-600' : status === 'error' ? 'bg-rose-100 text-rose-600' : status === 'complete' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>{statusLabel}</span>
+										       </div>
+										       <span className={`ml-2 transition-transform duration-200 ${openSectionKey === section.key ? 'rotate-90 text-rose-500' : 'rotate-0 text-slate-400'}`}>
+											       <svg width="20" height="20" fill="none" viewBox="0 0 20 20"><path d="M7 7l3 3-3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+										       </span>
+									       </button>
+									       {/* Accordion Panel */}
+									       <div
+										       id={`section-panel-${section.key}`}
+										       className={`transition-all duration-300 ${openSectionKey === section.key ? 'max-h-[2000px] opacity-100 py-4 px-4' : 'max-h-0 opacity-0 py-0 px-4 pointer-events-none'}`}
+										       aria-hidden={openSectionKey !== section.key}
+										       style={{ overflow: 'hidden' }}
+									       >
+										       {openSectionKey === section.key && (
+											       <div>{content}</div>
+										       )}
+									       </div>
+								       </div>
+							       );
 			})}
 		</div>
 	);

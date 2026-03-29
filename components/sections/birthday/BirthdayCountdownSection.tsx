@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Theme } from '@/lib/types';
+import { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../../builder/ThemeWrapper';
 import SectionHeader from '../../page/SectionHeader';
 
 interface Props {
-  theme: Theme;
+  theme: ThemeKey;
   birthdayDate: string;
 }
 

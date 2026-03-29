@@ -1,6 +1,6 @@
 'use client';
 
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../../builder/ThemeWrapper';
 import TypingText from '../../ui/TypingText';
 import SectionHeader from '../../page/SectionHeader';
@@ -8,7 +8,7 @@ import ScrollReveal from '../../ui/ScrollReveal';
 
 type Props = {
   message: string;
-  theme: Theme;
+  theme: ThemeKey;
   variant?: 'default' | 'alt';
 };
 

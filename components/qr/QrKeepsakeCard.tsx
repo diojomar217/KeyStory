@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import QRCodeStyling from 'qr-code-styling';
-import { Theme } from '@/lib/types';
+
 
 export type QrCardStyle = 'none' | 'love_card' | 'birthday_card' | 'minimal_card' | 'polaroid';
 
@@ -16,8 +16,8 @@ export type QrConfig = {
   showNames?: boolean;
 };
 
-interface QrKeepsakeCardProps {
-  theme?: Theme;
+export interface QrKeepsakeCardProps {
+  theme?: import('@/config/themeConfig').ThemeKey;
   siteType?: 'couple' | 'birthday' | string;
   customerName?: string;
   partnerName?: string;
@@ -28,7 +28,7 @@ interface QrKeepsakeCardProps {
   cardSize?: 'small' | 'large';
 }
 
-export default function QrKeepsakeCard({
+export function QrKeepsakeCard({
   theme = 'romantic_classic',
   siteType = 'couple',
   customerName = 'Your Name',

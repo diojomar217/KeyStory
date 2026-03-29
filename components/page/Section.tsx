@@ -1,6 +1,6 @@
 'use client';
 
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../builder/ThemeWrapper';
 import SectionHeader from './SectionHeader';
 import ScrollReveal from '../ui/ScrollReveal';
@@ -13,7 +13,7 @@ interface SectionProps {
   /** Section icon (emoji) */
   icon?: string;
   /** Theme */
-  theme: Theme;
+  theme: ThemeKey;
   /** Section content */
   children: React.ReactNode;
   /** Custom CSS class for container */
@@ -185,7 +185,7 @@ export function SectionCompact({
 /**
  * Section separator component for manual placement
  */
-export function SectionSeparator({ theme }: { theme?: Theme }) {
+export function SectionSeparator({ theme }: { theme?: ThemeKey }) {
   const borderColor = theme === 'dark_elegant' ? '#3f3f46' : '#fce7f3';
   const iconColor = theme === 'dark_elegant' ? 'text-amber-300' : 'text-rose-500';
 

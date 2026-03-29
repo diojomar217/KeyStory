@@ -1,3 +1,4 @@
+import { DEFAULT_THEME } from '@/config/defaults';
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, Site } from '@/lib/supabase';
 import { uploadToCloudinary } from '@/lib/cloudinary';
@@ -135,7 +136,7 @@ export async function PUT(req: NextRequest) {
           special_date: updates.specialDate || updates.anniversary_date || updates.config?.dates?.special_date,
         },
         occasion: updates.occasion || updates.site_type || updates.config?.occasion || undefined,
-        theme: updates.config?.theme || updates.theme || 'romantic_classic',
+        theme: updates.config?.theme || updates.theme || DEFAULT_THEME,
         sections: updates.config?.sections || updates.sections || [],
         templates: {
           home: updates.config?.home_template || updates.home_template,
@@ -203,11 +204,17 @@ export async function PUT(req: NextRequest) {
       ],
     });
   } catch (err: any) {
-    const body = req.bodyUsed ? 'body already read' : 'body not read yet';
-    console.error('PUT /api/admin failed:', { 
-      id: body !== 'body not read yet' ? (await req.json()).id : 'unknown', 
-      message: err.message, 
-      stack: err.stack 
+    let idForLog = 'unknown';
+    if (!req.bodyUsed) {
+      try {
+        const parsed = await req.json();
+        idForLog = parsed?.id || 'unknown';
+      } catch {}
+    }
+    console.error('PUT /api/admin failed:', {
+      id: idForLog,
+      message: err.message,
+      stack: err.stack
     });
     return NextResponse.json({ 
       message: err.message || 'Update failed - check image sizes and try fewer photos' 
@@ -224,8 +231,56 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ message: 'Order ID is required' }, { status: 400 });
     }
 
-    const { error } = await supabase.from('sites').delete().eq('id', id);
+    // Fetch the site config before deleting
+    const { data: site, error: fetchError } = await supabase.from('sites').select('config').eq('id', id).single();
+    if (fetchError) {
+      return NextResponse.json({ message: fetchError.message }, { status: 500 });
+    }
 
+    // Extract and delete Cloudinary images
+    if (site && site.config) {
+      // Inline extractMediaUrls and getCloudinaryPublicId from archiver.ts
+      function extractMediaUrls(config: any): string[] {
+        const results: string[] = [];
+        function recurse(obj: any): void {
+          if (!obj || typeof obj !== 'object') return;
+          if (Array.isArray(obj)) { obj.forEach(recurse); return; }
+          Object.values(obj).forEach((value) => {
+            if (typeof value === 'string' && value.includes('cloudinary.com')) {
+              results.push(value);
+            } else if (typeof value === 'object') {
+              recurse(value);
+            }
+          });
+        }
+        recurse(config);
+        return Array.from(new Set(results));
+      }
+      function getCloudinaryPublicId(url: string): string | null {
+        try {
+          const parsed = new URL(url);
+          const parts = parsed.pathname.split('/').filter(Boolean);
+          const idx = parts.findIndex((part) => /^v\d+$/.test(part));
+          const idParts = idx >= 0 ? parts.slice(idx + 1) : parts;
+          const publicId = idParts.join('/').replace(/\.[^.]+$/, '');
+          return publicId;
+        } catch { return null; }
+      }
+      const mediaUrls = extractMediaUrls(site.config);
+      const cloudinary = (await import('@/lib/cloudinary')).default;
+      for (const mediaUrl of mediaUrls) {
+        const publicId = getCloudinaryPublicId(mediaUrl);
+        if (!publicId) continue;
+        try {
+          await cloudinary.uploader.destroy(publicId, { invalidate: true });
+        } catch (err) {
+          console.warn('Failed to remove Cloudinary media', publicId, err);
+        }
+      }
+    }
+
+    // Now delete the site record
+    const { error } = await supabase.from('sites').delete().eq('id', id);
     if (error) {
       return NextResponse.json({ message: error.message }, { status: 500 });
     }

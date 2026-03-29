@@ -3,13 +3,14 @@
 import { useEffect, useRef, useState } from 'react';
 import QRCodeStyling from 'qr-code-styling';
 import { toPng } from 'html-to-image';
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import type { QrCardStyle } from '@/components/qr/QrKeepsakeCard';
 import { useTheme } from '../builder/ThemeWrapper';
-import ScrollReveal from './ScrollReveal';
 
-type Props = {
-  theme: Theme;
+import ScrollReveal from './ScrollReveal'; // Ensure this is a default import
+
+interface Props {
+  theme: ThemeKey;
   customerName: string;
   partnerName: string;
   qrCodeUrl?: string;
@@ -25,7 +26,7 @@ type Props = {
     subtitle?: string;
     showNames?: boolean;
   };
-};
+}
 
 export default function MemoryCardSection({
   theme,

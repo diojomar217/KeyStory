@@ -39,14 +39,11 @@ export async function uploadToCloudinary(dataUrl: string, options: CloudinaryUpl
   const crop = options.crop ?? 'limit';
   const stripMetadata = options.stripMetadata ?? true;
 
-  const transformation: any[] = [{ width: maxWidth, crop }];
 
+  const transformation: any[] = [{ width: maxWidth, crop }];
   // Hero uses slightly higher quality and larger width, gallery uses lighter optimization
   transformation.push({ quality, fetch_format: fetchFormat, flags: 'progressive' });
-
-  if (stripMetadata) {
-    transformation.push({ flags: 'strip' });
-  }
+  // 'strip' is not a valid Cloudinary flag and causes errors. Do not add it.
 
   const res = await cloudinary.uploader.upload(dataUrl, {
     folder: 'loveqr',

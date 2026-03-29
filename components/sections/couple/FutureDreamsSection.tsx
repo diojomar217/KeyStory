@@ -1,6 +1,6 @@
 'use client';
 
-import type { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import SectionHeader from '../../page/SectionHeader';
 import ScrollReveal from '../../ui/ScrollReveal';
 
@@ -12,7 +12,7 @@ interface FutureDream {
 }
 
 interface FutureDreamsSectionProps {
-  theme: Theme;
+  theme: ThemeKey;
   dreams?: FutureDream[];
   variant?: 'default' | 'alt';
 }
@@ -45,7 +45,7 @@ export default function FutureDreamsSection({
 
         <ScrollReveal animation="fade-up" delay={200}>
           <div className="grid gap-8 lg:gap-12 max-w-6xl mx-auto">
-            {displayDreams.map((dream, index) => (
+            {displayDreams.map((dream: FutureDream, index: number) => (
               <ScrollReveal key={dream.id} animation="fade-up" delay={index * 100}>
                 <div className="
                   group bg-white/90 backdrop-blur-xl border border-white/40 rounded-3xl shadow-xl lg:shadow-2xl

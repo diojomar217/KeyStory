@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useEffect, useRef, useCallback } from 'react';
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 
 interface ParticlesCanvasProps {
-  theme: Theme;
+  theme: ThemeKey;
   className?: string;
 }
 

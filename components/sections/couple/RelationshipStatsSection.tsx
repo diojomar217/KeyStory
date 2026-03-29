@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import SectionHeader from '../../page/SectionHeader';
 import { useTheme } from '../../builder/ThemeWrapper';
 import { THEME_CONFIG } from '@/config/themeConfig';
 
 interface RelationshipStatsSectionProps {
-  theme: Theme;
+  theme: ThemeKey;
   anniversaryDate: string;
 }
 

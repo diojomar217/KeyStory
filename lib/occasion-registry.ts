@@ -3,7 +3,8 @@
 // OCCASION REGISTRY - Core extensibility layer
 // ============================================
 
-import { Section, Theme } from './types';
+import type { ThemeKey } from '@/config/themeConfig';
+import { Section } from './types';
 import { SECTION_REGISTRY, getDefaultSections } from './section-registry';
 
 /**
@@ -26,10 +27,10 @@ export interface OccasionMetadata {
   icon: string;
   color: string;
   defaultSections: Section[];
-  defaultTheme: Theme;
+  defaultTheme: ThemeKey;
   participantsLabel: string;     // 'Partner', 'Bride/Groom', etc.
   specialDateLabel: string;      // 'Anniversary Date', 'Wedding Date', etc.
-  supportedThemes: Theme[];
+  supportedThemes: ThemeKey[];
   previewImage?: string;
   isProductionReady: boolean;    // Only 'couple' is fully ready
 }
@@ -116,18 +117,16 @@ export const getOccasionMetadata = (occasion: OccasionType): OccasionMetadata =>
   return OCCASION_REGISTRY[occasion] || OCCASION_REGISTRY.couple; // Default to couple
 };
 
-export const getDefaultOccasionConfig = (occasion: OccasionType = 'couple'): {
-  occasion: OccasionType;
-  sections: Section[];
-  theme: Theme;
-} => {
+
+// Helper to get default occasion data
+export function getDefaultOccasionData(occasion: OccasionType): { occasion: OccasionType; sections: Section[]; theme: ThemeKey } {
   const meta = getOccasionMetadata(occasion);
   return {
     occasion,
     sections: meta.defaultSections,
     theme: meta.defaultTheme,
   };
-};
+}
 
 export const getProductionReadyOccasions = (): OccasionType[] => {
   return Object.values(OCCASION_REGISTRY)

@@ -1,43 +1,20 @@
 'use client';
 
-import { SiteConfig, Theme, OccasionType } from '@/lib/types';
-import { THEME_CONFIG } from '@/config/themeConfig';
+import type { SiteConfig, OccasionType } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
+import { getThemeColors, ThemeColors } from '@/config/themeUtils';
+import { DEFAULT_THEME } from '@/config/defaults';
 
 // ============================================
 // THEME STYLES - Theme-specific styling
 // ============================================
-
-type ThemeColors = {
-  primary: string;
-  secondary: string;
-  accent: string;
-  background: string;
-  text: string;
-  card: string;
-  border: string;
-  muted: string;
-};
-
-const getThemeColors = (theme: Theme): ThemeColors => {
-  const preset = THEME_CONFIG[theme] || THEME_CONFIG.romantic_classic;
-  return {
-    primary: preset.colors.primary,
-    secondary: preset.colors.secondary,
-    accent: preset.colors.accent,
-    background: preset.colors.background,
-    text: preset.colors.text,
-    card: preset.colors.card,
-    border: preset.colors.border,
-    muted: preset.colors.text + '99',
-  };
-};
 
 // ============================================
 // HOME SECTION PREVIEW
 // ============================================
 
 interface HomeSectionPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
   siteType?: OccasionType;
   customerName: string;
   partnerName: string;
@@ -163,7 +140,7 @@ const dateString = specialDate || anniversary_date || '';
 // ============================================
 
 interface GallerySectionPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
   photoCount: number;
 }
 
@@ -232,7 +209,7 @@ function GallerySectionPreview({
 // ============================================
 
 interface TimelineSectionPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
   eventCount: number;
 }
 
@@ -330,11 +307,11 @@ function TimelineSectionPreview({
 // ============================================
 
 interface SongSectionPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
   hasSong: boolean;
 }
 
-export function SongSectionPreview({
+function SongSectionPreview({
   theme,
   hasSong,
 }: SongSectionPreviewProps) {
@@ -403,11 +380,11 @@ export function SongSectionPreview({
 // ============================================
 
 interface LoveLetterSectionPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
   hasMessage: boolean;
 }
 
-export function LoveLetterSectionPreview({
+function LoveLetterSectionPreview({
   theme,
   hasMessage,
 }: LoveLetterSectionPreviewProps) {
@@ -448,10 +425,10 @@ export function LoveLetterSectionPreview({
 // ============================================
 
 interface QuotesSectionPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
 }
 
-export function QuotesSectionPreview({ theme }: { theme: Theme }) {
+export function QuotesSectionPreview({ theme }: QuotesSectionPreviewProps) {
   const colors = getThemeColors(theme);
   const quotes = [
     'Love is not about how many days we have been together...',
@@ -496,10 +473,10 @@ export function QuotesSectionPreview({ theme }: { theme: Theme }) {
 // ============================================
 
 interface StatsSectionPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
 }
 
-export function StatsSectionPreview({ theme }: { theme: Theme }) {
+export function StatsSectionPreview({ theme }: StatsSectionPreviewProps) {
   const colors = getThemeColors(theme);
 
   return (
@@ -550,10 +527,10 @@ export function StatsSectionPreview({ theme }: { theme: Theme }) {
 // ============================================
 
 interface MilestonesSectionPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
 }
 
-export function MilestonesSectionPreview({ theme }: { theme: Theme }) {
+export function MilestonesSectionPreview({ theme }: MilestonesSectionPreviewProps) {
   const colors = getThemeColors(theme);
 
   return (
@@ -598,10 +575,10 @@ export function MilestonesSectionPreview({ theme }: { theme: Theme }) {
 // ============================================
 
 interface FutureDreamsSectionPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
 }
 
-export function FutureDreamsSectionPreview({ theme }: { theme: Theme }) {
+export function FutureDreamsSectionPreview({ theme }: FutureDreamsSectionPreviewProps) {
   const colors = getThemeColors(theme);
 
   return (
@@ -651,11 +628,11 @@ export function FutureDreamsSectionPreview({ theme }: { theme: Theme }) {
 // ============================================
 
 interface PolaroidGalleryPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
   photoCount: number;
 }
 
-export function PolaroidGalleryPreview({
+function PolaroidGalleryPreview({
   theme,
   photoCount,
 }: PolaroidGalleryPreviewProps) {
@@ -698,10 +675,10 @@ export function PolaroidGalleryPreview({
 // ============================================
 
 interface AnniversaryCountdownPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
 }
 
-export function AnniversaryCountdownPreview({ theme }: { theme: Theme }) {
+export function AnniversaryCountdownPreview({ theme }: AnniversaryCountdownPreviewProps) {
   const colors = getThemeColors(theme);
 
   return (
@@ -750,10 +727,10 @@ export function AnniversaryCountdownPreview({ theme }: { theme: Theme }) {
 // ============================================
 
 interface QRKeepsakePreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
 }
 
-export function QRKeepsakePreview({ theme }: { theme: Theme }) {
+export function QRKeepsakePreview({ theme }: QRKeepsakePreviewProps) {
   const colors = getThemeColors(theme);
 
   return (
@@ -793,10 +770,10 @@ export function QRKeepsakePreview({ theme }: { theme: Theme }) {
 
 interface DefaultSectionPreviewProps {
   sectionId: string;
-  theme: Theme;
+  theme: ThemeKey;
 }
 
-export function DefaultSectionPreview({
+function DefaultSectionPreview({
   sectionId,
   theme,
 }: DefaultSectionPreviewProps) {
@@ -855,7 +832,7 @@ interface SectionRendererProps {
 }
 
 export function SectionRenderer({ sectionId, config, occasion, coupleNames, tagline, message, specialDate }: SectionRendererProps) {
-  const theme = config.theme || 'romantic_classic';
+  const theme: ThemeKey = (config.theme as ThemeKey) || DEFAULT_THEME;
   const siteType = occasion || config.occasion || 'couple';
   const hasCoverPhoto = config.cover_photo_index !== undefined;
   const photoCount = config.cover_photo_index !== undefined ? 5 : 0;
@@ -876,42 +853,30 @@ export function SectionRenderer({ sectionId, config, occasion, coupleNames, tagl
           hasCoverPhoto={hasCoverPhoto}
         />
       );
-    
     case 'gallery':
       return <GallerySectionPreview theme={theme} photoCount={photoCount} />;
-    
     case 'timeline':
       return <TimelineSectionPreview theme={theme} eventCount={eventCount} />;
-    
     case 'song':
       return <SongSectionPreview theme={theme} hasSong={hasSong} />;
-    
     case 'love_letter':
       return <LoveLetterSectionPreview theme={theme} hasMessage={true} />;
-    
     case 'quotes':
       return <QuotesSectionPreview theme={theme} />;
-    
     case 'relationship_stats':
       return <StatsSectionPreview theme={theme} />;
-    
     case 'milestones':
       return <MilestonesSectionPreview theme={theme} />;
-    
     case 'future_dreams':
       return <FutureDreamsSectionPreview theme={theme} />;
-    
     case 'polaroid_gallery':
       return <PolaroidGalleryPreview theme={theme} photoCount={photoCount} />;
-    
     case 'anniversary_countdown':
       return <AnniversaryCountdownPreview theme={theme} />;
-    
     case 'qr_keepsake':
       return <QRKeepsakePreview theme={theme} />;
-    
     default:
-      return <DefaultSectionPreview sectionId={sectionId} theme={theme} />;
+      return <DefaultSectionPreview sectionId={sectionId} theme={theme === 'romantic_classic' ? DEFAULT_THEME : theme} />;
   }
 }
 

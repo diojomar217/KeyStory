@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState } from 'react';
 import QRCodeStyling from 'qr-code-styling';
 import { toPng } from 'html-to-image';
-import { Theme } from '@/lib/types';
-import { useTheme } from '../builder/ThemeWrapper';
+import type { ThemeKey } from '@/config/themeConfig';
+import { getThemeStyles } from '@/config/themeStyles';
 import ScrollReveal from '../ui/ScrollReveal';
 
 type Props = {
-  theme: Theme;
+  theme: ThemeKey;
   customerName: string;
   partnerName: string;
   qrCodeUrl?: string;
@@ -24,7 +24,7 @@ export default function MemoryCardSection({
   qrDataUrl,
   slug,
 }: Props) {
-  const styles = useTheme(theme);
+  const styles = getThemeStyles(theme);
   const coupleNames = `${customerName} & ${partnerName}`;
   
   const qrRef = useRef<HTMLDivElement>(null);

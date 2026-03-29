@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { Theme, GuestMessage, GuestMessageRecord } from '@/lib/types';
+import type { GuestMessage, GuestMessageRecord } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../../builder/ThemeWrapper';
 import { GridSectionLayout } from '../../page/SectionLayouts';
 import ScrollReveal from '../../ui/ScrollReveal';
 
 interface GuestMessagesSectionProps {
-  theme: Theme;
+  theme: ThemeKey;
   siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
   messages?: GuestMessage[]; // fallback/legacy messages
   approvedMessages?: GuestMessageRecord[]; // from DB

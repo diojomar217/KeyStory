@@ -1,9 +1,10 @@
 import { OccasionType } from './occasion-registry';
-import { Section, Theme, LayoutPreset, HomeTemplate, GalleryTemplate, TimelineTemplate, SongTemplate } from './types';
-
+import type {LayoutPreset, HomeTemplate, GalleryTemplate, TimelineTemplate, SongTemplate } from './types';
+import { Section } from './types';
+import type { ThemeKey } from '@/config/themeConfig';
 export type PresetDefaults = {
   sections: Section[];
-  theme: Theme;
+  theme: ThemeKey;
   layout_preset: LayoutPreset;
   templates: {
     home?: HomeTemplate;

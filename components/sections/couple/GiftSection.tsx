@@ -1,8 +1,9 @@
 'use client';
 
-import type { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import SectionHeader from '../../page/SectionHeader';
 import ScrollReveal from '../../ui/ScrollReveal';
+
 
 interface Gift {
   id: string;
@@ -12,7 +13,7 @@ interface Gift {
 }
 
 interface GiftSectionProps {
-  theme: Theme;
+  theme: ThemeKey;
   partnerName: string;
   gifts?: Gift[];
 }

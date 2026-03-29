@@ -3,27 +3,24 @@
 import { useEffect, useRef, useState } from 'react';
 import QRCodeStyling from 'qr-code-styling';
 import { toPng } from 'html-to-image';
-import { Theme } from '@/lib/types';
-import { useTheme } from '../../builder/ThemeWrapper';
+import { ThemeKey, getThemeStyles } from '@/config/themeConfig';
 import ScrollReveal from '../../ui/ScrollReveal';
 import Link from 'next/link';
 
-type Props = {
-  theme: Theme;
+  theme: ThemeKey;
   slug?: string;
   coupleNames: string;
   qrCodeUrl?: string;
   qrDataUrl?: string;
 };
 
-export default function QRKeepsakeSection({
   theme,
   slug,
   coupleNames,
   qrCodeUrl,
   qrDataUrl,
 }: Props) {
-  const styles = useTheme(theme);
+  const styles = getThemeStyles(theme);
   const qrRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const qrCodeInstanceRef = useRef<QRCodeStyling | null>(null);
@@ -129,7 +126,6 @@ export default function QRKeepsakeSection({
       default: return 'rose';
     }
   };
-
   const accentColor = getAccentColor();
   const qrLinkUrl = getQRLinkUrl();
 

@@ -5,7 +5,9 @@
 // This file provides the connection between section registry and actual
 // React components that render each section.
 
-import { Section, Theme, TimelineEvent, Participant } from './types';
+import type { TimelineEvent, Participant } from './types';
+import type { ThemeKey } from '@/config/themeConfig';
+import { Section } from './types';
 
 // Import shared sections
 import HomeSection from '@/components/page/HomeSection';
@@ -46,7 +48,7 @@ import GiftWishlistSection from '@/components/sections/birthday/GiftWishlistSect
 // ============================================
 
 export interface BaseSectionProps {
-  theme: Theme;
+  theme: ThemeKey;
 }
 
 export interface HomeSectionProps extends BaseSectionProps {

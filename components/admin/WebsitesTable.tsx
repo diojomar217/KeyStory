@@ -62,7 +62,8 @@ interface WebsitesTableProps {
   loading?: boolean;
 }
 
-type ThemeFilter = 'all' | 'romantic_classic' | 'cute_pastel' | 'minimal_modern' | 'dark_elegant';
+import type { ThemeKey } from '@/config/themeConfig';
+type ThemeFilter = 'all' | ThemeKey;
 type StatusFilter = 'all' | 'active' | 'expired' | 'archived';
 
 const getStatusFromOrder = (order: Site) => {

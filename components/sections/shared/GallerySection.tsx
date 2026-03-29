@@ -2,14 +2,15 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Theme, GalleryTemplate } from '@/lib/types';
+import type { GalleryTemplate } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../../builder/ThemeWrapper';
 import Lightbox from '../../ui/Lightbox';
 import SectionHeader from '../../page/SectionHeader';
 import ScrollReveal from '../../ui/ScrollReveal';
 
 type Props = {
-  theme: Theme;
+  theme: ThemeKey;
   template: GalleryTemplate;
   photos: string[];
   coverPhotoIndex?: number;
@@ -212,29 +213,7 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
           />
         </ScrollReveal>
 
-        {/* CTA for short gallery */}
-        {isShortGallery && (
-          <div className="mx-auto mb-8 max-w-3xl px-2">
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white/80 p-5 text-center shadow-sm">
-              <p className="text-sm font-semibold text-slate-700">Looks like your gallery is just getting started.</p>
-              <p className="mt-1 text-xs text-slate-500">Add a few more moments to make your story shine.</p>
-              <div className="mt-4 flex flex-wrap justify-center gap-3">
-                <button
-                  onClick={(e) => e.preventDefault()}
-                  className="rounded-lg bg-teal-500 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-teal-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
-                >
-                  Add memory
-                </button>
-                <button
-                  onClick={(e) => e.preventDefault()}
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
-                >
-                  Edit this piece
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        
 
         {/* Gallery Content */}
         {template === 'grid' && renderGrid()}

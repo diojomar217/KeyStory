@@ -1,5 +1,5 @@
 'use client';
-
+import { DEFAULT_THEME } from '@/config/defaults';
 import { Site } from '@/lib/supabase';
 import WebsiteActionsDropdown from './WebsiteActionsDropdown';
 
@@ -62,7 +62,7 @@ export default function WebsiteRow({ order, onDelete, selected, onSelect }: Webs
   const coverPhoto = order.config?.media?.photos?.[0] || order.config?.cover_photo || order.photos?.[0] || '';
   const websiteName = order.website_name || order.slug;
 
-  const themeValue = (order.config?.theme as string) || (order.theme as string) || 'romantic_classic';
+  const themeValue = (order.config?.theme as string) || (order.theme as string) || DEFAULT_THEME;
   const status = (order.status || 'active').toLowerCase();
   const expiresAt = order.expires_at ? new Date(order.expires_at) : null;
   const isExpired = expiresAt ? expiresAt.getTime() < Date.now() : false;

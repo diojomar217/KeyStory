@@ -1,3 +1,4 @@
+import { DEFAULT_THEME } from '@/config/defaults';
 // app/api/order.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, Site } from '@/lib/supabase';
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
     dates: {
       special_date: data.specialDate || data.anniversary_date || '',
     },
-    theme: data.config?.theme || 'romantic_classic',
+    theme: data.config?.theme || DEFAULT_THEME,
     sections: data.config?.sections || [],
     templates: {
       home: data.config?.home_template,

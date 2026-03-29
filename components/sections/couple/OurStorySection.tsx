@@ -1,12 +1,12 @@
 'use client';
 
-import type { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../../builder/ThemeWrapper';
 import SectionHeader from '../../page/SectionHeader';
-import ScrollReveal from '../../ui/ScrollReveal';
+import ScrollReveal from '../../ui/ScrollReveal'; // Ensure this is a default import
 
 interface OurStorySectionProps {
-  theme: Theme;
+  theme: ThemeKey;
   customerName: string;
   partnerName: string;
   story?: string;

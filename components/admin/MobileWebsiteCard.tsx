@@ -1,5 +1,5 @@
 'use client';
-
+import { DEFAULT_THEME } from '@/config/defaults';
 import { Site } from '@/lib/supabase';
 
 interface MobileWebsiteCardProps {
@@ -23,7 +23,7 @@ export default function MobileWebsiteCard({
     : partnerName
       ? `${customerName || 'Your Name'} & ${partnerName || 'Partner Name'}`
       : customerName || 'Your Name';
-  const themeValue = (order.config?.theme as string) || (order as any).theme || 'romantic_classic';
+  const themeValue = (order.config?.theme as string) || (order as any).theme || DEFAULT_THEME;
   const coverPhoto = order.config?.media?.photos?.[0] || order.config?.cover_photo || order.photos?.[0] || '';
   const websiteName = order.website_name || order.slug;
 

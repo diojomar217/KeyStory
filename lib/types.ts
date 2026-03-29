@@ -4,24 +4,7 @@
 // THEME TYPES - 16 Theme Presets
 // ============================================
 
-export type Theme =
-  | 'romantic_classic'
-  | 'cute_pastel'
-  | 'minimal_modern'
-  | 'dark_elegant'
-  | 'soft_pastel'
-  | 'elegant_rose_gold'
-  | 'vintage_love_letter'
-  | 'scrapbook_memories'
-  | 'wedding_style'
-  | 'floral_romance'
-  | 'dreamy_pink'
-  | 'luxury_gold'
-  | 'minimal_white'
-  | 'cute_kawaii'
-  | 'soft_lavender'
-  | 'photo_focus'
-  | 'colorful_celebration';
+// Theme type removed. Use ThemeKey from '@/config/themeConfig' everywhere.
 
 // ============================================
 // SECTION TYPES - Refactored to Remove Redundancy
@@ -118,15 +101,7 @@ export interface ThemePresetStyle {
   shadowIntensity: 'none' | 'light' | 'medium' | 'heavy';
 }
 
-export interface ThemePresetConfig {
-  key: Theme;
-  label: string;
-  description: string;
-  colors: ThemePresetColors;
-  typography: ThemePresetTypography;
-  style: ThemePresetStyle;
-  preview: string[]; // Color hex codes for preview
-}
+// ThemePresetConfig is now defined in config/themeConfig.ts. Use ThemeDefinition from there.
 
 // Layout Preset Configuration
 export interface LayoutPresetConfig {
@@ -161,13 +136,12 @@ export interface Participant {
 }
 
 export interface SiteConfig {
-  occasion: OccasionType; // NEW: Core occasion type
-  theme: Theme;
+  occasion: OccasionType;
+  theme: string;
   layout_preset?: LayoutPreset;
   sections: Section[];
-  section_toggles?: Record<Section, boolean>; // Enable/disable individual sections
+  section_toggles?: Record<Section, boolean>;
   section_templates?: Record<Section, string>;
-  // Legacy template fields (for backward compatibility)
   home_template?: HomeTemplate;
   gallery_template?: GalleryTemplate;
   gallery_layout?: GalleryLayout;
@@ -177,27 +151,19 @@ export interface SiteConfig {
   cover_photo_index?: number;
   tagline?: string;
   message?: string;
-  // NEW: Generalized fields (backward compat - populate from legacy)
   participants?: Participant[];
   specialDate?: string;
-  // Media settings for components like song and gallery
   media?: {
     photos?: string[];
     song_link?: string;
     song_autoplay?: boolean;
   };
-  // Password protection config
   password?: {
     enabled: boolean;
     hash?: string;
   };
-  // Temporary plain password field (never persisted)
   password_input?: string;
-
-  // Dynamic section content for each enabled section
   section_content?: SectionContentMap;
-
-  // QR keepsake design configuration
   qr?: {
     color?: string;
     background?: string;
@@ -207,18 +173,12 @@ export interface SiteConfig {
     subtitle?: string;
     showNames?: boolean;
   };
-
-  // Premium section divider style (site-level)
   section_divider_style?: 'none' | 'standard' | 'gradient' | 'dots';
-
-  // Dedicated hero cover photo settings (new)
   hero?: {
     coverPhotoUrl?: string;
     publicId?: string;
     coverPhotoIndex?: number;
   };
-
-  // Preset information selected during create flow
   preset?: {
     id: string;
     label: string;

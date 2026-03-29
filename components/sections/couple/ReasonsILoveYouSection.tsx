@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from "react";
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import SectionHeader from '../../page/SectionHeader';
 import { useTheme } from '../../builder/ThemeWrapper';
 
@@ -12,7 +12,7 @@ interface Reason {
 }
 
 interface ReasonsILoveYouSectionProps {
-  theme: Theme;
+  theme: ThemeKey;
   partnerName: string;
   reasons?: Reason[];
   variant?: 'default' | 'alt';

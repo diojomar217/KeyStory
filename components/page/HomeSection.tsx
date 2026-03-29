@@ -2,20 +2,21 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, useAnimation, useInView } from 'framer-motion';
-import type { OccasionType, Theme, HomeTemplate } from '@/lib/types';
+import type { OccasionType, HomeTemplate } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 
 interface ParallaxImmersiveProps {
   heroImage: string;
   tagline?: string;
   normalizedDate?: string;
-  theme: Theme;
+  theme: ThemeKey;
   siteType?: string;
   customerName: string;
   partnerName: string;
 }
 
 interface HomeSectionProps {
-  theme: Theme;
+  theme: ThemeKey;
   siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
   config?: any;
   template: HomeTemplate | string;

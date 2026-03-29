@@ -1,12 +1,12 @@
 'use client';
 
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../../builder/ThemeWrapper';
 import SectionHeader from '../../page/SectionHeader';
 import ScrollReveal from '../../ui/ScrollReveal';
 
 type Props = {
-  theme: Theme;
+  theme: ThemeKey;
   message: string;
 };
 

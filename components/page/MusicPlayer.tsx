@@ -1,15 +1,16 @@
 'use client';
 
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
+import { DEFAULT_THEME } from '@/config/defaults';
 import { useTheme } from '../builder/ThemeWrapper';
 import { getMusicEmbedInfo } from '@/lib/musicEmbed';
 
 type Props = {
   songLink?: string;
-  theme?: Theme;
+  theme?: ThemeKey;
 };
 
-export default function MusicPlayer({ songLink, theme = 'romantic_classic' }: Props) {
+export default function MusicPlayer({ songLink, theme = DEFAULT_THEME }: Props) {
   const styles = useTheme(theme);
   
   if (!songLink) return null;

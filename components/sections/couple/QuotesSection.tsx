@@ -1,11 +1,12 @@
 'use client';
 
-import type { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import SectionHeader from '../../page/SectionHeader';
-import ScrollReveal from '../../ui/ScrollReveal';
+
+import ScrollReveal from '../../ui/ScrollReveal'; // Ensure this is a default import
 
 interface QuotesSectionProps {
-  theme: Theme;
+  theme: ThemeKey;
   quotes?: { id: string; text: string; author?: string }[];
   variant?: 'default' | 'alt';
 }

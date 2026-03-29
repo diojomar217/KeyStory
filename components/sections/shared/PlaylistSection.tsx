@@ -1,12 +1,12 @@
 'use client';
 
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import SectionHeader from '../../page/SectionHeader';
 import { useTheme } from '../../builder/ThemeWrapper';
 import { THEME_CONFIG } from '@/config/themeConfig';
 
 interface PlaylistSectionProps {
-  theme: Theme;
+  theme: ThemeKey;
   siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
   songLink?: string;
 }

@@ -1,8 +1,10 @@
 'use client';
 
 import React from 'react';
-import { SiteConfig, Theme, LayoutPreset, Section } from '@/lib/types';
+import { SiteConfig, LayoutPreset, Section } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { THEME_CONFIG } from '@/config/themeConfig';
+import { getThemeConfig } from '@/config/themeConfig';
 import { LAYOUT_CONFIG } from '@/config/layoutConfig';
 import { SECTION_CONFIG } from '@/config/sectionConfig';
 
@@ -31,7 +33,7 @@ export default function ReviewPublishPanel({
   onPublish,
   isPublishing = false,
 }: ReviewPublishPanelProps) {
-  const themePreset = THEME_CONFIG[config.theme];
+  const themePreset = getThemeConfig(config.theme as ThemeKey);
   const layoutPreset = LAYOUT_CONFIG.find(p => p.key === config.layout_preset);
   
   // Get enabled sections

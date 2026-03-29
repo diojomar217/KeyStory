@@ -1,7 +1,9 @@
+import { DEFAULT_THEME } from '@/config/defaults';
 import { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
-import { Theme, HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, GuestMessageRecord } from '@/lib/types';
-import LovePageClient from '@/components/page/LovePageClient';
+import type { HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, GuestMessageRecord } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
+import ClientPage from '@/components/page/ClientPage';
 import { isExpired, isArchived } from '@/lib/site-status';
 import { getPublicSiteBySlug } from '@/lib/site-data';
 
@@ -118,7 +120,7 @@ export default async function LovePage({ params }: PageProps) {
   const approvedGuestMessages = (approvedMessagesData ?? []) as GuestMessageRecord[];
   
   // Extract theme and templates with fallbacks
-  const theme: Theme = (config.theme as Theme) || 'romantic_classic';
+  const theme: ThemeKey = (config.theme as ThemeKey) || DEFAULT_THEME;
   const sections = Array.isArray(config.sections) ? config.sections : ['home'];
   const homeTemplate: HomeTemplate = (config.home_template as HomeTemplate) || 'hero_centered';
   const galleryTemplate: GalleryTemplate = (config.gallery_template as GalleryTemplate) || 'grid';
@@ -164,7 +166,7 @@ export default async function LovePage({ params }: PageProps) {
   const songAutoplay = config?.media?.song_autoplay ?? (data as any).song_autoplay ?? false;
 
   return (
-    <LovePageClient
+    <ClientPage
         siteType={siteType}
         config={config}
         slug={slug}

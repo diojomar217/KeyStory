@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { resolveHeroConfig } from '@/lib/site-type-utils';
 
 interface RomanticOpeningProps {
-  theme: Theme;
+  theme: ThemeKey;
   siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
   customerName?: string;
   partnerName?: string;

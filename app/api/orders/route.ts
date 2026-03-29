@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
     // Build base query for data
     let dataQuery = supabase
       .from('sites')
-      .select('id,slug,website_name,site_type,status,expires_at,created_at')
+      .select('id,slug,website_name,site_type,status,expires_at,created_at,config')
       .order(sortBy, { ascending: sortDirection === 'asc' })
       .range(offset, offset + limit - 1);
 
@@ -84,6 +84,7 @@ export async function GET(req: NextRequest) {
       countQuery
     ]);
 
+    console.log('[API /api/orders] Raw data from Supabase:', JSON.stringify(dataRes.data, null, 2));
     if (dataRes.error) {
       console.error('Failed to fetch orders:', dataRes.error);
       return NextResponse.json(
@@ -99,7 +100,16 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const responseData = { success: true, orders: dataRes.data, total: countRes.count };
+    // Flatten theme to top-level for each order (for admin table display)
+    const ordersWithTheme = (dataRes.data || []).map((order: any) => {
+      let theme = undefined;
+      if (order.config && typeof order.config === 'object' && order.config.theme) {
+        theme = order.config.theme;
+      }
+      return { ...order, theme };
+    });
+    const responseData = { success: true, orders: ordersWithTheme, total: countRes.count };
+    console.log('[API /api/orders] Final responseData:', JSON.stringify(responseData, null, 2));
     ordersCache[cacheKey] = { data: responseData, cachedAt: now };
     return NextResponse.json(responseData);
   } catch (err) {
