@@ -5,9 +5,9 @@ import QRCodeStyling from 'qr-code-styling';
 import { toPng } from 'html-to-image';
 import type { ThemeKey } from '@/config/themeConfig';
 import type { QrCardStyle } from '@/components/qr/QrKeepsakeCard';
-import { useTheme } from '../builder/ThemeWrapper';
+import { useTheme } from '../../builder/ThemeWrapper';
 
-import ScrollReveal from './ScrollReveal'; // Ensure this is a default import
+import ScrollReveal from '../../ui/ScrollReveal'; // Fixed import path
 
 interface Props {
   theme: ThemeKey;

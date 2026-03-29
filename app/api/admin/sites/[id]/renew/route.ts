@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getWebsiteByIdWithConfig } from '@/lib/db/websites';
 
 const addMonths = (date: Date, months: number): string => {
   const result = new Date(date);
@@ -26,8 +26,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ success: false, message: 'Invalid duration' }, { status: 400 });
     }
 
-    const { data: site, error: fetchError } = await supabase.from('sites').select('*').eq('id', id).single();
-    if (fetchError || !site) {
+    let site;
+    try {
+      site = await getWebsiteByIdWithConfig(id);
+    } catch (fetchError) {
       return NextResponse.json({ success: false, message: 'Site not found' }, { status: 404 });
     }
 

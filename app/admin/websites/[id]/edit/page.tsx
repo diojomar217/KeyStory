@@ -19,6 +19,7 @@ import type { SiteConfig, Section, SectionContentMap } from '@/lib/types';
 import type { ThemeKey } from '@/config/themeConfig';
 import { DEFAULT_THEME } from '@/config/defaults';
 import { Site } from '@/lib/supabase';
+import { getSite, updateSite } from '@/lib/api/sites';
 import { validateStep } from '@/lib/builder-steps-config';
 import bcrypt from 'bcryptjs';
 
@@ -168,11 +169,8 @@ export default function EditWebsitePage() {
 
   const fetchOrder = async () => {
     try {
-      const res = await fetch(`/api/admin?id=${id}`);
-      const data = await res.json();
-
-      if (data.site || data.order) {
-        const site: Site = (data.site || data.order) as Site;
+      const site = await getSite(id);
+      if (site) {
         // Safely extract tagline - it could be in config or at top level
         const taglineValue = typeof site.tagline === 'string' 
           ? site.tagline 
@@ -285,6 +283,13 @@ export default function EditWebsitePage() {
           : undefined;
         // Safely extract section_content (new feature)
         const sectionContentValue = site.config?.section_content || {};
+        // Ensure tagline is set in section_content.home as well
+        if (taglineValue) {
+          if (!sectionContentValue.home) sectionContentValue.home = {};
+          sectionContentValue.home.tagline = taglineValue;
+        }
+
+      
 
         // Set config and selectedPresetId from loaded data (define configPatch only once)
         const configPatch: any = {
@@ -356,7 +361,18 @@ export default function EditWebsitePage() {
         setExpirationMode(computedMode);
         setCustomExpirationDate(computedCustomDate);
 
-        setPhotoPreviews(site.photos || []);
+        // Gather all possible sources for gallery images
+        let galleryPhotos: string[] = [];
+        if (Array.isArray(site.config?.section_content?.gallery?.photos)) {
+          galleryPhotos = site.config.section_content.gallery.photos;
+        } else if (Array.isArray(site.config?.media?.photos)) {
+          galleryPhotos = site.config.media.photos;
+        } else if (Array.isArray(site.photos)) {
+          galleryPhotos = site.photos;
+        } else if (Array.isArray(site.config?.photos)) {
+          galleryPhotos = site.config.photos;
+        }
+        setPhotoPreviews(galleryPhotos);
 
         // Safely extract sections - ensure it's an array and cast to Section[]
         // ...existing code...
@@ -638,56 +654,35 @@ export default function EditWebsitePage() {
         throw new Error(err?.message || 'Invalid expiration date');
       }
 
-      const res = await fetch('/api/admin', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id,
-          website_name: form.website_name,
-          site_type: config.occasion,
-          occasion: config.occasion,
-          customer_name: form.customer_name,
-          partner_name: form.partner_name,
-          specialDate: form.specialDate || form.anniversary_date,
-          anniversary_date: form.specialDate || form.anniversary_date,
-          message: form.message,
-          tagline: form.tagline,
-          song_link: form.song_link,
-          song_autoplay: form.song_autoplay,
-          photos: allPhotos,
-          config: normalizedConfig,
-          password_input: form.password_input,
-          expires_at: expiresAt,
-          hero_photo: heroPhotoBase64,
-        }),
-      });
-
-      let resultData = null;
+      const payload = {
+        id,
+        website_name: form.website_name,
+        site_type: config.occasion,
+        occasion: config.occasion,
+        customer_name: form.customer_name,
+        partner_name: form.partner_name,
+        specialDate: form.specialDate || form.anniversary_date,
+        anniversary_date: form.specialDate || form.anniversary_date,
+        message: form.message,
+        tagline: form.tagline,
+        song_link: form.song_link,
+        song_autoplay: form.song_autoplay,
+        photos: allPhotos,
+        config: normalizedConfig,
+        password_input: form.password_input,
+        expires_at: expiresAt,
+        hero_photo: heroPhotoBase64,
+      };
       try {
-        const text = await res.text();
-        resultData = text ? JSON.parse(text) : null;
-      } catch (err) {
-        console.error('Failed to parse server response as JSON', err);
-        resultData = null;
-      }
-
-      if (res.ok) {
+        const resultData = await updateSite(payload);
         if (resultData?.warnings?.length) {
           setWarning(`Update completed with warnings: ${resultData.warnings.join('; ')}`);
         } else {
           setWarning(null);
         }
         setSuccess(true);
-      } else {
-        let errorMessage = res.statusText || 'Server error (500)';
-
-        if (resultData) {
-          errorMessage = resultData?.message || resultData?.error || errorMessage;
-          if (resultData?.warnings?.length) {
-            setWarning(`Upload warnings: ${resultData.warnings.join('; ')}`);
-          }
-        }
-
+      } catch (err: any) {
+        let errorMessage = err?.message || 'Server error (500)';
         setError(`Update failed: ${errorMessage}`);
         return;
       }

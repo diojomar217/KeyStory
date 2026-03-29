@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+
+import { deleteGuestMessage } from '@/lib/db/guestMessages';
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -35,11 +36,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     return NextResponse.json({ error: 'Message ID is required' }, { status: 400 });
   }
 
-  const { error } = await supabase.from('guest_messages').delete().eq('id', id);
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    await deleteGuestMessage(id);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
-
-  return NextResponse.json({ success: true });
 }

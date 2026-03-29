@@ -1,23 +1,22 @@
 import { cache } from 'react';
-import { supabase, Site } from '@/lib/supabase';
+import { supabase, Site, getSiteById } from '@/lib/supabase';
 import { isArchived, isExpired } from '@/lib/site-status';
 
 export type PublicSiteData = Omit<Site, 'password' | 'password_input'>;
 
-export const getPublicSiteBySlug = cache(async (slug: string): Promise<PublicSiteData | null> => {
-  if (!slug) return null;
 
+export async function getPublicSiteBySlug(slug: string): Promise<PublicSiteData | null> {
+  if (!slug) return null;
+  // getSiteById expects id, so fallback to direct query for slug
   const { data: site, error } = await supabase
     .from('sites')
     .select('*')
     .eq('website_name', slug)
     .maybeSingle();
-
   if (error) {
     console.error('[getPublicSiteBySlug] Supabase error:', error);
     throw error;
   }
-
   if (!site) return null;
 
   const status = (site.status || 'active').toString().toLowerCase();
@@ -35,4 +34,4 @@ export const getPublicSiteBySlug = cache(async (slug: string): Promise<PublicSit
     status: normalizedStatus,
     config: site.config || {},
   } as PublicSiteData;
-});
+}

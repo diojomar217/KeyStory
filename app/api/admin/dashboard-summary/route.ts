@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, getSites } from '@/lib/supabase';
 
 // Simple in-memory cache (per server instance)
 let cachedData: any = null;
@@ -28,11 +28,14 @@ export async function GET() {
     .gte('created_at', monthStart);
 
   // Get 5 most recent
-  const { data: recentWebsites, error: recentError } = await supabase
-    .from('sites')
-    .select('id,slug,website_name,site_type,status,expires_at,created_at')
-    .order('created_at', { ascending: false })
-    .limit(5);
+  let recentWebsites = [];
+  let recentError = null;
+  try {
+    const allSites = await getSites();
+    recentWebsites = (allSites || []).slice(0, 5);
+  } catch (err) {
+    recentError = err;
+  }
 
   // Get published count (active, not expired)
   const { count: publishedWebsites, error: publishedError } = await supabase

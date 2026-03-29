@@ -7,6 +7,7 @@ import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../../builder/ThemeWrapper';
 import Lightbox from '../../ui/Lightbox';
 import SectionHeader from '../../page/SectionHeader';
+import { getSectionCopy } from '@/lib/section-copy';
 import ScrollReveal from '../../ui/ScrollReveal';
 
 type Props = {
@@ -205,12 +206,17 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
       <div className="max-w-6xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <ScrollReveal animation="fade-up">
-          <SectionHeader
-            icon={siteType === 'birthday' ? '🎉' : '📸'}
-            title={siteType === 'birthday' ? 'Birthday Memories' : 'Our Memories'}
-            subtitle={siteType === 'birthday' ? 'Celebrating your most joyful moments' : 'Moments we will never forget'}
-            theme={theme}
-          />
+          {(() => {
+            const copy = getSectionCopy('gallery', siteType);
+            return (
+              <SectionHeader
+                icon={copy.icon}
+                title={copy.title}
+                subtitle={copy.subtitle}
+                theme={theme}
+              />
+            );
+          })()}
         </ScrollReveal>
 
         

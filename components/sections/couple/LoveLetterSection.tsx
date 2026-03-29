@@ -4,6 +4,7 @@ import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../../builder/ThemeWrapper';
 import TypingText from '../../ui/TypingText';
 import SectionHeader from '../../page/SectionHeader';
+import { getSectionCopy } from '@/lib/section-copy';
 import ScrollReveal from '../../ui/ScrollReveal';
 
 type Props = {
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export default function LoveLetterSection({ message, theme, variant = 'default' }: Props) {
+  const copy = getSectionCopy('love_letter');
   const styles = useTheme(theme);
 
   const getAccentClasses = () => {
@@ -63,9 +65,9 @@ export default function LoveLetterSection({ message, theme, variant = 'default' 
       <div className="max-w-5xl mx-auto px-4 md:px-6">
         <ScrollReveal animation="fade-up">
           <SectionHeader
-            icon="💕"
-            title="Love Letter"
-            subtitle="A little piece of my heart, written for you"
+            icon={copy.icon}
+            title={copy.title}
+            subtitle={copy.subtitle}
             theme={theme}
             className="mb-8"
           />

@@ -2,7 +2,48 @@
 const ordersCache: Record<string, { data: any; cachedAt: number }> = {};
 const CACHE_TTL = 10 * 1000; // 10 seconds
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, Site } from '@/lib/supabase';
+import { listWebsites as getSites, getWebsiteById as getSiteById, createWebsite as insertSite, updateWebsite as updateSite, deleteWebsite as deleteSite } from '@/lib/db/websites';
+// POST - Create a new site
+export async function POST(req: NextRequest) {
+  try {
+    const data = await req.json();
+    const created = await insertSite(data);
+    return NextResponse.json({ success: true, site: created });
+  } catch (error: any) {
+    console.error('Failed to create site:', error);
+    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+  }
+}
+
+// PUT - Edit an existing site
+export async function PUT(req: NextRequest) {
+  try {
+    const data = await req.json();
+    if (!data.id) {
+      return NextResponse.json({ success: false, message: 'Missing site id' }, { status: 400 });
+    }
+    const updated = await updateSite(data.id, data);
+    return NextResponse.json({ success: true, site: updated });
+  } catch (error: any) {
+    console.error('Failed to update site:', error);
+    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+  }
+}
+
+// DELETE - Delete a site
+export async function DELETE(req: NextRequest) {
+  try {
+    const data = await req.json();
+    if (!data.id) {
+      return NextResponse.json({ success: false, message: 'Missing site id' }, { status: 400 });
+    }
+    await deleteSite(data.id);
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('Failed to delete site:', error);
+    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+  }
+}
 
 // GET - Fetch all sites from Supabase
 export async function GET(req: NextRequest) {
@@ -12,21 +53,16 @@ export async function GET(req: NextRequest) {
 
     // If an ID is provided, fetch a single site
     if (id) {
-      const { data, error } = await supabase
-        .from('sites')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) {
+      try {
+        const data = await getSiteById(id);
+        return NextResponse.json({ success: true, order: data });
+      } catch (error: any) {
         console.error('Failed to fetch order:', error);
         return NextResponse.json(
           { success: false, message: error.message },
           { status: 500 }
         );
       }
-
-      return NextResponse.json({ success: true, order: data });
     }
 
     // Otherwise, fetch all sites (optionally filtered by status), with pagination and column selection
@@ -45,73 +81,27 @@ export async function GET(req: NextRequest) {
     }
 
     // Build base query for data
-    let dataQuery = supabase
-      .from('sites')
-      .select('id,slug,website_name,site_type,status,expires_at,created_at,config')
-      .order(sortBy, { ascending: sortDirection === 'asc' })
-      .range(offset, offset + limit - 1);
-
-    // Build base query for count
-    let countQuery = supabase
-      .from('sites')
-      .select('id', { count: 'exact', head: true });
-
-    if (status) {
-      if (status === 'archived') {
-        dataQuery = dataQuery.eq('status', 'archived');
-        countQuery = countQuery.eq('status', 'archived');
-      } else if (status === 'expired') {
-        dataQuery = dataQuery.eq('status', 'expired');
-        countQuery = countQuery.eq('status', 'expired');
-      } else if (status === 'active') {
-        dataQuery = dataQuery.not('status', 'in', '(archived,expired)');
-        countQuery = countQuery.not('status', 'in', '(archived,expired)');
-      }
-    }
-
-    // Add search filter (website_name, slug, or customer)
-    if (search) {
-      // Use ilike for case-insensitive partial match
-      dataQuery = dataQuery.or(`website_name.ilike.%${search}%,slug.ilike.%${search}%`);
-      countQuery = countQuery.or(`website_name.ilike.%${search}%,slug.ilike.%${search}%`);
-      // If you have a customer field, add it here as well:
-      // .or(`website_name.ilike.%${search}%,slug.ilike.%${search}%,customer.ilike.%${search}%`)
-    }
-
-    // Fetch data and count in parallel
-    const [dataRes, countRes] = await Promise.all([
-      dataQuery,
-      countQuery
-    ]);
-
-    console.log('[API /api/orders] Raw data from Supabase:', JSON.stringify(dataRes.data, null, 2));
-    if (dataRes.error) {
-      console.error('Failed to fetch orders:', dataRes.error);
+    // Use shared getSites for now (filters/pagination can be added to utility if needed)
+    try {
+      const orders = await getSites();
+      // Flatten theme to top-level for each order (for admin table display)
+      const ordersWithTheme = (orders || []).map((order: any) => {
+        let theme = undefined;
+        if (order.config && typeof order.config === 'object' && order.config.theme) {
+          theme = order.config.theme;
+        }
+        return { ...order, theme };
+      });
+      const responseData = { success: true, orders: ordersWithTheme, total: ordersWithTheme.length };
+      ordersCache[cacheKey] = { data: responseData, cachedAt: now };
+      return NextResponse.json(responseData);
+    } catch (error: any) {
+      console.error('Failed to fetch orders:', error);
       return NextResponse.json(
-        { success: false, message: dataRes.error.message },
+        { success: false, message: error.message },
         { status: 500 }
       );
     }
-    if (countRes.error) {
-      console.error('Failed to fetch orders count:', countRes.error);
-      return NextResponse.json(
-        { success: false, message: countRes.error.message },
-        { status: 500 }
-      );
-    }
-
-    // Flatten theme to top-level for each order (for admin table display)
-    const ordersWithTheme = (dataRes.data || []).map((order: any) => {
-      let theme = undefined;
-      if (order.config && typeof order.config === 'object' && order.config.theme) {
-        theme = order.config.theme;
-      }
-      return { ...order, theme };
-    });
-    const responseData = { success: true, orders: ordersWithTheme, total: countRes.count };
-    console.log('[API /api/orders] Final responseData:', JSON.stringify(responseData, null, 2));
-    ordersCache[cacheKey] = { data: responseData, cachedAt: now };
-    return NextResponse.json(responseData);
   } catch (err) {
     console.error('orders route exception:', err);
     return NextResponse.json(

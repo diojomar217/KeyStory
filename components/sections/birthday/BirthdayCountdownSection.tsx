@@ -52,12 +52,17 @@ export default function BirthdayCountdownSection({ theme, birthdayDate }: Props)
   return (
     <section className={`py-16 md:py-24 ${styles.sectionBg}`} id="birthday-countdown">
       <div className="max-w-4xl mx-auto px-4 md:px-6">
-        <SectionHeader
-          icon="⏳"
-          title="Birthday Countdown"
-          subtitle={`Count down to ${birthdayDate || 'the special day'}`}
-          theme={theme}
-        />
+        {(() => {
+          const copy = getSectionCopy('birthday_countdown');
+          return (
+            <SectionHeader
+              icon={copy.icon}
+              title={copy.title}
+              subtitle={copy.subtitle}
+              theme={theme}
+            />
+          );
+        })()}
 
         <div className="mt-6 grid grid-cols-4 gap-3 text-center">
           {['Days','Hours','Minutes','Seconds'].map((label, idx) => {

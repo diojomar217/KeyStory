@@ -1,6 +1,6 @@
 import { DEFAULT_THEME } from '@/config/defaults';
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, Site } from '@/lib/supabase';
+import { insertSite, updateSite, deleteSite, getSites, getSiteById, Site } from '@/lib/supabase';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 
 const normalizePasswordConfig = async (siteConfig: any, passwordInput?: string): Promise<any> => {
@@ -34,27 +34,27 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
 
-  if (id) {
-    const { data, error } = await supabase.from('sites').select('*').eq('id', id).single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ site: data });
+  try {
+    if (id) {
+      const site = await getSiteById(id);
+      return NextResponse.json({ site });
+    }
+    const orders = await getSites();
+    return NextResponse.json({ orders });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
-
-  const { data, error } = await supabase.from('sites').select('*').order('created_at', { ascending: false });
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ orders: data });
 }
 
 // POST - Create new order (legacy, for backwards compatibility)
 export async function POST(req: NextRequest) {
   try {
     const { id, status } = await req.json();
-    const { error } = await supabase.from('sites').update({ status }).eq('id', id);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    await updateSite(id, { status });
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch (err: any) {
     console.error('POST error:', err);
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    return NextResponse.json({ error: err.message || 'Invalid request' }, { status: 400 });
   }
 }
 

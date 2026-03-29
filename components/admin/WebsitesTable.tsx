@@ -244,7 +244,7 @@ export default function WebsitesTable({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
       {/* Search and Filter Bar */}
       <div className="p-4 border-b border-slate-200 bg-slate-50/50">
         <div className="flex flex-wrap gap-3">

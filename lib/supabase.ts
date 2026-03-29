@@ -40,36 +40,7 @@ export type Site = {
   photos?: string[];
 };
 
-export async function insertSite(site: Site) {
-  const { data, error } = await supabase.from('sites').insert(site).select().single();
-  if (error) throw error;
-  return data;
-}
 
-export async function updateSite(id: string, updates: Partial<Site>) {
-  const { data, error } = await supabase
-    .from('sites')
-    .update(updates)
-    .eq('id', id)
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
-}
-
-export async function deleteSite(id: string) {
-  const { error } = await supabase.from('sites').delete().eq('id', id);
-  if (error) throw error;
-}
-
-export async function getSites() {
-  const { data, error } = await supabase
-    .from('sites')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return data;
-}
 
 export async function getSiteById(id: string) {
   const { data, error } = await supabase
@@ -78,6 +49,6 @@ export async function getSiteById(id: string) {
     .eq('id', id)
     .single();
   if (error) throw error;
-  return data;
+  return data || null;
 }
 

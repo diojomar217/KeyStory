@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import fetch from 'node-fetch';
 import cloudinary, { uploadToCloudinary } from '@/lib/cloudinary';
-import { supabase, Site } from '@/lib/supabase';
+import { supabase, Site } from '@/lib/supabase'; // No change needed, not direct site CRUD
 import { uploadArchivePackage } from '@/lib/archive-storage';
 
 function sanitizeFileName(url: string): string {

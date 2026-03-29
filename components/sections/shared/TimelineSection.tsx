@@ -6,17 +6,20 @@ import type { TimelineTemplate, TimelineEvent } from '@/lib/types';
 import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../../builder/ThemeWrapper';
 import SectionHeader from '../../page/SectionHeader';
+import { getSectionCopy } from '@/lib/section-copy';
 import ScrollReveal from '../../ui/ScrollReveal';
 import Lightbox from '../../ui/Lightbox';
+
 
 type Props = {
   theme: ThemeKey;
   template: TimelineTemplate;
   events: TimelineEvent[];
   variant?: 'default' | 'alt';
+  siteType?: string;
 };
 
-export default function TimelineSection({ theme, template, events, variant = 'default' }: Props) {
+export default function TimelineSection({ theme, template, events, variant = 'default', siteType }: Props) {
   const styles = useTheme(theme);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -412,12 +415,17 @@ export default function TimelineSection({ theme, template, events, variant = 'de
       <div className="max-w-5xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <ScrollReveal animation="fade-up">
-          <SectionHeader
-            icon="📖"
-            title="Our Love Story"
-            subtitle="The beautiful journey of us"
-            theme={theme}
-          />
+          {(() => {
+            const copy = getSectionCopy('timeline', siteType);
+            return (
+              <SectionHeader
+                icon={copy.icon}
+                title={copy.title}
+                subtitle={copy.subtitle}
+                theme={theme}
+              />
+            );
+          })()}
         </ScrollReveal>
         
         {/* Timeline Content */}

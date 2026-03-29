@@ -6,6 +6,7 @@ import type { ThemeKey } from '@/config/themeConfig';
 import { getThemeStyles } from '@/config/themeStyles';
 import { getMusicEmbedInfo } from '@/lib/musicEmbed';
 import SectionHeader from '../../page/SectionHeader';
+import { getSectionCopy } from '@/lib/section-copy';
 import ScrollReveal from '../../ui/ScrollReveal';
 
 interface SongSectionProps {
@@ -47,12 +48,17 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
       <section className={`${styles.sectionBgAlt} py-16 md:py-24 w-full`}>
         <div className="max-w-xl mx-auto px-4 md:px-6">
           <ScrollReveal animation="fade-up">
-            <SectionHeader
-              icon="🎵"
-              title="Our Song"
-              subtitle="A song that reminds us of our favorite moments together"
-              theme={theme}
-            />
+            {(() => {
+              const copy = getSectionCopy('song', siteType);
+              return (
+                <SectionHeader
+                  icon={copy.icon}
+                  title={copy.title}
+                  subtitle={copy.subtitle}
+                  theme={theme}
+                />
+              );
+            })()}
           </ScrollReveal>
           <div className={`${styles.card} ${styles.cardBorder} border rounded-2xl p-6 text-center shadow-xl`}>
             <p className={`${styles.textMuted}`}>Invalid song link. Please provide a valid YouTube or Spotify link.</p>
@@ -75,12 +81,17 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
       <div className="max-w-xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <ScrollReveal animation="fade-up">
-          <SectionHeader
-            icon="🎵"
-            title="Our Song"
-            subtitle="A song that reminds us of our favorite moments together"
-            theme={theme}
-          />
+          {(() => {
+            const copy = getSectionCopy('song', siteType);
+            return (
+              <SectionHeader
+                icon={copy.icon}
+                title={copy.title}
+                subtitle={copy.subtitle}
+                theme={theme}
+              />
+            );
+          })()}
         </ScrollReveal>
 
         {/* Premium Video Container with Waveform Animation */}

@@ -1,7 +1,7 @@
 import { DEFAULT_THEME } from '@/config/defaults';
 // app/api/order.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, Site } from '@/lib/supabase';
+import { insertSite, Site } from '@/lib/supabase';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import { generateQRCode } from '@/lib/qrcode';
 import { v4 as uuidv4 } from 'uuid';
@@ -77,8 +77,8 @@ export async function POST(req: NextRequest) {
     tagline: data.tagline || data.config?.tagline || '',
   };
 
-  const { data: site, error } = await supabase.from('sites').insert([
-    {
+  try {
+    await insertSite({
       slug: baseSlug,
       website_name: websiteSlug,
       site_type: data.occasion || 'couple',
@@ -87,12 +87,9 @@ export async function POST(req: NextRequest) {
       archived_at: null,
       qr_code_url: qrCodeUrl,
       config: siteConfig,
-    },
-  ]).select().single();
-
-  if (error) {
+    });
+    return NextResponse.json({ slug: websiteSlug, coupleUrl, qrCodeUrl });
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-
-  return NextResponse.json({ slug: websiteSlug, coupleUrl, qrCodeUrl });
 }

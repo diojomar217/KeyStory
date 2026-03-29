@@ -192,9 +192,15 @@ export default function SectionContentInputs({
 									name="tagline"
 									maxLength={120}
 									placeholder="Every love story is beautiful, but ours is my favorite."
-									value={config.tagline || ''}
+									value={section_content.home?.tagline ?? config.tagline ?? ''}
 									className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
-									onChange={e => onSectionContentChange('home', { ...section_content.home, tagline: e.target.value })}
+									onChange={e => {
+									// Update both config.tagline and section_content.home.tagline
+									onSectionContentChange('home', { ...section_content.home, tagline: e.target.value });
+									if (typeof config === 'object') {
+										config.tagline = e.target.value;
+									}
+								}}
 								/>
 								<p className="text-xs text-slate-400 mt-1">A short romantic line shown in the hero section. (Max 120 characters)</p>
 								<label className="block text-sm font-medium text-slate-600 mb-1.5 mt-4">Dedicated Hero Cover Photo</label>

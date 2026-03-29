@@ -1,5 +1,6 @@
 import {NextRequest, NextResponse} from 'next/server';
 import {supabase} from '@/lib/supabase';
+import { insertAnalyticsEvent } from '@/lib/db/analytics';
 import {createHash} from 'crypto';
 
 const allowedEventTypes = ['page_view', 'qr_scan'] as const;
@@ -45,16 +46,16 @@ export async function POST(req: NextRequest) {
     const referrer = sanitizeText(req.headers.get('referer') || '', 1024);
     const ip_hash = getIpHash(req);
 
-    const {error: insertError} = await supabase.from('site_analytics_events').insert({
-      site_id: site.id,
-      event_type,
-      source,
-      user_agent,
-      referrer,
-      ip_hash,
-    });
-
-    if (insertError) {
+    try {
+      await insertAnalyticsEvent({
+        site_id: site.id,
+        event_type,
+        source,
+        user_agent,
+        referrer,
+        ip_hash,
+      });
+    } catch (insertError) {
       console.error('Analytics insert error:', insertError);
       return NextResponse.json({error: 'Failed to record analytics event'}, {status: 500});
     }

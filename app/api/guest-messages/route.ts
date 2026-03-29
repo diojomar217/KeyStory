@@ -84,14 +84,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Please wait before sending the same message again.' }, { status: 429 });
     }
 
-    const { error: insertError } = await supabase.from('guest_messages').insert({
-      site_id: site.id,
-      name,
-      message,
-      status: 'pending',
-    });
 
-    if (insertError) {
+    try {
+      await (await import('@/lib/db/guestMessages')).insertGuestMessage({
+        site_id: site.id,
+        name,
+        message,
+      });
+    } catch (insertError) {
       console.error('Insert guest message error', insertError);
       return NextResponse.json({ error: 'Could not submit message' }, { status: 500 });
     }

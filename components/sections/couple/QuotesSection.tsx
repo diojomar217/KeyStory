@@ -2,6 +2,7 @@
 
 import type { ThemeKey } from '@/config/themeConfig';
 import SectionHeader from '../../page/SectionHeader';
+import { getSectionCopy } from '@/lib/section-copy';
 
 import ScrollReveal from '../../ui/ScrollReveal'; // Ensure this is a default import
 
@@ -29,12 +30,17 @@ export default function QuotesSection({
     <section className="relative py-20 md:py-24" id="quotes">
       <div className="max-w-6xl mx-auto px-6 lg:px-8">
         <ScrollReveal animation="fade-up">
-          <SectionHeader
-            icon="💕"
-            title="Love Quotes"
-            subtitle="Words that capture our feelings"
-            theme={theme}
-          />
+          {(() => {
+            const copy = getSectionCopy('quotes');
+            return (
+              <SectionHeader
+                icon={copy.icon}
+                title={copy.title}
+                subtitle={copy.subtitle}
+                theme={theme}
+              />
+            );
+          })()}
         </ScrollReveal>
 
         <ScrollReveal animation="fade-up" delay={200}>
