@@ -182,6 +182,11 @@ export interface SiteConfig {
   };
   password_input?: string;
   section_content?: SectionContentMap;
+  // Legacy template fields (use section_templates instead)
+  home_template?: string;
+  gallery_template?: string;
+  timeline_template?: string;
+  song_template?: string;
   qr?: {
     color?: string;
     background?: string;
@@ -416,12 +421,18 @@ export interface SectionContentMap {
   timeline?: TimelineEvent[];
   first_date?: {
     content?: string;
+    title?: string;
+    date?: string;
+    location?: string;
+    description?: string;
   };
   special_moments?: {
     content?: string;
+    moments?: SpecialMoment[];
   };
   milestones?: {
     content?: string;
+    milestones?: Milestone[];
   };
   travel_notes?: {
     content?: string;

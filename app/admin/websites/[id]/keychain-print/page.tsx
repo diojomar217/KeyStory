@@ -6,7 +6,7 @@ import KeychainInsertPreview from '@/components/product/KeychainInsertPreview';
 import KeychainPrintSheet from '@/components/product/KeychainPrintSheet';
 import { Site } from '@/lib/supabase';
 import { getSite } from '@/lib/api/sites';
-import { KeychainSize, KEYCHAIN_SIZES } from '@/components/product/KeychainSizeConfig';
+import { KeychainSize, KEYCHAIN_SIZES, findKeychainSize } from '@/components/product/KeychainSizeConfig';
 import {
   createDefaultPhotoTransform,
   duplicateConfig,
@@ -17,35 +17,49 @@ import {
   SharedQrDesign,
   validateScanability,
 } from '@/components/product/print-builder-shared';
+import {
+  PRODUCT_EXPANSION_PRESETS,
+  getProductExpansionPreset,
+  type ProductExpansionPreset,
+} from '@/config/productExpansion';
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
 type InsertConfig = {
+  productPresetId: ProductExpansionPreset['id'];
   size: KeychainSize;
   customWidth: number;
   customHeight: number;
   caption: string;
+  subtitle: string;
   copies: number;
   photoIndex: number;
   photoTransform: PhotoTransform;
+  sheetMode: 'front-back-pair' | 'qr-only';
+  backSideVariant: 'photo' | 'engraved';
   useCustomQr: boolean;
   qrPreset: QrPreset;
   qrDesign: SharedQrDesign;
 };
 
-export default function KeychainPrintPage({ params }: PageProps) {
-  const { id } = use(params);
+const buildInsertConfigFromPreset = (presetId: ProductExpansionPreset['id']): InsertConfig => {
+  const preset = getProductExpansionPreset(presetId) || PRODUCT_EXPANSION_PRESETS[0];
+  const size = findKeychainSize(preset.sizeLabel) || KEYCHAIN_SIZES[1];
 
-  const createDefaultInsertConfig = (): InsertConfig => ({
-    size: KEYCHAIN_SIZES[1],
-    customWidth: 30.5,
-    customHeight: 47,
-    caption: 'Scan our love story',
-    copies: 12,
+  return {
+    productPresetId: preset.id,
+    size,
+    customWidth: size.width_mm || 30.5,
+    customHeight: size.height_mm || 47,
+    caption: preset.defaultCaption,
+    subtitle: preset.defaultSubtitle,
+    copies: preset.defaultCopies,
     photoIndex: 0,
     photoTransform: createDefaultPhotoTransform(),
+    sheetMode: preset.sheetMode,
+    backSideVariant: preset.backSideVariant,
     useCustomQr: false,
     qrPreset: 'classic',
     qrDesign: {
@@ -57,13 +71,17 @@ export default function KeychainPrintPage({ params }: PageProps) {
       cornersDotType: 'dot',
       logoUrl: '/heart-icon.svg',
     },
-  });
+  };
+};
+
+export default function KeychainPrintPage({ params }: PageProps) {
+  const { id } = use(params);
 
   const [order, setOrder] = useState<Site | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [insertConfigs, setInsertConfigs] = useState<InsertConfig[]>([createDefaultInsertConfig()]);
+  const [insertConfigs, setInsertConfigs] = useState<InsertConfig[]>([buildInsertConfigFromPreset('nfc_keychain')]);
   const [activeConfigIndex, setActiveConfigIndex] = useState(0);
   const [pairsPerRow, setPairsPerRow] = useState(2);
   const [showGuides, setShowGuides] = useState(true);
@@ -102,6 +120,22 @@ export default function KeychainPrintPage({ params }: PageProps) {
 
   const updateInsertConfig = (index: number, updater: (config: InsertConfig) => InsertConfig) => {
     setInsertConfigs((prev) => prev.map((cfg, i) => (i === index ? updater(cfg) : cfg)));
+  };
+
+  const applyProductPreset = (index: number, presetId: ProductExpansionPreset['id']) => {
+    const presetConfig = buildInsertConfigFromPreset(presetId);
+    updateInsertConfig(index, (prev) => ({
+      ...prev,
+      productPresetId: presetConfig.productPresetId,
+      size: presetConfig.size,
+      customWidth: presetConfig.customWidth,
+      customHeight: presetConfig.customHeight,
+      caption: presetConfig.caption,
+      subtitle: presetConfig.subtitle,
+      copies: presetConfig.copies,
+      sheetMode: presetConfig.sheetMode,
+      backSideVariant: presetConfig.backSideVariant,
+    }));
   };
 
   const removeInsertConfig = (index: number) => {
@@ -195,7 +229,7 @@ export default function KeychainPrintPage({ params }: PageProps) {
     const usableWidthMm = pageWidthMm - outerMarginMm * 2;
     const usableHeightMm = pageHeightMm - outerMarginMm * 2;
 
-    const pairWidthMm = widthMm * 2;
+    const pairWidthMm = activeConfig.sheetMode === 'qr-only' ? widthMm : widthMm * 2;
     const estimatedPairsPerRow = Math.max(
       1,
       Math.min(
@@ -307,9 +341,9 @@ export default function KeychainPrintPage({ params }: PageProps) {
       <div className="print:hidden mb-6">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Keychain Print Maker</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Product Print Maker</h1>
             <p className="text-slate-500 mt-1">
-              {coupleNames} • {activeConfig.size.label} ({widthMm}mm × {heightMm}mm)
+              {coupleNames} • {getProductExpansionPreset(activeConfig.productPresetId)?.label || activeConfig.size.label} ({widthMm}mm × {heightMm}mm)
             </p>
           </div>
 
@@ -330,7 +364,7 @@ export default function KeychainPrintPage({ params }: PageProps) {
       <div className="print:hidden">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-4 space-y-6">
-            <h2 className="text-lg font-semibold mb-2">Select Insert Sizes, Captions & Quantities</h2>
+            <h2 className="text-lg font-semibold mb-2">Select Product Formats, Captions & Quantities</h2>
 
             <div className="space-y-4">
               {insertConfigs.map((cfg, idx) => {
@@ -381,6 +415,26 @@ export default function KeychainPrintPage({ params }: PageProps) {
                     </div>
 
                     <div className="mt-3 space-y-3">
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                        <label className="flex flex-col text-sm font-semibold text-slate-800">
+                          Product preset
+                          <select
+                            value={cfg.productPresetId}
+                            onChange={(e) => applyProductPreset(idx, e.target.value as ProductExpansionPreset['id'])}
+                            className="mt-1 border rounded px-2 py-1 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-slate-900"
+                          >
+                            {PRODUCT_EXPANSION_PRESETS.map((preset) => (
+                              <option key={preset.id} value={preset.id}>
+                                {preset.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <p className="mt-2 text-xs text-slate-500">
+                          {getProductExpansionPreset(cfg.productPresetId)?.description}
+                        </p>
+                      </div>
+
                       <KeychainTypeSelector
                         selectedSize={cfg.size}
                         onSizeChange={(size) => {
@@ -396,7 +450,7 @@ export default function KeychainPrintPage({ params }: PageProps) {
                         }}
                       />
 
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <label className="flex flex-col text-sm font-semibold text-slate-800">
                           Caption
                           <input
@@ -412,6 +466,58 @@ export default function KeychainPrintPage({ params }: PageProps) {
                             className="mt-1 border rounded px-2 py-1 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-slate-900"
                             maxLength={30}
                           />
+                        </label>
+
+                        <label className="flex flex-col text-sm font-semibold text-slate-800">
+                          Back-side note
+                          <input
+                            type="text"
+                            value={cfg.subtitle}
+                            onChange={(e) => {
+                              updateInsertConfig(idx, (prev) => ({
+                                ...prev,
+                                subtitle: e.target.value,
+                              }));
+                            }}
+                            placeholder="Back-side note"
+                            className="mt-1 border rounded px-2 py-1 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-slate-900"
+                            maxLength={60}
+                          />
+                        </label>
+
+                        <label className="flex flex-col text-sm font-semibold text-slate-800">
+                          Sheet mode
+                          <select
+                            value={cfg.sheetMode}
+                            onChange={(e) => {
+                              updateInsertConfig(idx, (prev) => ({
+                                ...prev,
+                                sheetMode: e.target.value as InsertConfig['sheetMode'],
+                              }));
+                            }}
+                            className="mt-1 border rounded px-2 py-1 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-slate-900"
+                          >
+                            <option value="front-back-pair">Front + back pair</option>
+                            <option value="qr-only">QR-only sheet</option>
+                          </select>
+                        </label>
+
+                        <label className="flex flex-col text-sm font-semibold text-slate-800">
+                          Back side style
+                          <select
+                            value={cfg.backSideVariant}
+                            onChange={(e) => {
+                              updateInsertConfig(idx, (prev) => ({
+                                ...prev,
+                                backSideVariant: e.target.value as InsertConfig['backSideVariant'],
+                              }));
+                            }}
+                            disabled={cfg.sheetMode === 'qr-only'}
+                            className="mt-1 border rounded px-2 py-1 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-slate-900 disabled:bg-slate-100"
+                          >
+                            <option value="photo">Photo back</option>
+                            <option value="engraved">Engraved back</option>
+                          </select>
                         </label>
 
                         <label className="flex flex-col text-sm font-semibold text-slate-800">
@@ -773,7 +879,7 @@ export default function KeychainPrintPage({ params }: PageProps) {
                 type="button"
                 className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-rose-100 rounded-xl text-rose-700 font-medium hover:bg-rose-200"
                 onClick={() => {
-                  setInsertConfigs((prev) => [...prev, createDefaultInsertConfig()]);
+                  setInsertConfigs((prev) => [...prev, buildInsertConfigFromPreset('wallet_insert')]);
                   setActiveConfigIndex(insertConfigs.length);
                 }}
               >
@@ -790,7 +896,9 @@ export default function KeychainPrintPage({ params }: PageProps) {
 
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between gap-3">
-                    <label className="text-sm font-semibold text-slate-700">Pairs per row</label>
+                    <label className="text-sm font-semibold text-slate-700">
+                      {activeConfig.sheetMode === 'qr-only' ? 'Pieces per row' : 'Pairs per row'}
+                    </label>
                     <select
                       value={pairsPerRow}
                       onChange={(e) => setPairsPerRow(Number(e.target.value))}
@@ -896,6 +1004,10 @@ export default function KeychainPrintPage({ params }: PageProps) {
               coverPhotoUrl={activePhotoUrl}
               coupleNames={coupleNames}
               caption={activeConfig.caption}
+              sheetMode={activeConfig.sheetMode}
+              backSideVariant={activeConfig.backSideVariant}
+              backSideSubtitle={activeConfig.subtitle}
+              printModeLabel={getProductExpansionPreset(activeConfig.productPresetId)?.label}
               qrScale={qrScale}
               qrDesign={activeConfig.useCustomQr ? activeConfig.qrDesign : undefined}
               photoTransform={activeConfig.photoTransform}
@@ -922,6 +1034,9 @@ export default function KeychainPrintPage({ params }: PageProps) {
                     copies={cfg.copies}
                     pairsPerRow={pairsPerRow}
                     showGuides={showGuides}
+                    sheetMode={cfg.sheetMode}
+                    backSideVariant={cfg.backSideVariant}
+                    backSideSubtitle={cfg.subtitle}
                     qrScale={qrScale}
                     qrDesign={cfg.useCustomQr ? cfg.qrDesign : undefined}
                     photoTransform={cfg.photoTransform}
@@ -952,6 +1067,9 @@ export default function KeychainPrintPage({ params }: PageProps) {
               copies={cfg.copies}
               pairsPerRow={pairsPerRow}
               showGuides={showGuides}
+              sheetMode={cfg.sheetMode}
+              backSideVariant={cfg.backSideVariant}
+              backSideSubtitle={cfg.subtitle}
               qrScale={qrScale}
               qrDesign={cfg.useCustomQr ? cfg.qrDesign : undefined}
               photoTransform={cfg.photoTransform}

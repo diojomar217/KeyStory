@@ -2,6 +2,7 @@
 
 import type { TimelineEvent } from '@/lib/types';
 import type { ThemeKey } from '@/config/themeConfig';
+import { getSectionCopy } from '@/lib/section-copy';
 import { useTheme } from '../../builder/ThemeWrapper';
 import SectionHeader from '../../page/SectionHeader';
 import TimelineSection from '../shared/TimelineSection';

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getWebsiteByIdWithConfig } from '@/lib/db/websites';
 import { createArchiveForSite } from '@/lib/archiver';
+import { recordAdminAudit } from '@/lib/reliability/audit';
+import { captureError } from '@/lib/reliability/monitoring';
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -35,13 +37,27 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         console.warn('Revalidate path failed on archive:', err);
       }
 
+      await recordAdminAudit(req, {
+        action: 'admin.site.archive',
+        targetType: 'site',
+        targetId: id,
+        success: true,
+      });
+
       return NextResponse.json({ success: true, archived_at: new Date().toISOString(), archive: archiveResult });
     } catch (archiveErr) {
-      console.error('Failed to archive site data:', archiveErr);
+      await captureError('admin-site-archive', archiveErr, { siteId: id });
+      await recordAdminAudit(req, {
+        action: 'admin.site.archive',
+        targetType: 'site',
+        targetId: id,
+        success: false,
+        details: { error: archiveErr instanceof Error ? archiveErr.message : String(archiveErr) },
+      });
       return NextResponse.json({ success: false, message: 'Failed to create archive package' }, { status: 500 });
     }
   } catch (err) {
-    console.error('Archive site error:', err);
+    await captureError('admin-site-archive', err);
     return NextResponse.json({ success: false, message: 'Invalid request' }, { status: 400 });
   }
 }

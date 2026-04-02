@@ -7,6 +7,7 @@ import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../../builder/ThemeWrapper';
 import SectionHeader from '../../page/SectionHeader';
 import { getSectionCopy } from '@/lib/section-copy';
+import type { SiteTypeKey } from '@/config/siteTypeConfig';
 import ScrollReveal from '../../ui/ScrollReveal';
 import Lightbox from '../../ui/Lightbox';
 
@@ -416,7 +417,7 @@ export default function TimelineSection({ theme, template, events, variant = 'de
         {/* Section Header */}
         <ScrollReveal animation="fade-up">
           {(() => {
-            const copy = getSectionCopy('timeline', siteType);
+            const copy = getSectionCopy('timeline', siteType as SiteTypeKey | undefined);
             return (
               <SectionHeader
                 icon={copy.icon}

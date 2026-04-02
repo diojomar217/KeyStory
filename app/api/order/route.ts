@@ -9,6 +9,10 @@ import { DEFAULT_THEME } from '@/config/defaults';
 import { createHash } from 'crypto';
 import { getIdempotencyReplay, saveIdempotencyResult } from '@/lib/db/idempotency';
 import { validateAndNormalizeSiteConfig } from '@/lib/site-config-validation';
+import { enforceRateLimit } from '@/lib/reliability/rate-limit';
+import { captureError } from '@/lib/reliability/monitoring';
+import { enqueueJob } from '@/lib/reliability/job-queue';
+import { featureFlags } from '@/lib/reliability/feature-flags';
 
 const addMonths = (date: Date, months: number): string => {
   const result = new Date(date);
@@ -118,6 +122,13 @@ interface OrderRequest {
 }
 
 export async function POST(req: NextRequest) {
+  const limited = enforceRateLimit(req, {
+    keyPrefix: 'api:order:create',
+    limit: 20,
+    windowMs: 60 * 1000,
+  });
+  if (limited) return limited;
+
   try {
     const rawBody = await req.text();
     const data: OrderRequest = JSON.parse(rawBody || '{}');
@@ -344,6 +355,19 @@ export async function POST(req: NextRequest) {
       console.warn('Revalidate path failed on create site:', err);
     }
 
+    if (
+      featureFlags.retryFailedUploads() &&
+      featureFlags.backgroundJobQueue() &&
+      site?.id &&
+      (photoUploadWarnings.length > 0 || heroUploadWarning)
+    ) {
+      try {
+        await enqueueJob('retry_site_media_upload', { siteId: site.id });
+      } catch (queueError) {
+        await captureError('order-create-enqueue-retry', queueError, { siteId: site.id });
+      }
+    }
+
     const responsePayload = {
       success: true,
       slug,
@@ -361,7 +385,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(responsePayload);
   } catch (err) {
-    console.error('order route exception', err);
+    await captureError('order-create', err);
     return NextResponse.json({ success: false, message: 'Invalid request' }, { status: 400 });
   }
 }

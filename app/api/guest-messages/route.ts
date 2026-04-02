@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { enforceRateLimit } from '@/lib/reliability/rate-limit';
+import { captureError } from '@/lib/reliability/monitoring';
 
 const cleanText = (value: unknown): string => {
   if (typeof value !== 'string') return '';
@@ -39,6 +41,13 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const limited = enforceRateLimit(req, {
+    keyPrefix: 'api:guest-messages:post',
+    limit: 12,
+    windowMs: 60 * 1000,
+  });
+  if (limited) return limited;
+
   try {
     const body = await req.json();
     const slug = cleanText(body.slug);
@@ -98,7 +107,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error('Guest messages POST error', err);
+    await captureError('guest-messages-post', err);
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 }

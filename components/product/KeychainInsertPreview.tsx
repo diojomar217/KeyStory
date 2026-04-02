@@ -14,6 +14,10 @@ interface KeychainInsertPreviewProps {
   coverPhotoUrl?: string;
   coupleNames: string;
   caption?: string;
+  sheetMode?: 'front-back-pair' | 'qr-only';
+  backSideVariant?: 'photo' | 'engraved';
+  backSideSubtitle?: string;
+  printModeLabel?: string;
   qrScale?: number;
   photoTransform?: {
     zoom: number;
@@ -40,6 +44,10 @@ export default function KeychainInsertPreview({
   coverPhotoUrl,
   coupleNames,
   caption = 'Scan our love story',
+  sheetMode = 'front-back-pair',
+  backSideVariant = 'photo',
+  backSideSubtitle,
+  printModeLabel,
   qrScale = 1,
   photoTransform,
   qrDesign,
@@ -99,28 +107,37 @@ export default function KeychainInsertPreview({
           </div>
         </div>
 
-        <div className="flex flex-col items-center">
-          <p className="text-sm font-semibold text-slate-700 mb-2">Photo Side</p>
-          <div style={cardWrapStyle}>
-            <KeychainInsertPhoto
-              widthMm={widthMm}
-              heightMm={heightMm}
-              shape={shape}
-              coverPhotoUrl={coverPhotoUrl}
-              coupleNames={coupleNames}
-              scale={2}
-              printMode={false}
-              showGuides={true}
-              photoTransform={photoTransform}
-            />
+        {sheetMode === 'front-back-pair' ? (
+          <div className="flex flex-col items-center">
+            <p className="text-sm font-semibold text-slate-700 mb-2">
+              {backSideVariant === 'engraved' ? 'Engraved Back' : 'Photo Side'}
+            </p>
+            <div style={cardWrapStyle}>
+              <KeychainInsertPhoto
+                widthMm={widthMm}
+                heightMm={heightMm}
+                shape={shape}
+                coverPhotoUrl={coverPhotoUrl}
+                coupleNames={coupleNames}
+                variant={backSideVariant}
+                subtitle={backSideSubtitle}
+                scale={2}
+                printMode={false}
+                showGuides={true}
+                photoTransform={photoTransform}
+              />
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
 
       <p className="text-center text-xs text-slate-500 mt-4">
         Actual size: {widthMm}mm × {heightMm}mm (
         {shape === 'heart' ? 'Heart' : shape === 'square' ? 'Square' : 'Rectangle'})
       </p>
+      {printModeLabel ? (
+        <p className="text-center text-xs text-slate-500 mt-1">Format: {printModeLabel}</p>
+      ) : null}
     </div>
   );
 }

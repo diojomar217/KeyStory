@@ -3,6 +3,7 @@
 import { Section } from '@/lib/types';
 import { SECTION_CONFIG } from '@/config/sectionConfig';
 import { getAllowedSections, getDefaultSelections } from '@/lib/config-helpers';
+import type { SiteTypeKey } from '@/config/siteTypeConfig';
 import { getSectionMetadata, getRelatedSectionRecommendations } from '@/lib/section-registry';
 import { OccasionType } from '@/lib/occasion-registry';
 import React, { useState } from 'react';
@@ -285,7 +286,7 @@ export default function SectionSelector({ value, onChange, siteType }: Props) {
   const [showAllSections, setShowAllSections] = useState(false);
 
   // Get allowed sections for the selected site type
-  const allSections = getAllowedSections(siteType);
+  const allSections: Section[] = getAllowedSections(siteType as SiteTypeKey);
 
   // Get required/optional sections from allowed
   const requiredSections = allSections.filter((id: Section) => {
@@ -358,9 +359,9 @@ export default function SectionSelector({ value, onChange, siteType }: Props) {
 
   const handleSelectPopular = () => {
     // Use default sections from config for this site type
-    const { defaultSections } = getDefaultSelections(siteType);
+    const { defaultSections } = getDefaultSelections(siteType as SiteTypeKey);
     // Only include allowed sections
-    const sanitized = (defaultSections || []).filter((section: Section) => allSections.includes(section));
+    const sanitized: Section[] = (defaultSections as Section[] || []).filter((s) => allSections.includes(s));
     // Add related suggestions as part of adaptive defaults
     const autoSuggestions = getRelatedSectionRecommendations(sanitized)
       .filter((section) => allSections.includes(section) && !sanitized.includes(section));

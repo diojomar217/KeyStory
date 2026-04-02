@@ -2,6 +2,8 @@ import {NextRequest, NextResponse} from 'next/server';
 import {supabase} from '@/lib/supabase';
 import { insertAnalyticsEvent } from '@/lib/db/analytics';
 import {createHash} from 'crypto';
+import { enforceRateLimit } from '@/lib/reliability/rate-limit';
+import { captureError } from '@/lib/reliability/monitoring';
 
 const allowedEventTypes = ['page_view', 'qr_scan'] as const;
 
@@ -22,6 +24,13 @@ const getIpHash = (req: NextRequest): string | null => {
 };
 
 export async function POST(req: NextRequest) {
+  const limited = enforceRateLimit(req, {
+    keyPrefix: 'api:analytics:event',
+    limit: 60,
+    windowMs: 60 * 1000,
+  });
+  if (limited) return limited;
+
   try {
     const data = await req.json();
     const slug = sanitizeText(data.slug, 100);
@@ -62,7 +71,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({success: true});
   } catch (err) {
-    console.error('Analytics POST error:', err);
+    await captureError('analytics-event-post', err);
     return NextResponse.json({error: 'Invalid request'}, {status: 400});
   }
 }

@@ -14,6 +14,8 @@ interface KeychainInsertPhotoProps {
   shape?: KeychainShape;
   coverPhotoUrl?: string;
   coupleNames: string;
+  variant?: 'photo' | 'engraved';
+  subtitle?: string;
   scale?: number;
   printMode?: boolean;
   showGuides?: boolean;
@@ -30,6 +32,8 @@ export default function KeychainInsertPhoto({
   shape = 'rectangle',
   coverPhotoUrl,
   coupleNames,
+  variant = 'photo',
+  subtitle,
   scale = 1,
   printMode = false,
   showGuides = true,
@@ -55,6 +59,72 @@ export default function KeychainInsertPhoto({
     shape === 'heart'
       ? Math.max(7, Math.min(10, widthMm * 0.16))
       : Math.max(7, Math.min(10.5, widthMm * 0.19));
+  const subtitleFontSize = Math.max(5.8, Math.min(8.4, widthMm * 0.12));
+
+  const renderEngravedFace = () => (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        padding: printMode ? '1.6mm' : '8%',
+        background:
+          'linear-gradient(145deg, #fbfaf8 0%, #e7ded2 30%, #b9ad9d 55%, #f7f3ed 100%)',
+        color: '#2f261f',
+        boxSizing: 'border-box',
+      }}
+    >
+      <div
+        style={{
+          width: '72%',
+          height: '1px',
+          background: 'rgba(82, 65, 48, 0.35)',
+          marginBottom: printMode ? '1.2mm' : '10%',
+        }}
+      />
+      <p
+        className="font-semibold"
+        style={{
+          fontFamily: 'Georgia, "Times New Roman", serif',
+          fontSize: `${Math.max(nameFontSize, 8.5)}px`,
+          lineHeight: 1.12,
+          letterSpacing: '0.08em',
+          margin: 0,
+          textTransform: 'uppercase',
+          wordBreak: 'break-word',
+        }}
+      >
+        {coupleNames}
+      </p>
+      {subtitle ? (
+        <p
+          style={{
+            fontFamily: 'Georgia, "Times New Roman", serif',
+            fontSize: `${subtitleFontSize}px`,
+            lineHeight: 1.25,
+            letterSpacing: '0.04em',
+            margin: printMode ? '1mm 0 0' : '8% 0 0',
+            opacity: 0.85,
+            wordBreak: 'break-word',
+          }}
+        >
+          {subtitle}
+        </p>
+      ) : null}
+      <div
+        style={{
+          width: '54%',
+          height: '1px',
+          background: 'rgba(82, 65, 48, 0.35)',
+          marginTop: printMode ? '1.2mm' : '10%',
+        }}
+      />
+    </div>
+  );
 
   if (shape === 'heart') {
     const heartContainerStyle: CSSProperties = {
@@ -129,7 +199,7 @@ export default function KeychainInsertPhoto({
               padding: 0,
             }}
           >
-            {coverPhotoUrl ? (
+            {variant === 'engraved' ? renderEngravedFace() : coverPhotoUrl ? (
               <Image
                 src={coverPhotoUrl}
                 alt="Couple Cover Photo"
@@ -200,7 +270,7 @@ export default function KeychainInsertPhoto({
     <div style={containerStyle}>
       <div style={polaroidStyle}>
         <div style={photoFrameStyle}>
-          {coverPhotoUrl ? (
+          {variant === 'engraved' ? renderEngravedFace() : coverPhotoUrl ? (
             <Image
               src={coverPhotoUrl}
               alt="Couple Cover Photo"
@@ -215,7 +285,7 @@ export default function KeychainInsertPhoto({
           )}
         </div>
 
-        {coupleNames && (
+        {coupleNames && variant !== 'engraved' && (
           <div style={nameWrapStyle}>
             <p
               className="text-slate-900 font-semibold"

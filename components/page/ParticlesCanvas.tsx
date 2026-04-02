@@ -11,7 +11,7 @@ interface ParticlesCanvasProps {
 export default function ParticlesCanvas({ theme, className = '' }: ParticlesCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const getParticleColor = (theme: Theme) => {
+  const getParticleColor = (theme: ThemeKey) => {
     const colors = {
       'romantic_classic': '#ec4899',
       'cute_pastel': '#a78bfa',

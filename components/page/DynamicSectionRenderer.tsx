@@ -71,6 +71,7 @@ interface InternalConfig {
   songAutoplay?: boolean;
   song_autoplay?: boolean;
   section_templates?: Record<string, string>;
+  section_content?: import('@/lib/types').SectionContentMap;
   home_template?: string;
   gallery_template?: string;
   timeline_template?: string;
@@ -157,6 +158,7 @@ const buildProps = (section: Section, props: DynamicSectionRendererProps): Recor
     timeline_events: (config as any).timeline_events || [],
     songAutoplay: (props.songAutoplay !== undefined ? props.songAutoplay : (config as any).media?.song_autoplay) || false,
     section_templates: config.section_templates,
+    section_content: config.section_content,
     home_template: config.home_template,
     gallery_template: config.gallery_template,
     timeline_template: config.timeline_template,

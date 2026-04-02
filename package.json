@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "job:auto-archive": "tsx scripts/auto-archive.ts",
-    "job:renewal-reminders": "tsx scripts/renewal-reminders.ts"
+    "job:renewal-reminders": "tsx scripts/renewal-reminders.ts",
+    "job:process-queue": "tsx scripts/process-job-queue.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1013.0",
@@ -35,7 +36,8 @@
     "styled-jsx": "^5.1.7",
     "tsparticles": "^3.9.1",
     "unzipper": "^0.12.3",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "web-vitals": "^5.2.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -17,6 +17,9 @@ interface KeychainPrintSheetProps {
   pairsPerRow?: number;
   showGuides?: boolean;
   accentColor?: string;
+  sheetMode?: 'front-back-pair' | 'qr-only';
+  backSideVariant?: 'photo' | 'engraved';
+  backSideSubtitle?: string;
   qrDesign?: {
     dotsColor: string;
     backgroundColor: string;
@@ -34,7 +37,7 @@ interface KeychainPrintSheetProps {
   };
 }
 
-function PairCropMarks({ show }: { show: boolean }) {
+function PairCropMarks({ show, showCenterMarks = true }: { show: boolean; showCenterMarks?: boolean }) {
   if (!show) return null;
 
   const mark = {
@@ -58,24 +61,28 @@ function PairCropMarks({ show }: { show: boolean }) {
       <div style={{ ...mark, bottom: 0, right: 0, width: '2mm', height: '0.25mm' }} />
       <div style={{ ...mark, bottom: 0, right: 0, width: '0.25mm', height: '2mm' }} />
 
-      <div
-        style={{
-          ...mark,
-          top: 0,
-          left: 'calc(50% - 0.125mm)',
-          width: '0.25mm',
-          height: '2.2mm',
-        }}
-      />
-      <div
-        style={{
-          ...mark,
-          bottom: 0,
-          left: 'calc(50% - 0.125mm)',
-          width: '0.25mm',
-          height: '2.2mm',
-        }}
-      />
+      {showCenterMarks ? (
+        <>
+          <div
+            style={{
+              ...mark,
+              top: 0,
+              left: 'calc(50% - 0.125mm)',
+              width: '0.25mm',
+              height: '2.2mm',
+            }}
+          />
+          <div
+            style={{
+              ...mark,
+              bottom: 0,
+              left: 'calc(50% - 0.125mm)',
+              width: '0.25mm',
+              height: '2.2mm',
+            }}
+          />
+        </>
+      ) : null}
     </>
   );
 }
@@ -89,6 +96,9 @@ function InsertPair({
   coverPhotoUrl,
   coupleNames,
   caption,
+  sheetMode = 'front-back-pair',
+  backSideVariant = 'photo',
+  backSideSubtitle,
   qrDesign,
   showGuides,
   qrScale,
@@ -102,6 +112,9 @@ function InsertPair({
   coverPhotoUrl?: string;
   coupleNames: string;
   caption?: string;
+  sheetMode?: 'front-back-pair' | 'qr-only';
+  backSideVariant?: 'photo' | 'engraved';
+  backSideSubtitle?: string;
   qrScale?: number;
   qrDesign?: {
     dotsColor: string;
@@ -135,7 +148,7 @@ function InsertPair({
         borderRadius: 0,
         padding: 0,
         margin: 0,
-        width: `${widthMm * 2}mm`,
+        width: `${sheetMode === 'qr-only' ? widthMm : widthMm * 2}mm`,
         height: `${heightMm}mm`,
         boxSizing: 'border-box',
         breakInside: 'avoid',
@@ -143,7 +156,7 @@ function InsertPair({
         overflow: 'visible',
       }}
     >
-      <PairCropMarks show={!!showGuides} />
+      <PairCropMarks show={!!showGuides} showCenterMarks={sheetMode !== 'qr-only'} />
 
       <div
         style={{
@@ -171,29 +184,33 @@ function InsertPair({
         />
       </div>
 
-      <div
-        style={{
-          width: `${widthMm}mm`,
-          height: `${heightMm}mm`,
-          border: 'none',
-          padding: 0,
-          margin: 0,
-          backgroundColor: '#ffffff',
-          boxSizing: 'border-box',
-        }}
-      >
-        <KeychainInsertPhoto
-          widthMm={widthMm}
-          heightMm={heightMm}
-          shape={shape}
-          coverPhotoUrl={coverPhotoUrl}
-          coupleNames={coupleNames}
-          scale={1}
-          printMode={true}
-          showGuides={false}
-          photoTransform={photoTransform}
-        />
-      </div>
+      {sheetMode === 'front-back-pair' ? (
+        <div
+          style={{
+            width: `${widthMm}mm`,
+            height: `${heightMm}mm`,
+            border: 'none',
+            padding: 0,
+            margin: 0,
+            backgroundColor: '#ffffff',
+            boxSizing: 'border-box',
+          }}
+        >
+          <KeychainInsertPhoto
+            widthMm={widthMm}
+            heightMm={heightMm}
+            shape={shape}
+            coverPhotoUrl={coverPhotoUrl}
+            coupleNames={coupleNames}
+            variant={backSideVariant}
+            subtitle={backSideSubtitle}
+            scale={1}
+            printMode={true}
+            showGuides={false}
+            photoTransform={photoTransform}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -210,6 +227,9 @@ export default function KeychainPrintSheet({
   copies,
   pairsPerRow = 2,
   showGuides = true,
+  sheetMode = 'front-back-pair',
+  backSideVariant = 'photo',
+  backSideSubtitle,
   qrScale = 1,
   qrDesign,
   photoTransform,
@@ -221,7 +241,7 @@ export default function KeychainPrintSheet({
   const horizontalGapMm = 0.8;
   const verticalGapMm = 0.8;
 
-  const pairWidthMm = widthMm * 2;
+  const pairWidthMm = sheetMode === 'qr-only' ? widthMm : widthMm * 2;
   const usableWidthMm = pageWidthMm - outerMarginMm * 2;
   const usableHeightMm = pageHeightMm - outerMarginMm * 2;
 
@@ -368,6 +388,9 @@ export default function KeychainPrintSheet({
                 coverPhotoUrl={coverPhotoUrl}
                 coupleNames={coupleNames}
                 caption={caption}
+                sheetMode={sheetMode}
+                backSideVariant={backSideVariant}
+                backSideSubtitle={backSideSubtitle}
                 showGuides={showGuides}
                 qrScale={qrScale}
                 qrDesign={qrDesign}
@@ -380,9 +403,13 @@ export default function KeychainPrintSheet({
 
       <div className="print:hidden text-center mt-4 text-sm text-slate-500">
         <p>
-          Printing {copies} inserts ({actualPairsPerRow} pairs/row × {totalRows} rows)
+          Printing {copies} {sheetMode === 'qr-only' ? 'panels' : 'inserts'} ({actualPairsPerRow} {sheetMode === 'qr-only' ? 'pieces' : 'pairs'}/row × {totalRows} rows)
         </p>
-        <p className="text-xs mt-1">Each insert has QR code and photo side by side</p>
+        <p className="text-xs mt-1">
+          {sheetMode === 'qr-only'
+            ? 'Each print shows a single QR-facing panel'
+            : `Each insert has QR code and ${backSideVariant === 'engraved' ? 'engraved back' : 'photo side'} side by side`}
+        </p>
         <p className="text-xs mt-1 text-rose-600">
           Print using Actual Size / 100% for best alignment
         </p>

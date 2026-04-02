@@ -1,4 +1,9 @@
 import { DEFAULT_THEME } from '@/config/defaults';
+import { enforceRateLimit } from '@/lib/reliability/rate-limit';
+import { captureError } from '@/lib/reliability/monitoring';
+import { recordAdminAudit } from '@/lib/reliability/audit';
+import { enqueueJob } from '@/lib/reliability/job-queue';
+import { featureFlags } from '@/lib/reliability/feature-flags';
 import { NextRequest, NextResponse } from 'next/server';
 import { createWebsite as insertSite, updateWebsite as updateSite, deleteWebsite as deleteSite, listWebsites as getSites, getWebsiteById as getSiteById } from '@/lib/db/websites';
 import { uploadToCloudinary } from '@/lib/cloudinary';
@@ -79,6 +84,13 @@ export async function POST(req: NextRequest) {
 
 // PUT - Update existing order
 export async function PUT(req: NextRequest) {
+  const limited = enforceRateLimit(req, {
+    keyPrefix: 'api:admin:put',
+    limit: 40,
+    windowMs: 60 * 1000,
+  });
+  if (limited) return limited;
+
   try {
     const body = await req.json();
     const idempotencyKey = req.headers.get('idempotency-key')?.trim() || '';
@@ -267,9 +279,32 @@ export async function PUT(req: NextRequest) {
       ],
     };
 
+    if (
+      featureFlags.retryFailedUploads() &&
+      featureFlags.backgroundJobQueue() &&
+      id &&
+      responsePayload.warnings.length > 0
+    ) {
+      try {
+        await enqueueJob('retry_site_media_upload', { siteId: id });
+      } catch (queueError) {
+        await captureError('admin-update-enqueue-retry', queueError, { id });
+      }
+    }
+
     if (idempotencyKey) {
       await saveIdempotencyResult('admin:update-site', idempotencyKey, requestHash, 200, responsePayload);
     }
+
+    await recordAdminAudit(req, {
+      action: 'admin.site.update',
+      targetType: 'site',
+      targetId: id,
+      success: true,
+      details: {
+        warnings: responsePayload.warnings,
+      },
+    });
 
     return NextResponse.json(responsePayload);
   } catch (err: any) {
@@ -280,6 +315,16 @@ export async function PUT(req: NextRequest) {
         idForLog = parsed?.id || 'unknown';
       } catch {}
     }
+    await captureError('admin-put', err, { id: idForLog });
+    await recordAdminAudit(req, {
+      action: 'admin.site.update',
+      targetType: 'site',
+      targetId: idForLog,
+      success: false,
+      details: {
+        error: err.message || 'unknown error',
+      },
+    });
     console.error('PUT /api/admin failed:', {
       id: idForLog,
       message: err.message,
@@ -293,6 +338,13 @@ export async function PUT(req: NextRequest) {
 
 // DELETE - Delete an order
 export async function DELETE(req: NextRequest) {
+  const limited = enforceRateLimit(req, {
+    keyPrefix: 'api:admin:delete',
+    limit: 20,
+    windowMs: 60 * 1000,
+  });
+  if (limited) return limited;
+
   try {
     const { id } = await req.json();
 
@@ -354,8 +406,22 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ message: error.message }, { status: 500 });
     }
 
+    await recordAdminAudit(req, {
+      action: 'admin.site.delete',
+      targetType: 'site',
+      targetId: id,
+      success: true,
+    });
+
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch (err: any) {
+    await captureError('admin-delete', err);
+    await recordAdminAudit(req, {
+      action: 'admin.site.delete',
+      targetType: 'site',
+      success: false,
+      details: { error: err.message || 'unknown error' },
+    });
     console.error('DELETE error:', err);
     return NextResponse.json({ message: 'Invalid request' }, { status: 400 });
   }

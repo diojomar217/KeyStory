@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getWebsiteByIdWithConfig } from '@/lib/db/websites';
 import { restoreSiteFromArchive } from '@/lib/archiver';
 import { supabase } from '@/lib/supabase';
+import { recordAdminAudit } from '@/lib/reliability/audit';
+import { captureError } from '@/lib/reliability/monitoring';
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -53,6 +55,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         return NextResponse.json({ success: false, message: 'Cannot restore site; archive data is missing' }, { status: 500 });
       }
 
+      await recordAdminAudit(req, {
+        action: 'admin.site.restore',
+        targetType: 'site',
+        targetId: id,
+        success: true,
+        details: { mode: 'restored-without-media' },
+      });
       return NextResponse.json({ success: true, restoredSite: updatedSite, info: 'restored-without-media' });
     }
 
@@ -70,13 +79,26 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         console.warn('Revalidate path failed on restore:', err);
       }
 
+      await recordAdminAudit(req, {
+        action: 'admin.site.restore',
+        targetType: 'site',
+        targetId: id,
+        success: true,
+      });
       return NextResponse.json({ success: true, restoredSite });
     } catch (err) {
-      console.error('Restore site error:', err);
+      await captureError('admin-site-restore', err, { siteId: id });
+      await recordAdminAudit(req, {
+        action: 'admin.site.restore',
+        targetType: 'site',
+        targetId: id,
+        success: false,
+        details: { error: err instanceof Error ? err.message : String(err) },
+      });
       return NextResponse.json({ success: false, message: 'Failed to restore archived site' }, { status: 500 });
     }
   } catch (err) {
-    console.error('Restore site error:', err);
+    await captureError('admin-site-restore', err);
     return NextResponse.json({ success: false, message: 'Invalid request' }, { status: 400 });
   }
 }
