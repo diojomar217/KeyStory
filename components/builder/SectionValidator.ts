@@ -205,32 +205,29 @@ export function getSectionValidationStatus(
   };
   
   // Check gallery
-      if (config.sections.includes('timeline')) {
-        const timeline = config.section_content?.timeline || [];
-        if (!timeline.length) {
-          return {
-            section: 'timeline',
-            message: 'Timeline section requires at least one event',
-            field: 'timeline',
-          };
-        }
-        // Check if all events have required fields
-        const invalidEvents = timeline.filter(
-          (event) => !event.title?.trim() || !event.date
-        );
-        if (invalidEvents.length > 0) {
-          return {
-            section: 'timeline',
-            message: 'All timeline events must have a title and date',
-            field: 'timeline',
-          };
-        }
-      }
-      if (!isValidYouTube && !isValidSpotify) {
-        status.song = 'invalid';
-      }
+  if (config.sections.includes('gallery')) {
+    status.gallery = photos.length > 0 ? 'valid' : 'invalid';
+  }
+
+  // Check timeline
+  if (config.sections.includes('timeline')) {
+    const timeline = config.timeline_events || [];
+    if (!timeline.length) {
+      status.timeline = 'invalid';
     } else {
-      status.song = 'warning'; // Optional but should have a value if enabled
+      const invalidEvents = timeline.filter((event) => !event.title?.trim() || !event.date);
+      status.timeline = invalidEvents.length > 0 ? 'invalid' : 'valid';
+    }
+  }
+
+  // Check song
+  if (config.sections.includes('song')) {
+    if (!songLink.trim()) {
+      status.song = 'warning';
+    } else {
+      const isValidYouTube = songLink.includes('youtube.com') || songLink.includes('youtu.be');
+      const isValidSpotify = songLink.includes('spotify.com');
+      status.song = !isValidYouTube && !isValidSpotify ? 'invalid' : 'valid';
     }
   }
   

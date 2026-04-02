@@ -139,8 +139,21 @@ export async function POST(req: NextRequest) {
     const message = data.message || '';
 
     const requiredFieldsByOccasion: Record<string, string[]> = {
-      couple: ['customer_name', 'partner_name', 'special_date', 'message'],
-      birthday: ['customer_name', 'special_date', 'message'],
+      couple: ['customer_name', 'partner_name', 'special_date'],
+      wedding: ['customer_name', 'partner_name', 'special_date'],
+      birthday: ['customer_name', 'special_date'],
+      anniversary: ['customer_name', 'partner_name', 'special_date'],
+      proposal: ['customer_name', 'partner_name', 'special_date'],
+      graduation: ['customer_name', 'special_date'],
+      baby_shower: ['customer_name', 'special_date'],
+      debut: ['customer_name', 'special_date'],
+      memorial: ['customer_name', 'special_date'],
+      family: ['customer_name', 'special_date'],
+      friendship: ['customer_name', 'special_date'],
+      travel: ['customer_name', 'special_date'],
+      valentines: ['customer_name', 'partner_name', 'special_date'],
+      mothers_day: ['customer_name', 'special_date'],
+      fathers_day: ['customer_name', 'special_date'],
     };
 
     const requiredFields = requiredFieldsByOccasion[occasion] || requiredFieldsByOccasion.couple;
@@ -202,8 +215,8 @@ export async function POST(req: NextRequest) {
 
     // Get base URL safely
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://your-domain.vercel.app';
-    const coupleUrl = `${baseUrl}/site/${website_name}`;
-    const qrCodeUrl = await generateQRCode(coupleUrl);
+    const qrRedirectUrl = `${baseUrl}/r/${website_name}`;
+    const qrCodeUrl = await generateQRCode(qrRedirectUrl);
 
     // Build normalized site config for storage
     let heroCoverPhotoUrl: string | undefined = data.config?.hero?.coverPhotoUrl;

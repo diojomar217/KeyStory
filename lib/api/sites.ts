@@ -91,4 +91,80 @@ export async function deleteSite(id: string): Promise<any> {
   return response;
 }
 
+export async function getSiteRedirectTarget(id: string): Promise<{
+  success: boolean;
+  site_id: string;
+  website_name: string;
+  redirect_target: string | null;
+  fallback_target: string;
+}> {
+  const res = await fetch(`${API_BASE}/sites/${id}/redirect`, { method: 'GET' });
+  if (!res.ok) throw new Error('Failed to fetch redirect target');
+  return res.json();
+}
+
+export async function updateSiteRedirectTarget(id: string, redirectTarget: string | null): Promise<{
+  success: boolean;
+  site_id: string;
+  website_name: string;
+  redirect_target: string | null;
+  fallback_target: string;
+}> {
+  const res = await fetch(`${API_BASE}/sites/${id}/redirect`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ redirect_target: redirectTarget }),
+  });
+
+  if (!res.ok) throw new Error('Failed to update redirect target');
+  return res.json();
+}
+
+export async function getSiteFulfillment(id: string): Promise<{
+  success: boolean;
+  site_id: string;
+  website_name: string;
+  fulfillment: {
+    status: 'draft' | 'paid' | 'in_production' | 'shipped' | 'delivered' | 'activated';
+    note: string | null;
+    tracking_number: string | null;
+    courier: string | null;
+    updated_at: string | null;
+  };
+}> {
+  const res = await fetch(`${API_BASE}/sites/${id}/fulfillment`, { method: 'GET' });
+  if (!res.ok) throw new Error('Failed to fetch fulfillment');
+  return res.json();
+}
+
+export async function updateSiteFulfillment(
+  id: string,
+  payload: Partial<{
+    status: 'draft' | 'paid' | 'in_production' | 'shipped' | 'delivered' | 'activated';
+    note: string;
+    tracking_number: string;
+    courier: string;
+  }>
+): Promise<{
+  success: boolean;
+  site_id: string;
+  website_name: string;
+  fulfillment: {
+    status: 'draft' | 'paid' | 'in_production' | 'shipped' | 'delivered' | 'activated';
+    note?: string | null;
+    tracking_number?: string | null;
+    courier?: string | null;
+    updated_at?: string | null;
+  };
+}> {
+  const res = await fetch(`${API_BASE}/sites/${id}/fulfillment`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error('Failed to update fulfillment');
+  return res.json();
+}
+
 // Add getSiteBySlug if needed for public view

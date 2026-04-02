@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getWebsiteByIdWithConfig } from '@/lib/db/websites';
 import { restoreSiteFromArchive } from '@/lib/archiver';
+import { supabase } from '@/lib/supabase';
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

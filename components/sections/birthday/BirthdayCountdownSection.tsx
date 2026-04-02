@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../../builder/ThemeWrapper';
 import SectionHeader from '../../page/SectionHeader';
+import { getSectionCopy } from '@/lib/section-copy';
 
 interface Props {
   theme: ThemeKey;

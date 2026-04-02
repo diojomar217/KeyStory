@@ -51,7 +51,7 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
         <div className="max-w-xl mx-auto px-4 md:px-6">
           <ScrollReveal animation="fade-up">
             {(() => {
-              const copy = getSectionCopy('song', siteType);
+              const copy = getSectionCopy('song');
               return (
                 <SectionHeader
                   icon={copy.icon}
@@ -84,7 +84,7 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
         {/* Section Header */}
         <ScrollReveal animation="fade-up">
           {(() => {
-            const copy = getSectionCopy('song', siteType);
+            const copy = getSectionCopy('song');
             return (
               <SectionHeader
                 icon={copy.icon}

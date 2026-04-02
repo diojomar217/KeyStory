@@ -191,6 +191,14 @@ export interface SiteConfig {
     subtitle?: string;
     showNames?: boolean;
   };
+  qr_data_url?: string;
+  fulfillment?: {
+    status?: 'draft' | 'paid' | 'in_production' | 'shipped' | 'delivered' | 'activated';
+    note?: string;
+    tracking_number?: string;
+    courier?: string;
+    updated_at?: string;
+  };
   section_divider_style?: 'none' | 'standard' | 'gradient' | 'dots';
   hero?: {
     coverPhotoUrl?: string;
@@ -407,16 +415,37 @@ export interface SectionContentMap {
   };
   timeline?: TimelineEvent[];
   first_date?: {
-    title: string;
-    date: string;
-    location: string;
-    description: string;
+    content?: string;
   };
   special_moments?: {
-    moments: SpecialMoment[];
+    content?: string;
   };
   milestones?: {
-    milestones: Milestone[];
+    content?: string;
+  };
+  travel_notes?: {
+    content?: string;
+  };
+  life_story?: {
+    content?: string;
+  };
+  message_letter?: {
+    content?: string;
+  };
+  couple_message?: {
+    content?: string;
+  };
+  family_message?: {
+    content?: string;
+  };
+  parents_message?: {
+    content?: string;
+  };
+  celebrant_message?: {
+    content?: string;
+  };
+  graduation_message?: {
+    content?: string;
   };
   playlist?: {
     playlistUrl: string;
@@ -432,7 +461,16 @@ export interface SectionContentMap {
   future_dreams?: {
     dreams: FutureDream[];
   };
+  future_plans?: {
+    dreams: FutureDream[];
+  };
   quotes?: {
+    quotes: LoveQuote[];
+  };
+  tributes?: {
+    quotes: LoveQuote[];
+  };
+  baby_predictions?: {
     quotes: LoveQuote[];
   };
   birthday_message?: {
@@ -442,7 +480,23 @@ export interface SectionContentMap {
   birthday_wishes?: {
     quotes: LoveQuote[];
   };
+  birthday_timeline?: TimelineEvent[];
+  school_memories?: {
+    events: TimelineEvent[];
+  };
+  achievements?: {
+    events: TimelineEvent[];
+  };
+  travel_timeline?: {
+    events: TimelineEvent[];
+  };
   party_details?: {
+    location?: string;
+    date?: string;
+    time?: string;
+    dressCode?: string;
+  };
+  event_details?: {
     location?: string;
     date?: string;
     time?: string;
@@ -453,6 +507,9 @@ export interface SectionContentMap {
   };
   gift_registry?: {
     items: string[];
+  };
+  photo_highlights?: {
+    photos: string[];
   };
   reasons_love_you?: {
     reasons: ReasonILoveYou[];

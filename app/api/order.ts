@@ -1,7 +1,7 @@
 import { DEFAULT_THEME } from '@/config/defaults';
 // app/api/order.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { insertSite, Site } from '@/lib/supabase';
+import { createWebsite as insertSite } from '@/lib/db/websites';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import { generateQRCode } from '@/lib/qrcode';
 import { v4 as uuidv4 } from 'uuid';
@@ -49,7 +49,8 @@ export async function POST(req: NextRequest) {
   // Generate QR code with safe fallback
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://your-domain.vercel.app';
   const coupleUrl = `${baseUrl}/site/${websiteSlug}`;
-  const qrCodeUrl = await generateQRCode(coupleUrl);
+  const qrRedirectUrl = `${baseUrl}/r/${websiteSlug}`;
+  const qrCodeUrl = await generateQRCode(qrRedirectUrl);
 
   const siteConfig = {
     ...(data.config || {}),

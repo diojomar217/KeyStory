@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getWebsiteByIdWithConfig } from '@/lib/db/websites';
+import { supabase } from '@/lib/supabase';
 
 const addMonths = (date: Date, months: number): string => {
   const result = new Date(date);

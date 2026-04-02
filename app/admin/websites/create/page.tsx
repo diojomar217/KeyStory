@@ -897,6 +897,22 @@ export default function CreateWebsitePage() {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                  QR Destination Override (optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="/site/your-slug or https://example.com/page"
+                  value={config.qr_data_url || ''}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                  onChange={(e) => handleConfigChange({ qr_data_url: e.target.value.trim() || undefined })}
+                />
+                <p className="text-xs text-slate-400 mt-1">
+                  Leave blank to use the default destination.
+                </p>
+              </div>
+
               {/* Advanced Options Collapsible */}
               <div className="mt-6">
                 <details className="bg-white border border-slate-200 rounded-xl p-4 group" style={{ transition: 'box-shadow 0.2s' }}>

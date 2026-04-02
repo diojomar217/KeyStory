@@ -11,6 +11,7 @@ interface Props {
   activeSection: string;
 }
 
+export default function SectionProgressNav({ theme, sections, activeSection }: Props) {
   const [scrolledSections, setScrolledSections] = useState<Set<string>>(new Set());
   const styles = getThemeStyles(theme);
 
@@ -42,17 +43,13 @@ interface Props {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const getDotColor = (section: string) => {
-    if (scrolledSections.has(section)) {
-      return styles.progressDotActive;
-    }
-    return styles.progressDotInactive;
+  const getDotClass = (section: string) => {
+    if (section === activeSection) return styles.accentBg;
+    return scrolledSections.has(section) ? styles.accentBg : 'bg-slate-300';
   };
 
-  const getLabelColor = (section: string) => {
-    return scrolledSections.has(section)
-      ? styles.progressLabelActive
-      : styles.progressLabelInactive;
+  const getLabelClass = (section: string) => {
+    return scrolledSections.has(section) || section === activeSection ? styles.accent : styles.textMuted;
   };
 
   return (
@@ -68,7 +65,7 @@ interface Props {
             whileTap={{ scale: 0.95 }}
           >
             <motion.div 
-              className={`w-full h-full rounded-full ${getDotColor(section)}`}
+              className={`w-full h-full rounded-full ${getDotClass(section)}`}
               initial={{ scale: 0 }}
               animate={{ scale: scrolledSections.has(section) ? 1 : 0 }}
               transition={{ duration: 0.3 }}
@@ -76,13 +73,13 @@ interface Props {
             <AnimatePresence>
               {scrolledSections.has(section) && (
                 <motion.span 
-                  className={`absolute -right-12 text-xs font-medium whitespace-nowrap ${getLabelColor(section)}`}
+                  className={`absolute -right-16 text-xs font-medium whitespace-nowrap ${getLabelClass(section)}`}
                   initial={{ opacity: 0, x: 10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 10 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {section.replace('_', ' ').replace(/\\b\\w/g, l => l.toUpperCase())}
+                  {section.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())}
                 </motion.span>
               )}
             </AnimatePresence>

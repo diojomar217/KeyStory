@@ -6,21 +6,27 @@ import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
 import { useRouter, useParams } from 'next/navigation';
 
-import EditStepNav from '@/components/builder/EditStepNav';
+import StepNavigator from '@/components/builder/StepNavigator';
 import ThemeSelector from '@/components/builder/ThemeSelector';
 import SectionSelector from '@/components/builder/SectionSelector';
 import { calculateExpirationDate, getDaysRemaining, getExpirationLabel, ExpirationMode } from '@/lib/expiration-utils';
 import TemplateSelector from '@/components/builder/TemplateSelector';
 import TimelineEditor from '@/components/builder/TimelineEditor';
 import SectionContentInputs from '@/components/builder/SectionContentInputs';
-import SummaryPanel from '@/components/builder/SummaryPanel';
 import LayoutPresetSelector from '@/components/builder/LayoutPresetSelector';
-import type { SiteConfig, Section, SectionContentMap } from '@/lib/types';
+import LivePreview from '@/components/builder/LivePreview';
+import type { SiteConfig, Section, SectionContentMap, OccasionType } from '@/lib/types';
 import type { ThemeKey } from '@/config/themeConfig';
 import { DEFAULT_THEME } from '@/config/defaults';
 import { Site } from '@/lib/supabase';
 import { getSite, updateSite } from '@/lib/api/sites';
-import { validateStep } from '@/lib/builder-steps-config';
+import { validateStep, WIZARD_STEPS } from '@/lib/builder-steps-config';
+import { getPresetsForOccasion, getPresetById } from '@/lib/preset-registry';
+import { getDefaultSelections, getTemplatesForSection } from '@/lib/config-helpers';
+import { getSectionMetadata } from '@/lib/section-registry';
+import { SITE_TYPES } from '@/config/siteTypeConfig';
+import type { SiteTypeKey } from '@/config/siteTypeConfig';
+import { getParticipantFieldsForOccasion, OCCASION_DATE_LABELS } from '@/config/occasionFormConfig';
 import bcrypt from 'bcryptjs';
 
 type LocalForm = {
@@ -36,11 +42,23 @@ type LocalForm = {
   existingPhotos: string[];
   heroPhoto?: File | null;
   heroPhotoIndex?: number;
-  occasion: 'couple' | 'birthday';
+  occasion: OccasionType;
   participants: { id: string; name: string; role?: string }[];
   password_input?: string;
   expires_at?: string;
 };
+
+function buildParticipantsForOccasion(
+  occasion: OccasionType,
+  existingParticipants: Array<{ id: string; name: string; role?: string }> = []
+): Array<{ id: string; name: string; role?: string }> {
+  const fields = getParticipantFieldsForOccasion(occasion);
+  return fields.map((field, index) => ({
+    id: field.id,
+    role: field.role,
+    name: existingParticipants[index]?.name || '',
+  }));
+}
 
 export default function EditWebsitePage() {
         const MAX_IMAGE_UPLOAD_BYTES = 12 * 1024 * 1024; // 12 MB
@@ -75,7 +93,7 @@ export default function EditWebsitePage() {
       song_autoplay: false,
       photos: [],
       existingPhotos: [],
-      occasion: 'couple',
+      occasion: 'couple' as OccasionType,
       participants: [
         { id: 'customer', name: '', role: 'primary' },
         { id: 'partner', name: '', role: 'partner' },
@@ -84,7 +102,7 @@ export default function EditWebsitePage() {
     });
 
     const [config, setConfig] = useState<SiteConfig>({
-      occasion: 'couple',
+      occasion: 'couple' as OccasionType,
       theme: DEFAULT_THEME,
       sections: ['home'],
       templates: { home: undefined, gallery: undefined, timeline: undefined, song: undefined },
@@ -131,6 +149,7 @@ export default function EditWebsitePage() {
   const [success, setSuccess] = useState(false);
   const [passwordEnabled, setPasswordEnabled] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
 
   const [expirationMode, setExpirationMode] = useState<'3_months'|'6_months'|'1_year'|'custom'>('6_months');
   const [customExpirationDate, setCustomExpirationDate] = useState('');
@@ -218,6 +237,18 @@ export default function EditWebsitePage() {
           loadedOccasion = site.config.preset.siteType;
           loadedPresetId = site.config.preset.id;
         }
+        // Build participants based on occasion type, restoring names from saved data
+        const savedParticipants: Array<{ id: string; name: string; role?: string }>  =
+          Array.isArray(site.config?.participants) ? site.config.participants : [];
+        // If no participants saved, fallback using customer/partner names
+        const fallbackParticipants = savedParticipants.length > 0
+          ? savedParticipants
+          : [
+              { id: 'customer', name: customerName, role: 'primary' },
+              { id: 'partner', name: partnerName, role: 'partner' },
+            ];
+        const loadedParticipants = buildParticipantsForOccasion(loadedOccasion as OccasionType, fallbackParticipants);
+
         setForm({
           website_name: site.website_name || site.slug || '',
           customer_name: customerName,
@@ -231,11 +262,8 @@ export default function EditWebsitePage() {
           existingPhotos: site.config?.media?.photos || site.photos || [],
           heroPhoto: null,
           heroPhotoIndex: site.config?.hero?.coverPhotoIndex,
-          occasion: loadedOccasion,
-          participants: [
-            { id: 'customer', name: customerName, role: 'primary' },
-            { id: 'partner', name: partnerName, role: 'partner' },
-          ],
+          occasion: loadedOccasion as OccasionType,
+          participants: loadedParticipants,
           password_input: site.config?.password?.enabled ? '••••' : '',
           expires_at: site.expires_at || undefined,
         });
@@ -278,7 +306,7 @@ export default function EditWebsitePage() {
 
         // Set config and selectedPresetId from loaded data (define configPatch only once)
         const configPatch: any = {
-          occasion: loadedOccasion as 'couple' | 'birthday',
+          occasion: loadedOccasion as OccasionType,
           theme: (site.config?.theme || siteAny.theme) as ThemeKey || DEFAULT_THEME,
           sections: sectionsValue,
           templates,
@@ -389,15 +417,53 @@ export default function EditWebsitePage() {
   };
 
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const name = e.target.name;
     const value = e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value;
-    setForm({ ...form, [e.target.name]: value });
+
+    if (name === 'occasion') {
+      const nextOccasion = value as OccasionType;
+      setForm((prev) => ({
+        ...prev,
+        occasion: nextOccasion,
+        participants: buildParticipantsForOccasion(nextOccasion, prev.participants),
+      }));
+      // Auto-apply the first preset for the new occasion
+      const occasionPresets = getPresetsForOccasion(nextOccasion as SiteTypeKey);
+      const firstPreset = occasionPresets[0];
+      if (firstPreset) {
+        setSelectedPresetId(firstPreset.id);
+        setConfig((prev) => ({
+          ...prev,
+          occasion: nextOccasion,
+          theme: firstPreset.defaults.theme,
+          layout_preset: firstPreset.defaults.layout_preset,
+          sections: firstPreset.defaults.sections,
+          templates: {
+            ...(prev.templates || {}),
+            ...(firstPreset.defaults.templates as Record<string, string>),
+          },
+        }));
+      } else {
+        setSelectedPresetId(null);
+        const defaults = getDefaultSelections(nextOccasion as SiteTypeKey);
+        setConfig((prev) => ({
+          ...prev,
+          occasion: nextOccasion,
+          theme: defaults.defaultTheme || prev.theme,
+          sections: defaults.defaultSections || [],
+        }));
+      }
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value as any }));
+    }
   };
 
-  // Separate handler for <select> elements to fix TS error
+  // Separate handler for <select> elements (kept for backward compat)
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    handleChange(e as any);
   };
+
 
   const handleConfigChange = (newConfig: Partial<SiteConfig>) => {
     setConfig((prev) => {
@@ -426,6 +492,27 @@ export default function EditWebsitePage() {
       password: passwordEnabled ? { enabled: true } : undefined,
     }));
   }, [form.song_link, form.song_autoplay, passwordEnabled]);
+
+  // Sync form fields → config (occasion, participants, message, tagline, specialDate)
+  useEffect(() => {
+    setConfig((prev) => ({
+      ...prev,
+      occasion: form.occasion,
+      participants: form.participants,
+      message: form.message,
+      tagline: form.tagline,
+      specialDate: form.specialDate,
+      hero: {
+        ...(prev.hero || {}),
+        coverPhotoIndex: typeof form.heroPhotoIndex === 'number' ? form.heroPhotoIndex : prev.hero?.coverPhotoIndex,
+      },
+      media: {
+        ...(prev.media || {}),
+        song_link: form.song_link,
+        song_autoplay: !!form.song_autoplay,
+      },
+    }));
+  }, [form.occasion, form.participants, form.message, form.tagline, form.specialDate, form.song_link, form.song_autoplay, form.heroPhotoIndex]);
 
   const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
@@ -672,38 +759,34 @@ export default function EditWebsitePage() {
     }
   };
 
+  const applyPreset = (presetId: string) => {
+    const preset = getPresetById(presetId);
+    if (!preset) return;
+    setSelectedPresetId(presetId);
+    setForm((prev) => ({
+      ...prev,
+      occasion: preset.siteType as OccasionType,
+      participants: buildParticipantsForOccasion(preset.siteType as OccasionType, prev.participants),
+    }));
+    setConfig((prev) => ({
+      ...prev,
+      occasion: preset.siteType as OccasionType,
+      preset: { id: preset.id, label: preset.label, siteType: preset.siteType },
+      theme: preset.defaults.theme,
+      layout_preset: preset.defaults.layout_preset,
+      sections: preset.defaults.sections,
+      templates: {
+        ...(prev.templates || {}),
+        ...(preset.defaults.templates as Record<string, string>),
+      },
+    }));
+  };
+
   const renderStepContent = () => {
+    const stepInfo = WIZARD_STEPS.find((s) => s.id === currentStep);
+
     switch (currentStep) {
       case 1:
-        const { getPresetsForOccasion, getPresetById } = require('@/lib/preset-registry');
-        const applyPreset = (presetId: string) => {
-          const preset = getPresetById(presetId);
-          if (!preset) return;
-          setSelectedPresetId(presetId);
-          setForm((prev: any) => ({
-            ...prev,
-            occasion: preset.siteType,
-            preset_id: preset.id,
-            tagline: preset.defaults.copy?.tagline || prev.tagline,
-            message: preset.defaults.copy?.message || prev.message,
-          }));
-          setConfig((prev: any) => ({
-            ...prev,
-            occasion: preset.siteType,
-            preset: { id: preset.id, label: preset.label },
-            theme: preset.defaults.theme,
-            layout_preset: preset.defaults.layout_preset,
-            sections: preset.defaults.sections,
-            templates: {
-              home: preset.defaults.templates.home,
-              gallery: preset.defaults.templates.gallery,
-              timeline: preset.defaults.templates.timeline,
-              song: preset.defaults.templates.song,
-            },
-            tagline: preset.defaults.copy?.tagline || prev.tagline,
-            message: preset.defaults.copy?.message || prev.message,
-          }));
-        };
         return (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/50 p-6 md:p-8 space-y-6 opacity-0 animate-fade-in-up">
             <div className="flex items-center gap-3 mb-6">
@@ -719,8 +802,13 @@ export default function EditWebsitePage() {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-slate-800">
-                  Basic Information
+                  {stepInfo?.title || 'Your Details'}
                 </h2>
+                {stepInfo?.helpText && (
+                  <div className="mt-1 text-slate-500 text-sm max-w-xl">
+                    {stepInfo.helpText}
+                  </div>
+                )}
               </div>
             </div>
             <div className="space-y-5">
@@ -750,58 +838,71 @@ export default function EditWebsitePage() {
                 <select
                   name="occasion"
                   value={form.occasion}
-                  onChange={handleSelectChange}
+                  onChange={handleChange}
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
                 >
-                  <option value="couple">💑 Romantic Couple</option>
-                  <option value="birthday">🎂 Birthday Celebration</option>
+                  {[...SITE_TYPES]
+                    .sort((a, b) => a.label.localeCompare(b.label))
+                    .map((siteType) => (
+                      <option key={siteType.key} value={siteType.key}>
+                        {siteType.icon} {siteType.label}
+                      </option>
+                    ))}
                 </select>
               </div>
+
+              {/* Preset selector */}
               <div className="mt-4">
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                
-                <div>
-                  <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                    {form.occasion === 'couple' ? 'Your Name' : 'Celebrant Name'}
-                  </label>
-                  <input
-                    name="participants.0.name"
-                    required
-                    placeholder={form.occasion === 'couple' ? 'Your name' : 'Celebrant name'}
-                    value={form.participants?.[0]?.name || ''}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
-                    onChange={(e) => {
-                      const newParticipants = [...(form.participants || [{id: '0', name: ''}])];
-                      newParticipants[0] = { ...newParticipants[0], name: e.target.value };
-                      setForm({...form, participants: newParticipants});
-                    }}
-                  />
-                </div>
-                <div>
-                  {form.occasion === 'couple' && (
-                    <>
-                      <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                        Partner's Name
-                      </label>
-                      <input
-                        name="participants.1.name"
-                        required
-                        placeholder="Partner's name"
-                        value={form.participants?.[1]?.name || ''}
-                        className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
-                        onChange={(e) => {
-                          const newParticipants = [...(form.participants || [{id: '0', name: ''}, {id: '1', name: ''}])];
-                          newParticipants[1] = { ...newParticipants[1], name: e.target.value };
-                          setForm({...form, participants: newParticipants});
-                        }}
-                      />
-                    </>
-                  )}
+                <h3 className="text-sm font-semibold text-slate-700 mb-2">Choose a starting template</h3>
+                <p className="text-xs text-slate-500 mb-3">Pick one and customize as needed later.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {getPresetsForOccasion(form.occasion as SiteTypeKey).map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => applyPreset(preset.id)}
+                      className={`text-left rounded-xl border p-3 transition hover:shadow-lg ${
+                        selectedPresetId === preset.id
+                          ? 'border-rose-500 bg-rose-50'
+                          : 'border-slate-200 bg-white'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <strong className="text-sm text-slate-800">{preset.label}</strong>
+                        <span className="text-[11px] font-medium text-slate-500">{preset.badge}</span>
+                      </div>
+                      <p className="text-xs text-slate-500">{preset.description}</p>
+                    </button>
+                  ))}
                 </div>
               </div>
+
+              {/* Dynamic participant fields based on occasion */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {getParticipantFieldsForOccasion(form.occasion).map((field, index) => (
+                  <div key={field.id}>
+                    <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                      {field.label}
+                    </label>
+                    <input
+                      name={`participants.${index}.name`}
+                      required
+                      placeholder={field.placeholder}
+                      value={form.participants?.[index]?.name || ''}
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                      onChange={(e) => {
+                        const newParticipants = buildParticipantsForOccasion(form.occasion, form.participants);
+                        newParticipants[index] = { ...newParticipants[index], name: e.target.value };
+                        setForm((prev) => ({ ...prev, participants: newParticipants }));
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                  {form.occasion === 'couple' ? 'Anniversary Date' : 'Birth Date'}
+                  {OCCASION_DATE_LABELS[form.occasion] || 'Special Date'}
                 </label>
                 <input
                   name="specialDate"
@@ -811,6 +912,22 @@ export default function EditWebsitePage() {
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
                   onChange={handleChange}
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                  QR Destination Override (optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="/site/your-slug or https://example.com/page"
+                  value={config.qr_data_url || ''}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                  onChange={(e) => handleConfigChange({ qr_data_url: e.target.value.trim() || undefined })}
+                />
+                <p className="text-xs text-slate-400 mt-1">
+                  Leave blank to use the default destination.
+                </p>
               </div>
               {/* Advanced Options Collapsible */}
               <div className="mt-6">
@@ -958,20 +1075,25 @@ export default function EditWebsitePage() {
 
       case 3:
         return (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-6">Select Website Sections</h2>
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/50 p-6 md:p-8 opacity-0 animate-fade-in-up">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-pink-500 text-white font-bold text-sm">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-slate-800">Page Layout</h2>
+            </div>
             <SectionSelector
               value={config.sections}
               siteType={config.occasion || 'couple'}
               onChange={(sections) => {
-                // When sections change, reset templates for removed sections (match Create flow)
                 const prevSections = config.sections || [];
                 const removedSections = prevSections.filter((s) => !sections.includes(s));
                 const newConfig = { ...config, sections };
                 removedSections.forEach((sectionKey) => {
-                  const key = `${sectionKey}_template` as keyof SiteConfig;
-                  if ((newConfig as any)[key] !== undefined) {
-                    delete (newConfig as any)[key];
+                  if (newConfig.templates && newConfig.templates[sectionKey]) {
+                    delete newConfig.templates[sectionKey];
                   }
                 });
                 handleConfigChange(newConfig);
@@ -982,22 +1104,24 @@ export default function EditWebsitePage() {
 
       case 4:
         return (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-6">
-            <h2 className="text-lg font-semibold text-slate-900">Choose Templates</h2>
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/50 p-6 md:p-8 space-y-8 opacity-0 animate-fade-in-up">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-pink-500 text-white font-bold text-sm">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-slate-800">Templates</h2>
+            </div>
             {config.sections.length === 0 ? (
-              <p className="text-slate-500">Please select sections in step 3 first.</p>
+              <p className="text-slate-500 text-center py-8">
+                Please select sections in the previous step first.
+              </p>
             ) : (
               <div className="space-y-6">
                 {config.sections.map((sectionKey) => {
-                  // Only render TemplateSelector if templates exist for this section
-                  const { getTemplatesForSection } = require('@/lib/config-helpers');
                   const templates = getTemplatesForSection(sectionKey);
                   if (!templates.length) return null;
-                  console.log('[DEBUG] Render TemplateSelector', {
-                    sectionKey,
-                    selectedPresetId,
-                    templateValue: config[`${sectionKey}_template` as keyof typeof config],
-                  });
                   return (
                     <TemplateSelector
                       key={sectionKey}
@@ -1015,41 +1139,258 @@ export default function EditWebsitePage() {
         );
 
       case 5:
-        // Debug: Log photoPreviews whenever this step renders
-        console.log('DEBUG: photoPreviews passed to SectionContentInputs:', photoPreviews);
         return (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-6">
-            <h2 className="text-lg font-semibold text-slate-900">Add Your Content</h2>
-            {/* Only SectionContentInputs, matching Create flow */}
-            <SectionContentInputs
-              config={config}
-              onSectionContentChange={(sectionKey: string, content: any) => handleSectionContentChange(sectionKey as keyof SectionContentMap, content)}
-              photoPreviews={photoPreviews}
-              handlePhotos={handlePhotos}
-              heroPhotoPreview={heroPhotoPreview}
-              crop={crop}
-              zoom={zoom}
-              setCrop={setCrop}
-              setZoom={setZoom}
-              setCroppedAreaPixels={setCroppedAreaPixels}
-              handleHeroPhotoUpload={handleHeroPhotoUpload}
-              handleHeroPhotoSelect={handleHeroPhotoSelect}
-              handleRemoveHeroPhoto={handleRemoveHeroPhoto}
-            />
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/50 p-6 md:p-8 space-y-6 opacity-0 animate-fade-in-up">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-white font-bold text-sm">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-slate-800">Add Your Content</h2>
+            </div>
+            {config.sections.length === 0 ? (
+              <div className="p-6 bg-slate-50 rounded-xl border border-slate-200 text-slate-500">
+                <p className="text-sm">No sections enabled yet. Go back to Step 3 to select sections and continue.</p>
+              </div>
+            ) : (
+              <SectionContentInputs
+                config={config}
+                onSectionContentChange={(sectionKey: string, content: any) => handleSectionContentChange(sectionKey as keyof SectionContentMap, content)}
+                validationErrors={(() => {
+                  const errors: Record<string, boolean> = {};
+                  const { sections = [], section_content = {} } = config;
+                  sections.forEach((key: string) => {
+                    const meta = getSectionMetadata(key as Section);
+                    if (meta?.required) {
+                      if (key === 'gallery' && (photoPreviews.length === 0 && (!form.existingPhotos || form.existingPhotos.length === 0))) {
+                        errors[key] = true;
+                      } else if (key === 'timeline' && (!config.section_content?.timeline || !Array.isArray(config.section_content.timeline) || config.section_content.timeline.length === 0)) {
+                        errors[key] = true;
+                      } else if (key === 'love_letter' && (!(section_content as any).love_letter || !((section_content as any).love_letter?.content || (section_content as any).love_letter?.text)?.trim())) {
+                        errors[key] = true;
+                      }
+                    }
+                  });
+                  return errors;
+                })()}
+                photoPreviews={photoPreviews}
+                handlePhotos={handlePhotos}
+                heroPhotoPreview={heroPhotoPreview}
+                crop={crop}
+                zoom={zoom}
+                setCrop={setCrop}
+                setZoom={setZoom}
+                setCroppedAreaPixels={setCroppedAreaPixels}
+                handleHeroPhotoUpload={handleHeroPhotoUpload}
+                handleHeroPhotoSelect={handleHeroPhotoSelect}
+                handleRemoveHeroPhoto={handleRemoveHeroPhoto}
+              />
+            )}
           </div>
         );
 
-      case 6:
+      case 6: {
+        const toLabel = (key: string) => key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const sectionLabels = config.sections.map((key: Section) => {
+          const meta = getSectionMetadata ? getSectionMetadata(key) : undefined;
+          return meta?.title || toLabel(key);
+        });
+        const keyTemplates: Section[] = ['home', 'timeline', 'gallery'];
+        const otherTemplates = (config.sections as Section[]).filter((key) => !keyTemplates.includes(key));
+        let sectionsSummary = '';
+        if (sectionLabels.length > 5) {
+          sectionsSummary = `${sectionLabels.slice(0, 5).join(', ')} +${sectionLabels.length - 5} more sections`;
+        } else {
+          sectionsSummary = sectionLabels.join(', ');
+        }
+        const completed: { label: string; icon?: string }[] = [];
+        const needsAttention: { label: string; icon?: string }[] = [];
+        const autoGenerated: { label: string; icon?: string }[] = [];
+        (config.sections as Section[]).forEach((key) => {
+          const meta = getSectionMetadata ? getSectionMetadata(key) : undefined;
+          const label = meta?.title || toLabel(key);
+          const sectionContent = (config.section_content && (config.section_content as any)[key]) || undefined;
+          const rsvpContent = (config.section_content && (config.section_content as any).rsvp) || undefined;
+          if (['relationship_stats','anniversary_countdown','birthday_countdown','wedding_countdown','guest_messages','qr_keepsake'].includes(key)) {
+            autoGenerated.push({ label, icon: meta?.icon });
+          } else if (
+            (key === 'home' && (config.tagline && config.tagline.trim() || (config.hero && typeof config.hero.coverPhotoIndex === 'number'))) ||
+            (key === 'gallery' && ((photoPreviews.length > 0) || (form.existingPhotos && form.existingPhotos.length > 0))) ||
+            (key === 'photo_highlights' && ((photoPreviews.length > 0) || (form.existingPhotos && form.existingPhotos.length > 0))) ||
+            (key === 'timeline' && Array.isArray((config as any).timeline_events) && (config as any).timeline_events.length > 0) ||
+            (key === 'wedding_timeline' && Array.isArray((config as any).timeline_events) && (config as any).timeline_events.length > 0) ||
+            (key === 'school_memories' && Array.isArray((config as any).timeline_events) && (config as any).timeline_events.length > 0) ||
+            (key === 'achievements' && Array.isArray((config as any).timeline_events) && (config as any).timeline_events.length > 0) ||
+            (key === 'travel_timeline' && Array.isArray((config as any).timeline_events) && (config as any).timeline_events.length > 0) ||
+            (key === 'event_details' && sectionContent && ((typeof sectionContent.location === 'string' && sectionContent.location.trim()) || (typeof sectionContent.date === 'string' && sectionContent.date.trim()))) ||
+            (key === 'party_details' && sectionContent && ((typeof sectionContent.location === 'string' && sectionContent.location.trim()) || (typeof sectionContent.date === 'string' && sectionContent.date.trim()))) ||
+            (key === 'rsvp' && rsvpContent && ((typeof rsvpContent.deadline === 'string' && rsvpContent.deadline.trim()) || (Array.isArray(rsvpContent.messages) && rsvpContent.messages.length > 0))) ||
+            (key === 'gift_wishlist' && sectionContent && Array.isArray(sectionContent.items) && sectionContent.items.length > 0) ||
+            (key === 'gift_registry' && sectionContent && Array.isArray(sectionContent.items) && sectionContent.items.length > 0) ||
+            (key === 'surprise_message' && sectionContent && ((typeof sectionContent.message === 'string' && sectionContent.message.trim()) || (typeof sectionContent.hint === 'string' && sectionContent.hint.trim()))) ||
+            (sectionContent && (
+              (Array.isArray(sectionContent.gifts) && sectionContent.gifts.length > 0) ||
+              (Array.isArray(sectionContent.reasons) && sectionContent.reasons.length > 0) ||
+              (Array.isArray(sectionContent.quotes) && sectionContent.quotes.length > 0) ||
+              (Array.isArray(sectionContent.dreams) && sectionContent.dreams.length > 0) ||
+              (Array.isArray(sectionContent.videos) && sectionContent.videos.length > 0) ||
+              (Array.isArray(sectionContent.locations) && sectionContent.locations.length > 0) ||
+              (typeof sectionContent.content === 'string' && sectionContent.content.trim()) ||
+              (typeof sectionContent.letter === 'string' && sectionContent.letter.trim()) ||
+              (typeof sectionContent.message === 'string' && sectionContent.message.trim()) ||
+              (typeof sectionContent.playlistUrl === 'string' && sectionContent.playlistUrl.trim())
+            ))
+          ) {
+            completed.push({ label, icon: meta?.icon });
+          } else {
+            needsAttention.push({ label, icon: meta?.icon });
+          }
+        });
         return (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-6">
-            <h2 className="text-lg font-semibold text-slate-900">Review</h2>
-            <SummaryPanel
-              config={config}
-              form={form}
-              onEditSection={(step) => setCurrentStep(step)}
-            />
+          <div className="bg-gradient-to-br from-white via-slate-50 to-rose-50/60 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-200/60 p-8 md:p-12 space-y-10 transition-all duration-300">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="rounded-2xl border border-slate-200/70 bg-white/90 shadow-sm p-6 group transition-all duration-200 hover:shadow-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-bold text-lg text-slate-800 tracking-tight">Basic Info</h3>
+                  <button type="button" className="text-xs px-3 py-1 rounded-full bg-gradient-to-r from-rose-100 to-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-50 font-semibold shadow-sm transition-all duration-150" onClick={() => setCurrentStep(1)}>Edit</button>
+                </div>
+                <div className="text-base text-slate-700 space-y-2">
+                  <div><span className="font-medium">Website Name:</span> {form.website_name}</div>
+                  <div>
+                    <span className="font-medium">Names:</span> {
+                      Array.isArray(form.participants) && form.participants.length > 0
+                        ? form.participants.map((p: any) => p.name).filter(Boolean).join(' & ') || <span className="text-slate-400">Not set</span>
+                        : <span className="text-slate-400">Not set</span>
+                    }
+                  </div>
+                  <div><span className="font-medium">Special Date:</span> {form.specialDate ? new Date(form.specialDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : <span className="text-slate-400">Not set</span>}</div>
+                  <div><span className="font-medium">Occasion:</span> {toLabel(form.occasion)}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Password:</span>
+                    {form.password_input ? (
+                      <>
+                        <span className="tracking-widest select-all">{showPassword ? form.password_input : '••••••••'}</span>
+                        <button type="button" className="ml-2 text-xs px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 hover:bg-slate-200 font-medium transition-all duration-150" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? 'Hide' : 'Show'}</button>
+                      </>
+                    ) : (
+                      <span className="text-slate-400">Not set</span>
+                    )}
+                  </div>
+                  <div>
+                    <span className="font-medium">Hosting Duration:</span> {
+                      expirationMode === '3_months' ? '3 months'
+                      : expirationMode === '6_months' ? '6 months'
+                      : expirationMode === '1_year' ? '12 months'
+                      : <span className="text-slate-400">Not set</span>
+                    }
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-slate-200/70 bg-white/90 shadow-sm p-6 group transition-all duration-200 hover:shadow-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-bold text-lg text-slate-800 tracking-tight">Style</h3>
+                  <button type="button" className="text-xs px-3 py-1 rounded-full bg-gradient-to-r from-rose-100 to-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-50 font-semibold shadow-sm transition-all duration-150" onClick={() => setCurrentStep(2)}>Edit</button>
+                </div>
+                <div className="text-base text-slate-700 space-y-2">
+                  <div><span className="font-medium">Theme:</span> {toLabel(config.theme)}</div>
+                  <div className="mt-1">
+                    <span className="font-medium">Templates:</span>
+                    <ul className="list-disc ml-6 mt-1 space-y-0.5">
+                      {keyTemplates.map((key) => {
+                        if (!(config.sections as Section[]).includes(key)) return null;
+                        const meta = getSectionMetadata ? getSectionMetadata(key) : undefined;
+                        return (
+                          <li key={key} className="flex items-center gap-1">
+                            {meta?.icon && <span className="mr-1">{meta.icon}</span>}
+                            <span>{meta?.title || toLabel(key)}: <span className="text-slate-500">{config.templates?.[key] || 'Default'}</span></span>
+                          </li>
+                        );
+                      })}
+                      {otherTemplates.length > 0 && <li className="flex items-center gap-1"><span className="text-slate-500">Other Sections: Default</span></li>}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-slate-200/70 bg-white/90 shadow-sm p-6 group transition-all duration-200 hover:shadow-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-bold text-lg text-slate-800 tracking-tight">Sections</h3>
+                  <button type="button" className="text-xs px-3 py-1 rounded-full bg-gradient-to-r from-rose-100 to-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-50 font-semibold shadow-sm transition-all duration-150" onClick={() => setCurrentStep(3)}>Edit</button>
+                </div>
+                <div className="text-base text-slate-700">
+                  {sectionLabels.length > 0 ? <span>{sectionsSummary}</span> : <span>No sections selected</span>}
+                </div>
+              </div>
+              <div className="rounded-2xl border border-slate-200/70 bg-white/90 shadow-sm p-6 group transition-all duration-200 hover:shadow-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-bold text-lg text-slate-800 tracking-tight">Content Summary</h3>
+                  <button type="button" className="text-xs px-3 py-1 rounded-full bg-gradient-to-r from-rose-100 to-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-50 font-semibold shadow-sm transition-all duration-150" onClick={() => setCurrentStep(5)}>Edit</button>
+                </div>
+                <div className="text-base text-slate-700 space-y-3">
+                  {completed.length > 0 && (
+                    <div>
+                      <span className="font-medium text-emerald-700">Completed:</span>
+                      <ul className="list-disc ml-6 mt-1 space-y-0.5">
+                        {completed.map((item, i) => (
+                          <li key={i} className="flex items-center gap-1">
+                            {item.icon && <span className="mr-1">{item.icon}</span>}
+                            <span>{item.label}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {needsAttention.length > 0 && (
+                    <div>
+                      <span className="font-medium text-rose-700">Needs Attention:</span>
+                      <ul className="list-disc ml-6 mt-1 space-y-0.5">
+                        {needsAttention.map((item, i) => (
+                          <li key={i} className="flex items-center gap-1">
+                            {item.icon && <span className="mr-1">{item.icon}</span>}
+                            <span>{item.label}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {autoGenerated.length > 0 && (
+                    <div>
+                      <span className="font-medium text-slate-500">Auto-generated:</span>
+                      <ul className="list-disc ml-6 mt-1 space-y-0.5">
+                        {autoGenerated.map((item, i) => (
+                          <li key={i} className="flex items-center gap-1">
+                            {item.icon && <span className="mr-1">{item.icon}</span>}
+                            <span>{item.label}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {completed.length === 0 && needsAttention.length === 0 && autoGenerated.length === 0 && (
+                    <span className="text-slate-400">No content sections</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className={needsAttention.length > 0
+              ? "bg-gradient-to-r from-amber-50 to-white rounded-2xl p-5 border border-amber-200 shadow"
+              : "bg-gradient-to-r from-emerald-50 to-white rounded-2xl p-5 border border-emerald-200 shadow"
+            }>
+              {needsAttention.length > 0 ? (
+                <div className="text-amber-700 text-sm font-medium flex items-center gap-2">
+                  <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01" /></svg>
+                  Some sections need attention. You can still save — review the content sections when ready.
+                </div>
+              ) : (
+                <div className="text-emerald-700 text-sm font-medium flex items-center gap-2">
+                  <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  Everything looks great! Save your changes below.
+                </div>
+              )}
+            </div>
           </div>
         );
+      }
 
       default:
         return null;
@@ -1101,78 +1442,137 @@ export default function EditWebsitePage() {
     }
   };
 
-  return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Edit Website</h1>
-          <p className="text-slate-500 mt-1">Update website configuration</p>
+    return (
+    <div className="bg-gradient-to-b from-[#FFF7FB] to-[#FDF2F8] min-h-screen">
+      <div className="max-w-6xl mx-auto px-4 py-8 lg:py-10">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl lg:text-3xl font-bold text-center mb-3 text-slate-800">
+            Edit Website
+          </h1>
+          <p className="text-slate-500 text-sm lg:text-base">
+            Update your website configuration
+          </p>
         </div>
-        <a href="/admin/websites" className="text-rose-600 hover:text-rose-700 font-medium">
-          ← Back to Websites
-        </a>
+
+        <div className="flex justify-end mb-4">
+          <a href="/admin/websites" className="text-rose-600 hover:text-rose-700 font-medium text-sm">
+            ← Back to Websites
+          </a>
+        </div>
+
+        <div className="lg:hidden mb-4">
+          <button
+            onClick={() => setMobilePreviewOpen(true)}
+            className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 rounded-xl py-3 text-slate-700 font-medium shadow-sm"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            View Live Preview
+          </button>
+        </div>
+
+        <div className="mb-6">
+          <StepNavigator
+            currentStep={currentStep}
+            completedSteps={completedSteps}
+            onStepClick={(step) => {
+              if (step < currentStep || completedSteps.includes(step - 1)) {
+                setCurrentStep(step);
+                setError(null);
+              }
+            }}
+          />
+        </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl">
+            {error}
+          </div>
+        )}
+
+        {warning && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl">
+            {warning}
+          </div>
+        )}
+
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex-1">
+            <form onSubmit={handleFormSubmit}>
+              {renderStepContent()}
+
+              <div className="flex justify-between mt-8">
+                {currentStep > 1 ? (
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-300 text-slate-700 rounded-xl font-medium hover:bg-slate-50 transition-all"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Back
+                  </button>
+                ) : (
+                  <div />
+                )}
+
+                {currentStep < 6 ? (
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all"
+                  >
+                    {currentStep === 5 ? 'Next: Review' : 'Continue'}
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        Saving...
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Save Changes
+                      </span>
+                    )}
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+
+          <LivePreview
+            occasion={form.occasion}
+            config={config}
+            coupleNames={{
+              customer_name: form.participants?.[0]?.name ?? form.customer_name ?? '',
+              partner_name: form.participants?.[1]?.name ?? form.partner_name ?? '',
+            }}
+            tagline={form.tagline}
+            message={form.message}
+            specialDate={form.specialDate}
+            isMobileOpen={mobilePreviewOpen}
+            onMobileClose={() => setMobilePreviewOpen(false)}
+          />
+        </div>
       </div>
-
-{/* Edit Steps Navigation */}
-      <EditStepNav 
-        currentStep={currentStep} 
-        completedSteps={completedSteps} 
-        onStepClick={(step) => {
-          if (step < currentStep || completedSteps.includes(step - 1)) {
-            setCurrentStep(step);
-            setError(null);
-          }
-        }} 
-      />
-
-      {error && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg">
-          {error}
-        </div>
-      )}
-
-      {warning && (
-        <div className="p-4 bg-amber-50 border border-amber-200 text-amber-700 rounded-lg">
-          {warning}
-        </div>
-      )}
-
-      <form onSubmit={handleFormSubmit}>
-        {renderStepContent()}
-
-        <div className="flex justify-between mt-6">
-          {currentStep > 1 ? (
-            <button
-              type="button"
-              onClick={handleBack}
-              className="px-6 py-3 border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50"
-            >
-              Back
-            </button>
-          ) : (
-            <div></div>
-          )}
-
-          {currentStep < 6 ? (
-            <button
-              type="button"
-              onClick={handleNext}
-              className="px-6 py-3 bg-rose-600 text-white font-medium rounded-lg hover:bg-rose-700"
-            >
-              {currentStep === 5 ? 'Next: Review' : 'Continue'}
-            </button>
-          ) : (
-            <button
-              type="submit"
-              className="px-8 py-3 bg-rose-600 text-white font-medium rounded-lg hover:bg-rose-700 disabled:opacity-60"
-              disabled={loading}
-            >
-              {loading ? 'Saving...' : 'Save Changes'}
-            </button>
-          )}
-        </div>
-      </form>
     </div>
   );
 }
-

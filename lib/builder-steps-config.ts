@@ -157,7 +157,7 @@ export const validateContentStep = (
   config: SiteConfig
 ): ValidationResult => {
   const sections = config.sections || [];
-  const sectionContent = config.section_content || {};
+  const sectionContent = (config.section_content || {}) as any;
   
   // Gallery requires photos
   if (sections.includes('gallery') && (!form.photos || form.photos.length === 0)) {
@@ -278,6 +278,30 @@ export const validateContentStep = (
     const quotes = sectionContent.quotes?.quotes || [];
     if (!Array.isArray(quotes) || quotes.length === 0) {
       return { valid: false, error: 'Quotes section requires at least one quote' };
+    }
+  }
+
+  // Milestones requires content (deprecated but still usable)
+  if (sections.includes('milestones')) {
+    const content = sectionContent.milestones?.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'Milestones section requires content' };
+    }
+  }
+
+  // First Date requires content (deprecated but still usable)
+  if (sections.includes('first_date')) {
+    const content = sectionContent.first_date?.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'First Date section requires content' };
+    }
+  }
+
+  // Special Moments requires content (deprecated but still usable)
+  if (sections.includes('special_moments')) {
+    const content = sectionContent.special_moments?.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'Special Moments section requires content' };
     }
   }
 
