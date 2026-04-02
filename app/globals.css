@@ -1094,7 +1094,15 @@ html {
    For printable QR card and keychain inserts
    ============================================ */
 
+   
 @media print {
+  * {
+    box-shadow: none !important;
+  }
+
+  body {
+    margin: 0;
+  }
   /* Hide all elements with print:hidden class */
   .print\:hidden {
     display: none !important;

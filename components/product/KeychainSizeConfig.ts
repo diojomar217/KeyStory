@@ -9,7 +9,7 @@ export interface KeychainSize {
   height_mm: number;
   shape: KeychainShape;
   description?: string;
-  safeAreaScale?: number; // For shapes with unsafe edge areas (e.g., 0.85 = 85% usable)
+  safeAreaScale?: number;
 }
 
 // Predefined keychain sizes
@@ -23,10 +23,10 @@ export const KEYCHAIN_SIZES: KeychainSize[] = [
   },
   {
     label: 'Medium Portrait',
-    width_mm: 35,
-    height_mm: 50,
+    width_mm: 30.5,
+    height_mm: 47,
     shape: 'rectangle',
-    description: 'Standard portrait - 35mm × 50mm (recommended for clear acrylic)',
+    description: 'Standard portrait print - 30.5mm × 47mm',
   },
   {
     label: 'Square',
@@ -48,40 +48,28 @@ export const KEYCHAIN_SIZES: KeychainSize[] = [
     height_mm: 50,
     shape: 'heart',
     description: 'Heart shape - 50mm × 50mm (clear acrylic)',
-    safeAreaScale: 0.82, // 82% of total area is safe for content
+    safeAreaScale: 0.82,
   },
   {
     label: 'Custom Size',
     width_mm: 0,
     height_mm: 0,
     shape: 'rectangle',
-    description: 'Enter custom dimensions (for unique layouts)',
+    description: 'Enter custom dimensions',
   },
 ];
 
-// Conversion constants
-const MM_TO_PX = 3.7795; // 1mm = 3.7795px at 96 DPI
-const MM_TO_INCH = 0.0393701; // 1mm = 0.0393701 inches
+const MM_TO_PX = 3.7795;
+const MM_TO_INCH = 0.0393701;
 
-/**
- * Convert millimeters to pixels (at 96 DPI for screen display)
- */
 export function mmToPx(mm: number): number {
   return Math.round(mm * MM_TO_PX);
 }
 
-/**
- * Convert millimeters to inches (for print)
- */
 export function mmToInch(mm: number): number {
   return mm * MM_TO_INCH;
 }
 
-/**
- * Calculate the number of inserts that fit on a sheet
- * A4 paper: 210mm × 297mm
- * Letter paper: 8.5in × 11in = 215.9mm × 279.4mm
- */
 export function calculateInsertsPerSheet(
   insertWidthMm: number,
   insertHeightMm: number,
@@ -93,8 +81,8 @@ export function calculateInsertsPerSheet(
   const usableWidth = paperWidthMm - 2 * marginMm;
   const usableHeight = paperHeightMm - 2 * marginMm;
 
-  const columns = Math.max(1, Math.floor(usableWidth / (insertWidthMm + gapMm)));
-  const rows = Math.max(1, Math.floor(usableHeight / (insertHeightMm + gapMm)));
+  const columns = Math.max(1, Math.floor((usableWidth + gapMm) / (insertWidthMm + gapMm)));
+  const rows = Math.max(1, Math.floor((usableHeight + gapMm) / (insertHeightMm + gapMm)));
 
   return {
     columns,
@@ -103,27 +91,20 @@ export function calculateInsertsPerSheet(
   };
 }
 
-/**
- * Get CSS size string for rendering
- */
 export function getInsertDimensions(
   widthMm: number,
   heightMm: number,
   scale: number = 1
 ): { width: string; height: string } {
-  // For screen display, convert to pixels with scale
   const widthPx = mmToPx(widthMm) * scale;
   const heightPx = mmToPx(heightMm) * scale;
-  
+
   return {
     width: `${widthPx}px`,
     height: `${heightPx}px`,
   };
 }
 
-/**
- * Get print dimensions in mm for CSS
- */
 export function getPrintDimensions(
   widthMm: number,
   heightMm: number
@@ -134,31 +115,21 @@ export function getPrintDimensions(
   };
 }
 
-/**
- * Find a keychain size by label
- */
 export function findKeychainSize(label: string): KeychainSize | undefined {
-  return KEYCHAIN_SIZES.find(size => size.label === label);
+  return KEYCHAIN_SIZES.find((size) => size.label === label);
 }
 
-/**
- * Get safe area dimensions for content based on shape
- * Returns the usable area scale (0-1) where content should be placed
- */
 export function getSafeAreaScale(shape: KeychainShape, customScale?: number): number {
   if (customScale !== undefined) return customScale;
-  
+
   switch (shape) {
     case 'heart':
-      return 0.82; // 82% of area is safe for heart shape (avoids edges and tip)
+      return 0.82;
     default:
-      return 1; // rectangle and square use full area
+      return 1;
   }
 }
 
-/**
- * Calculate safe content dimensions for a given shape
- */
 export function getSafeContentDimensions(
   widthMm: number,
   heightMm: number,
@@ -166,22 +137,20 @@ export function getSafeContentDimensions(
   safeAreaScale?: number
 ): { width: number; height: number; offsetX: number; offsetY: number } {
   const scale = getSafeAreaScale(shape, safeAreaScale);
-  
+
   if (shape === 'heart') {
-    // For heart shape, content is centered and scaled
     const scaledWidth = widthMm * scale;
     const scaledHeight = heightMm * scale;
     const offsetX = (widthMm - scaledWidth) / 2;
     const offsetY = (heightMm - scaledHeight) / 2;
     return { width: scaledWidth, height: scaledHeight, offsetX, offsetY };
   }
-  
-  // For rectangle/square, use full dimensions
-  return { 
-    width: widthMm, 
-    height: heightMm, 
-    offsetX: 0, 
-    offsetY: 0 
+
+  return {
+    width: widthMm,
+    height: heightMm,
+    offsetX: 0,
+    offsetY: 0,
   };
 }
 
@@ -211,14 +180,3 @@ export function getHeartClipPath(): string {
     56% 86%
   )`;
 }
-
-
-/**
- * Get CSS clip-path for heart outline (for guides in preview)
- */
-export function getHeartOutlinePath(): string {
-  // Slightly larger heart outline for guides
-  return getHeartClipPath(); // Same shape, just used for outline reference
-}
-
-

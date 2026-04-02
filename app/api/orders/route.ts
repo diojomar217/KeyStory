@@ -3,11 +3,32 @@ const ordersCache: Record<string, { data: any; cachedAt: number }> = {};
 const CACHE_TTL = 10 * 1000; // 10 seconds
 import { NextRequest, NextResponse } from 'next/server';
 import { listWebsites as getSites, getWebsiteById as getSiteById, createWebsite as insertSite, updateWebsite as updateSite, deleteWebsite as deleteSite } from '@/lib/db/websites';
+
+const ALLOWED_SORT_COLUMNS = new Set([
+  'created_at',
+  'updated_at',
+  'website_name',
+  'slug',
+  'status',
+  'expires_at',
+]);
+
+const clearOrdersCache = () => {
+  Object.keys(ordersCache).forEach((key) => {
+    delete ordersCache[key];
+  });
+};
+
 // POST - Create a new site
 export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
+    if (!data || typeof data !== 'object') {
+      return NextResponse.json({ success: false, message: 'Invalid payload' }, { status: 400 });
+    }
+
     const created = await insertSite(data);
+    clearOrdersCache();
     return NextResponse.json({ success: true, site: created });
   } catch (error: any) {
     console.error('Failed to create site:', error);
@@ -22,7 +43,9 @@ export async function PUT(req: NextRequest) {
     if (!data.id) {
       return NextResponse.json({ success: false, message: 'Missing site id' }, { status: 400 });
     }
-    const updated = await updateSite(data.id, data);
+
+    const updated = await updateSite({ ...data, id: data.id });
+    clearOrdersCache();
     return NextResponse.json({ success: true, site: updated });
   } catch (error: any) {
     console.error('Failed to update site:', error);
@@ -38,6 +61,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Missing site id' }, { status: 400 });
     }
     await deleteSite(data.id);
+    clearOrdersCache();
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('Failed to delete site:', error);
@@ -67,10 +91,13 @@ export async function GET(req: NextRequest) {
 
     // Otherwise, fetch all sites (optionally filtered by status), with pagination and column selection
     const status = searchParams.get('status')?.toLowerCase();
-    const limit = parseInt(searchParams.get('limit') || '20', 10);
-    const offset = parseInt(searchParams.get('offset') || '0', 10);
+    const parsedLimit = parseInt(searchParams.get('limit') || '20', 10);
+    const parsedOffset = parseInt(searchParams.get('offset') || '0', 10);
+    const limit = Number.isNaN(parsedLimit) ? 20 : Math.min(Math.max(parsedLimit, 1), 100);
+    const offset = Number.isNaN(parsedOffset) ? 0 : Math.max(parsedOffset, 0);
     const search = searchParams.get('search')?.trim();
-    const sortBy = searchParams.get('sortBy') || 'created_at';
+    const requestedSortBy = searchParams.get('sortBy') || 'created_at';
+    const sortBy = ALLOWED_SORT_COLUMNS.has(requestedSortBy) ? requestedSortBy : 'created_at';
     const sortDirection = (searchParams.get('sortDirection') === 'asc' ? 'asc' : 'desc');
 
     // Build cache key from query params (after all are defined)

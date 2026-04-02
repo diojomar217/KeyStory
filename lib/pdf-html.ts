@@ -72,7 +72,7 @@ export function generatePdfHtml(site: Site, slug: string) {
   const cfg = site.config || {};
   const customerName = cfg?.people?.primary || site.customer_name || cfg?.customer_name || '';
   const partnerName = cfg?.people?.secondary || site.partner_name || cfg?.partner_name || '';
-  const specialDate = cfg?.dates?.special_date || site.specialDate || site.anniversary_date || '';
+  const specialDate = cfg?.dates?.special_date || site.specialDate || '';
   const tagline = cfg?.tagline || site.tagline || '';
   const qrCodeUrl = site.qr_code_url || cfg?.qr_data_url || '';
   const sectionContent = getSectionContent(site);

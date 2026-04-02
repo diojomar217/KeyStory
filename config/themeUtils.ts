@@ -12,23 +12,20 @@ export type ThemeColors = {
   muted: string;
 };
 
+function hexToRgba(hex: string, alpha: number): string {
+  const normalized = hex.replace('#', '');
+  if (normalized.length !== 6) return `rgba(107,114,128,${alpha})`;
+
+  const r = parseInt(normalized.slice(0, 2), 16);
+  const g = parseInt(normalized.slice(2, 4), 16);
+  const b = parseInt(normalized.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 export function getThemeColors(theme: ThemeKey): ThemeColors {
   const preset = THEME_CONFIG[theme as ThemeKey] || THEME_CONFIG.romantic_classic;
-  // Use a valid muted color for each theme
-  let muted = '#6B7280'; // default gray-500
-  switch (theme) {
-    case 'romantic_classic':
-      muted = '#9D174D'; // rose-700
-      break;
-    case 'cute_pastel':
-      muted = '#6D28D9'; // purple-700
-      break;
-    case 'minimal_modern':
-      muted = '#374151'; // slate-700
-      break;
-    default:
-      muted = '#6B7280';
-  }
+  const muted = hexToRgba(preset.colors.text, 0.68);
+
   return {
     primary: preset.colors.primary,
     secondary: preset.colors.secondary,

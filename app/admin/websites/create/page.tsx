@@ -22,6 +22,12 @@ import {
 import { getTemplateSections, getSectionMetadata, getSectionTemplates } from '@/lib/section-registry';
 import { getDefaultSelections } from '@/lib/config-helpers';
 import { getPresetsForOccasion, getPresetById } from '@/lib/preset-registry';
+import { SITE_TYPES } from '@/config/siteTypeConfig';
+import type { SiteTypeKey } from '@/config/siteTypeConfig';
+import {
+  getParticipantFieldsForOccasion,
+  OCCASION_DATE_LABELS,
+} from '@/config/occasionFormConfig';
 import ThemeSelector from '@/components/builder/ThemeSelector';
 import SectionSelector from '@/components/builder/SectionSelector';
 import TemplateSelector from '@/components/builder/TemplateSelector';
@@ -53,6 +59,19 @@ import { SectionContentMap, Section } from '@/lib/types';
 
 type LocalForm = Omit<CreateOrderPayload, 'config' | 'photos'> & { occasion: OccasionType; photos: File[]; heroPhoto?: File | null; heroPhotoIndex?: number; song_autoplay?: boolean; password_input?: string };
 
+function buildParticipantsForOccasion(
+  occasion: OccasionType,
+  existingParticipants: Array<{ id: string; name: string; role?: string }> = []
+): Array<{ id: string; name: string; role?: string }> {
+  const fields = getParticipantFieldsForOccasion(occasion);
+
+  return fields.map((field, index) => ({
+    id: field.id,
+    role: field.role,
+    name: existingParticipants[index]?.name || '',
+  }));
+}
+
 const sanitizeSlug = (value: string): string => {
   return value
     .toLowerCase()
@@ -68,7 +87,7 @@ const MAX_IMAGE_UPLOAD_BYTES = 12 * 1024 * 1024; // 12 MB; will be optimized on 
 const DRAFT_KEY = 'create-website-draft-v1';
 
 function getInitialDraft(): { form: LocalForm; config: SiteConfig; currentStep: number; completedSteps: number[] } {
-  const validOccasions: OccasionType[] = ['couple', 'wedding', 'birthday', 'proposal', 'anniversary'];
+  const validOccasions = SITE_TYPES.map((siteType) => siteType.key) as OccasionType[];
   if (typeof window === 'undefined') {
     return {
       form: {
@@ -90,7 +109,7 @@ function getInitialDraft(): { form: LocalForm; config: SiteConfig; currentStep: 
         occasion: 'couple' as OccasionType,
         theme: DEFAULT_THEME,
         sections: [],
-        templates: { home: undefined, gallery: undefined },
+        templates: {},
         timeline_events: [],
         cover_photo_index: undefined,
         section_content: {},
@@ -125,7 +144,7 @@ function getInitialDraft(): { form: LocalForm; config: SiteConfig; currentStep: 
     occasion: 'couple',
     theme: DEFAULT_THEME as ThemeKey,
     sections: [],
-    templates: { home: undefined, gallery: undefined },
+    templates: {},
     timeline_events: [],
     cover_photo_index: undefined,
     section_content: {},
@@ -370,17 +389,43 @@ export default function CreateWebsitePage() {
       setForm((prev) => ({ ...prev, [name]: sanitized }));
       setSlugSanitized(true);
     } else if (name === 'occasion') {
-      setSelectedPresetId(null);
-      setForm((prev) => ({ ...prev, occasion: value as any, preset_id: undefined }));
-      // Set config defaults for new site type
-      const defaults = getDefaultSelections(value as string);
-      setConfig((prev) => ({
+      const nextOccasion = value as OccasionType;
+      setForm((prev) => ({
         ...prev,
-        occasion: value as any,
-        theme: defaults.defaultTheme || prev.theme,
-        sections: defaults.defaultSections || [],
-        ...defaults.defaultTemplates,
+        occasion: nextOccasion,
+        preset_id: undefined,
+        participants: buildParticipantsForOccasion(nextOccasion, prev.participants),
       }));
+      // Auto-apply the first preset for the new occasion, or fall back to defaults
+      const siteType = value as SiteTypeKey;
+      const occasionPresets = getPresetsForOccasion(siteType);
+      const firstPreset = occasionPresets[0];
+      if (firstPreset) {
+        setSelectedPresetId(firstPreset.id);
+        setConfig((prev) => ({
+          ...prev,
+          occasion: value as any,
+          theme: firstPreset.defaults.theme,
+          layout_preset: firstPreset.defaults.layout_preset,
+          sections: firstPreset.defaults.sections,
+          templates: {
+            ...(prev.templates || {}),
+            ...(firstPreset.defaults.templates as Record<string, string>),
+          },
+          tagline: firstPreset.defaults.copy?.tagline || prev.tagline,
+          message: firstPreset.defaults.copy?.message || prev.message,
+        }));
+      } else {
+        setSelectedPresetId(null);
+        const defaults = getDefaultSelections(siteType);
+        setConfig((prev) => ({
+          ...prev,
+          occasion: value as any,
+          theme: defaults.defaultTheme || prev.theme,
+          sections: defaults.defaultSections || [],
+          ...defaults.defaultTemplates,
+        }));
+      }
     } else if (name === 'specialDate') {
       setForm((prev) => ({ ...prev, specialDate: value as string }));
     } else {
@@ -504,11 +549,14 @@ export default function CreateWebsitePage() {
     if (!preset) return;
 
     setSelectedPresetId(presetId);
+
+    // Applying a preset should drive Step 3 defaults, so sections are preselected.
     setConfig((prev) => ({
       ...prev,
       occasion: form.occasion,
-      message: form.message,
-      tagline: form.tagline,
+      theme: preset.defaults.theme,
+      layout_preset: preset.defaults.layout_preset,
+      sections: preset.defaults.sections,
       specialDate: form.specialDate,
       hero: {
         ...(prev.hero || {}),
@@ -520,10 +568,8 @@ export default function CreateWebsitePage() {
         song_autoplay: !!form.song_autoplay,
       },
       templates: {
-        home: preset.defaults.templates.home,
-        gallery: preset.defaults.templates.gallery,
-        timeline: preset.defaults.templates.timeline,
-        song: preset.defaults.templates.song,
+        ...(prev.templates || {}),
+        ...(preset.defaults.templates as Record<string, string>),
       },
       tagline: preset.defaults.copy?.tagline || prev.tagline,
       message: preset.defaults.copy?.message || prev.message,
@@ -666,7 +712,14 @@ export default function CreateWebsitePage() {
       }
 
       const payload: any = {
-        ...form,
+        website_name: form.website_name,
+        occasion: form.occasion,
+        customer_name: form.customer_name,
+        partner_name: form.partner_name,
+        specialDate: form.specialDate,
+        message: form.message,
+        tagline: form.tagline,
+        participants: Array.isArray(form.participants) ? form.participants : undefined,
         expires_at: expiresAt,
         photos: photosBase64,
         config: normalizedConfig,
@@ -773,8 +826,13 @@ export default function CreateWebsitePage() {
                   onChange={handleChange}
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
                 >
-                  <option value="couple">💕 Romantic Couple</option>
-                  <option value="birthday">🎂 Birthday Celebration</option>
+                  {[...SITE_TYPES]
+                    .sort((a, b) => a.label.localeCompare(b.label))
+                    .map((siteType) => (
+                    <option key={siteType.key} value={siteType.key}>
+                      {siteType.icon} {siteType.label}
+                    </option>
+                    ))}
                 </select>
               </div>
 
@@ -804,50 +862,30 @@ export default function CreateWebsitePage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                
-                <div>
-                  <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                    {form.occasion === 'couple' ? 'Your Name' : 'Celebrant Name'}
-                  </label>
-                  <input
-                    name="participants.0.name"
-                    required
-                    placeholder={form.occasion === 'couple' ? 'Your name' : 'Celebrant name'}
-                    value={form.participants?.[0]?.name || ''}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
-                    onChange={(e) => {
-                      const newParticipants = [...(form.participants || [{id: '0', name: ''}])];
-                      newParticipants[0] = { ...newParticipants[0], name: e.target.value };
-                      setForm({...form, participants: newParticipants});
-                    }}
-                  />
-                </div>
-
-                <div>
-                  {form.occasion === 'couple' && (
-                    <>
-                      <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                        Partner&apos;s Name
-                      </label>
-                      <input
-                        name="participants.1.name"
-                        required
-                        placeholder="Partner's name"
-                        value={form.participants?.[1]?.name || ''}
-                        className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
-                        onChange={(e) => {
-                          const newParticipants = [...(form.participants || [{id: '0', name: ''}, {id: '1', name: ''}])];
-                          newParticipants[1] = { ...newParticipants[1], name: e.target.value };
-                          setForm({...form, participants: newParticipants});
-                        }}
-                      />
-                    </>
-                  )}
-                </div>
+                {getParticipantFieldsForOccasion(form.occasion).map((field, index) => (
+                  <div key={field.id}>
+                    <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                      {field.label}
+                    </label>
+                    <input
+                      name={`participants.${index}.name`}
+                      required
+                      placeholder={field.placeholder}
+                      value={form.participants?.[index]?.name || ''}
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                      onChange={(e) => {
+                        const newParticipants = buildParticipantsForOccasion(form.occasion, form.participants);
+                        newParticipants[index] = { ...newParticipants[index], name: e.target.value };
+                        setForm({ ...form, participants: newParticipants });
+                      }}
+                    />
+                  </div>
+                ))}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                  {form.occasion === 'couple' ? 'Anniversary Date' : 'Birth Date'}
+                  {OCCASION_DATE_LABELS[form.occasion] || 'Special Date'}
                 </label>
                 <input
                   name="specialDate"
@@ -1065,7 +1103,7 @@ export default function CreateWebsitePage() {
             ) : (
               <div className="space-y-6">
                 {config.sections.map((sectionKey) => {
-                  const { getTemplatesForSection } = require('@/config/templateConfig');
+                  const { getTemplatesForSection } = require('@/lib/config-helpers');
                   const templates = getTemplatesForSection(sectionKey);
                   if (!templates.length) return null;
                   return (
@@ -1118,14 +1156,10 @@ export default function CreateWebsitePage() {
                   config={config}
                   onSectionContentChange={handleSectionContentChange}
                   validationErrors={(() => {
-                    // Compute validation errors for required sections
                     const errors: Record<string, boolean> = {};
                     const { sections = [], section_content = {} } = config;
-                    // Use SECTION_CONFIG for required info
-                    const sectionMeta: Record<string, any> = {};
-                    require('@/config/sectionConfig').SECTION_CONFIG.forEach((s: any) => (sectionMeta[s.key] = s));
                     sections.forEach((key: string) => {
-                      const meta = sectionMeta[key];
+                      const meta = getSectionMetadata(key as import('@/lib/types').Section);
                       if (meta?.required) {
                         // Gallery: must have at least 1 photo (use config.photos)
                         if (key === 'gallery' && (!form.photos || !Array.isArray(form.photos) || form.photos.length === 0)) {
@@ -1136,7 +1170,11 @@ export default function CreateWebsitePage() {
                           errors[key] = true;
                         }
                         // Love Letter: must have content
-                        else if (key === 'love_letter' && (!section_content.love_letter || !section_content.love_letter.content || !section_content.love_letter.content.trim())) {
+                        else if (
+                          key === 'love_letter' &&
+                          (!section_content.love_letter ||
+                            !(section_content.love_letter.content || section_content.love_letter.text)?.trim())
+                        ) {
                           errors[key] = true;
                         }
                         // Home: always considered complete (no input required)
@@ -1215,10 +1253,13 @@ export default function CreateWebsitePage() {
           const meta = getSectionMetadata ? getSectionMetadata(key) : undefined;
           const label = meta?.title || toLabel(key);
           const sectionContent = (config.section_content && (config.section_content as any)[key]) || undefined;
+          const rsvpContent = (config.section_content && (config.section_content as any).rsvp) || undefined;
+          
           if ([
             'relationship_stats',
             'anniversary_countdown',
             'birthday_countdown',
+            'wedding_countdown',
             'guest_messages',
             'qr_keepsake',
           ].includes(key)) {
@@ -1226,7 +1267,35 @@ export default function CreateWebsitePage() {
           } else if (
             (key === 'home' && (config.tagline && config.tagline.trim() || (config.hero && typeof config.hero.coverPhotoIndex === 'number'))) ||
             (key === 'gallery' && form.photos && form.photos.length > 0) ||
+            (key === 'photo_highlights' && form.photos && form.photos.length > 0) ||
             (key === 'timeline' && Array.isArray((config as any).timeline_events) && (config as any).timeline_events.length > 0) ||
+            (key === 'wedding_timeline' && Array.isArray((config as any).timeline_events) && (config as any).timeline_events.length > 0) ||
+            (key === 'school_memories' && Array.isArray((config as any).timeline_events) && (config as any).timeline_events.length > 0) ||
+            (key === 'achievements' && Array.isArray((config as any).timeline_events) && (config as any).timeline_events.length > 0) ||
+            (key === 'travel_timeline' && Array.isArray((config as any).timeline_events) && (config as any).timeline_events.length > 0) ||
+            (key === 'event_details' && sectionContent && (
+              (typeof sectionContent.location === 'string' && sectionContent.location.trim()) ||
+              (typeof sectionContent.date === 'string' && sectionContent.date.trim()) ||
+              (typeof sectionContent.time === 'string' && sectionContent.time.trim()) ||
+              (typeof sectionContent.dressCode === 'string' && sectionContent.dressCode.trim())
+            )) ||
+            (key === 'party_details' && sectionContent && (
+              (typeof sectionContent.location === 'string' && sectionContent.location.trim()) ||
+              (typeof sectionContent.date === 'string' && sectionContent.date.trim()) ||
+              (typeof sectionContent.time === 'string' && sectionContent.time.trim()) ||
+              (typeof sectionContent.dressCode === 'string' && sectionContent.dressCode.trim())
+            )) ||
+            (key === 'rsvp' && rsvpContent && (
+              (typeof rsvpContent.deadline === 'string' && rsvpContent.deadline.trim()) ||
+              (typeof rsvpContent.note === 'string' && rsvpContent.note.trim()) ||
+              (Array.isArray(rsvpContent.messages) && rsvpContent.messages.length > 0)
+            )) ||
+            (key === 'gift_wishlist' && sectionContent && Array.isArray(sectionContent.items) && sectionContent.items.length > 0) ||
+            (key === 'gift_registry' && sectionContent && Array.isArray(sectionContent.items) && sectionContent.items.length > 0) ||
+            (key === 'surprise_message' && sectionContent && (
+              (typeof sectionContent.message === 'string' && sectionContent.message.trim()) ||
+              (typeof sectionContent.hint === 'string' && sectionContent.hint.trim())
+            )) ||
             (sectionContent && (
               (Array.isArray(sectionContent.gifts) && sectionContent.gifts.length > 0) ||
               (Array.isArray(sectionContent.reasons) && sectionContent.reasons.length > 0) ||

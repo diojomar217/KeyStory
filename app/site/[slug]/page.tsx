@@ -1,11 +1,12 @@
 import { DEFAULT_THEME } from '@/config/defaults';
 import { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
-import type { HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, GuestMessageRecord } from '@/lib/types';
+import type { HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, GuestMessageRecord, OccasionType } from '@/lib/types';
 import type { ThemeKey } from '@/config/themeConfig';
 import ClientPage from '@/components/page/ClientPage';
 import { isExpired, isArchived } from '@/lib/site-status';
 import { getPublicSiteBySlug } from '@/lib/site-data';
+import { resolveHeroCoverPhoto } from '@/lib/site-type-utils';
 
 export const revalidate = 60;
 
@@ -19,7 +20,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const data = await getPublicSiteBySlug(slug);
 
   if (data) {
-    const siteType = (data.site_type as 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary') || 'couple';
+    const siteType = (data.site_type as OccasionType) || 'couple';
     const customerName =
       data.config?.people?.primary || data.customer_name || data.config?.customer_name || '';
     const partnerName =
@@ -152,13 +153,51 @@ export default async function LovePage({ params }: PageProps) {
   const coverPhotoIndex = config.cover_photo_index;
   const heroCoverPhotoUrl = config?.hero?.coverPhotoUrl || null;
 
+  const heroIndex = typeof config?.hero?.coverPhotoIndex === 'number' ? config.hero.coverPhotoIndex : null;
+  const legacyCoverIndex = typeof coverPhotoIndex === 'number' ? coverPhotoIndex : null;
+  const resolvedFromFallbackChain = resolveHeroCoverPhoto(
+    { hero: config?.hero, cover_photo_index: coverPhotoIndex },
+    photos,
+  );
+  const effectiveHeroUrl = heroCoverPhotoUrl || resolvedFromFallbackChain || null;
+
+  const heroPhotoSource =
+    heroCoverPhotoUrl
+      ? 'config.hero.coverPhotoUrl'
+      : heroIndex !== null && Boolean(photos[heroIndex])
+        ? `config.hero.coverPhotoIndex(${heroIndex})`
+        : legacyCoverIndex !== null && Boolean(photos[legacyCoverIndex])
+          ? `config.cover_photo_index(${legacyCoverIndex})`
+          : photos.length > 0
+            ? 'photos[0]'
+            : 'none';
+
+  const shortUrl = (url?: string | null) => {
+    if (!url) return null;
+    return url.length > 140 ? `${url.slice(0, 140)}...` : url;
+  };
+
+  console.info('[site-photo-source]', {
+    slug,
+    siteId: data.id,
+    heroPhotoSource,
+    dbFields: {
+      heroCoverPhotoUrl: shortUrl(config?.hero?.coverPhotoUrl || null),
+      heroCoverPhotoIndex: heroIndex,
+      coverPhotoIndex: legacyCoverIndex,
+      photosCount: photos.length,
+      firstPhoto: shortUrl(photos[0] || null),
+    },
+    resolvedHeroUrl: shortUrl(effectiveHeroUrl),
+  });
+
   // Get QR data URL target (link to encode in styled QR)
   const qrDataUrl = config.qr_data_url || undefined;
 
-  const siteType = (data.site_type as 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary') || 'couple';
+  const siteType = (data.site_type as OccasionType) || 'couple';
   const customerName = config?.people?.primary || data.customer_name || '';
   const partnerName = config?.people?.secondary || data.partner_name || '';
-  const specialDateVal = config?.dates?.special_date || data.specialDate || data.anniversary_date || '';
+  const specialDateVal = config?.dates?.special_date || data.specialDate || '';
   const message = config?.message || data.message || '';
   const songLink = config?.media?.song_link || data.song_link || '';
   const songAutoplay = config?.media?.song_autoplay ?? (data as any).song_autoplay ?? false;

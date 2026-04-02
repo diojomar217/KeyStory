@@ -1,6 +1,6 @@
 'use client';
 import { Section } from '@/lib/types';
-import { getTemplatesForSection } from '@/config/templateConfig';
+import { getTemplatesForSection } from '@/lib/config-helpers';
 import React from 'react';
 // Minimal mock preview component for template cards
 function TemplateMockPreview({ type, variant }: { type: string; variant: string }) {
@@ -30,6 +30,18 @@ function TemplateMockPreview({ type, variant }: { type: string; variant: string 
       return <div className="w-full h-full bg-gradient-to-br from-pink-100 to-rose-50 flex items-end justify-center rounded"><div className="w-2/3 h-2 bg-white rounded mb-1" /><div className="w-2/3 h-4 bg-rose-200 rounded" /></div>;
     case 'song_lyrics':
       return <div className="w-full h-full bg-gradient-to-br from-pink-100 to-rose-50 flex flex-col items-center justify-center rounded"><div className="w-2/3 h-2 bg-white rounded mb-1" /><div className="w-1/2 h-2 bg-white rounded mb-1" /><div className="w-1/3 h-2 bg-white rounded" /></div>;
+    case 'love_letter_classic':
+      return <div className="w-full h-full bg-gradient-to-br from-rose-50 to-pink-50 flex flex-col items-center justify-center rounded"><div className="w-3/4 h-2 bg-white rounded mb-1" /><div className="w-2/3 h-2 bg-white rounded mb-1" /><div className="w-1/2 h-2 bg-white rounded" /></div>;
+    case 'love_letter_floral':
+      return <div className="w-full h-full bg-gradient-to-br from-pink-100 to-rose-100 flex items-center justify-center rounded"><div className="w-3/4 h-3/4 bg-white rounded border-2 border-rose-200" /></div>;
+    case 'love_letter_handwritten':
+      return <div className="w-full h-full bg-gradient-to-br from-rose-50 to-pink-100 flex items-center justify-center rounded"><div className="w-2/3 h-3/4 bg-white rounded shadow-md -rotate-2" /></div>;
+    case 'qr_card':
+      return <div className="w-full h-full bg-gradient-to-br from-slate-100 to-rose-50 flex items-center justify-center rounded"><div className="w-10 h-10 bg-white rounded grid grid-cols-3 gap-0.5 p-1"><div className="bg-rose-300 rounded-sm" /><div className="bg-rose-100 rounded-sm" /><div className="bg-rose-300 rounded-sm" /><div className="bg-rose-100 rounded-sm" /><div className="bg-rose-300 rounded-sm" /><div className="bg-rose-100 rounded-sm" /><div className="bg-rose-300 rounded-sm" /><div className="bg-rose-100 rounded-sm" /><div className="bg-rose-300 rounded-sm" /></div></div>;
+    case 'qr_mini':
+      return <div className="w-full h-full bg-gradient-to-br from-slate-100 to-rose-50 flex items-center justify-center rounded"><div className="w-7 h-7 bg-white rounded-full grid grid-cols-3 gap-0.5 p-1"><div className="bg-rose-300 rounded-full" /><div className="bg-rose-100 rounded-full" /><div className="bg-rose-300 rounded-full" /><div className="bg-rose-100 rounded-full" /><div className="bg-rose-300 rounded-full" /><div className="bg-rose-100 rounded-full" /><div className="bg-rose-300 rounded-full" /><div className="bg-rose-100 rounded-full" /><div className="bg-rose-300 rounded-full" /></div></div>;
+    case 'qr_ornament':
+      return <div className="w-full h-full bg-gradient-to-br from-slate-100 to-rose-50 flex items-center justify-center rounded"><div className="w-8 h-10 bg-white rounded-full border-2 border-rose-200 flex items-center justify-center"><div className="w-4 h-4 bg-rose-300 rounded-sm" /></div></div>;
     default:
       return <div className="w-full h-full bg-slate-100 rounded" />;
   }

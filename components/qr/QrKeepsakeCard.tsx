@@ -1,10 +1,24 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import QRCodeStyling from 'qr-code-styling';
 
+export type QrCardStyle =
+  | 'none'
+  | 'love_card'
+  | 'birthday_card'
+  | 'minimal_card'
+  | 'polaroid';
 
-export type QrCardStyle = 'none' | 'love_card' | 'birthday_card' | 'minimal_card' | 'polaroid';
+export type QrVisualDesign = {
+  dotsColor: string;
+  backgroundColor: string;
+  cornersColor: string;
+  dotsType: 'rounded' | 'dots' | 'classy' | 'classy-rounded' | 'square' | 'extra-rounded';
+  cornersType: 'square' | 'dot' | 'extra-rounded';
+  cornersDotType: 'dot' | 'square';
+  logoUrl?: string;
+};
 
 export type QrConfig = {
   color?: string;
@@ -14,11 +28,16 @@ export type QrConfig = {
   title?: string;
   subtitle?: string;
   showNames?: boolean;
+  qrDesign?: QrVisualDesign;
 };
 
-export interface QrKeepsakeCardProps {
-  theme?: import('@/config/themeConfig').ThemeKey;
-  siteType?: 'couple' | 'birthday' | string;
+type PhotoTransform = {
+  zoom: number;
+  offsetX: number;
+  offsetY: number;
+};
+
+type Props = {
   customerName?: string;
   partnerName?: string;
   qrDataUrl?: string;
@@ -26,118 +45,430 @@ export interface QrKeepsakeCardProps {
   slug?: string;
   config?: QrConfig;
   cardSize?: 'small' | 'large';
+  photoUrl?: string;
+  photoTransform?: PhotoTransform;
+  theme?: unknown;
+  siteType?: string;
+};
+
+function getPhotoStyle(transform?: PhotoTransform) {
+  const zoom = transform?.zoom ?? 1;
+  const offsetX = transform?.offsetX ?? 0;
+  const offsetY = transform?.offsetY ?? 0;
+
+  return {
+    transform: `translate(${offsetX}px, ${offsetY}px) scale(${zoom})`,
+    transformOrigin: 'center center',
+  } as const;
 }
 
 export function QrKeepsakeCard({
-  theme = 'romantic_classic',
-  siteType = 'couple',
   customerName = 'Your Name',
   partnerName = 'Partner Name',
   qrDataUrl,
-  qrCodeUrl,
-  slug,
   config,
   cardSize = 'large',
-}: QrKeepsakeCardProps) {
+  photoUrl,
+  photoTransform,
+}: Props) {
   const qrRef = useRef<HTMLDivElement>(null);
-  const qrCodeRef = useRef<QRCodeStyling | null>(null);
   const [isClient, setIsClient] = useState(false);
 
   const qrConfig = {
     color: '#e11d48',
     background: '#ffffff',
     style: 'rounded' as const,
-    cardStyle: siteType === 'birthday' ? 'birthday_card' : 'love_card' as const,
-    title: siteType === 'birthday' ? 'Scan the birthday surprise 🎉' : 'Scan our love story ❤️',
-    subtitle: 'Open the memory website',
-    showNames: siteType !== 'birthday',
+    cardStyle: 'love_card' as const,
+    title: 'Scan our love story ❤️',
+    subtitle: 'Our digital keepsake',
+    showNames: true,
     ...config,
   };
 
-  const isDataImageUrl = (value?: string) => typeof value === 'string' && value.startsWith('data:image');
-
-  const getQrTarget = () => {
-    if (qrDataUrl && !isDataImageUrl(qrDataUrl)) return qrDataUrl;
-    if (qrCodeUrl && !isDataImageUrl(qrCodeUrl) && /^https?:\/\//.test(qrCodeUrl)) return qrCodeUrl;
-    if (slug && typeof window !== 'undefined') return `${window.location.origin}/site/${slug}`;
-    if (slug) return `/site/${slug}`;
-    return undefined;
-  };
-
-  const targetQrDataUrl = getQrTarget();
-
-  const cardDimensions = cardSize === 'small'
-    ? { width: '5.5cm', height: '4cm' }
-    : { width: '6.2cm', height: '4.1cm' };
+  const size = useMemo(() => {
+    return cardSize === 'small'
+      ? {
+          w: '5.5cm',
+          h: '4cm',
+          qr: 66,
+          radius: '12px',
+          padding: '7px',
+          title: '11px',
+          subtitle: '6.3px',
+          names: '7.4px',
+          footer: '6.3px',
+          photo: 46,
+          gap: '7px',
+        }
+      : {
+          w: '6.2cm',
+          h: '4.1cm',
+          qr: 72,
+          radius: '12px',
+          padding: '8px',
+          title: '12px',
+          subtitle: '6.6px',
+          names: '7.8px',
+          footer: '6.6px',
+          photo: 52,
+          gap: '8px',
+        };
+  }, [cardSize]);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   useEffect(() => {
-    if (!qrRef.current || !targetQrDataUrl) return;
+    if (!qrRef.current || !qrDataUrl || !isClient) return;
 
-    const dots = qrConfig.style === 'square' ? 'classy' : qrConfig.style === 'dots' ? 'dots' : 'rounded';
-    const corners = qrConfig.style === 'rounded' ? 'extra-rounded' : 'square';
+    const visualDesign = qrConfig.qrDesign;
 
-    const qrcode = new QRCodeStyling({
-      width: 220,
-      height: 220,
+    const qr = new QRCodeStyling({
+      width: size.qr,
+      height: size.qr,
+      data: qrDataUrl,
       type: 'canvas',
-      data: targetQrDataUrl,
-      imageOptions: { crossOrigin: 'anonymous', margin: 6 },
-      dotsOptions: { color: qrConfig.color || '#e11d48', type: dots as any },
-      cornersSquareOptions: { color: qrConfig.color || '#e11d48', type: corners as any },
-      cornersDotOptions: { color: qrConfig.color || '#e11d48', type: corners as any },
-      backgroundOptions: { color: qrConfig.background || '#ffffff' },
-      qrOptions: { errorCorrectionLevel: 'H' },
+      dotsOptions: {
+        color: visualDesign?.dotsColor ?? qrConfig.color,
+        type: visualDesign?.dotsType ?? (qrConfig.style === 'square' ? 'square' : 'rounded'),
+      },
+      backgroundOptions: {
+        color: visualDesign?.backgroundColor ?? '#ffffff',
+      },
+      cornersSquareOptions: {
+        color: visualDesign?.cornersColor ?? qrConfig.color,
+        type: visualDesign?.cornersType ?? 'extra-rounded',
+      },
+      cornersDotOptions: {
+        color: visualDesign?.cornersColor ?? qrConfig.color,
+        type: visualDesign?.cornersDotType ?? 'dot',
+      },
+      image: visualDesign?.logoUrl,
+      imageOptions: visualDesign?.logoUrl
+        ? {
+            hideBackgroundDots: true,
+            imageSize: 0.28,
+            margin: 4,
+            crossOrigin: 'anonymous',
+          }
+        : undefined,
+      qrOptions: {
+        errorCorrectionLevel: 'H',
+      },
     });
 
-    qrCodeRef.current = qrcode;
     qrRef.current.innerHTML = '';
-    qrcode.append(qrRef.current);
+    qr.append(qrRef.current);
+  }, [qrDataUrl, isClient, qrConfig.color, qrConfig.qrDesign, qrConfig.style, size.qr]);
 
-  }, [qrDataUrl, qrConfig.color, qrConfig.background, qrConfig.style]);
+  const imageBlock = photoUrl ? (
+    <div
+      className="overflow-hidden border border-slate-200 bg-slate-50"
+      style={{
+        width: `${size.photo}px`,
+        height: `${size.photo}px`,
+        borderRadius: '10px',
+        flexShrink: 0,
+        position: 'relative',
+      }}
+    >
+      <img
+        src={photoUrl}
+        alt="Keepsake"
+        className="absolute left-1/2 top-1/2 h-full w-full object-cover"
+        style={{
+          ...getPhotoStyle(photoTransform),
+          minWidth: '100%',
+          minHeight: '100%',
+        }}
+        draggable={false}
+      />
+    </div>
+  ) : (
+    <div
+      className="flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 text-slate-400"
+      style={{
+        width: `${size.photo}px`,
+        height: `${size.photo}px`,
+        borderRadius: '10px',
+        fontSize: cardSize === 'small' ? '9px' : '10px',
+        flexShrink: 0,
+      }}
+    >
+      No photo
+    </div>
+  );
 
-  if (!targetQrDataUrl) return null;
+  const qrBlock = (
+    <div
+      className="bg-white"
+      style={{
+        padding: '4px',
+        borderRadius: '10px',
+        border: '1px solid #d9d9d9',
+        flexShrink: 0,
+      }}
+    >
+      <div
+        ref={qrRef}
+        style={{
+          width: `${size.qr}px`,
+          height: `${size.qr}px`,
+        }}
+      />
+    </div>
+  );
 
-  const styleClasses: Record<QrCardStyle, string> = {
-    love_card: 'bg-gradient-to-br from-rose-100 to-pink-100 border-2 border-rose-200 text-rose-900',
-    birthday_card: 'bg-gradient-to-br from-orange-100 via-yellow-100 to-pink-100 border-2 border-orange-200 text-orange-900',
-    minimal_card: 'bg-white border border-slate-200 text-slate-900',
-    polaroid: 'bg-white border-2 border-slate-300 shadow-xl text-slate-900',
-    none: 'bg-white text-slate-900',
-  };
+  if (qrConfig.cardStyle === 'polaroid') {
+    return (
+      <div
+        className="relative bg-white print:shadow-none"
+        style={{
+          width: size.w,
+          height: size.h,
+          borderRadius: size.radius,
+          padding: size.padding,
+          border: '1px solid #d4d4d8',
+          overflow: 'hidden',
+        }}
+      >
+        <div className="flex h-full flex-col">
+          <div className="relative flex-1 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+            {photoUrl ? (
+              <img
+                src={photoUrl}
+                alt="Polaroid keepsake"
+                className="absolute left-1/2 top-1/2 h-full w-full object-cover"
+                style={{
+                  ...getPhotoStyle(photoTransform),
+                  minWidth: '100%',
+                  minHeight: '100%',
+                }}
+                draggable={false}
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-xs text-slate-400">
+                No photo
+              </div>
+            )}
+          </div>
+
+          <div className="mt-2 flex items-end justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <div
+                className="truncate font-semibold text-slate-900"
+                style={{ fontSize: size.title, lineHeight: 1.1 }}
+              >
+                {customerName} &amp; {partnerName}
+              </div>
+              <div
+                className="truncate text-slate-500"
+                style={{ fontSize: size.footer, marginTop: '2px' }}
+              >
+                {qrConfig.subtitle}
+              </div>
+            </div>
+            {qrBlock}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (qrConfig.cardStyle === 'minimal_card') {
+    return (
+      <div
+        className="relative bg-white print:shadow-none"
+        style={{
+          width: size.w,
+          height: size.h,
+          borderRadius: size.radius,
+          padding: size.padding,
+          border: '1px solid #d4d4d8',
+          overflow: 'hidden',
+        }}
+      >
+        <div className="flex h-full items-center justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div
+              className="uppercase text-slate-400"
+              style={{
+                fontSize: size.subtitle,
+                letterSpacing: '0.14em',
+                marginBottom: '4px',
+              }}
+            >
+              {qrConfig.subtitle}
+            </div>
+            <div
+              className="font-semibold text-slate-900"
+              style={{ fontSize: size.title, lineHeight: 1.08, marginBottom: '4px' }}
+            >
+              {qrConfig.title}
+            </div>
+            {qrConfig.showNames && (
+              <div
+                className="text-slate-600"
+                style={{ fontSize: size.names, lineHeight: 1.1, marginBottom: '6px' }}
+              >
+                {customerName} &amp; {partnerName}
+              </div>
+            )}
+            {photoUrl && imageBlock}
+          </div>
+
+          {qrBlock}
+        </div>
+      </div>
+    );
+  }
+
+  if (qrConfig.cardStyle === 'birthday_card') {
+    return (
+      <div
+        className="relative overflow-hidden print:shadow-none"
+        style={{
+          width: size.w,
+          height: size.h,
+          borderRadius: size.radius,
+          border: '1px solid #f1c4d7',
+          background: '#fffafc',
+        }}
+      >
+        <div className="absolute right-2 top-1 text-[10px]">🎉</div>
+        <div className="absolute left-2 top-1 text-[10px]">🎂</div>
+
+        <div
+          className="flex h-full items-center"
+          style={{ gap: size.gap, padding: size.padding }}
+        >
+          <div className="flex min-w-0 flex-1 flex-col justify-center">
+            <div
+              className="uppercase text-slate-500"
+              style={{
+                fontSize: size.subtitle,
+                letterSpacing: '0.14em',
+                marginBottom: '4px',
+              }}
+            >
+              Birthday surprise
+            </div>
+            <div
+              className="font-semibold text-slate-900"
+              style={{ fontSize: size.title, lineHeight: 1.08, marginBottom: '4px' }}
+            >
+              {qrConfig.title}
+            </div>
+            {qrConfig.showNames && (
+              <div
+                className="text-slate-600"
+                style={{ fontSize: size.names, lineHeight: 1.1, marginBottom: '6px' }}
+              >
+                {customerName}
+              </div>
+            )}
+            {photoUrl && imageBlock}
+          </div>
+
+          {qrBlock}
+        </div>
+      </div>
+    );
+  }
+
+  if (qrConfig.cardStyle === 'none') {
+    return (
+      <div
+        className="relative bg-white print:shadow-none"
+        style={{
+          width: size.w,
+          height: size.h,
+          borderRadius: size.radius,
+          padding: size.padding,
+          border: '1px solid #d4d4d8',
+          overflow: 'hidden',
+        }}
+      >
+        <div className="flex h-full items-center justify-center gap-2">
+          {photoUrl && imageBlock}
+          {qrBlock}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
-      className={`relative rounded-2xl shadow-lg overflow-hidden ${styleClasses[(qrConfig.cardStyle || 'none') as QrCardStyle]}`}
-      style={{ ...cardDimensions, minWidth: cardDimensions.width, minHeight: cardDimensions.height, padding: '0.8rem' }}
+      className="relative overflow-hidden print:shadow-none"
+      style={{
+        width: size.w,
+        height: size.h,
+        borderRadius: size.radius,
+        background: qrConfig.background || '#fffafc',
+        border: '1px solid #e9c7d2',
+      }}
     >
-      <div className="h-full w-full flex flex-col justify-between">
-        <div className="text-center">
-          <p className="text-xs uppercase font-bold tracking-widest opacity-70">{qrConfig.subtitle}</p>
-          <h3 className="text-lg font-extrabold mt-1">{qrConfig.title}</h3>
-          {qrConfig.showNames && (
-            <p className="text-sm mt-1 opacity-80">{customerName} & {partnerName}</p>
-          )}
-        </div>
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,#fffdfd_0%,#fff8fa_100%)] print:hidden" />
 
-        <div className="mx-auto my-2 w-fit">
+      <div
+        className="relative flex h-full"
+        style={{ gap: size.gap, padding: size.padding }}
+      >
+        <div className="flex min-w-0 flex-1 flex-col justify-center">
           <div
-            ref={qrRef}
-            className="rounded-lg overflow-hidden"
-            style={{ width: '220px', height: '220px' }}
-          />
+            className="uppercase text-slate-500"
+            style={{
+              fontSize: size.subtitle,
+              letterSpacing: '0.16em',
+              lineHeight: 1.1,
+              marginBottom: '4px',
+            }}
+          >
+            {qrConfig.subtitle}
+          </div>
+
+          <div
+            className="font-semibold text-slate-900"
+            style={{
+              fontSize: size.title,
+              lineHeight: 1.08,
+              marginBottom: '4px',
+            }}
+          >
+            {qrConfig.title}
+          </div>
+
+          {qrConfig.showNames && (
+            <div
+              className="text-slate-600"
+              style={{
+                fontSize: size.names,
+                lineHeight: 1.1,
+                marginBottom: '6px',
+              }}
+            >
+              {customerName} &amp; {partnerName}
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            {imageBlock}
+            <div
+              className="text-slate-500"
+              style={{
+                fontSize: size.footer,
+                lineHeight: 1.2,
+                maxWidth: cardSize === 'small' ? '62px' : '72px',
+              }}
+            >
+              Scan to open our story
+            </div>
+          </div>
         </div>
 
-        <div className="text-center text-xs opacity-70">
-          <p>Scan to revisit</p>
-          {slug && <p className="truncate">/site/{slug}</p>}
-        </div>
+        <div className="flex shrink-0 items-center">{qrBlock}</div>
       </div>
-
-      <div className="absolute right-2 top-2 text-[10px] text-slate-400">{cardSize === 'small' ? '5.5x4cm' : '6.2x4.1cm'}</div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import type { MemoryMapLocation } from '@/lib/types';
+import type { MemoryMapLocation, OccasionType } from '@/lib/types';
 import type { ThemeKey } from '@/config/themeConfig';
 import SectionHeader from '../../page/SectionHeader';
 import { getSectionCopy } from '@/lib/section-copy';
@@ -10,6 +10,7 @@ import { THEME_CONFIG } from '@/config/themeConfig';
 
 interface MemoryMapSectionProps {
   theme: ThemeKey;
+  siteType?: OccasionType;
   locations?: MemoryMapLocation[];
 }
 
@@ -17,7 +18,7 @@ const MemoryMap = dynamic(() => import('./MemoryMap'), {
   ssr: false,
 });
 
-export default function MemoryMapSection({ theme, locations }: MemoryMapSectionProps) {
+export default function MemoryMapSection({ theme, siteType = 'couple', locations }: MemoryMapSectionProps) {
   const styles = useTheme(theme);
   const themeConfig = THEME_CONFIG[theme];
   const { colors, typography } = themeConfig;

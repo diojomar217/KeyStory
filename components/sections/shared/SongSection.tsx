@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import type { ThemeKey } from '@/config/themeConfig';
 import { getThemeStyles } from '@/config/themeStyles';
+import { getThemeColors } from '@/config/themeUtils';
 import { getMusicEmbedInfo } from '@/lib/musicEmbed';
 import SectionHeader from '../../page/SectionHeader';
 import { getSectionCopy } from '@/lib/section-copy';
@@ -34,6 +35,7 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
 
 
   const styles = getThemeStyles(theme);
+  const themeColors = getThemeColors(theme);
   const accent = getThemeAccents(theme);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -100,7 +102,7 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
             relative overflow-hidden rounded-2xl
             ${styles.card} ${styles.cardBorder} border
             shadow-xl
-            ${isDarkTheme ? 'shadow-amber-500/10' : 'shadow-rose-500/10'}
+            shadow-black/10
           `}>
             {/* Decorative top accent line */}
             <div className={`
@@ -120,11 +122,11 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
                   key={i}
                   className={`
                     w-1 rounded-full
-                    ${isDarkTheme ? 'bg-amber-400' : 'bg-rose-400'}
                     equalizer-bar
                   `}
                   style={{
                     height: '100%',
+                    backgroundColor: themeColors.accent,
                     animationDelay: `${i * 0.1}s`,
                   }}
                 />
@@ -194,9 +196,9 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
 
         {/* Decorative elements - Hearts */}
         <div className="flex justify-center gap-2 mt-8">
-          <span className="text-rose-300/50 text-sm">💕</span>
-          <span className="text-rose-300/30 text-xs">💕</span>
-          <span className="text-rose-300/20 text-sm">💕</span>
+          <span className={`${styles.accent} opacity-50 text-sm`}>💕</span>
+          <span className={`${styles.accent} opacity-35 text-xs`}>💕</span>
+          <span className={`${styles.accent} opacity-20 text-sm`}>💕</span>
         </div>
       </div>
     </section>

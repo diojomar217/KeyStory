@@ -1,6 +1,7 @@
 // Shared config types for static data
 
-export type SiteTypeKey = 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
+import type { SiteTypeKey } from '@/config/siteTypeConfig';
+export type { SiteTypeKey };
 export type ThemeKey =
   | 'romantic_classic'
   | 'dark_elegant'

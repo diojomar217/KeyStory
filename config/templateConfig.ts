@@ -1,3 +1,5 @@
+import type { Section } from '@/lib/types';
+
 // Centralized template config for all template sections
 export const TEMPLATE_CONFIG = {
   hero: [
@@ -80,20 +82,78 @@ export const TEMPLATE_CONFIG = {
       preview: { type: 'mock', variant: 'song_lyrics' },
     },
   ],
+  love_letter: [
+    {
+      key: 'classic_letter',
+      label: 'Classic Letter',
+      description: 'Elegant centered love message layout.',
+      preview: { type: 'mock', variant: 'love_letter_classic' },
+    },
+    {
+      key: 'floral_border',
+      label: 'Floral Border',
+      description: 'Romantic letter with decorative floral framing.',
+      preview: { type: 'mock', variant: 'love_letter_floral' },
+    },
+    {
+      key: 'handwritten',
+      label: 'Handwritten Style',
+      description: 'Personal handwritten-style presentation.',
+      preview: { type: 'mock', variant: 'love_letter_handwritten' },
+    },
+  ],
+  qr_keepsake: [
+    {
+      key: 'qr_card',
+      label: 'QR Card',
+      description: 'Classic keepsake card with QR and caption.',
+      preview: { type: 'mock', variant: 'qr_card' },
+    },
+    {
+      key: 'qr_mini',
+      label: 'Mini QR Tag',
+      description: 'Compact QR design for tags and keychains.',
+      preview: { type: 'mock', variant: 'qr_mini' },
+    },
+    {
+      key: 'qr_ornament',
+      label: 'QR Ornament',
+      description: 'Decorative QR style for framed keepsakes.',
+      preview: { type: 'mock', variant: 'qr_ornament' },
+    },
+  ],
 
 } as const;
 
 // Centralized mapping from section keys to template group keys
-export const SECTION_TEMPLATE_MAP = {
+export const SECTION_TEMPLATE_MAP: Partial<Record<Section, keyof typeof TEMPLATE_CONFIG>> = {
   home: 'hero',
   timeline: 'timeline',
+  wedding_timeline: 'timeline',
+  travel_timeline: 'timeline',
+  school_memories: 'timeline',
+  achievements: 'timeline',
+  birthday_timeline: 'timeline',
   gallery: 'gallery',
+  photo_highlights: 'gallery',
+  love_letter: 'love_letter',
+  couple_message: 'love_letter',
+  graduation_message: 'love_letter',
+  parents_message: 'love_letter',
+  celebrant_message: 'love_letter',
+  family_message: 'love_letter',
+  message_letter: 'love_letter',
+  birthday_message: 'love_letter',
+  life_story: 'love_letter',
+  travel_notes: 'love_letter',
+  song: 'song',
   playlist: 'song',
-} as const;
+  qr_keepsake: 'qr_keepsake',
+};
 
 // Helper to get templates for a section
-export function getTemplatesForSection(sectionKey: string) {
-  const group = SECTION_TEMPLATE_MAP[sectionKey as keyof typeof SECTION_TEMPLATE_MAP];
+export function getTemplatesForSection(sectionKey: Section | string) {
+  const group = SECTION_TEMPLATE_MAP[sectionKey as Section];
   if (group && Array.isArray(TEMPLATE_CONFIG[group])) {
     return TEMPLATE_CONFIG[group];
   }

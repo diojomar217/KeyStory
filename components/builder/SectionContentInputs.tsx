@@ -141,7 +141,7 @@ export default function SectionContentInputs({
 						       const count = val && Array.isArray(val.gifts) ? val.gifts.length : 0;
 						       isComplete = count > 0;
 						       label = count > 0 ? `${count} gift${count > 1 ? 's' : ''}` : (isRequired ? 'Missing' : 'Empty');
-					       } else if (key === 'relationship_stats' || key === 'anniversary_countdown' || key === 'qr_keepsake') {
+					       } else if (key === 'relationship_stats' || key === 'anniversary_countdown' || key === 'wedding_countdown' || key === 'countdown' || key === 'qr_keepsake') {
 						       // Auto-generated
 						       isComplete = true;
 						       label = 'Auto-generated';
@@ -314,14 +314,169 @@ export default function SectionContentInputs({
 						   );
 						   break;
 					case 'love_letter':
+					case 'our_story':
+					case 'birthday_message':
+					case 'couple_message':
+					case 'graduation_message':
+					case 'parents_message':
+					case 'celebrant_message':
+					case 'family_message':
+					case 'message_letter':
+					case 'life_story':
+					case 'travel_notes':
+					case 'first_date':
+					case 'special_moments':
+					case 'milestones':
 						content = (
 							<TextContentInput
-								label="Your Love Letter"
-								value={section_content?.love_letter?.content || ''}
-								onChange={(content: string) => onSectionContentChange('love_letter', { content })}
+								label={section.label}
+								value={section_content?.[section.key]?.content || section_content?.[section.key]?.text || ''}
+								onChange={(content: string) => onSectionContentChange(section.key, { content })}
 								placeholder="Write your heartfelt love letter here..."
 								rows={6}
 							/>
+						);
+						break;
+					case 'song':
+						content = (
+							<div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+								<div className="flex items-center gap-2 mb-2">
+									<span className="font-semibold text-slate-700">Song</span>
+									<span className="ml-2 text-xs font-medium bg-sky-100 text-sky-600 rounded-full px-2 py-0.5">Configured in Details</span>
+								</div>
+								<div className="text-slate-600 text-sm mb-1">Song link and autoplay are configured in earlier steps (Music settings).</div>
+							</div>
+						);
+						break;
+					case 'birthday_wishes':
+						content = (
+							<QuotesInput
+								value={section_content?.birthday_wishes}
+								onChange={(content: any) => onSectionContentChange('birthday_wishes', content)}
+							/>
+						);
+						break;
+					case 'birthday_timeline':
+						content = (
+							<div className="bg-slate-50 rounded-xl p-4 border border-slate-200 max-h-[70vh] overflow-y-auto">
+								<span className="font-semibold text-lg">Birthday Timeline</span>
+								<TimelineEditor
+									events={section_content?.birthday_timeline || config.section_content?.timeline || []}
+									onChange={timeline => onSectionContentChange('birthday_timeline', timeline)}
+								/>
+							</div>
+						);
+						break;
+					case 'party_details':
+					case 'event_details': {
+						const details = section_content?.[section.key] || {};
+						content = (
+							<div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3">
+								<span className="font-semibold text-lg">{section.label}</span>
+								<input
+									className="w-full px-3 py-2 rounded-lg border border-slate-200"
+									placeholder="Location"
+									value={details.location || ''}
+									onChange={(e) => onSectionContentChange(section.key, { ...details, location: e.target.value })}
+								/>
+								<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+									<input
+										type="date"
+										className="w-full px-3 py-2 rounded-lg border border-slate-200"
+										value={details.date || ''}
+										onChange={(e) => onSectionContentChange(section.key, { ...details, date: e.target.value })}
+									/>
+									<input
+										type="time"
+										className="w-full px-3 py-2 rounded-lg border border-slate-200"
+										value={details.time || ''}
+										onChange={(e) => onSectionContentChange(section.key, { ...details, time: e.target.value })}
+									/>
+								</div>
+								<input
+									className="w-full px-3 py-2 rounded-lg border border-slate-200"
+									placeholder="Dress code (optional)"
+									value={details.dressCode || ''}
+									onChange={(e) => onSectionContentChange(section.key, { ...details, dressCode: e.target.value })}
+								/>
+							</div>
+						);
+						break;
+					}
+					case 'gift_wishlist':
+					case 'gift_registry': {
+						const wishlist = section_content?.[section.key] || {};
+						const itemsText = Array.isArray(wishlist.items) ? wishlist.items.join('\n') : '';
+						content = (
+							<div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3">
+								<span className="font-semibold text-lg">{section.label}</span>
+								<textarea
+									className="w-full px-3 py-2 rounded-lg border border-slate-200 min-h-[120px]"
+									placeholder="One gift item per line"
+									value={itemsText}
+									onChange={(e) => {
+										const items = e.target.value
+											.split('\n')
+											.map((v) => v.trim())
+											.filter(Boolean);
+										onSectionContentChange(section.key, { ...wishlist, items });
+									}}
+								/>
+								<p className="text-xs text-slate-500">Each line becomes one wishlist/registry item.</p>
+							</div>
+						);
+						break;
+					}
+					case 'rsvp': {
+						const rsvp = section_content?.rsvp || {};
+						content = (
+							<div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3">
+								<span className="font-semibold text-lg">RSVP</span>
+								<input
+									className="w-full px-3 py-2 rounded-lg border border-slate-200"
+									placeholder="RSVP deadline (optional)"
+									value={rsvp.deadline || ''}
+									onChange={(e) => onSectionContentChange('rsvp', { ...rsvp, deadline: e.target.value })}
+								/>
+								<textarea
+									className="w-full px-3 py-2 rounded-lg border border-slate-200 min-h-[100px]"
+									placeholder="Optional RSVP note or instructions"
+									value={rsvp.note || ''}
+									onChange={(e) => onSectionContentChange('rsvp', { ...rsvp, note: e.target.value })}
+								/>
+								<p className="text-xs text-slate-500">Guest message submissions still work via the live site guest form.</p>
+							</div>
+						);
+						break;
+					}
+					case 'wedding_timeline':
+					case 'travel_timeline':
+					case 'school_memories':
+					case 'achievements':
+						content = (
+							<div className="bg-slate-50 rounded-xl p-4 border border-slate-200 max-h-[70vh] overflow-y-auto">
+								<span className="font-semibold text-lg">{section.label}</span>
+								<TimelineEditor
+									events={section_content?.[section.key] || config.section_content?.timeline || []}
+									onChange={timeline => onSectionContentChange(section.key, timeline)}
+								/>
+							</div>
+						);
+						break;
+					case 'photo_highlights':
+						content = (
+							<div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+								<span className="font-semibold text-lg">Upload Highlight Photos</span>
+								<div className="mt-3">
+									<label className="block text-sm font-medium text-slate-700 mb-1.5">Highlight Images</label>
+									<input
+										type="file"
+										multiple
+										className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100"
+										onChange={handlePhotos}
+									/>
+								</div>
+							</div>
 						);
 						break;
 					case 'playlist':
@@ -333,18 +488,21 @@ export default function SectionContentInputs({
 						);
 						break;
 					case 'quotes':
+					case 'baby_predictions':
+					case 'tributes':
 						content = (
 							<QuotesInput
-								value={section_content?.quotes}
-								onChange={(content: any) => onSectionContentChange('quotes', content)}
+								value={section_content?.[section.key]}
+								onChange={(content: any) => onSectionContentChange(section.key, content)}
 							/>
 						);
 						break;
 					case 'future_dreams':
+					case 'future_plans':
 						content = (
 							<FutureDreamsInput
-								value={section_content?.future_dreams}
-								onChange={(content: any) => onSectionContentChange('future_dreams', content)}
+								value={section_content?.[section.key]}
+								onChange={(content: any) => onSectionContentChange(section.key, content)}
 							/>
 						);
 						break;
@@ -433,15 +591,17 @@ export default function SectionContentInputs({
 							       );
 							       break;
 						       case 'anniversary_countdown':
+						       case 'wedding_countdown':
+						       case 'countdown':
 							       content = (
 								       <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
 									       <div className="flex items-center gap-2 mb-2">
-										       <span className="font-semibold text-slate-700">Anniversary Countdown</span>
+										       <span className="font-semibold text-slate-700">{section.label}</span>
 										       <span className="ml-2 text-xs font-medium bg-sky-100 text-sky-600 rounded-full px-2 py-0.5">Auto-generated</span>
 									       </div>
-									       <div className="text-slate-600 text-sm mb-1">This section automatically counts down to your next anniversary based on your anniversary date.</div>
+									       <div className="text-slate-600 text-sm mb-1">This section automatically counts down to your selected special date.</div>
 									       <ul className="text-xs text-slate-400 list-disc pl-5">
-										       <li>Depends on: anniversary/start date</li>
+										       <li>Depends on: special date</li>
 									       </ul>
 								       </div>
 							       );
@@ -461,13 +621,18 @@ export default function SectionContentInputs({
 							       );
 							       break;
 					       default:
-						       // Only render fallback/info for sections without custom UI
 						       content = (
-							       <span className="text-slate-400">Section key: {section.key}</span>
+							       <TextContentInput
+								       label={section.label}
+								       value={section_content?.[section.key]?.content || ''}
+								       onChange={(content: string) => onSectionContentChange(section.key, { content })}
+								       placeholder={`Write content for ${section.label.toLowerCase()}...`}
+								       rows={5}
+							       />
 						       );
 				}
 						       // Determine if this is an auto-generated section
-								   const isAutoGenerated = section.key === 'relationship_stats' || section.key === 'anniversary_countdown' || section.key === 'qr_keepsake';
+							   const isAutoGenerated = section.key === 'relationship_stats' || section.key === 'anniversary_countdown' || section.key === 'wedding_countdown' || section.key === 'countdown' || section.key === 'qr_keepsake';
 							       return (
 								       <div key={section.key} className={`mb-4 border rounded-xl overflow-hidden bg-white ${statusColors[status].border}`} style={{ borderLeftWidth: 6 }}>
 									       {/* Accordion Header */}

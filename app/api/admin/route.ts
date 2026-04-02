@@ -2,6 +2,25 @@ import { DEFAULT_THEME } from '@/config/defaults';
 import { NextRequest, NextResponse } from 'next/server';
 import { createWebsite as insertSite, updateWebsite as updateSite, deleteWebsite as deleteSite, listWebsites as getSites, getWebsiteById as getSiteById } from '@/lib/db/websites';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import { supabase, Site } from '@/lib/supabase';
+import { createHash } from 'crypto';
+import { getIdempotencyReplay, saveIdempotencyResult } from '@/lib/db/idempotency';
+import { validateAndNormalizeSiteConfig } from '@/lib/site-config-validation';
+
+const normalizeUniqueTextArray = (input: unknown[]): string[] => {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const item of input) {
+    if (typeof item !== 'string') continue;
+    const normalized = item.trim();
+    if (!normalized || seen.has(normalized)) continue;
+    seen.add(normalized);
+    result.push(normalized);
+  }
+
+  return result;
+};
 
 const normalizePasswordConfig = async (siteConfig: any, passwordInput?: string): Promise<any> => {
   if (!siteConfig) siteConfig = {};
@@ -50,7 +69,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const { id, status } = await req.json();
-    await updateSite(id, { status });
+    await updateSite({ id, status });
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error('POST error:', err);
@@ -62,10 +81,37 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
+    const idempotencyKey = req.headers.get('idempotency-key')?.trim() || '';
+    const requestHash = createHash('sha256').update(JSON.stringify(body || {})).digest('hex');
+
+    if (idempotencyKey) {
+      const replay = await getIdempotencyReplay('admin:update-site', idempotencyKey, requestHash);
+      if (replay) {
+        return NextResponse.json(replay.response, { status: replay.statusCode });
+      }
+    }
+
     const { id, ...updates } = body;
 
     if (!id) {
       return NextResponse.json({ message: 'Order ID is required' }, { status: 400 });
+    }
+
+    const existing = await getSiteById(id);
+    const currentRevision = Number(existing?.config?.meta?.revision || 0);
+    const expectedRevision =
+      typeof body.expectedRevision === 'number' ? body.expectedRevision :
+      typeof updates.config?.meta?.revision === 'number' ? updates.config.meta.revision :
+      null;
+
+    if (expectedRevision !== null && expectedRevision !== currentRevision) {
+      return NextResponse.json(
+        {
+          message: 'Update conflict. Please refresh and retry.',
+          currentRevision,
+        },
+        { status: 409 },
+      );
     }
 
     // Build update object with normalized config in JSONB
@@ -94,6 +140,8 @@ export async function PUT(req: NextRequest) {
       }
     }
 
+    const uniqueProcessedPhotos = normalizeUniqueTextArray(processedPhotos);
+
     let heroCoverPhotoUrl: string | undefined = updates.config?.hero?.coverPhotoUrl;
     let heroUploadWarning: string | null = null;
 
@@ -111,13 +159,13 @@ export async function PUT(req: NextRequest) {
     }
 
     const heroIndex = updates.config?.hero?.coverPhotoIndex;
-    if (typeof heroIndex === 'number' && processedPhotos[heroIndex]) {
-      heroCoverPhotoUrl = processedPhotos[heroIndex];
+    if (typeof heroIndex === 'number' && uniqueProcessedPhotos[heroIndex]) {
+      heroCoverPhotoUrl = uniqueProcessedPhotos[heroIndex];
     }
 
     const legacyCoverIndex = updates.config?.cover_photo_index;
-    if (!heroCoverPhotoUrl && typeof legacyCoverIndex === 'number' && processedPhotos[legacyCoverIndex]) {
-      heroCoverPhotoUrl = processedPhotos[legacyCoverIndex];
+    if (!heroCoverPhotoUrl && typeof legacyCoverIndex === 'number' && uniqueProcessedPhotos[legacyCoverIndex]) {
+      heroCoverPhotoUrl = uniqueProcessedPhotos[legacyCoverIndex];
     }
 
     const updateObj: Partial<Site> = {
@@ -133,7 +181,7 @@ export async function PUT(req: NextRequest) {
           secondary: updates.partner_name || updates.config?.people?.secondary,
         },
         dates: {
-          special_date: updates.specialDate || updates.anniversary_date || updates.config?.dates?.special_date,
+          special_date: updates.specialDate || updates.config?.dates?.special_date,
         },
         occasion: updates.occasion || updates.site_type || updates.config?.occasion || undefined,
         theme: updates.config?.theme || updates.theme || DEFAULT_THEME,
@@ -144,7 +192,7 @@ export async function PUT(req: NextRequest) {
           timeline: updates.config?.timeline_template || updates.timeline_template,
         },
         media: {
-          photos: processedPhotos,
+          photos: uniqueProcessedPhotos,
           song_link: updates.song_link || updates.config?.media?.song_link || '',
           song_autoplay: updates.song_autoplay ?? updates.config?.media?.song_autoplay ?? false,
         },
@@ -169,7 +217,22 @@ export async function PUT(req: NextRequest) {
     //   updateObj.theme = configUpdates.theme;
     // }
 
-    updateObj.config = await normalizePasswordConfig(updateObj.config, (updates as any).password_input);
+    const nextRevision = currentRevision + 1;
+    updateObj.config = {
+      ...updateObj.config,
+      meta: {
+        ...(updateObj.config?.meta || {}),
+        revision: nextRevision,
+        updatedAt: new Date().toISOString(),
+      },
+    };
+
+    const validation = validateAndNormalizeSiteConfig(updateObj.config);
+    if (validation.errors.length > 0) {
+      return NextResponse.json({ message: validation.errors.join('; ') }, { status: 400 });
+    }
+
+    updateObj.config = await normalizePasswordConfig(validation.config, (updates as any).password_input);
 
     const { data, error } = await supabase
       .from('sites')
@@ -195,14 +258,20 @@ export async function PUT(req: NextRequest) {
       console.warn('Revalidation failed in admin update:', err);
     }
 
-    return NextResponse.json({
+    const responsePayload = {
       success: true,
       order: data,
       warnings: [
         ...photoUploadWarnings,
         ...(heroUploadWarning ? [heroUploadWarning] : []),
       ],
-    });
+    };
+
+    if (idempotencyKey) {
+      await saveIdempotencyResult('admin:update-site', idempotencyKey, requestHash, 200, responsePayload);
+    }
+
+    return NextResponse.json(responsePayload);
   } catch (err: any) {
     let idForLog = 'unknown';
     if (!req.bodyUsed) {

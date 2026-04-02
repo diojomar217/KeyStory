@@ -301,6 +301,162 @@ home: {
       items: config.giftWishlist || [],
     }),
   },
+  wedding_countdown: {
+    component: AnniversaryCountdownSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      anniversaryDate: config.anniversaryDate || config.specialDate || '',
+    }),
+  },
+  event_details: {
+    component: PartyDetailsSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      location: config.partyLocation || config.venue || '',
+      date: config.specialDate || config.eventDate || '',
+      time: config.partyTime || config.eventTime || '',
+      dressCode: config.dressCode || 'To be announced',
+    }),
+  },
+  wedding_timeline: {
+    component: TimelineSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      template: config.section_templates?.wedding_timeline || config.section_templates?.timeline || config.timeline_template || 'vertical_timeline',
+      events: config.section_content?.wedding_timeline || config.timelineEvents || config.section_content?.timeline || [],
+      siteType: 'wedding',
+    }),
+  },
+  gift_registry: {
+    component: GiftWishlistSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      items: config.section_content?.gift_registry?.items || config.giftWishlist || [],
+    }),
+  },
+  rsvp: {
+    component: GuestMessagesSection,
+    getProps: (config) => ({
+      theme: config.theme,
+    }),
+  },
+  couple_message: {
+    component: LoveLetterSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      message: config.section_content?.couple_message?.content || config.message,
+    }),
+  },
+  graduation_message: {
+    component: LoveLetterSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      message: config.section_content?.graduation_message?.content || config.message,
+    }),
+  },
+  countdown: {
+    component: AnniversaryCountdownSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      anniversaryDate: config.anniversaryDate || config.specialDate || config.birthdayDate || '',
+    }),
+  },
+  school_memories: {
+    component: TimelineSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      template: config.section_templates?.school_memories || config.section_templates?.timeline || config.timeline_template || 'vertical_timeline',
+      events: config.section_content?.school_memories || config.timelineEvents || config.section_content?.timeline || [],
+    }),
+  },
+  achievements: {
+    component: TimelineSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      template: config.section_templates?.achievements || config.section_templates?.timeline || config.timeline_template || 'vertical_timeline',
+      events: config.section_content?.achievements || config.timelineEvents || config.section_content?.timeline || [],
+    }),
+  },
+  future_plans: {
+    component: FutureDreamsSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      dreams: config.section_content?.future_plans?.dreams || config.section_content?.future_dreams?.dreams,
+    }),
+  },
+  baby_predictions: {
+    component: QuotesSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      quotes: config.section_content?.baby_predictions?.quotes || config.section_content?.quotes?.quotes,
+    }),
+  },
+  parents_message: {
+    component: LoveLetterSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      message: config.section_content?.parents_message?.content || config.message,
+    }),
+  },
+  photo_highlights: {
+    component: GallerySection,
+    getProps: (config) => ({
+      theme: config.theme,
+      template: config.section_templates?.photo_highlights || config.section_templates?.gallery || config.gallery_template || 'grid',
+      photos: config.photos || [],
+      coverPhotoIndex: config.coverPhotoIndex,
+    }),
+  },
+  celebrant_message: {
+    component: LoveLetterSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      message: config.section_content?.celebrant_message?.content || config.message,
+    }),
+  },
+  life_story: {
+    component: OurStorySection,
+    getProps: (config) => ({
+      theme: config.theme,
+      participants: [{ name: config.customerName || '' }, { name: config.partnerName || '', role: 'partner' }],
+    }),
+  },
+  tributes: {
+    component: QuotesSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      quotes: config.section_content?.tributes?.quotes || config.section_content?.quotes?.quotes,
+    }),
+  },
+  family_message: {
+    component: LoveLetterSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      message: config.section_content?.family_message?.content || config.message,
+    }),
+  },
+  travel_timeline: {
+    component: TimelineSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      template: config.section_templates?.travel_timeline || config.section_templates?.timeline || config.timeline_template || 'vertical_timeline',
+      events: config.section_content?.travel_timeline || config.timelineEvents || config.section_content?.timeline || [],
+    }),
+  },
+  travel_notes: {
+    component: OurStorySection,
+    getProps: (config) => ({
+      theme: config.theme,
+      participants: [{ name: config.customerName || '' }, { name: config.partnerName || '', role: 'partner' }],
+    }),
+  },
+  message_letter: {
+    component: LoveLetterSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      message: config.section_content?.message_letter?.content || config.message,
+    }),
+  },
   
   // Guest & Messages
   guest_messages: {

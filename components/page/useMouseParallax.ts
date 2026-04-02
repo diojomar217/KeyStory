@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-export function useMouseParallax(ref: React.RefObject<HTMLDivElement>, intensity = 20) {
+export function useMouseParallax(ref: React.RefObject<HTMLDivElement | null>, intensity = 20) {
   useEffect(() => {
     const element = ref.current;
     if (!element) return;

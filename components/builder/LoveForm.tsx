@@ -11,7 +11,6 @@ export default function LoveForm({ onCreated }: Props) {
     customer_name: '',
     partner_name: '',
     specialDate: '',
-    anniversary_date: '',
     message: '',
     photos: [] as File[],
   });
@@ -45,8 +44,7 @@ export default function LoveForm({ onCreated }: Props) {
       method: 'POST',
       body: JSON.stringify({
         ...form,
-        anniversary_date: form.anniversary_date || form.specialDate,
-        specialDate: form.specialDate || form.anniversary_date,
+        specialDate: form.specialDate,
         photos: photosBase64,
       }),
       headers: { 'Content-Type': 'application/json' },

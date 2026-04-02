@@ -854,24 +854,42 @@ export function SectionRenderer({ sectionId, config, occasion, coupleNames, tagl
         />
       );
     case 'gallery':
+    case 'photo_highlights':
       return <GallerySectionPreview theme={theme} photoCount={photoCount} />;
     case 'timeline':
+    case 'wedding_timeline':
+    case 'travel_timeline':
+    case 'school_memories':
+    case 'achievements':
       return <TimelineSectionPreview theme={theme} eventCount={eventCount} />;
     case 'song':
       return <SongSectionPreview theme={theme} hasSong={hasSong} />;
     case 'love_letter':
+    case 'couple_message':
+    case 'graduation_message':
+    case 'parents_message':
+    case 'celebrant_message':
+    case 'family_message':
+    case 'message_letter':
+    case 'life_story':
+    case 'travel_notes':
       return <LoveLetterSectionPreview theme={theme} hasMessage={true} />;
     case 'quotes':
+    case 'baby_predictions':
+    case 'tributes':
       return <QuotesSectionPreview theme={theme} />;
     case 'relationship_stats':
       return <StatsSectionPreview theme={theme} />;
     case 'milestones':
       return <MilestonesSectionPreview theme={theme} />;
     case 'future_dreams':
+    case 'future_plans':
       return <FutureDreamsSectionPreview theme={theme} />;
     case 'polaroid_gallery':
       return <PolaroidGalleryPreview theme={theme} photoCount={photoCount} />;
     case 'anniversary_countdown':
+    case 'wedding_countdown':
+    case 'countdown':
       return <AnniversaryCountdownPreview theme={theme} />;
     case 'qr_keepsake':
       return <QRKeepsakePreview theme={theme} />;

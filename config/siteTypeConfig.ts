@@ -1,3 +1,13 @@
+import type { Section } from '@/lib/types';
+
+type SiteTypeConfigEntry = {
+  label: string;
+  icon: string;
+  description: string;
+  sections: Section[];
+};
+
+// Keep site type section lists aligned with the canonical Section union.
 export const SITE_TYPE_CONFIG = {
   couple: {
     label: 'Couple',
@@ -283,7 +293,7 @@ export const SITE_TYPE_CONFIG = {
       'photo_highlights',
     ],
   },
-} as const;
+} satisfies Record<string, SiteTypeConfigEntry>;
 
 export type SiteTypeKey = keyof typeof SITE_TYPE_CONFIG;
 

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, useAnimation, useInView } from 'framer-motion';
 import type { OccasionType, HomeTemplate } from '@/lib/types';
+import { getOccasionHeroSpec } from '../../config/occasionHeroConfig';
 import type { ThemeKey } from '@/config/themeConfig';
 
 interface ParallaxImmersiveProps {
@@ -10,14 +11,14 @@ interface ParallaxImmersiveProps {
   tagline?: string;
   normalizedDate?: string;
   theme: ThemeKey;
-  siteType?: string;
+  siteType?: OccasionType;
   customerName: string;
   partnerName: string;
 }
 
 interface HomeSectionProps {
   theme: ThemeKey;
-  siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
+  siteType?: OccasionType;
   config?: any;
   template: HomeTemplate | string;
   customerName: string;
@@ -30,6 +31,7 @@ interface HomeSectionProps {
   songLink?: string;
   heroCoverPhotoUrl?: string | null;
 }
+
 function FloatingHearts() {
   const [hearts, setHearts] = useState<Array<{
     left: number;
@@ -82,6 +84,17 @@ function renderParallaxImmersive({
   customerName,
   partnerName
 }: ParallaxImmersiveProps) {
+  const occasionHero = getOccasionHeroSpec(siteType || 'couple');
+  const hasPartnerName = Boolean(partnerName?.trim());
+  const parallaxHeading = hasPartnerName ? `${customerName} & ${partnerName}` : customerName;
+  const formattedDate = normalizedDate
+    ? new Date(normalizedDate).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+    : null;
+
   // Parallax scroll effect
   const bgRef = useRef<HTMLDivElement>(null);
   const midRef = useRef<HTMLDivElement>(null);
@@ -152,9 +165,12 @@ function renderParallaxImmersive({
           visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: 'easeOut' } }
         }}
       >
+        <p className="mb-3 rounded-full border border-white/40 bg-white/40 px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-gray-700 backdrop-blur-md">
+          {occasionHero.intro}
+        </p>
         {/* Names with gradient text */}
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-2 text-center bg-gradient-to-r from-pink-500 via-rose-400 to-fuchsia-500 bg-clip-text text-transparent drop-shadow-lg">
-          {customerName} & {partnerName}
+          {parallaxHeading}
         </h1>
         {/* Subtitle (tagline) */}
         {tagline && (
@@ -171,18 +187,20 @@ function renderParallaxImmersive({
         >
           <span className="text-xl text-pink-400 animate-pulse">💕</span>
           <div className="text-center">
-            <div className="font-medium text-base text-gray-800">Together since 2022-02-14</div>
-            <div className="text-xs text-gray-600">2 years • 1 month • 13 days</div>
+            <div className="font-medium text-base text-gray-800">
+              {formattedDate ? `${occasionHero.datePrefix} ${formattedDate}` : 'Special moment captured forever'}
+            </div>
+            <div className="text-xs text-gray-600">A keepsake made for this occasion</div>
           </div>
           <span className="text-xl text-pink-400 animate-pulse">💕</span>
         </motion.div>
         {/* CTA Button */}
         <motion.a
-          href="#our-story"
+          href={`#${occasionHero.primaryTarget}`}
           className="mt-2 px-8 py-3 rounded-full bg-gradient-to-r from-pink-500 to-rose-400 text-white font-semibold text-base shadow-xl hover:scale-105 hover:shadow-2xl transition-transform duration-300"
           whileHover={{ scale: 1.07 }}
         >
-          View Our Story
+          {occasionHero.primaryLabel}
         </motion.a>
       </motion.div>
     </div>
@@ -191,15 +209,15 @@ function renderParallaxImmersive({
 
 
 // Removed duplicate React import
-import { useMouseParallax } from './useMouseParallax';
 import ParticlesCanvas from './ParticlesCanvas';
-import { useTypewriter } from './useTypewriter';
 import Image from 'next/image';
+import DedicatedOccasionHero from './DedicatedOccasionHeroes';
+import SharedOccasionHero, { type HeroHighlight } from './SharedOccasionHeroes';
 // HomeTemplate imported above
 import { useTheme } from '../builder/ThemeWrapper';
 import RelationshipTimer from './RelationshipTimer';
 import { HeroDecorations, PremiumDualCTAs } from './HeroOverlay';
-import { resolveHeroConfig, resolveHeroCoverPhoto } from '@/lib/site-type-utils';
+import { resolveHeroConfig, resolveHeroCoverPhoto, resolveParticipantNames } from '@/lib/site-type-utils';
 
 export default function HomeSection({
   theme,
@@ -216,17 +234,20 @@ export default function HomeSection({
   heroCoverPhotoUrl,
 }: HomeSectionProps) {
   const styles = useTheme(theme);
-  // DEBUG: Print config.hero to inspect crop values
-  useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.log('DEBUG: config.hero', config?.hero);
-  }, [config]);
+  const occasionHero = getOccasionHeroSpec(siteType);
+  const resolvedNames = resolveParticipantNames(siteType, config?.participants || [], customerName, partnerName);
+  const primaryName = resolvedNames.primaryName;
+  const secondaryName = resolvedNames.secondaryName;
   const [isLoaded, setIsLoaded] = useState(false);
+  const premiumImageRef = useRef<HTMLDivElement>(null);
+  const premiumCardRef = useRef<HTMLDivElement>(null);
   const isBirthday = siteType === 'birthday';
+  const hasSecondaryName = Boolean(secondaryName?.trim());
+  const showDualNames = !isBirthday && hasSecondaryName;
 
   const celebrantName = isBirthday
-    ? config?.people?.celebrant || config?.participants?.[0]?.name || customerName || 'Birthday Star'
-    : customerName || 'Your Name';
+    ? config?.people?.celebrant || primaryName || 'Birthday Star'
+    : primaryName || 'Your Name';
 
   const birthdayDate = isBirthday
     ? config?.dates?.birthday || config?.specialDate || anniversaryDate
@@ -237,13 +258,23 @@ export default function HomeSection({
       ? birthdayDate
       : undefined;
 
+  const formattedSpecialDate = normalizedDate
+    ? new Date(normalizedDate).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+    : anniversaryDate;
+
+  const shouldUseRelationshipTimer = showDualNames && Boolean(anniversaryDate);
+
   const heroConfig = resolveHeroConfig(
     siteType,
     isBirthday
       ? [{ id: 'celebrant', name: celebrantName }]
       : [
-        { id: 'customer', name: customerName || 'Your Name' },
-        { id: 'partner', name: partnerName || 'Partner Name' },
+        { id: 'customer', name: primaryName || 'Your Name' },
+        { id: 'partner', name: secondaryName || 'Partner Name' },
       ],
     normalizedDate
   );
@@ -309,9 +340,57 @@ export default function HomeSection({
 
   // Parallax effect removed for stability
 
-  const customerTypewriter = useTypewriter(customerName || 'Your Name');
-  const partnerTypewriter = useTypewriter(partnerName || 'Partner Name');
-  const taglineTypewriter = useTypewriter(tagline || '', 80);
+  const displayHeadline = isBirthday
+    ? celebrantName
+    : showDualNames
+      ? `${primaryName || 'Your Name'} & ${secondaryName || 'Partner Name'}`
+      : primaryName || 'Your Name';
+  const supportingNarrative = (tagline || message || heroConfig.description).trim();
+
+  const heroHighlights = useMemo<HeroHighlight[]>(() => {
+    const dateValue = formattedSpecialDate || 'Date to be announced';
+    const fallbackStory = message || tagline || heroConfig.description;
+
+    switch (occasionHero.archetype) {
+      case 'ceremony_cinematic':
+        return [
+          { icon: '🗓️', label: occasionHero.datePrefix, value: dateValue },
+          { icon: '💌', label: 'Primary moment', value: occasionHero.primaryLabel },
+          { icon: '✨', label: 'Experience', value: occasionHero.secondaryLabel },
+        ];
+      case 'celebration_stage':
+        return [
+          { icon: occasionHero.badge, label: 'Occasion', value: occasionHero.intro },
+          { icon: '📅', label: occasionHero.timerLabel, value: dateValue },
+          { icon: '🎊', label: 'Spotlight', value: birthdayStats ? `Turning ${birthdayStats.ageTurning}` : 'Celebration-ready' },
+        ];
+      case 'scrapbook_story':
+        return [
+          { icon: '📸', label: 'Memory board', value: 'Photos, notes, and highlights' },
+          { icon: '💬', label: 'Story note', value: fallbackStory.slice(0, 36) || 'A page filled with warm memories' },
+          { icon: '🗓️', label: occasionHero.datePrefix, value: dateValue },
+        ];
+      case 'tribute_minimal':
+        return [
+          { icon: '🕊️', label: 'Tribute', value: 'A quiet space for remembrance' },
+          { icon: '🗓️', label: occasionHero.datePrefix, value: dateValue },
+          { icon: '🤍', label: 'Dedication', value: fallbackStory.slice(0, 36) || 'Stories, photos, and tributes' },
+        ];
+      case 'travel_journal':
+        return [
+          { icon: '🧭', label: 'Journey', value: occasionHero.intro },
+          { icon: '📍', label: 'Trip note', value: fallbackStory.slice(0, 36) || 'A route worth remembering' },
+          { icon: '🗓️', label: occasionHero.datePrefix, value: dateValue },
+        ];
+      case 'romantic_editorial':
+      default:
+        return [
+          { icon: occasionHero.badge, label: 'Chapter', value: occasionHero.intro },
+          { icon: '🗓️', label: occasionHero.datePrefix, value: dateValue },
+          { icon: '💞', label: 'Keepsake', value: fallbackStory.slice(0, 36) || 'A story designed to be revisited' },
+        ];
+    }
+  }, [birthdayStats, formattedSpecialDate, heroConfig.description, message, occasionHero, tagline]);
 
   const normalizedTemplate = useMemo(() => {
     const raw = String(template || '')
@@ -335,167 +414,117 @@ export default function HomeSection({
   }, [template]);
 
 
-  // --- Premium Romantic Centered Hero Section (Dynamic, Database-Driven) ---
-  interface SiteData {
-    website_name?: string;
-    coupleNames?: string;
-    tagline?: string;
-    start_date?: string;
-    cover_photo?: string;
-    slug: string;
-    cta_primary?: { label: string; link: string };
-    cta_secondary?: { label: string; link: string };
-    theme?: string;
-  }
+  const renderHeroCentered = () => {
+    const primaryButtonClass =
+      occasionHero.archetype === 'tribute_minimal'
+        ? 'bg-white/95 text-slate-900 hover:bg-white shadow-[0_10px_30px_rgba(255,255,255,0.16)]'
+        : occasionHero.archetype === 'ceremony_cinematic'
+          ? 'bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 text-slate-900 hover:brightness-105 shadow-[0_10px_30px_rgba(251,191,36,0.28)]'
+          : occasionHero.archetype === 'celebration_stage'
+            ? 'bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-400 text-white hover:brightness-110 shadow-[0_10px_30px_rgba(236,72,153,0.30)]'
+            : 'bg-gradient-to-r from-rose-500 via-pink-500 to-orange-400 text-white hover:brightness-110 shadow-[0_10px_30px_rgba(244,63,94,0.25)]';
 
-  function RelationshipDuration({ startDate }: { startDate: string }) {
-    const [now, setNow] = useState<Date>(() => new Date());
-    useEffect(() => {
-      const interval = setInterval(() => setNow(new Date()), 1000 * 60); // update every minute
-      return () => clearInterval(interval);
-    }, []);
-    const start = useMemo(() => new Date(startDate), [startDate]);
-    const diffMs = now.getTime() - start.getTime();
-    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const months = Math.floor(days / 30);
-    const remDays = days - months * 30;
-    const hours = now.getHours();
-    return (
-      <motion.div
-        className="px-7 py-3 rounded-full bg-white/30 backdrop-blur-md shadow-lg flex items-center gap-3 border border-white/40 animate-pulse"
-        initial={{ scale: 0.97, opacity: 0 }}
-        animate={{ scale: [0.97, 1.03, 1], opacity: 1 }}
-        transition={{ duration: 1.2, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
-      >
-        <span className="text-xl text-pink-400">💕</span>
-        <div className="text-center">
-          <div className="font-medium text-base text-gray-800">
-            Together since {start.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
-          </div>
-          <div className="text-xs text-gray-600">
-            {months} months • {remDays} days • {hours} hours together
-          </div>
-        </div>
-        <span className="text-xl text-pink-400">💕</span>
-      </motion.div>
-    );
-  }
+    const secondaryButtonClass =
+      occasionHero.archetype === 'tribute_minimal' || occasionHero.archetype === 'ceremony_cinematic'
+        ? 'border border-white/20 bg-white/10 text-white hover:bg-white/15'
+        : 'border border-rose-200/80 bg-white/90 text-rose-700 hover:bg-white hover:border-rose-300 shadow-sm';
 
-  function FloatingHearts() {
-    const [hearts, setHearts] = useState<Array<{ left: number; size: number; delay: number; duration: number }>>([]);
-    useEffect(() => {
-      setHearts(Array.from({ length: 8 }).map(() => ({
-        left: Math.random() * 90 + 2,
-        size: Math.random() * 24 + 18,
-        delay: Math.random() * 6,
-        duration: Math.random() * 8 + 10,
-      })));
-    }, []);
-    return (
-      <>
-        {hearts.map((h, i) => (
-          <motion.span
-            key={i}
-            initial={{ y: '100vh', opacity: 0 }}
-            animate={{ y: '-10vh', opacity: [0, 0.5, 0] }}
-            transition={{ duration: h.duration, delay: h.delay, repeat: Infinity, repeatType: 'loop', ease: 'easeInOut' }}
-            className="absolute text-pink-200/60 select-none pointer-events-none"
-            style={{ left: `${h.left}%`, fontSize: h.size }}
-          >
-            ♥
-          </motion.span>
-        ))}
-      </>
-    );
-  }
-
-  function DynamicHeroSection({ site }: { site: SiteData }) {
-    return (
-      <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-pink-100 via-pink-200 to-rose-200">
-        {/* Background: Floating Hearts */}
-        <div className="absolute inset-0 z-0 pointer-events-none">
-          <FloatingHearts />
-          <div className="absolute inset-0 bg-gradient-radial from-pink-200/60 via-white/0 to-transparent" />
-        </div>
-        {/* Hero Image with Glow */}
-        <div className="relative z-10 flex flex-col items-center justify-center w-full mt-24 mb-8">
-          <motion.div
-            className="relative w-40 h-40 md:w-56 md:h-56 lg:w-64 lg:h-64 rounded-full overflow-hidden shadow-2xl bg-white/40 flex items-center justify-center aspect-square group animate-float"
-            whileHover={{ scale: 1.045, rotate: -2 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 18 }}
-          >
-            <img
-              src={site.cover_photo}
-              alt={site.website_name || site.coupleNames || 'Couple'}
-              className="object-cover w-full h-full rounded-full shadow-xl group-hover:shadow-2xl"
-              style={{ boxShadow: '0 8px 40px 0 rgba(255, 0, 128, 0.10)' }}
-              loading="eager"
-            />
-            <div className="absolute inset-0 rounded-full bg-gradient-to-t from-pink-200/40 via-transparent to-white/10 pointer-events-none" />
-            <div className="absolute -inset-3 rounded-full blur-2xl bg-pink-300/30 opacity-60 pointer-events-none" />
-          </motion.div>
-        </div>
-        {/* Names Heading */}
-        <motion.h1
-          className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-2 text-center bg-gradient-to-r from-pink-500 via-rose-400 to-fuchsia-500 bg-clip-text text-transparent drop-shadow-lg"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
+    const sharedActions = (
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
+        <a
+          href={`#${occasionHero.primaryTarget}`}
+          className={`inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold tracking-wide shadow-xl transition-all duration-300 hover:scale-[1.02] no-underline ${primaryButtonClass}`}
         >
-          {site.website_name || site.coupleNames}
-        </motion.h1>
-        {/* Tagline */}
-        {site.tagline && (
-          <motion.p
-            className="text-lg md:text-xl font-light italic text-gray-700 mb-6 text-center max-w-2xl"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.2, ease: 'easeOut' }}
+          <span>{heroConfig.cta.startIcon}</span>
+          {occasionHero.primaryLabel}
+        </a>
+        {occasionHero.showSecondaryCta && (
+          <a
+            href={`#${occasionHero.secondaryTarget}`}
+            className={`inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold tracking-wide backdrop-blur-md transition-all duration-300 hover:scale-[1.02] no-underline ${secondaryButtonClass}`}
           >
-            {site.tagline}
-          </motion.p>
+            <span>{heroConfig.cta.endIcon}</span>
+            {occasionHero.secondaryLabel}
+          </a>
         )}
-        {/* Timer Card */}
-        {site.start_date && <RelationshipDuration startDate={site.start_date} />}
-        {/* CTAs */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-7">
-          {site.cta_primary && (
-            <motion.a
-              href={site.cta_primary.link.replace('[slug]', site.slug)}
-              className="px-8 py-3 rounded-full bg-gradient-to-r from-pink-500 to-rose-400 text-white font-semibold text-base shadow-xl hover:scale-105 hover:shadow-2xl transition-transform duration-300"
-              whileHover={{ scale: 1.07 }}
-            >
-              {site.cta_primary.label}
-            </motion.a>
-          )}
-          {site.cta_secondary && (
-            <motion.a
-              href={site.cta_secondary.link.replace('[slug]', site.slug)}
-              className="px-8 py-3 rounded-full bg-white/30 text-pink-600 font-semibold text-base shadow-xl hover:scale-105 hover:shadow-2xl transition-transform duration-300 border border-pink-200"
-              whileHover={{ scale: 1.07 }}
-            >
-              {site.cta_secondary.label}
-            </motion.a>
-          )}
-        </div>
       </div>
     );
-  }
 
-  const renderHeroCentered = () => {
-    // Compose site data from props
-    const site: SiteData = {
-      website_name: config?.website_name,
-      coupleNames: customerName && partnerName ? `${customerName} & ${partnerName}` : undefined,
-      tagline: tagline,
-      start_date: anniversaryDate,
-      cover_photo: heroCoverPhotoUrl || (photos && photos[0]),
-      slug: config?.slug || '',
-      cta_primary: config?.cta_primary || { label: 'View Our Story', link: `/site/[slug]#story` },
-      cta_secondary: config?.cta_secondary || { label: 'See Memories', link: `/site/[slug]#memories` },
-      theme: theme,
-    };
-    return <DynamicHeroSection site={site} />;
+    const sharedHighlightCards = (
+      <div className="grid gap-3 sm:grid-cols-3">
+        {heroHighlights.map((item) => (
+          <div
+            key={`${item.label}-${item.value}`}
+            className={`rounded-[1.5rem] border ${styles.glassBorder} ${styles.glassCard} p-4 shadow-lg min-h-[120px] flex flex-col justify-between`}
+          >
+            <div className="mb-2 text-lg">{item.icon}</div>
+            <div className={`text-[11px] uppercase tracking-[0.24em] font-semibold ${styles.textMuted}`}>{item.label}</div>
+            <div className={`mt-2 text-sm font-semibold ${styles.text} line-clamp-2`}>{item.value}</div>
+          </div>
+        ))}
+      </div>
+    );
+
+    const isDarkEyebrow =
+      occasionHero.archetype === 'ceremony_cinematic' ||
+      occasionHero.archetype === 'tribute_minimal';
+
+    const sharedEyebrow = (
+      <div
+        className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 shadow-sm ${isDarkEyebrow
+            ? 'border border-white/30 bg-white/20 backdrop-blur-md'
+            : 'border border-rose-200/90 bg-white/90'
+          }`}
+      >
+        <span>{occasionHero.badge}</span>
+        <span
+          className={`text-[11px] font-semibold uppercase tracking-[0.3em] ${isDarkEyebrow ? 'text-white/90' : 'text-rose-700'}`}
+        >
+          {occasionHero.intro}
+        </span>
+      </div>
+    );
+
+    if (occasionHero.renderStrategy === 'dedicated') {
+      return (
+        <DedicatedOccasionHero
+          siteType={siteType}
+          styles={styles}
+          heroImage={heroImage}
+          displayHeadline={displayHeadline}
+          formattedSpecialDate={formattedSpecialDate || 'Date to be announced'}
+          supportingNarrative={supportingNarrative}
+          occasionHero={occasionHero}
+          heroHighlights={heroHighlights}
+          actions={sharedActions}
+        />
+      );
+    }
+
+    return (
+      <SharedOccasionHero
+        siteType={siteType}
+        archetype={occasionHero.archetype}
+        styles={styles}
+        occasionHero={occasionHero}
+        heroImage={heroImage}
+        displayHeadline={displayHeadline}
+        formattedSpecialDate={formattedSpecialDate || 'Date to be announced'}
+        supportingNarrative={supportingNarrative}
+        headlineText={displayHeadline}
+        supportingText={supportingNarrative}
+        heroHighlights={heroHighlights}
+        sharedActions={sharedActions}
+        sharedHighlightCards={sharedHighlightCards}
+        sharedEyebrow={sharedEyebrow}
+        premiumImageRef={premiumImageRef}
+        premiumCardRef={premiumCardRef}
+        isLoaded={isLoaded}
+        message={message}
+        isBirthday={isBirthday}
+        birthdayStats={birthdayStats}
+      />
+    );
   };
 
 
@@ -524,7 +553,7 @@ export default function HomeSection({
           <div className="relative h-[40vh] lg:h-auto min-h-[50vh] lg:min-h-screen overflow-hidden order-1 lg:order-1">
             <Image
               src={heroImage}
-              alt={`${customerName} and ${partnerName}`}
+              alt={`${primaryName} and ${secondaryName || 'Partner'}`}
               fill
               className="object-cover brightness-[0.85] lg:brightness-100"
               priority
@@ -561,9 +590,13 @@ export default function HomeSection({
                           : 'text-rose-400'
                     }`}
                 >
-                  {isBirthday ? '🎉' : '💕'}
+                  {occasionHero.badge}
                 </span>
               </div>
+
+              <p className={`uppercase tracking-[0.24em] text-xs ${styles.textMuted} mb-4 font-semibold`}>
+                {occasionHero.intro}
+              </p>
 
               <div className="space-y-2 mb-6">
                 <h1
@@ -576,10 +609,10 @@ export default function HomeSection({
                     tracking-tight
                   `}
                 >
-                  {isBirthday ? celebrantName : customerName}
+                  {isBirthday ? celebrantName : primaryName}
                 </h1>
 
-                {!isBirthday && (
+                {showDualNames && (
                   <>
                     <p
                       className={`
@@ -601,7 +634,7 @@ export default function HomeSection({
                         tracking-tight
                       `}
                     >
-                      {partnerName}
+                      {secondaryName}
                     </h1>
                   </>
                 )}
@@ -627,7 +660,8 @@ export default function HomeSection({
                   )
                 ) : (
                   <>
-                    Together since <span className={`font-medium ${styles.text}`}>{anniversaryDate}</span>
+                    {occasionHero.datePrefix}{' '}
+                    <span className={`font-medium ${styles.text}`}>{formattedSpecialDate || 'Date to be announced'}</span>
                   </>
                 )}
               </p>
@@ -648,8 +682,21 @@ export default function HomeSection({
                       <span className="text-xl">🎈</span>
                     </div>
                   ) : null
-                ) : (
+                ) : shouldUseRelationshipTimer ? (
                   <RelationshipTimer anniversary={anniversaryDate} theme={theme} />
+                ) : (
+                  <div
+                    className={`
+                      ${styles.timerBg} ${styles.timerBorder} border rounded-full px-5 py-2.5 md:px-7 md:py-3 inline-flex items-center gap-2 md:gap-3 shadow-lg backdrop-blur-sm
+                    `}
+                  >
+                    <span className="text-xl">{occasionHero.badge}</span>
+                    <div className="text-center">
+                      <div className={`${styles.text} font-medium text-sm md:text-base`}>{occasionHero.timerLabel}</div>
+                      <div className="text-xs md:text-sm text-white/80">{formattedSpecialDate || 'Date to be announced'}</div>
+                    </div>
+                    <span className="text-xl">✨</span>
+                  </div>
                 )}
               </div>
 
@@ -698,7 +745,7 @@ export default function HomeSection({
 
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-10">
                 <a
-                  href="#love-letter"
+                  href={`#${occasionHero.primaryTarget}`}
                   className="
                     group
                     flex items-center justify-center gap-2
@@ -715,13 +762,13 @@ export default function HomeSection({
                   "
                 >
                   <span className="transition-transform group-hover:animate-pulse">{heroConfig.cta.startIcon}</span>
-                  {heroConfig.cta.primary}
+                  {occasionHero.primaryLabel}
                   <span className="transition-transform group-hover:translate-y-0.5">{heroConfig.cta.endIcon}</span>
                 </a>
 
-                {!isBirthday && (
+                {occasionHero.showSecondaryCta && (
                   <a
-                    href="#gallery"
+                    href={`#${occasionHero.secondaryTarget}`}
                     className="
                       group
                       flex items-center justify-center gap-2
@@ -744,7 +791,7 @@ export default function HomeSection({
                     }}
                   >
                     <span>{heroConfig.cta.endIcon}</span>
-                    {heroConfig.cta.secondary}
+                    {occasionHero.secondaryLabel}
                     <span className="transition-transform group-hover:translate-x-0.5">→</span>
                   </a>
                 )}
@@ -755,7 +802,7 @@ export default function HomeSection({
 
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 lg:bottom-8">
           <a
-            href="#love-letter"
+            href={`#${occasionHero.primaryTarget}`}
             className="
               flex flex-col items-center gap-1
               text-white/60 hover:text-white/80
@@ -805,9 +852,13 @@ export default function HomeSection({
         <div className="relative z-10 text-center text-white px-4 flex flex-col items-center justify-center max-w-3xl mx-auto">
           <div className="mb-6">
             <span className="text-5xl md:text-6xl animate-pulse inline-block">
-              {isBirthday ? '🎉' : '💕'}
+              {occasionHero.badge}
             </span>
           </div>
+
+          <p className="uppercase tracking-[0.24em] text-xs md:text-sm text-white/70 mb-4 font-semibold">
+            {occasionHero.intro}
+          </p>
 
           <h1
             className={`
@@ -824,11 +875,15 @@ export default function HomeSection({
               celebrantName
             ) : (
               <>
-                {customerName || 'Your Name'}
-                <span className="block md:inline mx-0 md:mx-4 text-3xl md:text-4xl text-rose-300/85 font-light">
-                  &
-                </span>
-                {partnerName || 'Partner Name'}
+                {primaryName || 'Your Name'}
+                {showDualNames && (
+                  <>
+                    <span className="block md:inline mx-0 md:mx-4 text-3xl md:text-4xl text-rose-300/85 font-light">
+                      &
+                    </span>
+                    {secondaryName || 'Partner Name'}
+                  </>
+                )}
               </>
             )}
           </h1>
@@ -845,14 +900,14 @@ export default function HomeSection({
               )
             ) : (
               <>
-                Together since{' '}
-                <span className="font-normal text-white/90">{anniversaryDate}</span>
+                {occasionHero.datePrefix}{' '}
+                <span className="font-normal text-white/90">{formattedSpecialDate || 'Date to be announced'}</span>
               </>
             )}
           </p>
 
 
-          {!isBirthday && (
+          {tagline && (
             <p className="text-base md:text-lg mb-6 text-white/90 font-light italic tracking-wide drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
               &ldquo;{tagline}&rdquo;
             </p>
@@ -884,9 +939,27 @@ export default function HomeSection({
                   <span className="text-xl">🎈</span>
                 </div>
               ) : null
-            ) : (
+            ) : shouldUseRelationshipTimer ? (
               <div className="scale-[0.96] opacity-95">
                 <RelationshipTimer anniversary={anniversaryDate} theme={theme} />
+              </div>
+            ) : (
+              <div
+                className="
+                  inline-flex items-center gap-3 rounded-full
+                  px-5 py-3 md:px-7 md:py-3.5
+                  border border-white/20
+                  bg-white/10
+                  backdrop-blur-md
+                  shadow-[0_12px_40px_rgba(0,0,0,0.18)]
+                "
+              >
+                <span className="text-xl">{occasionHero.badge}</span>
+                <div className="text-center">
+                  <div className="text-sm md:text-base font-medium text-white">{occasionHero.timerLabel}</div>
+                  <div className="text-xs md:text-sm text-white/80">{formattedSpecialDate || 'Date to be announced'}</div>
+                </div>
+                <span className="text-xl">✨</span>
               </div>
             )}
           </div>
@@ -898,8 +971,8 @@ export default function HomeSection({
           <div className="scale-[0.98]">
             <PremiumDualCTAs
               siteType={siteType}
-              primaryTarget="love-letter"
-              secondaryTarget="gallery"
+              primaryTarget={occasionHero.primaryTarget}
+              secondaryTarget={occasionHero.secondaryTarget}
             />
           </div>
         </div>
@@ -919,8 +992,8 @@ export default function HomeSection({
         normalizedDate,
         theme,
         siteType,
-        customerName,
-        partnerName
+        customerName: primaryName,
+        partnerName: secondaryName
       });
     case 'particles_fullscreen':
       return renderFullscreenBanner();

@@ -27,7 +27,6 @@ type LocalForm = {
   website_name: string;
   customer_name: string;
   partner_name: string;
-  anniversary_date: string;
   specialDate: string;
   message: string;
   tagline: string;
@@ -69,7 +68,6 @@ export default function EditWebsitePage() {
       website_name: '',
       customer_name: '',
       partner_name: '',
-      anniversary_date: '',
       specialDate: '',
       message: '',
       tagline: '',
@@ -176,7 +174,7 @@ export default function EditWebsitePage() {
 
         const customerName = site.config?.people?.primary || site.customer_name || '';
         const partnerName = site.config?.people?.secondary || site.partner_name || '';
-        const anniversaryDateValue = site.config?.dates?.special_date || site.specialDate || site.anniversary_date || '';
+        const specialDateValue = site.config?.dates?.special_date || site.specialDate || '';
 
         const partnerFromData = (site.config?.people?.secondary || site.partner_name || '').toString().trim();
         const customerFromData = (site.config?.people?.primary || site.customer_name || '').toString().trim();
@@ -224,8 +222,7 @@ export default function EditWebsitePage() {
           website_name: site.website_name || site.slug || '',
           customer_name: customerName,
           partner_name: partnerName,
-          anniversary_date: anniversaryDateValue,
-          specialDate: anniversaryDateValue,
+          specialDate: specialDateValue,
           message: site.config?.message || site.message || '',
           tagline: taglineValue,
           song_link: site.config?.media?.song_link || site.song_link || '',
@@ -643,8 +640,7 @@ export default function EditWebsitePage() {
         occasion: config.occasion,
         customer_name: form.customer_name,
         partner_name: form.partner_name,
-        specialDate: form.specialDate || form.anniversary_date,
-        anniversary_date: form.specialDate || form.anniversary_date,
+        specialDate: form.specialDate,
         message: form.message,
         tagline: form.tagline,
         song_link: form.song_link,
@@ -994,7 +990,7 @@ export default function EditWebsitePage() {
               <div className="space-y-6">
                 {config.sections.map((sectionKey) => {
                   // Only render TemplateSelector if templates exist for this section
-                  const { getTemplatesForSection } = require('@/config/templateConfig');
+                  const { getTemplatesForSection } = require('@/lib/config-helpers');
                   const templates = getTemplatesForSection(sectionKey);
                   if (!templates.length) return null;
                   console.log('[DEBUG] Render TemplateSelector', {

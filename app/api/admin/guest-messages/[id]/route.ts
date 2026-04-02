@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { deleteGuestMessage } from '@/lib/db/guestMessages';
+import { supabase } from '@/lib/supabase';
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

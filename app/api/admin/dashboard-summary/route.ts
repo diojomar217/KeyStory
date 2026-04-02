@@ -8,6 +8,68 @@ let cachedData: any = null;
 let cachedAt: number = 0;
 const CACHE_TTL = 15 * 1000; // 15 seconds
 
+function normalizeError(err: unknown, context: string) {
+  if (!err) return null;
+
+  if (err instanceof Error) {
+    return {
+      context,
+      message: err.message || 'Unexpected server error',
+    };
+  }
+
+  if (typeof err === 'string') {
+    const trimmed = err.trim();
+    if (!trimmed) return null;
+    return {
+      context,
+      message: trimmed,
+    };
+  }
+
+  if (typeof err === 'object') {
+    const maybeErr = err as {
+      message?: unknown;
+      hint?: unknown;
+      details?: unknown;
+      code?: unknown;
+    };
+
+    const message =
+      typeof maybeErr.message === 'string' && maybeErr.message.trim() !== ''
+        ? maybeErr.message
+        : typeof maybeErr.details === 'string' && maybeErr.details.trim() !== ''
+          ? maybeErr.details
+          : null;
+
+    const hint =
+      typeof maybeErr.hint === 'string' && maybeErr.hint.trim() !== ''
+        ? maybeErr.hint
+        : undefined;
+
+    const code =
+      typeof maybeErr.code === 'string' && maybeErr.code.trim() !== ''
+        ? maybeErr.code
+        : undefined;
+
+    if (!message && !hint && !code) {
+      return null;
+    }
+
+    return {
+      context,
+      message: message || 'Unexpected backend error',
+      hint,
+      code,
+    };
+  }
+
+  return {
+    context,
+    message: 'Unexpected backend error',
+  };
+}
+
 
 export async function GET() {
   const nowTime = Date.now();
@@ -32,8 +94,14 @@ export async function GET() {
   let recentWebsites = [];
   let recentError = null;
   try {
-    const allSites = await getSites();
-    recentWebsites = (allSites || []).slice(0, 5);
+    const allSitesResult = await getSites({ limit: 5, sortBy: 'created_at', sortDirection: 'desc' });
+    if (Array.isArray(allSitesResult)) {
+      recentWebsites = allSitesResult.slice(0, 5);
+    } else if (allSitesResult && Array.isArray((allSitesResult as { data?: unknown[] }).data)) {
+      recentWebsites = ((allSitesResult as { data: unknown[] }).data || []).slice(0, 5);
+    } else {
+      recentWebsites = [];
+    }
   } catch (err) {
     recentError = err;
   }
@@ -67,7 +135,14 @@ export async function GET() {
     expiringSoon: expiringSoon || 0,
     expiredSites: expiredSites || 0,
     recentWebsites: recentWebsites || [],
-    errors: [countError, monthError, recentError, publishedError, soonError, expiredError].filter(Boolean)
+    errors: [
+      normalizeError(countError, 'countError'),
+      normalizeError(monthError, 'monthError'),
+      normalizeError(recentError, 'recentError'),
+      normalizeError(publishedError, 'publishedError'),
+      normalizeError(soonError, 'soonError'),
+      normalizeError(expiredError, 'expiredError'),
+    ].filter(Boolean)
   };
   cachedData = result;
   cachedAt = nowTime;

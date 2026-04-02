@@ -8,6 +8,7 @@
 
 import { Section, OccasionType } from './types';
 import { OCCASION_REGISTRY } from './occasion-registry';
+import { getTemplatesForSection as getTemplatesFromConfig, SECTION_TEMPLATE_MAP } from '@/config/templateConfig';
 import React from 'react';
 
 // ============================================
@@ -64,7 +65,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     title: 'Home',
     description: 'Hero section with names, special date, and message',
     icon: '🏠',
-    supportedOccasions: ['couple', 'wedding', 'anniversary', 'birthday', 'proposal'],
+    supportedOccasions: ['couple', 'wedding', 'anniversary', 'birthday', 'proposal', 'graduation', 'baby_shower', 'debut', 'memorial', 'family', 'friendship', 'travel', 'valentines', 'mothers_day', 'fathers_day'],
     requiresPhotos: false,
     requiresTimeline: false,
     requiresSong: false,
@@ -80,7 +81,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     title: 'Gallery',
     description: 'Photo memories from your relationship journey',
     icon: '📸',
-    supportedOccasions: ['couple','birthday','wedding','anniversary','proposal'],
+    supportedOccasions: ['couple', 'birthday', 'wedding', 'anniversary', 'proposal', 'graduation', 'baby_shower', 'debut', 'memorial', 'family', 'friendship', 'travel', 'valentines', 'mothers_day', 'fathers_day'],
     requiresPhotos: true,
     requiresTimeline: false,
     requiresSong: false,
@@ -96,7 +97,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     title: 'Timeline',
     description: 'Key moments in your love story',
     icon: '📅',
-    supportedOccasions: ['couple','wedding','anniversary','proposal'],
+    supportedOccasions: ['couple', 'wedding', 'anniversary', 'proposal', 'family', 'friendship'],
     requiresPhotos: false,
     requiresTimeline: false,
     requiresSong: false,
@@ -131,7 +132,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     title: 'Love Letter',
     description: 'Your heartfelt message to your partner',
     icon: '💌',
-    supportedOccasions: ['couple','proposal','anniversary'],
+    supportedOccasions: ['couple', 'proposal', 'anniversary', 'valentines'],
     requiresPhotos: false,
     requiresTimeline: false,
     requiresSong: false,
@@ -147,7 +148,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     title: 'Our Story',
     description: 'Share your relationship story in detail',
     icon: '📖',
-    supportedOccasions: ['couple','wedding','anniversary'],
+    supportedOccasions: ['couple', 'wedding', 'anniversary', 'proposal'],
     requiresPhotos: false,
     requiresTimeline: false,
     requiresSong: false,
@@ -216,6 +217,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     title: 'Polaroid Gallery',
     description: 'Display photos in polaroid style frames',
     icon: '🖼️',
+    supportedOccasions: ['couple', 'birthday', 'wedding', 'anniversary', 'proposal', 'family', 'friendship'],
     requiresPhotos: true,
     requiresTimeline: false,
     requiresSong: false,
@@ -233,7 +235,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     title: 'Playlist',
     description: 'Share your relationship playlist',
     icon: '🎶',
-    supportedOccasions: ['couple','birthday','wedding','anniversary','proposal'],
+    supportedOccasions: ['couple', 'birthday', 'wedding', 'anniversary', 'proposal', 'graduation', 'baby_shower', 'debut', 'family', 'friendship', 'travel', 'valentines'],
     requiresPhotos: false,
     requiresTimeline: false,
     requiresSong: false,
@@ -249,7 +251,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     title: 'Video Memories',
     description: 'Share embedded video memories',
     icon: '🎬',
-    supportedOccasions: ['couple','birthday','wedding','anniversary','proposal'],
+    supportedOccasions: ['couple', 'birthday', 'wedding', 'anniversary', 'proposal', 'graduation', 'baby_shower', 'debut', 'memorial', 'family', 'friendship', 'travel', 'valentines', 'mothers_day', 'fathers_day'],
     requiresPhotos: false,
     requiresTimeline: false,
     requiresSong: false,
@@ -301,7 +303,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     title: 'Future Dreams',
     description: 'Share your plans and dreams together',
     icon: '💭',
-    supportedOccasions: ['couple','birthday','wedding','anniversary','proposal'],
+    supportedOccasions: ['couple', 'birthday', 'wedding', 'anniversary', 'proposal', 'graduation', 'friendship', 'valentines'],
     requiresPhotos: false,
     requiresTimeline: false,
     requiresSong: false,
@@ -319,7 +321,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     title: 'Love Quotes',
     description: 'Display romantic love quotes',
     icon: '💕',
-    supportedOccasions: ['couple','birthday','wedding','anniversary','proposal'],
+    supportedOccasions: ['couple', 'birthday', 'wedding', 'anniversary', 'proposal', 'graduation', 'memorial', 'family', 'friendship', 'travel', 'valentines', 'mothers_day', 'fathers_day'],
     requiresPhotos: false,
     requiresTimeline: false,
     requiresSong: false,
@@ -335,7 +337,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     title: 'Reasons I Love You',
     description: 'List all the reasons you love them',
     icon: '💖',
-    supportedOccasions: ['couple','anniversary','wedding'],
+    supportedOccasions: ['couple', 'anniversary', 'wedding', 'valentines'],
     requiresPhotos: false,
     requiresTimeline: false,
     requiresSong: false,
@@ -351,7 +353,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     title: 'Memory Map',
     description: 'Show places you have visited together',
     icon: '🗺️',
-    supportedOccasions: ['couple','birthday','wedding','anniversary','proposal'],
+    supportedOccasions: ['couple', 'birthday', 'wedding', 'anniversary', 'proposal', 'baby_shower', 'memorial', 'family', 'friendship', 'travel'],
     requiresPhotos: false,
     requiresTimeline: false,
     requiresSong: false,
@@ -470,7 +472,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     title: 'Guest Messages',
     description: 'Let friends and family leave messages',
     icon: '💬',
-    supportedOccasions: ['couple','birthday','wedding','anniversary','proposal'],
+    supportedOccasions: ['couple', 'birthday', 'wedding', 'anniversary', 'proposal', 'graduation', 'baby_shower', 'debut', 'memorial', 'family', 'friendship', 'mothers_day', 'fathers_day'],
     requiresPhotos: false,
     requiresTimeline: false,
     requiresSong: false,
@@ -488,7 +490,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     title: 'Letter to the Future',
     description: 'Write a message to open later',
     icon: '📮',
-    supportedOccasions: ['couple','birthday','wedding','anniversary','proposal'],
+    supportedOccasions: ['couple', 'birthday', 'wedding', 'anniversary', 'proposal', 'graduation', 'valentines', 'mothers_day', 'fathers_day'],
     requiresPhotos: false,
     requiresTimeline: false,
     requiresSong: false,
@@ -504,7 +506,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     title: 'Gift Section',
     description: 'Display digital love gifts',
     icon: '🎁',
-    supportedOccasions: ['couple','birthday','wedding','anniversary','proposal'],
+    supportedOccasions: ['couple', 'birthday', 'wedding', 'anniversary', 'proposal', 'valentines', 'mothers_day', 'fathers_day'],
     requiresPhotos: false,
     requiresTimeline: false,
     requiresSong: false,
@@ -520,7 +522,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     title: 'Surprise Message',
     description: 'Hidden message reveal feature',
     icon: '🎉',
-    supportedOccasions: ['couple','birthday','wedding','anniversary','proposal'],
+    supportedOccasions: ['couple', 'birthday', 'wedding', 'anniversary', 'proposal', 'graduation', 'friendship', 'valentines', 'mothers_day', 'fathers_day'],
     requiresPhotos: false,
     requiresTimeline: false,
     requiresSong: false,
@@ -531,6 +533,346 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     required: false,
     previewEmoji: '🎉',
   },
+  wedding_countdown: {
+    key: 'wedding_countdown',
+    title: 'Wedding Countdown',
+    description: 'Countdown to the wedding celebration',
+    icon: '⏰',
+    supportedOccasions: ['wedding'],
+    requiresPhotos: false,
+    requiresTimeline: false,
+    requiresSong: false,
+    hasTemplates: false,
+    hasLayoutOption: true,
+    hasMemoriesOption: false,
+    defaultEnabled: false,
+    required: false,
+    previewEmoji: '⏰',
+  },
+  event_details: {
+    key: 'event_details',
+    title: 'Event Details',
+    description: 'Share venue, date, and event information',
+    icon: '📍',
+    supportedOccasions: ['wedding', 'baby_shower', 'debut'],
+    requiresPhotos: false,
+    requiresTimeline: false,
+    requiresSong: false,
+    hasTemplates: false,
+    hasLayoutOption: true,
+    hasMemoriesOption: false,
+    defaultEnabled: false,
+    required: false,
+    previewEmoji: '📍',
+  },
+  wedding_timeline: {
+    key: 'wedding_timeline',
+    title: 'Wedding Timeline',
+    description: 'Chronicle the milestones leading to the wedding day',
+    icon: '💍',
+    supportedOccasions: ['wedding'],
+    requiresPhotos: false,
+    requiresTimeline: false,
+    requiresSong: false,
+    requiresEvents: true,
+    hasTemplates: true,
+    hasLayoutOption: true,
+    hasMemoriesOption: true,
+    defaultEnabled: false,
+    required: false,
+    previewEmoji: '💍',
+  },
+  gift_registry: {
+    key: 'gift_registry',
+    title: 'Gift Registry',
+    description: 'Share a registry or curated gift list',
+    icon: '🎁',
+    supportedOccasions: ['wedding', 'baby_shower'],
+    requiresPhotos: false,
+    requiresTimeline: false,
+    requiresSong: false,
+    hasTemplates: false,
+    hasLayoutOption: true,
+    hasMemoriesOption: false,
+    defaultEnabled: false,
+    required: false,
+    previewEmoji: '🎁',
+  },
+  rsvp: {
+    key: 'rsvp',
+    title: 'RSVP',
+    description: 'Collect responses or notes from guests',
+    icon: '💌',
+    supportedOccasions: ['wedding'],
+    requiresPhotos: false,
+    requiresTimeline: false,
+    requiresSong: false,
+    hasTemplates: false,
+    hasLayoutOption: true,
+    hasMemoriesOption: false,
+    defaultEnabled: false,
+    required: false,
+    previewEmoji: '💌',
+  },
+  couple_message: {
+    key: 'couple_message',
+    title: 'Couple Message',
+    description: 'A welcome message from the couple',
+    icon: '💞',
+    supportedOccasions: ['wedding'],
+    requiresPhotos: false,
+    requiresTimeline: false,
+    requiresSong: false,
+    hasTemplates: true,
+    hasLayoutOption: true,
+    hasMemoriesOption: false,
+    defaultEnabled: false,
+    required: false,
+    previewEmoji: '💞',
+  },
+  graduation_message: {
+    key: 'graduation_message',
+    title: 'Graduation Message',
+    description: 'A personal message to mark the graduation milestone',
+    icon: '🎓',
+    supportedOccasions: ['graduation'],
+    requiresPhotos: false,
+    requiresTimeline: false,
+    requiresSong: false,
+    hasTemplates: true,
+    hasLayoutOption: true,
+    hasMemoriesOption: false,
+    defaultEnabled: false,
+    required: false,
+    previewEmoji: '🎓',
+  },
+  countdown: {
+    key: 'countdown',
+    title: 'Countdown',
+    description: 'Count down to the special date',
+    icon: '⏳',
+    supportedOccasions: ['proposal', 'graduation', 'baby_shower', 'debut'],
+    requiresPhotos: false,
+    requiresTimeline: false,
+    requiresSong: false,
+    hasTemplates: false,
+    hasLayoutOption: true,
+    hasMemoriesOption: false,
+    defaultEnabled: false,
+    required: false,
+    previewEmoji: '⏳',
+  },
+  school_memories: {
+    key: 'school_memories',
+    title: 'School Memories',
+    description: 'A timeline of school highlights and favorite memories',
+    icon: '🏫',
+    supportedOccasions: ['graduation'],
+    requiresPhotos: false,
+    requiresTimeline: false,
+    requiresSong: false,
+    requiresEvents: true,
+    hasTemplates: true,
+    hasLayoutOption: true,
+    hasMemoriesOption: true,
+    defaultEnabled: false,
+    required: false,
+    previewEmoji: '🏫',
+  },
+  achievements: {
+    key: 'achievements',
+    title: 'Achievements',
+    description: 'Highlight major milestones and accomplishments',
+    icon: '🏆',
+    supportedOccasions: ['graduation'],
+    requiresPhotos: false,
+    requiresTimeline: false,
+    requiresSong: false,
+    requiresEvents: true,
+    hasTemplates: true,
+    hasLayoutOption: true,
+    hasMemoriesOption: true,
+    defaultEnabled: false,
+    required: false,
+    previewEmoji: '🏆',
+  },
+  future_plans: {
+    key: 'future_plans',
+    title: 'Future Plans',
+    description: 'Share the exciting plans that come next',
+    icon: '💭',
+    supportedOccasions: ['graduation', 'baby_shower'],
+    requiresPhotos: false,
+    requiresTimeline: false,
+    requiresSong: false,
+    hasTemplates: false,
+    hasLayoutOption: true,
+    hasMemoriesOption: false,
+    defaultEnabled: false,
+    required: false,
+    previewEmoji: '💭',
+  },
+  baby_predictions: {
+    key: 'baby_predictions',
+    title: 'Baby Predictions',
+    description: 'Fun predictions and wishes for the little one',
+    icon: '🍼',
+    supportedOccasions: ['baby_shower'],
+    requiresPhotos: false,
+    requiresTimeline: false,
+    requiresSong: false,
+    hasTemplates: false,
+    hasLayoutOption: true,
+    hasMemoriesOption: false,
+    defaultEnabled: false,
+    required: false,
+    previewEmoji: '🍼',
+  },
+  parents_message: {
+    key: 'parents_message',
+    title: 'Parents Message',
+    description: 'A message from the parents-to-be',
+    icon: '💌',
+    supportedOccasions: ['baby_shower'],
+    requiresPhotos: false,
+    requiresTimeline: false,
+    requiresSong: false,
+    hasTemplates: true,
+    hasLayoutOption: true,
+    hasMemoriesOption: false,
+    defaultEnabled: false,
+    required: false,
+    previewEmoji: '💌',
+  },
+  photo_highlights: {
+    key: 'photo_highlights',
+    title: 'Photo Highlights',
+    description: 'Showcase standout photos from the celebration',
+    icon: '🖼️',
+    supportedOccasions: ['debut', 'memorial', 'family', 'travel', 'mothers_day', 'fathers_day'],
+    requiresPhotos: true,
+    requiresTimeline: false,
+    requiresSong: false,
+    hasTemplates: true,
+    hasLayoutOption: true,
+    hasMemoriesOption: true,
+    defaultEnabled: false,
+    required: false,
+    previewEmoji: '🖼️',
+  },
+  celebrant_message: {
+    key: 'celebrant_message',
+    title: 'Celebrant Message',
+    description: 'A note from the celebrant',
+    icon: '🎤',
+    supportedOccasions: ['debut'],
+    requiresPhotos: false,
+    requiresTimeline: false,
+    requiresSong: false,
+    hasTemplates: true,
+    hasLayoutOption: true,
+    hasMemoriesOption: false,
+    defaultEnabled: false,
+    required: false,
+    previewEmoji: '🎤',
+  },
+  life_story: {
+    key: 'life_story',
+    title: 'Life Story',
+    description: 'Tell the story of a life filled with meaning and memories',
+    icon: '📖',
+    supportedOccasions: ['memorial'],
+    requiresPhotos: false,
+    requiresTimeline: false,
+    requiresSong: false,
+    hasTemplates: false,
+    hasLayoutOption: true,
+    hasMemoriesOption: false,
+    defaultEnabled: false,
+    required: false,
+    previewEmoji: '📖',
+  },
+  tributes: {
+    key: 'tributes',
+    title: 'Tributes',
+    description: 'Messages and words of remembrance from loved ones',
+    icon: '🕊️',
+    supportedOccasions: ['memorial'],
+    requiresPhotos: false,
+    requiresTimeline: false,
+    requiresSong: false,
+    hasTemplates: false,
+    hasLayoutOption: true,
+    hasMemoriesOption: false,
+    defaultEnabled: false,
+    required: false,
+    previewEmoji: '🕊️',
+  },
+  family_message: {
+    key: 'family_message',
+    title: 'Family Message',
+    description: 'A heartfelt message from the family',
+    icon: '🏡',
+    supportedOccasions: ['memorial', 'family', 'mothers_day', 'fathers_day'],
+    requiresPhotos: false,
+    requiresTimeline: false,
+    requiresSong: false,
+    hasTemplates: true,
+    hasLayoutOption: true,
+    hasMemoriesOption: false,
+    defaultEnabled: false,
+    required: false,
+    previewEmoji: '🏡',
+  },
+  travel_timeline: {
+    key: 'travel_timeline',
+    title: 'Travel Timeline',
+    description: 'Document the journey step by step',
+    icon: '✈️',
+    supportedOccasions: ['travel'],
+    requiresPhotos: false,
+    requiresTimeline: false,
+    requiresSong: false,
+    requiresEvents: true,
+    hasTemplates: true,
+    hasLayoutOption: true,
+    hasMemoriesOption: true,
+    defaultEnabled: false,
+    required: false,
+    previewEmoji: '✈️',
+  },
+  travel_notes: {
+    key: 'travel_notes',
+    title: 'Travel Notes',
+    description: 'Share notes and reflections from the trip',
+    icon: '📝',
+    supportedOccasions: ['travel'],
+    requiresPhotos: false,
+    requiresTimeline: false,
+    requiresSong: false,
+    hasTemplates: false,
+    hasLayoutOption: true,
+    hasMemoriesOption: false,
+    defaultEnabled: false,
+    required: false,
+    previewEmoji: '📝',
+  },
+  message_letter: {
+    key: 'message_letter',
+    title: 'Message Letter',
+    description: 'A personal letter-style message',
+    icon: '💌',
+    supportedOccasions: ['mothers_day', 'fathers_day'],
+    requiresPhotos: false,
+    requiresTimeline: false,
+    requiresSong: false,
+    hasTemplates: true,
+    hasLayoutOption: true,
+    hasMemoriesOption: false,
+    defaultEnabled: false,
+    required: false,
+    previewEmoji: '💌',
+  },
   
   // Keepsake
   qr_keepsake: {
@@ -538,7 +880,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
     title: 'QR Keepsake',
     description: 'A printable QR code card for physical keepsake',
     icon: '🎴',
-    supportedOccasions: ['couple','birthday','wedding','anniversary','proposal'],
+    supportedOccasions: ['couple', 'birthday', 'wedding', 'anniversary', 'proposal', 'graduation', 'baby_shower', 'debut', 'family', 'travel', 'valentines', 'mothers_day', 'fathers_day'],
     requiresPhotos: false,
     requiresTimeline: false,
     requiresSong: false,
@@ -555,7 +897,7 @@ export const SECTION_REGISTRY: Record<Section, SectionMetadata> = {
 // SECTION TEMPLATES MAP
 // ============================================
 
-export const SECTION_TEMPLATES: Record<Section, SectionTemplate[]> = {
+export const SECTION_TEMPLATES: Partial<Record<Section, SectionTemplate[]>> = {
   home: [
     { 
       key: 'hero_centered', 
@@ -890,6 +1232,34 @@ export const getRelatedSectionRecommendations = (selectedSections: Section[]): S
  * Get available templates for a specific section
  */
 export const getSectionTemplates = (section: Section): SectionTemplate[] => {
+  const configTemplates = getTemplatesFromConfig(section);
+
+  if (configTemplates.length > 0) {
+    const normalizedTemplates = Array.from(configTemplates) as Array<{
+      key: string;
+      label: string;
+      description: string;
+    }>;
+
+    return normalizedTemplates.map((template) => ({
+      key: template.key,
+      label: template.label,
+      description: template.description,
+      // Registry APIs expect React preview nodes, while templateConfig stores preview metadata.
+      preview: (
+        <div className="w-full h-full rounded-lg bg-slate-100 flex items-center justify-center text-[10px] text-slate-500 px-1 text-center">
+          {template.label}
+        </div>
+      ),
+    }));
+  }
+
+  // If a section is mapped to templateConfig, treat that as authoritative and
+  // do not silently fall back to duplicated legacy definitions.
+  if (SECTION_TEMPLATE_MAP[section]) {
+    return [];
+  }
+
   return SECTION_TEMPLATES[section] || [];
 };
 
@@ -897,9 +1267,7 @@ export const getSectionTemplates = (section: Section): SectionTemplate[] => {
  * Get all sections that have templates
  */
 export const getSectionsWithTemplates = (): Section[] => {
-  return Object.entries(SECTION_TEMPLATES)
-    .filter(([_, templates]) => templates.length > 0)
-    .map(([section]) => section as Section);
+  return (Object.keys(SECTION_REGISTRY) as Section[]).filter((section) => getSectionTemplates(section).length > 0);
 };
 
 /**
@@ -945,8 +1313,7 @@ export const getMemoriesSections = (): Section[] => {
  */
 export const getTemplateSections = (enabledSections: Section[]): Section[] => {
   return enabledSections.filter(section => {
-    const metadata = SECTION_REGISTRY[section];
-    return metadata?.hasTemplates;
+    return getSectionTemplates(section).length > 0;
   });
 };
 
@@ -983,7 +1350,7 @@ export const getAvailableSections = (occasion: OccasionType): Section[] => {
 export const validateSectionRequirements = (
   section: Section,
   form: { photos?: File[]; song_link?: string },
-  config: { timeline_events?: { length: number } }
+  config: { timeline_events?: { length: number }; section_content?: { timeline?: { length: number } } }
 ): { valid: boolean; error?: string } => {
   const metadata = SECTION_REGISTRY[section];
   
@@ -1012,7 +1379,7 @@ export const validateSectionRequirements = (
  * Get template selection label for a section
  */
 export const getSectionTemplateLabel = (section: Section): string => {
-  const labels: Record<Section, string> = {
+  const labels: Partial<Record<Section, string>> = {
     home: 'Home Template',
     gallery: 'Gallery Template',
     timeline: 'Timeline Template',
@@ -1043,6 +1410,27 @@ export const getSectionTemplateLabel = (section: Section): string => {
     letter_future: 'Letter to Future Section',
     gift_section: 'Gift Section',
     surprise_message: 'Surprise Message Section',
+    wedding_countdown: 'Wedding Countdown Section',
+    event_details: 'Event Details Section',
+    wedding_timeline: 'Wedding Timeline Section',
+    gift_registry: 'Gift Registry Section',
+    rsvp: 'RSVP Section',
+    couple_message: 'Couple Message Section',
+    graduation_message: 'Graduation Message Section',
+    countdown: 'Countdown Section',
+    school_memories: 'School Memories Section',
+    achievements: 'Achievements Section',
+    future_plans: 'Future Plans Section',
+    baby_predictions: 'Baby Predictions Section',
+    parents_message: 'Parents Message Section',
+    photo_highlights: 'Photo Highlights Section',
+    celebrant_message: 'Celebrant Message Section',
+    life_story: 'Life Story Section',
+    tributes: 'Tributes Section',
+    family_message: 'Family Message Section',
+    travel_timeline: 'Travel Timeline Section',
+    travel_notes: 'Travel Notes Section',
+    message_letter: 'Message Letter Section',
   };
   
   return labels[section] || `${section} Template`;

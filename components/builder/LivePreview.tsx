@@ -6,6 +6,8 @@ import type { ThemeKey } from '@/config/themeConfig';
 import { THEME_CONFIG } from '@/config/themeConfig';
 import { DEFAULT_THEME } from '@/config/defaults';
 import { getThemeStyles } from '@/config/themeStyles';
+import { getOccasionDesignSummary, getOccasionHeroSpec } from '@/config/occasionHeroConfig';
+import { OCCASION_REGISTRY } from '@/lib/occasion-registry';
 import { LAYOUT_CONFIG } from '@/config/layoutConfig';
 import { SectionRenderer } from '@/components/builder/SectionPreviews';
 
@@ -192,6 +194,9 @@ export default function LivePreview({ config, occasion, isMobileOpen, onMobileCl
       : [];
 
   const currentOccasion = occasion || config.occasion || 'couple';
+  const occasionHero = getOccasionHeroSpec(currentOccasion);
+  const designSummary = getOccasionDesignSummary(currentOccasion);
+  const occasionMeta = OCCASION_REGISTRY[currentOccasion];
 
   const content = (
     <div className="h-full flex flex-col">
@@ -227,6 +232,38 @@ export default function LivePreview({ config, occasion, isMobileOpen, onMobileCl
 
       {/* Preview Content */}
       <div className="flex-1 overflow-y-auto p-3">
+        <div className="mb-3 rounded-xl border border-slate-200/70 bg-white/80 p-3 shadow-sm backdrop-blur-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
+                Design Strategy
+              </div>
+              <div className="mt-1 flex items-center gap-2 text-sm font-semibold text-slate-800">
+                <span>{occasionHero.badge}</span>
+                <span>{occasionMeta.label}</span>
+              </div>
+            </div>
+            <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] ${occasionHero.renderStrategy === 'dedicated' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}`}>
+              {occasionHero.renderStrategy === 'dedicated' ? 'Dedicated' : 'Shared'}
+            </span>
+          </div>
+
+          <div className="mt-3 grid gap-2">
+            <div className="rounded-lg bg-slate-50 px-3 py-2">
+              <div className="text-[10px] uppercase tracking-[0.22em] text-slate-500">Hero</div>
+              <div className="mt-1 text-xs font-medium text-slate-700">{designSummary.heroLabel}</div>
+            </div>
+            <div className="rounded-lg bg-slate-50 px-3 py-2">
+              <div className="text-[10px] uppercase tracking-[0.22em] text-slate-500">Section Headers</div>
+              <div className="mt-1 text-xs font-medium text-slate-700">{designSummary.headerLabel}</div>
+            </div>
+            <div className="rounded-lg bg-slate-50 px-3 py-2">
+              <div className="text-[10px] uppercase tracking-[0.22em] text-slate-500">Tone</div>
+              <div className="mt-1 text-xs font-medium text-slate-700">{designSummary.toneLabel}</div>
+            </div>
+          </div>
+        </div>
+
         {previewSections.length === 0 ? (
           <EmptyPreviewState theme={theme} />
         ) : (

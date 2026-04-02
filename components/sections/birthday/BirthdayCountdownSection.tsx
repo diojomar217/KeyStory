@@ -69,7 +69,7 @@ export default function BirthdayCountdownSection({ theme, birthdayDate }: Props)
             const value = [countdown.days, countdown.hours, countdown.minutes, countdown.seconds][idx];
             return (
               <div key={label} className={`${styles.card} p-4 rounded-xl border ${styles.border} shadow-md`}>
-                <div className="text-3xl font-bold text-rose-500">{value}</div>
+                <div className={`text-3xl font-bold ${styles.accent}`}>{value}</div>
                 <div className="text-sm text-slate-600 dark:text-slate-300">{label}</div>
               </div>
             );

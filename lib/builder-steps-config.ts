@@ -233,6 +233,14 @@ export const validateContentStep = (
     }
   }
 
+  // Birthday Timeline requires events
+  if (
+    sections.includes('birthday_timeline') &&
+    (!config.section_content?.timeline || config.section_content.timeline.length === 0)
+  ) {
+    return { valid: false, error: 'Birthday Timeline section requires at least one event' };
+  }
+
   // Party Details require at least one field
   if (sections.includes('party_details')) {
     const details = sectionContent.party_details || {};
@@ -246,6 +254,196 @@ export const validateContentStep = (
     const items = sectionContent.gift_wishlist?.items || [];
     if (!Array.isArray(items) || items.length === 0) {
       return { valid: false, error: 'Gift Wishlist section requires at least one item' };
+    }
+  }
+
+  // Gift Registry requires at least one item
+  if (sections.includes('gift_registry')) {
+    const items = sectionContent.gift_registry?.items || [];
+    if (!Array.isArray(items) || items.length === 0) {
+      return { valid: false, error: 'Gift Registry section requires at least one item' };
+    }
+  }
+
+  // Gift Section requires at least one gift
+  if (sections.includes('gift_section')) {
+    const gifts = sectionContent.gift_section?.gifts || [];
+    if (!Array.isArray(gifts) || gifts.length === 0) {
+      return { valid: false, error: 'Gift Section requires at least one gift' };
+    }
+  }
+
+  // Quotes section requires at least one quote
+  if (sections.includes('quotes')) {
+    const quotes = sectionContent.quotes?.quotes || [];
+    if (!Array.isArray(quotes) || quotes.length === 0) {
+      return { valid: false, error: 'Quotes section requires at least one quote' };
+    }
+  }
+
+  // Wedding Timeline requires events
+  if (
+    sections.includes('wedding_timeline') &&
+    (!config.section_content?.timeline || config.section_content.timeline.length === 0)
+  ) {
+    return { valid: false, error: 'Wedding Timeline section requires at least one event' };
+  }
+
+  // Event Details require at least one field
+  if (sections.includes('event_details')) {
+    const details = sectionContent.event_details || {};
+    if (!details.location && !details.date && !details.time && !details.dressCode) {
+      return { valid: false, error: 'Event Details section requires at least one field filled in' };
+    }
+  }
+
+  // RSVP section requires deadline, note, or messages
+  if (sections.includes('rsvp')) {
+    const rsvp = sectionContent.rsvp || {};
+    if (!rsvp.deadline?.trim() && !rsvp.note?.trim() && (!rsvp.messages || rsvp.messages.length === 0)) {
+      return { valid: false, error: 'RSVP section requires a deadline, note, or guest messages' };
+    }
+  }
+
+  // Memory Map requires at least one location
+  if (sections.includes('memory_map')) {
+    const locations = sectionContent.memory_map?.locations || [];
+    if (!Array.isArray(locations) || locations.length === 0) {
+      return { valid: false, error: 'Memory Map section requires at least one location' };
+    }
+  }
+
+  // Surprise Message requires message or hint
+  if (sections.includes('surprise_message')) {
+    const message = sectionContent.surprise_message?.message || '';
+    const hint = sectionContent.surprise_message?.hint || '';
+    if (!message.trim() && !hint.trim()) {
+      return { valid: false, error: 'Surprise Message section requires a message or hint' };
+    }
+  }
+
+  // School Memories requires events (uses timeline_events)
+  if (
+    sections.includes('school_memories') &&
+    (!config.section_content?.timeline || config.section_content.timeline.length === 0)
+  ) {
+    return { valid: false, error: 'School Memories section requires at least one event' };
+  }
+
+  // Achievements requires events (uses timeline_events)
+  if (
+    sections.includes('achievements') &&
+    (!config.section_content?.timeline || config.section_content.timeline.length === 0)
+  ) {
+    return { valid: false, error: 'Achievements section requires at least one event' };
+  }
+
+  // Travel Timeline requires events
+  if (
+    sections.includes('travel_timeline') &&
+    (!config.section_content?.timeline || config.section_content.timeline.length === 0)
+  ) {
+    return { valid: false, error: 'Travel Timeline section requires at least one event' };
+  }
+
+  // Photo Highlights requires photos
+  if (sections.includes('photo_highlights') && (!form.photos || form.photos.length === 0)) {
+    return { valid: false, error: 'Photo Highlights section requires at least one photo' };
+  }
+
+  // Travel Notes requires content (uses our_story content)
+  if (sections.includes('travel_notes') && sectionContent.travel_notes) {
+    const content = sectionContent.travel_notes.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'Travel Notes section requires content' };
+    }
+  }
+
+  // Life Story requires content (uses love_letter content)
+  if (sections.includes('life_story') && sectionContent.life_story) {
+    const content = sectionContent.life_story.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'Life Story section requires content' };
+    }
+  }
+
+  // Message Letter requires content
+  if (sections.includes('message_letter') && sectionContent.message_letter) {
+    const content = sectionContent.message_letter.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'Message Letter section requires content' };
+    }
+  }
+
+  // Couple Message requires content
+  if (sections.includes('couple_message') && sectionContent.couple_message) {
+    const content = sectionContent.couple_message.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'Couple Message section requires content' };
+    }
+  }
+
+  // Family Message requires content
+  if (sections.includes('family_message') && sectionContent.family_message) {
+    const content = sectionContent.family_message.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'Family Message section requires content' };
+    }
+  }
+
+  // Parents Message requires content
+  if (sections.includes('parents_message') && sectionContent.parents_message) {
+    const content = sectionContent.parents_message.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'Parents Message section requires content' };
+    }
+  }
+
+  // Celebrant Message requires content
+  if (sections.includes('celebrant_message') && sectionContent.celebrant_message) {
+    const content = sectionContent.celebrant_message.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'Celebrant Message section requires content' };
+    }
+  }
+
+  // Graduation Message requires content
+  if (sections.includes('graduation_message') && sectionContent.graduation_message) {
+    const content = sectionContent.graduation_message.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'Graduation Message section requires content' };
+    }
+  }
+
+  // Letter to Future requires letter content
+  if (sections.includes('letter_future')) {
+    const letter = sectionContent.letter_future?.letter || '';
+    if (!letter.trim()) {
+      return { valid: false, error: 'Letter to Future section requires a letter' };
+    }
+  }
+
+  // Tributes requires quotes
+  if (sections.includes('tributes')) {
+    const tributes = sectionContent.tributes?.quotes || [];
+    if (!Array.isArray(tributes) || tributes.length === 0) {
+      return { valid: false, error: 'Tributes section requires at least one tribute' };
+    }
+  }
+
+  // Baby Predictions requires quotes
+  if (sections.includes('baby_predictions')) {
+    const predictions = sectionContent.baby_predictions?.quotes || [];
+    if (!Array.isArray(predictions) || predictions.length === 0) {
+      return { valid: false, error: 'Baby Predictions section requires at least one prediction' };
+    }
+  }
+
+  // Future Plans requires dreams
+  if (sections.includes('future_plans')) {
+    const plans = sectionContent.future_plans?.dreams || [];
+    if (!Array.isArray(plans) || plans.length === 0) {
+      return { valid: false, error: 'Future Plans section requires at least one plan' };
     }
   }
   

@@ -108,7 +108,6 @@ export default function BuilderForm({
       // Legacy compat
       customer_name: form.participants?.[0]?.name,
       partner_name: form.participants?.[1]?.name,
-      anniversary_date: form.specialDate,
     };
 
     // Convert photos to base64

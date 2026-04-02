@@ -41,7 +41,28 @@ export type Section =
   | 'guest_messages'
   | 'letter_future'
   | 'gift_section'
-  | 'surprise_message';
+  | 'surprise_message'
+  | 'wedding_countdown'
+  | 'event_details'
+  | 'wedding_timeline'
+  | 'gift_registry'
+  | 'rsvp'
+  | 'couple_message'
+  | 'graduation_message'
+  | 'countdown'
+  | 'school_memories'
+  | 'achievements'
+  | 'future_plans'
+  | 'baby_predictions'
+  | 'parents_message'
+  | 'photo_highlights'
+  | 'celebrant_message'
+  | 'life_story'
+  | 'tributes'
+  | 'family_message'
+  | 'travel_timeline'
+  | 'travel_notes'
+  | 'message_letter';
 
 // Gallery layout options - replaces separate gallery sections
 export type GalleryLayout = 'grid' | 'polaroid' | 'carousel';
@@ -141,8 +162,8 @@ export interface SiteConfig {
   layout_preset?: LayoutPreset;
   sections: Section[];
   section_toggles?: Record<Section, boolean>;
-  section_templates?: Record<Section, string>;
-  templates?: Record<Section, string>;
+  section_templates?: Partial<Record<Section, string>>;
+  templates?: Partial<Record<Section, string>>;
   gallery_layout?: GalleryLayout;
   timeline_events?: TimelineEvent[];
   cover_photo_index?: number;
@@ -216,7 +237,7 @@ export interface BuilderFormData {
   website_name: string;
   occasion: OccasionType;
   participants: Participant[]; // Replaces customer_name/partner_name
-  specialDate: string;         // Replaces anniversary_date
+  specialDate: string;         // Canonical date field
   message: string;
   tagline?: string;
   song_link?: string;
@@ -225,7 +246,6 @@ export interface BuilderFormData {
   // Legacy for migration
   customer_name?: string;
   partner_name?: string;
-  anniversary_date?: string;
 }
 
 // Preview State
@@ -248,7 +268,6 @@ export interface CreateOrderPayload {
   // Legacy for migration
   customer_name?: string;
   partner_name?: string;
-  anniversary_date?: string;
   password_input?: string;
   expires_at?: string;
 }
@@ -379,11 +398,14 @@ export interface RelationshipStats {
 
 export interface SectionContentMap {
   love_letter?: {
-    text: string;
+    text?: string;
+    content?: string;
   };
   our_story?: {
-    text: string;
+    text?: string;
+    content?: string;
   };
+  timeline?: TimelineEvent[];
   first_date?: {
     title: string;
     date: string;
@@ -414,7 +436,8 @@ export interface SectionContentMap {
     quotes: LoveQuote[];
   };
   birthday_message?: {
-    text: string;
+    text?: string;
+    content?: string;
   };
   birthday_wishes?: {
     quotes: LoveQuote[];
@@ -426,6 +449,9 @@ export interface SectionContentMap {
     dressCode?: string;
   };
   gift_wishlist?: {
+    items: string[];
+  };
+  gift_registry?: {
     items: string[];
   };
   reasons_love_you?: {
@@ -447,6 +473,11 @@ export interface SectionContentMap {
   };
   guest_messages?: {
     enabled: boolean;
+    messages?: GuestMessage[];
+  };
+  rsvp?: {
+    deadline?: string;
+    note?: string;
     messages?: GuestMessage[];
   };
 }

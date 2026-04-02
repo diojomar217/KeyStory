@@ -2,11 +2,12 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import type { ThemeKey } from '@/config/themeConfig';
+import type { OccasionType } from '@/lib/types';
 import { resolveHeroConfig } from '@/lib/site-type-utils';
 
 interface RomanticOpeningProps {
   theme: ThemeKey;
-  siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
+  siteType?: OccasionType;
   customerName?: string;
   partnerName?: string;
   tagline?: string;

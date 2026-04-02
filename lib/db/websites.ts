@@ -1,10 +1,23 @@
+import { supabase, Site } from '@/lib/supabase';
+
+const SORTABLE_SITE_COLUMNS = new Set([
+  'created_at',
+  'updated_at',
+  'website_name',
+  'slug',
+  'status',
+  'expires_at',
+]);
+
+const DEFAULT_PAGE_SIZE = 20;
+const MAX_PAGE_SIZE = 100;
+
 // Fetch full site object (with config) by id
 export async function getWebsiteByIdWithConfig(id: string) {
   const { data, error } = await supabase.from('sites').select('*').eq('id', id).single();
   if (error) throw error;
   return data;
 }
-import { supabase, Site } from '@/lib/supabase';
 
 export type CreateWebsiteInput = Omit<Site, 'id'>;
 export type UpdateWebsiteInput = Partial<Site> & { id: string };
@@ -44,23 +57,21 @@ export interface ListWebsitesOptions {
 }
 
 export async function listWebsites(options: ListWebsitesOptions = {}) {
+  const limit = Math.min(Math.max(options.limit ?? DEFAULT_PAGE_SIZE, 1), MAX_PAGE_SIZE);
+  const offset = Math.max(options.offset ?? 0, 0);
+  const sortBy = SORTABLE_SITE_COLUMNS.has(options.sortBy || '') ? options.sortBy! : 'created_at';
+  const ascending = options.sortDirection === 'asc';
+
   let query = supabase.from('sites').select('*', { count: 'exact' });
   if (options.status && options.status !== 'all') {
     query = query.eq('status', options.status);
   }
   if (options.search) {
-    query = query.ilike('website_name', `%${options.search}%`);
+    query = query.or(`website_name.ilike.%${options.search}%,slug.ilike.%${options.search}%`);
   }
-  if (options.sortBy) {
-    query = query.order(options.sortBy, { ascending: options.sortDirection === 'asc' });
-  } else {
-    query = query.order('created_at', { ascending: false });
-  }
-  if (typeof options.offset === 'number') {
-    query = query.range(options.offset, (options.offset || 0) + (options.limit || 20) - 1);
-  } else if (typeof options.limit === 'number') {
-    query = query.limit(options.limit);
-  }
+  query = query.order(sortBy, { ascending });
+  query = query.range(offset, offset + limit - 1);
+
   const { data, error, count } = await query;
   if (error) throw error;
   return { data: data || [], total: count || 0 };

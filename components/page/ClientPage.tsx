@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, SectionContentMap, GalleryLayout, Section, GuestMessage, GuestMessageRecord } from '@/lib/types';
+import { HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, SectionContentMap, GalleryLayout, Section, GuestMessage, GuestMessageRecord, OccasionType } from '@/lib/types';
 import { ThemeKey } from '@/config/themeConfig';
 import BackgroundDecorations from './BackgroundDecorations';
 import ThemeWrapper, { useTheme } from '../builder/ThemeWrapper';
@@ -13,6 +13,7 @@ import GallerySection from '../sections/shared/GallerySection';
 import TimelineSection from '../sections/shared/TimelineSection';
 import SongSection from '../sections/shared/SongSection';
 import FooterSection from './FooterSection';
+import SectionHeader from './SectionHeader';
 import LoveLetterSection from '../sections/couple/LoveLetterSection';
 import BackToTop from '../ui/BackToTop';
 import MemoryCardSection from '../sections/shared/MemoryCardSection';
@@ -42,6 +43,9 @@ import BirthdayCountdownSection from '../sections/birthday/BirthdayCountdownSect
 import BirthdayTimelineSection from '../sections/birthday/BirthdayTimelineSection';
 import PartyDetailsSection from '../sections/birthday/PartyDetailsSection';
 import GiftWishlistSection from '../sections/birthday/GiftWishlistSection';
+import WeddingCountdownSection from '../sections/shared/WeddingCountdownSection';
+import GiftRegistrySection from '../sections/shared/GiftRegistrySection';
+import { OccasionProvider } from './OccasionContext';
 
 // Import backward compatibility helpers
 import {
@@ -49,13 +53,15 @@ import {
   getGalleryLayout,
   sortSectionsByDisplayOrder
 } from '@/lib/section-migration';
+import { resolveSectionAlias } from '@/lib/section-aliases';
+import { resolveParticipantNames } from '@/lib/site-type-utils';
 
 // Import section layouts and separators
 import { SectionSeparator, GradientSeparator, DotsSeparator } from './SectionLayouts';
 
 type Props = {
   theme: ThemeKey;
-  siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
+  siteType?: OccasionType;
   config?: any; // optional, new site config object (for footer and future sections)
   sections: Section[];
   homeTemplate: HomeTemplate;
@@ -105,6 +111,9 @@ export default function ClientPage({
   slug,
 }: Props) {
   const isBirthday = siteType === 'birthday';
+  const resolvedNames = resolveParticipantNames(siteType, config?.participants || [], customerName, partnerName);
+  const resolvedCustomerName = resolvedNames.primaryName;
+  const resolvedPartnerName = resolvedNames.secondaryName;
 
   // Visual progress + transition state
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -275,18 +284,21 @@ export default function ClientPage({
     const getSectionVariantLocal = getSectionVariant;
 
     const renderSection = (section: Section, index: number, variant: 'default' | 'alt') => {
-      switch (section) {
+      const resolvedSection = resolveSectionAlias(section);
+      const rawSectionContent = (sectionContent as Record<string, any> | undefined)?.[section];
+      const resolvedSectionContent = (sectionContent as Record<string, any> | undefined)?.[resolvedSection];
+      const contentForSection = rawSectionContent || resolvedSectionContent;
+
+      switch (resolvedSection) {
         case 'home':
           return null; // Home is rendered above
 
         case 'love_letter':
-          // Love letter is controlled by section settings and message content
-          if (!activeSections.includes('love_letter')) return null;
-          if (!message && !sectionContent?.love_letter?.content) return null;
+          if (!message && !contentForSection?.content) return null;
           return (
             <LoveLetterSection
-              key="love_letter"
-              message={sectionContent?.love_letter?.content || message}
+              key={section}
+              message={contentForSection?.content || message}
               theme={theme}
             />
           );
@@ -294,11 +306,24 @@ export default function ClientPage({
         case 'our_story':
           return (
             <OurStorySection
-              key="our_story"
+              key={section}
               theme={theme}
-              customerName={customerName}
-              partnerName={partnerName}
-              story={sectionContent?.our_story?.content}
+              customerName={resolvedCustomerName}
+              partnerName={resolvedPartnerName}
+              story={contentForSection?.content}
+              variant={variant}
+            />
+          );
+
+        case 'life_story':
+        case 'travel_notes':
+          return (
+            <OurStorySection
+              key={section}
+              theme={theme}
+              customerName={resolvedCustomerName}
+              partnerName={resolvedPartnerName}
+              story={contentForSection?.content}
               variant={variant}
             />
           );
@@ -307,11 +332,27 @@ export default function ClientPage({
           if (!shouldShowTimeline) return null;
           return (
             <TimelineSection
-              key="timeline"
+              key={section}
               theme={theme}
               template={timelineTemplate}
-              events={mergedTimelineEvents}
+              events={contentForSection?.events || contentForSection || mergedTimelineEvents}
               variant={variant}
+              siteType={siteType}
+            />
+          );
+
+        case 'wedding_timeline':
+        case 'school_memories':
+        case 'achievements':
+        case 'travel_timeline':
+          return (
+            <TimelineSection
+              key={section}
+              theme={theme}
+              template={timelineTemplate}
+              events={contentForSection?.events || contentForSection || mergedTimelineEvents}
+              variant={variant}
+              siteType={siteType}
             />
           );
 
@@ -319,7 +360,18 @@ export default function ClientPage({
           if (!shouldShowGallery) return null;
           return (
             <GallerySection
-              key="gallery"
+              key={section}
+              theme={theme}
+              template={effectiveGalleryLayout as any}
+              photos={photos}
+              coverPhotoIndex={coverPhotoIndex}
+            />
+          );
+
+        case 'photo_highlights':
+          return (
+            <GallerySection
+              key={section}
               theme={theme}
               template={effectiveGalleryLayout as any}
               photos={photos}
@@ -342,9 +394,9 @@ export default function ClientPage({
           if (!activeSections.includes('playlist')) return null;
           return (
             <PlaylistSection
-              key="playlist"
+              key={section}
               theme={theme}
-              songLink={sectionContent?.playlist?.playlistUrl || songLink}
+              songLink={contentForSection?.playlistUrl || sectionContent?.playlist?.playlistUrl || songLink}
             />
           );
 
@@ -352,9 +404,9 @@ export default function ClientPage({
           if (!activeSections.includes('video_memories')) return null;
           return (
             <VideoMemoriesSection
-              key="video_memories"
+              key={section}
               theme={theme}
-              videos={sectionContent?.video_memories?.videos}
+              videos={contentForSection?.videos || sectionContent?.video_memories?.videos}
             />
           );
 
@@ -369,13 +421,31 @@ export default function ClientPage({
           );
 
         case 'anniversary_countdown':
-          if (!activeSections.includes('anniversary_countdown')) return null;
           return (
             <AnniversaryCountdownSection
-              key="anniversary_countdown"
+              key={section}
               theme={theme}
               anniversaryDate={anniversaryDate}
               variant={variant}
+            />
+          );
+
+        case 'countdown':
+          return (
+            <AnniversaryCountdownSection
+              key={section}
+              theme={theme}
+              anniversaryDate={anniversaryDate}
+              variant={variant}
+            />
+          );
+
+        case 'wedding_countdown':
+          return (
+            <WeddingCountdownSection
+              key={section}
+              theme={theme}
+              weddingDate={anniversaryDate}
             />
           );
 
@@ -395,7 +465,7 @@ export default function ClientPage({
             <BirthdayMessageSection
               key="birthday_message"
               theme={theme}
-              message={sectionContent?.birthday_message?.content || message}
+              message={(sectionContent as any)?.birthday_message?.content || sectionContent?.birthday_message?.text || message}
             />
           );
 
@@ -425,34 +495,43 @@ export default function ClientPage({
           );
 
         case 'party_details':
-          if (!activeSections.includes('party_details')) return null;
+        case 'event_details':
           return (
             <PartyDetailsSection
-              key="party_details"
+              key={section}
               theme={theme}
-              location={sectionContent?.party_details?.location}
-              date={sectionContent?.party_details?.date}
-              time={sectionContent?.party_details?.time}
-              dressCode={sectionContent?.party_details?.dressCode}
+              location={contentForSection?.location}
+              date={contentForSection?.date}
+              time={contentForSection?.time}
+              dressCode={contentForSection?.dressCode}
             />
           );
 
         case 'gift_wishlist':
-          if (!activeSections.includes('gift_wishlist')) return null;
           return (
             <GiftWishlistSection
-              key="gift_wishlist"
+              key={section}
               theme={theme}
-              items={sectionContent?.gift_wishlist?.items}
+              items={contentForSection?.items || sectionContent?.gift_wishlist?.items}
+            />
+          );
+
+        case 'gift_registry':
+          return (
+            <GiftRegistrySection
+              key={section}
+              theme={theme}
+              items={contentForSection?.items || sectionContent?.gift_registry?.items || sectionContent?.gift_wishlist?.items}
             />
           );
 
         case 'future_dreams':
+        case 'future_plans':
           return (
             <FutureDreamsSection
-              key="future_dreams"
+              key={section}
               theme={theme}
-              dreams={sectionContent?.future_dreams?.dreams}
+              dreams={contentForSection?.dreams || sectionContent?.future_dreams?.dreams}
               variant={variant}
             />
           );
@@ -462,75 +541,131 @@ export default function ClientPage({
             <ReasonsILoveYouSection
               key="reasons_love_you"
               theme={theme}
-              partnerName={partnerName}
+              partnerName={resolvedPartnerName || resolvedCustomerName}
               reasons={sectionContent?.reasons_love_you?.reasons}
               variant={variant}
             />
           );
 
         case 'quotes':
+        case 'baby_predictions':
+        case 'tributes':
           return (
             <QuotesSection
-              key="quotes"
+              key={section}
               theme={theme}
-              quotes={sectionContent?.quotes?.quotes}
+              quotes={contentForSection?.quotes || sectionContent?.quotes?.quotes}
               variant={variant}
+            />
+          );
+
+        case 'couple_message':
+        case 'graduation_message':
+        case 'parents_message':
+        case 'celebrant_message':
+        case 'family_message':
+        case 'message_letter':
+          return (
+            <LoveLetterSection
+              key={section}
+              message={contentForSection?.content || contentForSection?.text || message}
+              theme={theme}
             />
           );
 
         case 'guest_messages':
           return (
             <GuestMessagesSection
-              key="guest_messages"
+              key={section}
               theme={theme}
               siteType={siteType}
-              messages={sectionContent?.guest_messages?.messages}
+              messages={contentForSection?.messages || sectionContent?.guest_messages?.messages}
               approvedMessages={approvedGuestMessages}
               slug={slug}
               variant={variant}
             />
           );
 
+        case 'rsvp':
+          return (
+            <>
+              <section className={`py-10 ${variant === 'alt' ? styles.sectionBgAlt : styles.sectionBg}`} id="rsvp">
+                <div className="max-w-4xl mx-auto px-4 md:px-6">
+                  <SectionHeader
+                    icon="💌"
+                    title="RSVP"
+                    subtitle="Let the couple know if you can attend"
+                    theme={theme}
+                  />
+                  <div className="mt-6 grid gap-4 md:grid-cols-2">
+                    <div className={`${styles.card} p-5 rounded-xl border ${styles.border}`}>
+                      <h3 className={`text-sm font-semibold ${styles.textMuted} mb-1`}>Deadline</h3>
+                      <p className={`text-base font-medium ${styles.text}`}>
+                        {contentForSection?.deadline || sectionContent?.rsvp?.deadline || 'Please respond soon'}
+                      </p>
+                    </div>
+                    <div className={`${styles.card} p-5 rounded-xl border ${styles.border}`}>
+                      <h3 className={`text-sm font-semibold ${styles.textMuted} mb-1`}>Note</h3>
+                      <p className={`text-base font-medium ${styles.text}`}>
+                        {contentForSection?.note || sectionContent?.rsvp?.note || 'Please include your name and attendance details in your message.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+              <GuestMessagesSection
+                key={section}
+                theme={theme}
+                siteType={siteType}
+                messages={contentForSection?.messages || sectionContent?.rsvp?.messages || sectionContent?.guest_messages?.messages}
+                approvedMessages={approvedGuestMessages}
+                slug={slug}
+                variant={variant}
+              />
+            </>
+          );
+
         case 'memory_map':
           return (
             <MemoryMapSection
-              key="memory_map"
+              key={section}
               theme={theme}
-              locations={sectionContent?.memory_map?.locations}
+              siteType={siteType}
+              locations={contentForSection?.locations || sectionContent?.memory_map?.locations}
             />
           );
 
         case 'letter_future':
           return (
             <LetterToFutureSection
-              key="letter_future"
+              key={section}
               theme={theme}
-              customerName={customerName}
-              partnerName={partnerName}
-              letter={sectionContent?.letter_future?.letter}
-              openDate={sectionContent?.letter_future?.openDate}
+              customerName={resolvedCustomerName}
+              partnerName={resolvedPartnerName}
+              letter={contentForSection?.letter || sectionContent?.letter_future?.letter}
+              openDate={contentForSection?.openDate || sectionContent?.letter_future?.openDate}
             />
           );
 
         case 'gift_section':
           return (
             <GiftSection
-              key="gift_section"
+              key={section}
               theme={theme}
-              partnerName={partnerName}
-              gifts={sectionContent?.gift_section?.gifts}
+              partnerName={resolvedPartnerName || resolvedCustomerName}
+              gifts={contentForSection?.gifts || sectionContent?.gift_section?.gifts}
             />
           );
 
         case 'surprise_message':
           return (
             <SurpriseMessageSection
-              key="surprise_message"
+              key={section}
               theme={theme}
-              customerName={customerName}
-              partnerName={partnerName}
-              message={sectionContent?.surprise_message?.message}
-              hint={sectionContent?.surprise_message?.hint}
+              customerName={resolvedCustomerName}
+              partnerName={resolvedPartnerName}
+              message={contentForSection?.message || sectionContent?.surprise_message?.message}
+              hint={contentForSection?.hint || sectionContent?.surprise_message?.hint}
             />
           );
 
@@ -547,14 +682,15 @@ export default function ClientPage({
 
     return (
       <ThemeWrapper theme={theme}>
-        <div className="relative min-h-screen">
-          <BackgroundDecorations theme={theme} siteType={siteType} />
-          <div className="relative z-10">
+        <OccasionProvider siteType={siteType}>
+          <div className="relative min-h-screen">
+            <BackgroundDecorations theme={theme} siteType={siteType} />
+            <div className="relative z-10">
             {/* Home Section - Hero */}
             {activeSections.includes('home') && (
               <div className="fixed inset-x-0 top-0 z-50 h-1 bg-transparent">
                 <div
-                  className="h-full bg-rose-500 dark:bg-rose-300 transition-all duration-300 ease-out"
+                  className={`h-full ${styles.accentBg} transition-all duration-300 ease-out`}
                   style={{ width: `${scrollProgress}%` }}
                 />
               </div>
@@ -566,8 +702,8 @@ export default function ClientPage({
                 siteType={siteType}
                 config={config}
                 template={homeTemplate}
-                customerName={customerName}
-                partnerName={partnerName}
+                customerName={resolvedCustomerName}
+                partnerName={resolvedPartnerName}
                 anniversaryDate={anniversaryDate}
                 message={message}
                 tagline={tagline}
@@ -624,8 +760,8 @@ export default function ClientPage({
                   <div className={`${getSectionBgClass(theme, 0)} py-16`}>
                     <MemoryCardSection
                       theme={theme}
-                      customerName={customerName}
-                      partnerName={partnerName}
+                      customerName={resolvedCustomerName}
+                      partnerName={resolvedPartnerName}
                       qrCodeUrl={qrCodeUrl}
                       qrDataUrl={qrDataUrl}
                       slug={slug}
@@ -641,16 +777,17 @@ export default function ClientPage({
               theme={theme}
               siteType={siteType}
               config={config}
-              customerName={customerName}
-              partnerName={partnerName}
+              customerName={resolvedCustomerName}
+              partnerName={resolvedPartnerName}
               qrCodeUrl={qrCodeUrl}
               qrDataUrl={qrDataUrl}
             />
 
             {/* Back to Top Button */}
             <BackToTop />
+            </div>
           </div>
-        </div>
+        </OccasionProvider>
       </ThemeWrapper>
     );
   };
@@ -663,8 +800,8 @@ export default function ClientPage({
         <RomanticOpening
           theme={theme}
           siteType={siteType}
-          customerName={customerName}
-          partnerName={partnerName}
+          customerName={resolvedCustomerName}
+          partnerName={resolvedPartnerName}
           tagline={tagline}
           onReveal={handleReveal}
         />

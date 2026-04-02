@@ -1,13 +1,14 @@
 'use client';
 
 import type { ThemeKey } from '@/config/themeConfig';
+import type { OccasionType } from '@/lib/types';
 import SectionHeader from '../../page/SectionHeader';
 import { useTheme } from '../../builder/ThemeWrapper';
 import { THEME_CONFIG } from '@/config/themeConfig';
 
 interface PlaylistSectionProps {
   theme: ThemeKey;
-  siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
+  siteType?: OccasionType;
   songLink?: string;
 }
 

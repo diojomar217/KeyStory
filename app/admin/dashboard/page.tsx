@@ -57,6 +57,16 @@ export default function DashboardPage() {
   const expiringSoon = dashboardStats?.expiringSoon || 0;
   const expiredSites = dashboardStats?.expiredSites || 0;
   const recentWebsites = dashboardStats?.recentWebsites || [];
+  const backendErrors = Array.isArray(dashboardStats?.errors)
+    ? dashboardStats.errors.filter((err: any) => {
+        if (!err) return false;
+        if (typeof err === 'string') return err.trim() !== '';
+        if (typeof err === 'object') {
+          return Boolean(err.message || err.hint || err.code || err.details);
+        }
+        return true;
+      })
+    : [];
 
   if (loading) {
     return (
@@ -109,13 +119,18 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Backend Errors */}
-      {dashboardStats?.errors && dashboardStats.errors.length > 0 && (
+      {backendErrors.length > 0 && (
         <div className="bg-rose-50 border border-rose-200 text-rose-800 rounded-xl p-4 mb-4">
           <strong>Backend Errors:</strong>
           <ul className="mt-2 space-y-1 text-sm">
-            {dashboardStats.errors.map((err: any, idx: number) => (
+            {backendErrors.map((err: any, idx: number) => (
               <li key={idx}>
-                {err.message || JSON.stringify(err)}
+                {typeof err === 'string'
+                  ? err
+                  : err.message || err.details || 'Unexpected backend error'}
+                {err.context && (
+                  <span className="ml-2 text-rose-600">[{err.context}]</span>
+                )}
                 {err.hint && <span className="ml-2 italic text-rose-500">({err.hint})</span>}
               </li>
             ))}

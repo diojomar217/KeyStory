@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
       secondary: data.partner_name || data.participants?.[1]?.name || '',
     },
     dates: {
-      special_date: data.specialDate || data.anniversary_date || '',
+      special_date: data.specialDate || '',
     },
     theme: data.config?.theme || DEFAULT_THEME,
     sections: data.config?.sections || [],

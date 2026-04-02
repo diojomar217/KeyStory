@@ -15,6 +15,11 @@ interface KeychainInsertPreviewProps {
   coupleNames: string;
   caption?: string;
   qrScale?: number;
+  photoTransform?: {
+    zoom: number;
+    offsetX: number;
+    offsetY: number;
+  };
   qrDesign?: {
     dotsColor: string;
     backgroundColor: string;
@@ -36,18 +41,16 @@ export default function KeychainInsertPreview({
   coupleNames,
   caption = 'Scan our love story',
   qrScale = 1,
+  photoTransform,
   qrDesign,
 }: KeychainInsertPreviewProps) {
-  const previewCardStyle: CSSProperties = {
+  const cardWrapStyle: CSSProperties = {
     backgroundColor: '#ffffff',
     border: '1px solid #d1d5db',
     borderRadius: '0.8rem',
-    padding: '0.75rem',
     boxShadow: 'none',
-  };
-
-  const previewCardStyle2: CSSProperties = {
-    ...previewCardStyle,
+    padding: '8px',
+    width: 'fit-content',
   };
 
   return (
@@ -76,21 +79,10 @@ export default function KeychainInsertPreview({
         Live Preview
       </h3>
 
-      {/* Preview Container */}
       <div className="flex flex-wrap gap-8 justify-center items-start">
-        {/* QR Side */}
         <div className="flex flex-col items-center">
-          <p className="text-sm font-semibold text-slate-700 mb-2">
-            QR Code Side
-          </p>
-          <div style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #d1d5db',
-            borderRadius: '0.8rem',
-            boxShadow: 'none',
-            padding: '8px',
-            width: 'fit-content',
-          }}>
+          <p className="text-sm font-semibold text-slate-700 mb-2">QR Code Side</p>
+          <div style={cardWrapStyle}>
             <KeychainInsertQR
               widthMm={widthMm}
               heightMm={heightMm}
@@ -101,23 +93,15 @@ export default function KeychainInsertPreview({
               scale={2}
               qrScale={qrScale}
               qrDesign={qrDesign}
+              printMode={false}
+              showGuides={true}
             />
           </div>
         </div>
 
-        {/* Photo Side */}
         <div className="flex flex-col items-center">
-          <p className="text-sm font-semibold text-slate-700 mb-2">
-            Photo Side
-          </p>
-          <div style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #d1d5db',
-            borderRadius: '0.8rem',
-            boxShadow: 'none',
-            padding: '8px',
-            width: 'fit-content',
-          }}>
+          <p className="text-sm font-semibold text-slate-700 mb-2">Photo Side</p>
+          <div style={cardWrapStyle}>
             <KeychainInsertPhoto
               widthMm={widthMm}
               heightMm={heightMm}
@@ -125,16 +109,18 @@ export default function KeychainInsertPreview({
               coverPhotoUrl={coverPhotoUrl}
               coupleNames={coupleNames}
               scale={2}
+              printMode={false}
+              showGuides={true}
+              photoTransform={photoTransform}
             />
           </div>
         </div>
       </div>
 
-      {/* Size Indicator */}
       <p className="text-center text-xs text-slate-500 mt-4">
-        Actual size: {widthMm}mm × {heightMm}mm ({shape === 'heart' ? 'Heart' : shape === 'square' ? 'Square' : 'Rectangle'})
+        Actual size: {widthMm}mm × {heightMm}mm (
+        {shape === 'heart' ? 'Heart' : shape === 'square' ? 'Square' : 'Rectangle'})
       </p>
     </div>
   );
 }
-

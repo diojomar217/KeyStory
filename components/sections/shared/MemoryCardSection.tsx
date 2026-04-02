@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import QRCodeStyling from 'qr-code-styling';
 import { toPng } from 'html-to-image';
 import type { ThemeKey } from '@/config/themeConfig';
+import type { OccasionType } from '@/lib/types';
 import type { QrCardStyle } from '@/components/qr/QrKeepsakeCard';
 import { useTheme } from '../../builder/ThemeWrapper';
 
@@ -16,7 +17,7 @@ interface Props {
   qrCodeUrl?: string;
   qrDataUrl?: string;
   slug?: string;
-  siteType?: 'couple' | 'birthday' | string;
+  siteType?: OccasionType;
   qrConfig?: {
     color?: string;
     background?: string;

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import type { GalleryTemplate } from '@/lib/types';
+import type { GalleryTemplate, OccasionType } from '@/lib/types';
 import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../../builder/ThemeWrapper';
 import Lightbox from '../../ui/Lightbox';
@@ -15,7 +15,7 @@ type Props = {
   template: GalleryTemplate;
   photos: string[];
   coverPhotoIndex?: number;
-  siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
+  siteType?: OccasionType;
 };
 
 export default function GallerySection({ theme, template, photos, coverPhotoIndex, siteType = 'couple' }: Props) {

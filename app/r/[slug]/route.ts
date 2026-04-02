@@ -1,6 +1,7 @@
 import {NextRequest, NextResponse} from 'next/server';
 import {supabase} from '@/lib/supabase';
 import {createHash} from 'crypto';
+import { insertAnalyticsEvent } from '@/lib/db/analytics';
 
 const safestring = (value: unknown): string | null => {
   if (!value || typeof value !== 'string') return null;
@@ -37,16 +38,16 @@ export async function GET(req: NextRequest, {params}: {params: Promise<{slug: st
   const referrer = safestring(req.headers.get('referer'));
   const ip_hash = getIpHash(req);
 
-  const {error} = await supabase.from('site_analytics_events').insert({
-    site_id: site.id,
-    event_type: 'qr_scan',
-    source: 'qr',
-    user_agent,
-    referrer,
-    ip_hash,
-  });
-
-  if (error) {
+  try {
+    await insertAnalyticsEvent({
+      site_id: site.id,
+      event_type: 'qr_scan',
+      source: 'qr',
+      user_agent,
+      referrer,
+      ip_hash,
+    });
+  } catch (error) {
     console.warn('QR scan analytics insert failed', error);
   }
 
