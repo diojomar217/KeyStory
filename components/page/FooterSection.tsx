@@ -1,6 +1,7 @@
 'use client';
 
-import { SiteConfig, Theme, Participant } from '@/lib/types';
+import { SiteConfig, Participant } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../builder/ThemeWrapper';
 import { OccasionType } from '@/lib/occasion-registry';
 import { resolveFooterConfig, resolveDisplayName } from '@/lib/site-type-utils';
@@ -8,7 +9,7 @@ import { resolveFooterConfig, resolveDisplayName } from '@/lib/site-type-utils';
 type SiteType = OccasionType;
 
 type Props = {
-  theme: Theme;
+  theme: ThemeKey;
   siteType?: SiteType;
   config?: SiteConfig;
   customerName?: string;

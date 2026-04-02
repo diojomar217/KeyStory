@@ -1,5 +1,6 @@
 // lib/cloudinary.ts
 import { v2 as cloudinary } from 'cloudinary';
+import { withRetry } from '@/lib/reliability/retry';
 
 const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
 const apiKey = process.env.CLOUDINARY_API_KEY;
@@ -39,21 +40,25 @@ export async function uploadToCloudinary(dataUrl: string, options: CloudinaryUpl
   const crop = options.crop ?? 'limit';
   const stripMetadata = options.stripMetadata ?? true;
 
-  const transformation: any[] = [{ width: maxWidth, crop }];
 
+  const transformation: any[] = [{ width: maxWidth, crop }];
   // Hero uses slightly higher quality and larger width, gallery uses lighter optimization
   transformation.push({ quality, fetch_format: fetchFormat, flags: 'progressive' });
+  // 'strip' is not a valid Cloudinary flag and causes errors. Do not add it.
 
-  if (stripMetadata) {
-    transformation.push({ flags: 'strip' });
-  }
-
-  const res = await cloudinary.uploader.upload(dataUrl, {
-    folder: 'loveqr',
-    transformation,
-    use_filename: true,
-    unique_filename: false,
-  });
+  const res = await withRetry(
+    () => cloudinary.uploader.upload(dataUrl, {
+      folder: 'loveqr',
+      transformation,
+      use_filename: true,
+      unique_filename: false,
+    }),
+    {
+      retries: 2,
+      minDelayMs: 400,
+      maxDelayMs: 2500,
+    },
+  );
   return res.secure_url;
 }
 

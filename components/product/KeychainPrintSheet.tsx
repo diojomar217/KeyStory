@@ -2,11 +2,12 @@
 
 import KeychainInsertQR from './KeychainInsertQR';
 import KeychainInsertPhoto from './KeychainInsertPhoto';
-import { mmToPx } from './KeychainSizeConfig';
+import type { KeychainShape } from './KeychainSizeConfig';
 
 interface KeychainPrintSheetProps {
   widthMm: number;
   heightMm: number;
+  shape?: KeychainShape;
   qrDataUrl?: string;
   qrCodeUrl?: string;
   coverPhotoUrl?: string;
@@ -15,8 +16,10 @@ interface KeychainPrintSheetProps {
   copies: number;
   pairsPerRow?: number;
   showGuides?: boolean;
-  autoFit?: boolean;
   accentColor?: string;
+  sheetMode?: 'front-back-pair' | 'qr-only';
+  backSideVariant?: 'photo' | 'engraved';
+  backSideSubtitle?: string;
   qrDesign?: {
     dotsColor: string;
     backgroundColor: string;
@@ -27,31 +30,91 @@ interface KeychainPrintSheetProps {
     logoUrl?: string;
   };
   qrScale?: number;
+  photoTransform?: {
+    zoom: number;
+    offsetX: number;
+    offsetY: number;
+  };
+}
+
+function PairCropMarks({ show, showCenterMarks = true }: { show: boolean; showCenterMarks?: boolean }) {
+  if (!show) return null;
+
+  const mark = {
+    position: 'absolute' as const,
+    backgroundColor: '#222',
+    zIndex: 20,
+    pointerEvents: 'none' as const,
+  };
+
+  return (
+    <>
+      <div style={{ ...mark, top: 0, left: 0, width: '2mm', height: '0.25mm' }} />
+      <div style={{ ...mark, top: 0, left: 0, width: '0.25mm', height: '2mm' }} />
+
+      <div style={{ ...mark, top: 0, right: 0, width: '2mm', height: '0.25mm' }} />
+      <div style={{ ...mark, top: 0, right: 0, width: '0.25mm', height: '2mm' }} />
+
+      <div style={{ ...mark, bottom: 0, left: 0, width: '2mm', height: '0.25mm' }} />
+      <div style={{ ...mark, bottom: 0, left: 0, width: '0.25mm', height: '2mm' }} />
+
+      <div style={{ ...mark, bottom: 0, right: 0, width: '2mm', height: '0.25mm' }} />
+      <div style={{ ...mark, bottom: 0, right: 0, width: '0.25mm', height: '2mm' }} />
+
+      {showCenterMarks ? (
+        <>
+          <div
+            style={{
+              ...mark,
+              top: 0,
+              left: 'calc(50% - 0.125mm)',
+              width: '0.25mm',
+              height: '2.2mm',
+            }}
+          />
+          <div
+            style={{
+              ...mark,
+              bottom: 0,
+              left: 'calc(50% - 0.125mm)',
+              width: '0.25mm',
+              height: '2.2mm',
+            }}
+          />
+        </>
+      ) : null}
+    </>
+  );
 }
 
 function InsertPair({
-  index,
   widthMm,
   heightMm,
+  shape = 'rectangle',
   qrDataUrl,
   qrCodeUrl,
   coverPhotoUrl,
   coupleNames,
   caption,
-  gap,
+  sheetMode = 'front-back-pair',
+  backSideVariant = 'photo',
+  backSideSubtitle,
   qrDesign,
   showGuides,
   qrScale,
+  photoTransform,
 }: {
-  index: number;
   widthMm: number;
   heightMm: number;
+  shape?: KeychainShape;
   qrDataUrl?: string;
   qrCodeUrl?: string;
   coverPhotoUrl?: string;
   coupleNames: string;
   caption?: string;
-  gap: number;
+  sheetMode?: 'front-back-pair' | 'qr-only';
+  backSideVariant?: 'photo' | 'engraved';
+  backSideSubtitle?: string;
   qrScale?: number;
   qrDesign?: {
     dotsColor: string;
@@ -63,32 +126,53 @@ function InsertPair({
     logoUrl?: string;
   };
   showGuides?: boolean;
+  photoTransform?: {
+    zoom: number;
+    offsetX: number;
+    offsetY: number;
+  };
 }) {
   return (
     <div
       className="Print-card"
       style={{
+        position: 'relative',
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'stretch',
         justifyContent: 'stretch',
-        gap: `${gap}mm`,
-        backgroundColor: 'transparent',
+        gap: 0,
+        backgroundColor: '#ffffff',
         border: 'none',
         boxShadow: 'none',
-        borderRadius: '3mm',
-        padding: '0',
-        width: `${widthMm * 2 + gap + 1}mm`,
-        height: `${heightMm + 3}mm`,
+        borderRadius: 0,
+        padding: 0,
+        margin: 0,
+        width: `${sheetMode === 'qr-only' ? widthMm : widthMm * 2}mm`,
+        height: `${heightMm}mm`,
         boxSizing: 'border-box',
         breakInside: 'avoid',
         pageBreakInside: 'avoid',
+        overflow: 'visible',
       }}
     >
-      <div style={{ width: `${widthMm}mm`, height: `${heightMm}mm`, border: 'none', borderRadius: '3mm', padding: '0', backgroundColor: 'transparent', boxSizing: 'border-box' }}>
+      <PairCropMarks show={!!showGuides} showCenterMarks={sheetMode !== 'qr-only'} />
+
+      <div
+        style={{
+          width: `${widthMm}mm`,
+          height: `${heightMm}mm`,
+          border: 'none',
+          padding: 0,
+          margin: 0,
+          backgroundColor: '#ffffff',
+          boxSizing: 'border-box',
+        }}
+      >
         <KeychainInsertQR
           widthMm={widthMm}
           heightMm={heightMm}
+          shape={shape}
           qrDataUrl={qrDataUrl}
           qrCodeUrl={qrCodeUrl}
           caption={caption}
@@ -96,21 +180,37 @@ function InsertPair({
           scale={1}
           qrScale={qrScale}
           printMode={true}
-          showGuides={showGuides}
+          showGuides={false}
         />
       </div>
 
-      <div style={{ width: `${widthMm}mm`, height: `${heightMm}mm`, border: 'none', borderRadius: '3mm', padding: '0', backgroundColor: 'transparent', boxSizing: 'border-box' }}>
-        <KeychainInsertPhoto
-          widthMm={widthMm}
-          heightMm={heightMm}
-          coverPhotoUrl={coverPhotoUrl}
-          coupleNames={coupleNames}
-          scale={1}
-          printMode={true}
-          showGuides={showGuides}
-        />
-      </div>
+      {sheetMode === 'front-back-pair' ? (
+        <div
+          style={{
+            width: `${widthMm}mm`,
+            height: `${heightMm}mm`,
+            border: 'none',
+            padding: 0,
+            margin: 0,
+            backgroundColor: '#ffffff',
+            boxSizing: 'border-box',
+          }}
+        >
+          <KeychainInsertPhoto
+            widthMm={widthMm}
+            heightMm={heightMm}
+            shape={shape}
+            coverPhotoUrl={coverPhotoUrl}
+            coupleNames={coupleNames}
+            variant={backSideVariant}
+            subtitle={backSideSubtitle}
+            scale={1}
+            printMode={true}
+            showGuides={false}
+            photoTransform={photoTransform}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -118,6 +218,7 @@ function InsertPair({
 export default function KeychainPrintSheet({
   widthMm,
   heightMm,
+  shape = 'rectangle',
   qrDataUrl,
   qrCodeUrl,
   coverPhotoUrl,
@@ -126,107 +227,193 @@ export default function KeychainPrintSheet({
   copies,
   pairsPerRow = 2,
   showGuides = true,
-  autoFit = true,
-  accentColor = '#e11d48',
+  sheetMode = 'front-back-pair',
+  backSideVariant = 'photo',
+  backSideSubtitle,
   qrScale = 1,
   qrDesign,
+  photoTransform,
 }: KeychainPrintSheetProps) {
-  const numCopies = copies;
-  const insertWidth = widthMm;
-  const insertHeight = heightMm;
-  const gap = 1; // Reduced from 2mm for tighter print layout
+  const pageWidthMm = 210;
+  const pageHeightMm = 297;
 
-  // Pair width = QR side + Photo side
-  const pairWidth = insertWidth * 2 + gap;
-  const rowWidth = pairWidth * pairsPerRow + gap;
+  const outerMarginMm = 2;
+  const horizontalGapMm = 0.8;
+  const verticalGapMm = 0.8;
 
-  // Print page size (A4 width minus margins)
-  const pageWidthMm = 210 - 5; // 5mm total margin (2.5mm each side)
-  const scale = autoFit ? Math.min(1, pageWidthMm / rowWidth) : 1;
+  const pairWidthMm = sheetMode === 'qr-only' ? widthMm : widthMm * 2;
+  const usableWidthMm = pageWidthMm - outerMarginMm * 2;
+  const usableHeightMm = pageHeightMm - outerMarginMm * 2;
 
-  // Calculate how many rows we need
-  const numRows = Math.ceil(numCopies / pairsPerRow);
+  const actualPairsPerRow = Math.max(
+    1,
+    Math.min(
+      pairsPerRow,
+      Math.floor((usableWidthMm + horizontalGapMm) / (pairWidthMm + horizontalGapMm))
+    )
+  );
 
-  // Calculate row height including gap and card margin
-  const rowHeight = insertHeight + gap + 0.5; // Added 0.5mm for card bottom margin
+  const rowHeightMm = heightMm;
+  const rowsPerPage = Math.max(
+    1,
+    Math.floor((usableHeightMm + verticalGapMm) / (rowHeightMm + verticalGapMm))
+  );
+
+  const totalRows = Math.ceil(copies / actualPairsPerRow);
+  const totalPages = Math.ceil(totalRows / rowsPerPage);
+
+  const pages = Array.from({ length: totalPages }, (_, pageIndex) => {
+    const startRow = pageIndex * rowsPerPage;
+    const endRow = Math.min(startRow + rowsPerPage, totalRows);
+
+    const items: number[] = [];
+    for (let row = startRow; row < endRow; row++) {
+      for (let col = 0; col < actualPairsPerRow; col++) {
+        const itemIndex = row * actualPairsPerRow + col;
+        if (itemIndex < copies) items.push(itemIndex);
+      }
+    }
+    return items;
+  });
 
   return (
-    <div className="Print-sheet" style={{ padding: '0' }}>
+    <div
+      className="Print-sheet"
+      style={{
+        margin: 0,
+        padding: 0,
+        width: '100%',
+        background: '#ffffff',
+      }}
+    >
       <style jsx global>{`
         @media print {
-          @page { margin: 2mm; } /* Reduced from 5mm */
-          html, body { margin: 0; padding: 0; }
-          .Print-sheet { width: 100% !important; padding: 0 !important; margin: 0 !important; }
-          .Print-page { height: auto !important; overflow: visible !important; }
+          html,
+          body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 210mm !important;
+            min-height: 297mm !important;
+            background: #ffffff !important;
+          }
+
+          .Print-sheet {
+            width: 210mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+          }
+
+          .Print-page {
+            width: 210mm !important;
+            min-height: 297mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            overflow: visible !important;
+            page-break-after: always !important;
+          }
+
+          .Print-page:last-child {
+            page-break-after: auto !important;
+          }
+
           .Print-grid {
             display: grid !important;
-            grid-template-columns: repeat(${pairsPerRow}, minmax(0, 1fr)) !important;
-            grid-auto-rows: auto !important;
-            gap: 1mm !important; /* Gap for cards */
-            width: 100% !important;
+            justify-content: start !important;
+            align-content: start !important;
             margin: 0 !important;
             padding: 0 !important;
             overflow: visible !important;
-            border: none !important; /* Remove grid border, use individual card borders */
             box-sizing: border-box !important;
+            transform: none !important;
           }
-              .Print-card { 
-            page-break-inside: avoid !important; 
-            break-inside: avoid !important; 
-            margin: 0 0 0.5mm 0 !important; /* Add bottom margin for border visibility */
-            padding: 0 !important; /* Remove padding to maximize printable area */
-            width: ${widthMm * 2 + gap}mm !important; /* Exact width matching print size */
-            height: ${heightMm}mm !important; /* Exact height matching print size */
-            background-color: #ffffff !important; /* Fill to avoid gray non-ink boundary */
-            box-shadow: none !important; /* Remove drop shadow for cut-ready print */
+
+          .Print-card {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            box-shadow: none !important;
             border: none !important;
-            box-sizing: border-box !important; /* Border included in dimensions */
+            box-sizing: border-box !important;
+            overflow: visible !important;
           }
+
           .Print-card > div {
             border: none !important;
-            border-radius: 3mm !important;
-            padding: 2mm !important;
+            border-radius: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
             box-sizing: border-box !important;
           }
-          .no-print { display: none !important; }
+
+          .no-print {
+            display: none !important;
+          }
         }
       `}</style>
-      <div className="Print-page">
-        <div className="Print-grid" style={{ 
-          display: 'grid', 
-          gridTemplateColumns: `repeat(${pairsPerRow}, minmax(0, 1fr))`, 
-          gridAutoRows: `${rowHeight}mm`,
-          gap: `${gap}mm`, 
-          width: '100%', 
-          justifyContent: 'center',
-          margin: 0,
-          padding: 0,
-        }}>
-          {Array.from({ length: numCopies }, (_, i) => i).map((index) => (
-            <InsertPair 
-              key={`insert-pair-${index}`} 
-              index={index} 
-              widthMm={insertWidth} 
-              heightMm={insertHeight} 
-              qrDataUrl={qrDataUrl} 
-              qrCodeUrl={qrCodeUrl}
-              coverPhotoUrl={coverPhotoUrl} 
-              coupleNames={coupleNames} 
-              caption={caption} 
-              gap={gap} 
-              showGuides={showGuides}              qrScale={qrScale}              qrDesign={qrDesign}
-            />
-          ))}
+
+      {pages.map((pageItems, pageIndex) => (
+        <div
+          key={`print-page-${pageIndex}`}
+          className="Print-page"
+          style={{ background: '#ffffff' }}
+        >
+          <div
+            className="Print-grid"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: `repeat(${actualPairsPerRow}, ${pairWidthMm}mm)`,
+              gridAutoRows: `${rowHeightMm}mm`,
+              columnGap: `${horizontalGapMm}mm`,
+              rowGap: `${verticalGapMm}mm`,
+              width: 'fit-content',
+              margin: `${outerMarginMm}mm`,
+              padding: 0,
+              justifyContent: 'start',
+              alignContent: 'start',
+              background: '#ffffff',
+            }}
+          >
+            {pageItems.map((itemIndex) => (
+              <InsertPair
+                key={`insert-pair-${itemIndex}`}
+                widthMm={widthMm}
+                heightMm={heightMm}
+                shape={shape}
+                qrDataUrl={qrDataUrl}
+                qrCodeUrl={qrCodeUrl}
+                coverPhotoUrl={coverPhotoUrl}
+                coupleNames={coupleNames}
+                caption={caption}
+                sheetMode={sheetMode}
+                backSideVariant={backSideVariant}
+                backSideSubtitle={backSideSubtitle}
+                showGuides={showGuides}
+                qrScale={qrScale}
+                qrDesign={qrDesign}
+                photoTransform={photoTransform}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      ))}
+
       <div className="print:hidden text-center mt-4 text-sm text-slate-500">
-        <p>Printing {numCopies} inserts ({pairsPerRow} pairs/row × {numRows} rows)</p>
-        <p className="text-xs mt-1">Each insert has QR code and photo side by side</p>
+        <p>
+          Printing {copies} {sheetMode === 'qr-only' ? 'panels' : 'inserts'} ({actualPairsPerRow} {sheetMode === 'qr-only' ? 'pieces' : 'pairs'}/row × {totalRows} rows)
+        </p>
+        <p className="text-xs mt-1">
+          {sheetMode === 'qr-only'
+            ? 'Each print shows a single QR-facing panel'
+            : `Each insert has QR code and ${backSideVariant === 'engraved' ? 'engraved back' : 'photo side'} side by side`}
+        </p>
         <p className="text-xs mt-1 text-rose-600">
-          Cut lines are indicated by dashed borders, final corner radius: 3mm
+          Print using Actual Size / 100% for best alignment
         </p>
       </div>
     </div>
   );
 }
-

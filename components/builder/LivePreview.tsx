@@ -1,162 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { SiteConfig, Theme, Section, OccasionType } from '@/lib/types';
-import { THEME_PRESETS, SECTION_TOGGLES } from '@/lib/builder-constants';
+import type { SiteConfig, Section, OccasionType } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
+import { THEME_CONFIG } from '@/config/themeConfig';
+import { DEFAULT_THEME } from '@/config/defaults';
+import { getThemeStyles } from '@/config/themeStyles';
+import { getOccasionDesignSummary, getOccasionHeroSpec } from '@/config/occasionHeroConfig';
+import { OCCASION_REGISTRY } from '@/lib/occasion-registry';
+import { LAYOUT_CONFIG } from '@/config/layoutConfig';
 import { SectionRenderer } from '@/components/builder/SectionPreviews';
 
 // ============================================
 // THEME STYLES
 // ============================================
 
-type ThemeStyle = {
-  bg: string;
-  text: string;
-  accent: string;
-  card: string;
-  border: string;
-  muted: string;
-};
-
-const themeStyles: Record<Theme, ThemeStyle> = {
-  colorful_celebration: {
-    bg: 'bg-gradient-to-r from-yellow-50 to-orange-50',
-    text: 'text-orange-900',
-    accent: 'text-orange-600',
-    card: 'bg-white',
-    border: 'border-orange-200',
-    muted: 'text-orange-600/70',
-  },
-  romantic_classic: {
-    bg: 'bg-gradient-to-b from-rose-50 to-pink-50',
-    text: 'text-rose-900',
-    accent: 'text-rose-600',
-    card: 'bg-white',
-    border: 'border-rose-200',
-    muted: 'text-rose-600/70',
-  },
-  cute_pastel: {
-    bg: 'bg-gradient-to-b from-purple-50 to-pink-50',
-    text: 'text-purple-900',
-    accent: 'text-purple-600',
-    card: 'bg-white',
-    border: 'border-purple-200',
-    muted: 'text-purple-600/70',
-  },
-  minimal_modern: {
-    bg: 'bg-gradient-to-b from-slate-50 to-gray-100',
-    text: 'text-slate-900',
-    accent: 'text-slate-600',
-    card: 'bg-white',
-    border: 'border-slate-200',
-    muted: 'text-slate-600/70',
-  },
-  dark_elegant: {
-    bg: 'bg-gradient-to-b from-zinc-900 to-slate-900',
-    text: 'text-zinc-100',
-    accent: 'text-amber-400',
-    card: 'bg-zinc-800',
-    border: 'border-zinc-700',
-    muted: 'text-zinc-400',
-  },
-  soft_pastel: {
-    bg: 'bg-gradient-to-b from-amber-50 to-yellow-50',
-    text: 'text-amber-900',
-    accent: 'text-amber-600',
-    card: 'bg-white',
-    border: 'border-amber-200',
-    muted: 'text-amber-600/70',
-  },
-  elegant_rose_gold: {
-    bg: 'bg-gradient-to-b from-rose-50 to-pink-50',
-    text: 'text-rose-900',
-    accent: 'text-rose-600',
-    card: 'bg-white',
-    border: 'border-rose-200',
-    muted: 'text-rose-600/70',
-  },
-  vintage_love_letter: {
-    bg: 'bg-gradient-to-b from-amber-50 to-orange-50',
-    text: 'text-amber-900',
-    accent: 'text-amber-700',
-    card: 'bg-amber-50',
-    border: 'border-amber-200',
-    muted: 'text-amber-700/70',
-  },
-  scrapbook_memories: {
-    bg: 'bg-gradient-to-b from-orange-50 to-amber-50',
-    text: 'text-orange-900',
-    accent: 'text-orange-600',
-    card: 'bg-amber-50',
-    border: 'border-orange-200',
-    muted: 'text-orange-600/70',
-  },
-  wedding_style: {
-    bg: 'bg-gradient-to-b from-stone-50 to-slate-100',
-    text: 'text-stone-900',
-    accent: 'text-stone-600',
-    card: 'bg-white',
-    border: 'border-stone-200',
-    muted: 'text-stone-600/70',
-  },
-  floral_romance: {
-    bg: 'bg-gradient-to-b from-rose-50 to-pink-50',
-    text: 'text-rose-900',
-    accent: 'text-rose-600',
-    card: 'bg-white',
-    border: 'border-rose-200',
-    muted: 'text-rose-600/70',
-  },
-  dreamy_pink: {
-    bg: 'bg-gradient-to-b from-pink-50 to-fuchsia-50',
-    text: 'text-pink-900',
-    accent: 'text-pink-600',
-    card: 'bg-white',
-    border: 'border-pink-200',
-    muted: 'text-pink-600/70',
-  },
-  luxury_gold: {
-    bg: 'bg-gradient-to-b from-zinc-900 to-yellow-900',
-    text: 'text-yellow-100',
-    accent: 'text-yellow-400',
-    card: 'bg-zinc-800',
-    border: 'border-zinc-700',
-    muted: 'text-yellow-400/70',
-  },
-  minimal_white: {
-    bg: 'bg-gradient-to-b from-white to-gray-50',
-    text: 'text-slate-900',
-    accent: 'text-slate-500',
-    card: 'bg-white',
-    border: 'border-slate-200',
-    muted: 'text-slate-500/70',
-  },
-  cute_kawaii: {
-    bg: 'bg-gradient-to-b from-pink-50 to-purple-50',
-    text: 'text-pink-900',
-    accent: 'text-pink-600',
-    card: 'bg-white',
-    border: 'border-pink-200',
-    muted: 'text-pink-600/70',
-  },
-  soft_lavender: {
-    bg: 'bg-gradient-to-b from-violet-50 to-purple-50',
-    text: 'text-violet-900',
-    accent: 'text-violet-600',
-    card: 'bg-white',
-    border: 'border-violet-200',
-    muted: 'text-violet-600/70',
-  },
-photo_focus: {
-    bg: 'bg-gradient-to-b from-gray-50 to-slate-100',
-    text: 'text-slate-900',
-    accent: 'text-slate-500',
-    card: 'bg-white',
-    border: 'border-slate-200',
-    muted: 'text-slate-500/70',
-  },
-  // duplicate colorful_celebration entry removed (already defined above)
-};
 
 // ============================================
 // DEVICE PREVIEW STYLES
@@ -183,31 +41,29 @@ interface Props {
 // EMPTY STATE COMPONENT
 // ============================================
 
-function EmptyPreviewState({ theme }: { theme: ThemeStyle }) {
+function EmptyPreviewState({ theme }: { theme: ReturnType<typeof getThemeStyles> }) {
   return (
     <div className="flex flex-col items-center justify-center h-full py-12 px-4">
-      <div className="text-4xl mb-4">💕</div>
       <h3 className={`text-lg font-semibold ${theme.text} mb-2`}>
         Start Building Your Love Story
       </h3>
-      <p className={`text-sm text-center ${theme.muted}`}>
+      <p className={`text-sm text-center ${theme.textMuted}`}>
         Complete the wizard steps to see your website preview
       </p>
-      
       <div className="mt-6 flex flex-col gap-2 text-center">
-        <div className={`flex items-center gap-2 text-xs ${theme.muted}`}>
+        <div className={`flex items-center gap-2 text-xs ${theme.textMuted}`}>
           <span className="w-5 h-5 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-[10px] font-bold">1</span>
           <span>Add your details</span>
         </div>
-        <div className={`flex items-center gap-2 text-xs ${theme.muted}`}>
+        <div className={`flex items-center gap-2 text-xs ${theme.textMuted}`}>
           <span className="w-5 h-5 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-[10px] font-bold">2</span>
           <span>Write your love message</span>
         </div>
-        <div className={`flex items-center gap-2 text-xs ${theme.muted}`}>
+        <div className={`flex items-center gap-2 text-xs ${theme.textMuted}`}>
           <span className="w-5 h-5 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-[10px] font-bold">3</span>
           <span>Choose a theme</span>
         </div>
-        <div className={`flex items-center gap-2 text-xs ${theme.muted}`}>
+        <div className={`flex items-center gap-2 text-xs ${theme.textMuted}`}>
           <span className="w-5 h-5 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-[10px] font-bold">4</span>
           <span>Select sections</span>
         </div>
@@ -228,7 +84,7 @@ function DeviceFrame({
 }: { 
   children: React.ReactNode; 
   device: DeviceType;
-  theme: ThemeStyle;
+  theme: ReturnType<typeof getThemeStyles>;
   websiteName?: string;
 }) {
   const isMobile = device === 'mobile';
@@ -290,12 +146,12 @@ export default function LivePreview({ config, occasion, isMobileOpen, onMobileCl
   const [mounted, setMounted] = useState(false);
 
   // Get theme styles with fallback
-  const themeKey = config.theme || 'romantic_classic';
-  const theme = themeStyles[themeKey] || themeStyles.romantic_classic;
+  const themeKey = (config.theme || DEFAULT_THEME) as ThemeKey;
+  const theme = getThemeStyles(themeKey as ThemeKey);
   const sections = config.sections || [];
   
   // Get theme colors for previews
-  const themePreset = THEME_PRESETS[themeKey] || THEME_PRESETS.romantic_classic;
+  const themePreset = THEME_CONFIG[themeKey as ThemeKey] || THEME_CONFIG[DEFAULT_THEME];
 
   useEffect(() => {
     setMounted(true);
@@ -324,7 +180,7 @@ export default function LivePreview({ config, occasion, isMobileOpen, onMobileCl
     config.message?.trim() ||
     specialDate ||
     config.specialDate ||
-    (config.timeline_events?.length ?? 0) > 0 ||
+    (config.section_content?.timeline?.length ?? 0) > 0 ||
     (config.section_content && Object.keys(config.section_content).length > 0)
   );
 
@@ -338,6 +194,9 @@ export default function LivePreview({ config, occasion, isMobileOpen, onMobileCl
       : [];
 
   const currentOccasion = occasion || config.occasion || 'couple';
+  const occasionHero = getOccasionHeroSpec(currentOccasion);
+  const designSummary = getOccasionDesignSummary(currentOccasion);
+  const occasionMeta = OCCASION_REGISTRY[currentOccasion];
 
   const content = (
     <div className="h-full flex flex-col">
@@ -373,6 +232,38 @@ export default function LivePreview({ config, occasion, isMobileOpen, onMobileCl
 
       {/* Preview Content */}
       <div className="flex-1 overflow-y-auto p-3">
+        <div className="mb-3 rounded-xl border border-slate-200/70 bg-white/80 p-3 shadow-sm backdrop-blur-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
+                Design Strategy
+              </div>
+              <div className="mt-1 flex items-center gap-2 text-sm font-semibold text-slate-800">
+                <span>{occasionHero.badge}</span>
+                <span>{occasionMeta.label}</span>
+              </div>
+            </div>
+            <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] ${occasionHero.renderStrategy === 'dedicated' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}`}>
+              {occasionHero.renderStrategy === 'dedicated' ? 'Dedicated' : 'Shared'}
+            </span>
+          </div>
+
+          <div className="mt-3 grid gap-2">
+            <div className="rounded-lg bg-slate-50 px-3 py-2">
+              <div className="text-[10px] uppercase tracking-[0.22em] text-slate-500">Hero</div>
+              <div className="mt-1 text-xs font-medium text-slate-700">{designSummary.heroLabel}</div>
+            </div>
+            <div className="rounded-lg bg-slate-50 px-3 py-2">
+              <div className="text-[10px] uppercase tracking-[0.22em] text-slate-500">Section Headers</div>
+              <div className="mt-1 text-xs font-medium text-slate-700">{designSummary.headerLabel}</div>
+            </div>
+            <div className="rounded-lg bg-slate-50 px-3 py-2">
+              <div className="text-[10px] uppercase tracking-[0.22em] text-slate-500">Tone</div>
+              <div className="mt-1 text-xs font-medium text-slate-700">{designSummary.toneLabel}</div>
+            </div>
+          </div>
+        </div>
+
         {previewSections.length === 0 ? (
           <EmptyPreviewState theme={theme} />
         ) : (

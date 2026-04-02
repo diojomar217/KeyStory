@@ -1,34 +1,41 @@
 'use client';
 
+
 import { useState } from 'react';
-import { Theme } from '@/lib/types';
-import { useTheme } from '../../builder/ThemeWrapper';
+import type { ThemeKey } from '@/config/themeConfig';
+import { getThemeStyles } from '@/config/themeStyles';
+import { getThemeColors } from '@/config/themeUtils';
 import { getMusicEmbedInfo } from '@/lib/musicEmbed';
 import SectionHeader from '../../page/SectionHeader';
+import { getSectionCopy } from '@/lib/section-copy';
 import ScrollReveal from '../../ui/ScrollReveal';
 
-type Props = {
-  theme: Theme;
+interface SongSectionProps {
+  theme: ThemeKey;
   songLink?: string;
   autoplay?: boolean;
-};
-
-// Helper function to get theme accent colors
-function getThemeAccents(theme: Theme) {
-  switch (theme) {
-    case 'dark_elegant':
-      return { bg: 'bg-amber-500/20', text: 'text-amber-400', glow: 'shadow-amber-500/30' };
-    case 'cute_pastel':
-      return { bg: 'bg-purple-100', text: 'text-purple-600', glow: 'shadow-purple-500/20' };
-    case 'minimal_modern':
-      return { bg: 'bg-slate-100', text: 'text-slate-600', glow: 'shadow-slate-500/20' };
-    default:
-      return { bg: 'bg-rose-100', text: 'text-rose-600', glow: 'shadow-rose-500/20' };
-  }
 }
 
-export default function SongSection({ theme, songLink, autoplay = false }: Props) {
-  const styles = useTheme(theme);
+const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
+
+
+  // Helper function to get theme accent colors
+  function getThemeAccents(theme: ThemeKey) {
+    switch (theme) {
+      case 'dark_elegant':
+        return { bg: 'bg-amber-500/20', text: 'text-amber-400', glow: 'shadow-amber-500/30' };
+      case 'cute_pastel':
+        return { bg: 'bg-purple-100', text: 'text-purple-600', glow: 'shadow-purple-500/20' };
+      case 'minimal_modern':
+        return { bg: 'bg-slate-100', text: 'text-slate-600', glow: 'shadow-slate-500/20' };
+      default:
+        return { bg: 'bg-rose-100', text: 'text-rose-600', glow: 'shadow-rose-500/20' };
+    }
+  }
+
+
+  const styles = getThemeStyles(theme);
+  const themeColors = getThemeColors(theme);
   const accent = getThemeAccents(theme);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -43,12 +50,17 @@ export default function SongSection({ theme, songLink, autoplay = false }: Props
       <section className={`${styles.sectionBgAlt} py-16 md:py-24 w-full`}>
         <div className="max-w-xl mx-auto px-4 md:px-6">
           <ScrollReveal animation="fade-up">
-            <SectionHeader
-              icon="🎵"
-              title="Our Song"
-              subtitle="A song that reminds us of our favorite moments together"
-              theme={theme}
-            />
+            {(() => {
+              const copy = getSectionCopy('song');
+              return (
+                <SectionHeader
+                  icon={copy.icon}
+                  title={copy.title}
+                  subtitle={copy.subtitle}
+                  theme={theme}
+                />
+              );
+            })()}
           </ScrollReveal>
           <div className={`${styles.card} ${styles.cardBorder} border rounded-2xl p-6 text-center shadow-xl`}>
             <p className={`${styles.textMuted}`}>Invalid song link. Please provide a valid YouTube or Spotify link.</p>
@@ -71,12 +83,17 @@ export default function SongSection({ theme, songLink, autoplay = false }: Props
       <div className="max-w-xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <ScrollReveal animation="fade-up">
-          <SectionHeader
-            icon="🎵"
-            title="Our Song"
-            subtitle="A song that reminds us of our favorite moments together"
-            theme={theme}
-          />
+          {(() => {
+            const copy = getSectionCopy('song');
+            return (
+              <SectionHeader
+                icon={copy.icon}
+                title={copy.title}
+                subtitle={copy.subtitle}
+                theme={theme}
+              />
+            );
+          })()}
         </ScrollReveal>
 
         {/* Premium Video Container with Waveform Animation */}
@@ -85,7 +102,7 @@ export default function SongSection({ theme, songLink, autoplay = false }: Props
             relative overflow-hidden rounded-2xl
             ${styles.card} ${styles.cardBorder} border
             shadow-xl
-            ${isDarkTheme ? 'shadow-amber-500/10' : 'shadow-rose-500/10'}
+            shadow-black/10
           `}>
             {/* Decorative top accent line */}
             <div className={`
@@ -105,11 +122,11 @@ export default function SongSection({ theme, songLink, autoplay = false }: Props
                   key={i}
                   className={`
                     w-1 rounded-full
-                    ${isDarkTheme ? 'bg-amber-400' : 'bg-rose-400'}
                     equalizer-bar
                   `}
                   style={{
                     height: '100%',
+                    backgroundColor: themeColors.accent,
                     animationDelay: `${i * 0.1}s`,
                   }}
                 />
@@ -179,12 +196,14 @@ export default function SongSection({ theme, songLink, autoplay = false }: Props
 
         {/* Decorative elements - Hearts */}
         <div className="flex justify-center gap-2 mt-8">
-          <span className="text-rose-300/50 text-sm">💕</span>
-          <span className="text-rose-300/30 text-xs">💕</span>
-          <span className="text-rose-300/20 text-sm">💕</span>
+          <span className={`${styles.accent} opacity-50 text-sm`}>💕</span>
+          <span className={`${styles.accent} opacity-35 text-xs`}>💕</span>
+          <span className={`${styles.accent} opacity-20 text-sm`}>💕</span>
         </div>
       </div>
     </section>
   );
-}
+};
+
+export default SongSection;
 

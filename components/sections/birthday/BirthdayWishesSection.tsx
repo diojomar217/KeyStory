@@ -1,12 +1,13 @@
 'use client';
 
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../../builder/ThemeWrapper';
 import SectionHeader from '../../page/SectionHeader';
+import { getSectionCopy } from '@/lib/section-copy';
 import ScrollReveal from '../../ui/ScrollReveal';
 
 type Props = {
-  theme: Theme;
+  theme: ThemeKey;
   wishes?: string[];
 };
 
@@ -17,12 +18,17 @@ export default function BirthdayWishesSection({ theme, wishes = [] }: Props) {
     <section className={`py-16 md:py-24 ${styles.sectionBg}`} id="birthday-wishes">
       <div className="max-w-5xl mx-auto px-4 md:px-6">
         <ScrollReveal animation="fade-up">
-          <SectionHeader
-            icon="🎈"
-            title="Birthday Wishes"
-            subtitle="Messages from friends and family"
-            theme={theme}
-          />
+          {(() => {
+            const copy = getSectionCopy('birthday_wishes');
+            return (
+              <SectionHeader
+                icon={copy.icon}
+                title={copy.title}
+                subtitle={copy.subtitle}
+                theme={theme}
+              />
+            );
+          })()}
         </ScrollReveal>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -1,9 +1,11 @@
 'use client';
 
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
+import { getOccasionHeroSpec } from '../../config/occasionHeroConfig';
 import { useTheme } from '../builder/ThemeWrapper';
 import SectionHeader from './SectionHeader';
 import ScrollReveal from '../ui/ScrollReveal';
+import { useOccasionType } from './OccasionContext';
 
 interface SectionProps {
   /** Section title */
@@ -13,7 +15,7 @@ interface SectionProps {
   /** Section icon (emoji) */
   icon?: string;
   /** Theme */
-  theme: Theme;
+  theme: ThemeKey;
   /** Section content */
   children: React.ReactNode;
   /** Custom CSS class for container */
@@ -64,6 +66,7 @@ export default function Section({
   pb,
 }: SectionProps) {
   const styles = useTheme(theme);
+  const siteType = useOccasionType();
 
   // Determine background based on variant
   const getBackgroundClass = () => {
@@ -91,6 +94,7 @@ export default function Section({
             title={title || ''}
             subtitle={subtitle || ''}
             theme={theme}
+            siteType={siteType}
           />
         </ScrollReveal>
       )}
@@ -151,6 +155,8 @@ export function SectionCompact({
   className = '',
   id,
 }: Omit<SectionProps, 'variant' | 'showSeparator' | 'pt' | 'pb' | 'maxWidth'>) {
+  const siteType = useOccasionType();
+
   return (
     <section
       id={id}
@@ -158,23 +164,14 @@ export function SectionCompact({
     >
       <div className="max-w-4xl mx-auto px-4 md:px-6">
         {(title || subtitle) && (
-          <div className="text-center mb-6">
-            {icon && <span className="text-2xl mb-2 block">{icon}</span>}
-            {title && (
-              <h2 className={`text-2xl md:text-3xl font-bold font-serif ${
-                theme === 'dark_elegant' ? 'text-zinc-100' : 'text-rose-900'
-              }`}>
-                {title}
-              </h2>
-            )}
-            {subtitle && (
-              <p className={`mt-2 ${
-                theme === 'dark_elegant' ? 'text-zinc-400' : 'text-rose-700'
-              }`}>
-                {subtitle}
-              </p>
-            )}
-          </div>
+          <SectionHeader
+            icon={icon || '💕'}
+            title={title || ''}
+            subtitle={subtitle || ''}
+            theme={theme}
+            siteType={siteType}
+            className="mb-6"
+          />
         )}
         {children}
       </div>
@@ -185,9 +182,28 @@ export function SectionCompact({
 /**
  * Section separator component for manual placement
  */
-export function SectionSeparator({ theme }: { theme?: Theme }) {
+export function SectionSeparator({ theme }: { theme?: ThemeKey }) {
+  const siteType = useOccasionType();
+  const occasionHero = getOccasionHeroSpec(siteType);
   const borderColor = theme === 'dark_elegant' ? '#3f3f46' : '#fce7f3';
-  const iconColor = theme === 'dark_elegant' ? 'text-amber-300' : 'text-rose-500';
+  const iconColor =
+    siteType === 'wedding'
+      ? 'text-amber-400'
+      : siteType === 'memorial'
+        ? 'text-white/70'
+        : siteType === 'travel'
+          ? 'text-sky-500'
+          : theme === 'dark_elegant'
+            ? 'text-amber-300'
+            : 'text-rose-500';
+  const dividerIcon =
+    siteType === 'wedding'
+      ? '💍'
+      : siteType === 'memorial'
+        ? '🕊️'
+        : siteType === 'travel'
+          ? '✈️'
+          : occasionHero.badge;
 
   return (
     <div className="relative py-8 md:py-10 flex justify-center items-center">
@@ -195,7 +211,7 @@ export function SectionSeparator({ theme }: { theme?: Theme }) {
         <div className="h-px w-full rounded-full" style={{ background: `linear-gradient(to right, transparent, ${borderColor}, transparent)` }} />
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/60 shadow-lg px-4 py-1.5 bg-white">
           <span className={`text-xl ${iconColor} animate-gentle-pulse`}>
-            💕
+            {dividerIcon}
           </span>
         </div>
       </div>

@@ -1,11 +1,11 @@
 'use client';
 
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../builder/ThemeWrapper';
 
 type Props = {
   message: string;
-  theme: Theme;
+  theme: ThemeKey;
 };
 
 export default function LoveMessageCard({ message, theme }: Props) {

@@ -1,53 +1,46 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Site } from '@/lib/supabase';
 import Link from 'next/link';
 import AdminHeader from '@/components/admin/AdminHeader';
 import DashboardStatCard, { TotalWebsitesCard, WebsitesThisMonthCard, PublishedWebsitesCard } from '@/components/admin/DashboardStatCard';
 import EmptyState from '@/components/admin/EmptyState';
 
 export default function DashboardPage() {
-  const [orders, setOrders] = useState<Site[]>([]);
+  const [dashboardStats, setDashboardStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [totalVisits, setTotalVisits] = useState(0);
   const [totalQrScans, setTotalQrScans] = useState(0);
   const [recentActivity, setRecentActivity] = useState<Array<{event_type:string; source:string | null; created_at:string}>>([]);
 
   useEffect(() => {
-    fetchOrders();
+    const fetchDashboardStats = async () => {
+      try {
+        const res = await fetch('/api/admin/dashboard-summary');
+        if (!res.ok) throw new Error('Failed to fetch dashboard summary');
+        const data = await res.json();
+        setDashboardStats(data);
+      } catch (error) {
+        console.error('Failed to fetch dashboard summary:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    const fetchAnalytics = async () => {
+      try {
+        const res = await fetch('/api/admin/analytics');
+        if (!res.ok) throw new Error('Failed to fetch analytics');
+        const data = await res.json();
+        setTotalVisits(data.totalVisits || 0);
+        setTotalQrScans(data.totalQrScans || 0);
+        setRecentActivity(data.recentActivity || []);
+      } catch (error) {
+        console.error('Failed to fetch analytics:', error);
+      }
+    };
+    fetchDashboardStats();
     fetchAnalytics();
   }, []);
-
-  const fetchAnalytics = async () => {
-    try {
-      const res = await fetch('/api/admin/analytics');
-      if (!res.ok) throw new Error('Failed to fetch analytics');
-      const data = await res.json();
-      setTotalVisits(data.totalVisits || 0);
-      setTotalQrScans(data.totalQrScans || 0);
-      setRecentActivity(data.recentActivity || []);
-    } catch (error) {
-      console.error('Failed to fetch analytics:', error);
-    }
-  };
-
-  const fetchOrders = async () => {
-    try {
-      const res = await fetch('/api/orders');
-      
-      if (!res.ok) {
-        throw new Error(`Failed to fetch orders: ${res.status} ${res.statusText}`);
-      }
-      
-      const data = await res.json();
-      setOrders(data.orders || []);
-    } catch (error) {
-      console.error('Failed to fetch orders:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
@@ -58,44 +51,92 @@ export default function DashboardPage() {
     });
   };
 
-  const now = new Date();
-  const totalWebsites = orders.length;
-  const thisMonthCount = orders.filter(o => {
-    const created = new Date(o.created_at || '');
-    return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
-  }).length;
-
-  const areExpired = (site: typeof orders[number]) => {
-    const status = (site.status || 'active').toString().toLowerCase();
-    if (status === 'archived' || status === 'expired') return true;
-    if (!site.expires_at) return false;
-    return new Date(site.expires_at).getTime() < Date.now();
-  };
-
-  const activeSites = orders.filter(site => !areExpired(site)).length;
-  const expiredSites = orders.filter(areExpired).length;
-  const expiringSoon = orders.filter(site => {
-    const status = (site.status || 'active').toString().toLowerCase();
-    if (status !== 'active') return false;
-    if (!site.expires_at) return false;
-    const expires = new Date(site.expires_at).getTime();
-    const days = (expires - Date.now()) / (1000 * 60 * 60 * 24);
-    return days > 0 && days <= 30;
-  }).length;
-
-  const publishedWebsites = activeSites;
-  const recentWebsites = orders.slice(0, 5);
+  const totalWebsites = dashboardStats?.totalWebsites || 0;
+  const thisMonthCount = dashboardStats?.thisMonthCount || 0;
+  const publishedWebsites = dashboardStats?.publishedWebsites || 0;
+  const expiringSoon = dashboardStats?.expiringSoon || 0;
+  const expiredSites = dashboardStats?.expiredSites || 0;
+  const recentWebsites = dashboardStats?.recentWebsites || [];
+  const backendErrors = Array.isArray(dashboardStats?.errors)
+    ? dashboardStats.errors.filter((err: any) => {
+        if (!err) return false;
+        if (typeof err === 'string') return err.trim() !== '';
+        if (typeof err === 'object') {
+          return Boolean(err.message || err.hint || err.code || err.details);
+        }
+        return true;
+      })
+    : [];
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600"></div>
+      <div className="space-y-8">
+        {/* Skeleton for Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm animate-pulse">
+              <div className="h-4 w-1/3 bg-slate-200 rounded mb-4" />
+              <div className="h-8 w-1/2 bg-slate-300 rounded" />
+            </div>
+          ))}
+        </div>
+
+        {/* Skeleton for Expiring/Expired */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm animate-pulse">
+              <div className="h-4 w-1/3 bg-slate-200 rounded mb-4" />
+              <div className="h-8 w-1/2 bg-slate-300 rounded" />
+            </div>
+          ))}
+        </div>
+
+        {/* Skeleton for Recent Websites */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mt-8">
+          <div className="px-6 py-5 border-b border-slate-200">
+            <div className="flex items-center justify-between">
+              <div className="h-6 w-1/3 bg-slate-200 rounded animate-pulse" />
+              <div className="h-6 w-16 bg-slate-100 rounded animate-pulse" />
+            </div>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="p-4 flex items-center gap-4 animate-pulse">
+                <div className="w-12 h-12 rounded-xl bg-slate-200" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-1/2 bg-slate-200 rounded" />
+                  <div className="h-3 w-1/3 bg-slate-100 rounded" />
+                  <div className="h-3 w-1/4 bg-slate-100 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-8">
+      {/* Backend Errors */}
+      {backendErrors.length > 0 && (
+        <div className="bg-rose-50 border border-rose-200 text-rose-800 rounded-xl p-4 mb-4">
+          <strong>Backend Errors:</strong>
+          <ul className="mt-2 space-y-1 text-sm">
+            {backendErrors.map((err: any, idx: number) => (
+              <li key={idx}>
+                {typeof err === 'string'
+                  ? err
+                  : err.message || err.details || 'Unexpected backend error'}
+                {err.context && (
+                  <span className="ml-2 text-rose-600">[{err.context}]</span>
+                )}
+                {err.hint && <span className="ml-2 italic text-rose-500">({err.hint})</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {/* Header */}
       <AdminHeader 
         title="Dashboard" 
@@ -229,7 +270,7 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {recentWebsites.map((order) => {
+            {recentWebsites.map((order: any) => {
               const siteType = order.site_type || (order.config?.occasion || 'General');
               const siteSlug = order.slug || order.website_name || '';
               return (

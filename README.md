@@ -22,6 +22,14 @@ A full-stack web application for generating personalized couple websites with QR
 - Dynamic couple page that adapts to chosen sections, displays timer, gallery, timeline, and optional music
 - Admin dashboard for order management
 
+## Reliability Tooling
+- Rate limiting on high-volume API routes (auth, order creation, analytics, guest messages).
+- Admin audit logs via `admin_audit_logs` table and `/api/admin/audit-logs` endpoint.
+- Background job queue (`background_jobs`) with retry backoff and processor endpoint.
+- Upload retry jobs to recover failed Cloudinary data URL uploads.
+- Web vitals collection endpoint with performance budget alerts.
+- Optional webhook-based error alerting using `ALERT_WEBHOOK_URL`.
+
 ## Setup
 1. Install dependencies:
    ```bash
@@ -36,6 +44,18 @@ A full-stack web application for generating personalized couple websites with QR
 4. Run the development server:
    ```bash
    npm run dev
+   ```
+
+5. Apply reliability SQL schemas in Supabase:
+   - `supabase-admin-audit-logs-table.sql`
+   - `supabase-background-jobs-table.sql`
+   - `supabase-web-vitals-table.sql`
+
+6. Optional cron jobs:
+   ```bash
+   npm run job:auto-archive
+   npm run job:renewal-reminders
+   npm run job:process-queue
    ```
 
 ## Folder Structure

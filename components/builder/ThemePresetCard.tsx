@@ -1,17 +1,17 @@
 'use client';
 
 import React from 'react';
-import { Theme, ThemePresetConfig } from '@/lib/types';
-import { THEME_PRESETS } from '@/lib/builder-constants';
+import type { ThemeKey } from '@/config/themeConfig';
+import { THEME_CONFIG } from '@/config/themeConfig';
 
 interface ThemePresetCardProps {
-  theme: Theme;
+  theme: ThemeKey;
   isSelected: boolean;
-  onSelect: (theme: Theme) => void;
+  onSelect: (theme: ThemeKey) => void;
 }
 
 export default function ThemePresetCard({ theme, isSelected, onSelect }: ThemePresetCardProps) {
-  const preset = THEME_PRESETS[theme];
+  const preset = THEME_CONFIG[theme];
 
   return (
     <button
@@ -38,7 +38,7 @@ export default function ThemePresetCard({ theme, isSelected, onSelect }: ThemePr
 
       {/* Color Palette Preview */}
       <div className="flex gap-1.5 mb-3">
-        {preset.preview.map((color, idx) => (
+        {preset.preview.map((color: string, idx: number) => (
           <div
             key={idx}
             className="w-6 h-6 rounded-full shadow-sm border border-slate-200/50 transform group-hover:scale-110 transition-transform duration-300"
@@ -76,5 +76,5 @@ export default function ThemePresetCard({ theme, isSelected, onSelect }: ThemePr
 }
 
 // Export all theme presets for use in theme selector
-export { THEME_PRESETS };
+export { THEME_CONFIG };
 

@@ -1,7 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Section, Theme, SiteConfig, TimelineEvent } from '@/lib/types';
+import { Section, SiteConfig, TimelineEvent } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
+
+import { DEFAULT_THEME } from '@/config/defaults';
 
 // Import section components for direct rendering
 import HomeSection from '@/components/page/HomeSection';
@@ -35,7 +38,7 @@ export interface DynamicSectionRendererProps {
   section: Section;
   config: SiteConfig;
   // Individual props for flexibility
-  theme?: Theme;
+  theme?: ThemeKey;
   customerName?: string;
   partnerName?: string;
   anniversaryDate?: string;
@@ -53,7 +56,7 @@ export interface DynamicSectionRendererProps {
 // ============================================
 
 interface InternalConfig {
-  theme: Theme;
+  theme: ThemeKey;
   customerName: string;
   partnerName: string;
   anniversaryDate: string;
@@ -68,6 +71,7 @@ interface InternalConfig {
   songAutoplay?: boolean;
   song_autoplay?: boolean;
   section_templates?: Record<string, string>;
+  section_content?: import('@/lib/types').SectionContentMap;
   home_template?: string;
   gallery_template?: string;
   timeline_template?: string;
@@ -107,6 +111,27 @@ const RENDERER_COMPONENTS: Record<Section, React.ComponentType<any>> = {
   birthday_timeline: TimelineSection,
   party_details: OurStorySection,
   gift_wishlist: GiftSection,
+  wedding_countdown: AnniversaryCountdownSection,
+  event_details: OurStorySection,
+  wedding_timeline: TimelineSection,
+  gift_registry: GiftSection,
+  rsvp: GuestMessagesSection,
+  couple_message: LoveLetterSection,
+  graduation_message: LoveLetterSection,
+  countdown: AnniversaryCountdownSection,
+  school_memories: TimelineSection,
+  achievements: TimelineSection,
+  future_plans: FutureDreamsSection,
+  baby_predictions: QuotesSection,
+  parents_message: LoveLetterSection,
+  photo_highlights: GallerySection,
+  celebrant_message: LoveLetterSection,
+  life_story: OurStorySection,
+  tributes: QuotesSection,
+  family_message: LoveLetterSection,
+  travel_timeline: TimelineSection,
+  travel_notes: OurStorySection,
+  message_letter: LoveLetterSection,
   qr_keepsake: () => null, // QR is handled separately
 };
 
@@ -119,7 +144,7 @@ const buildProps = (section: Section, props: DynamicSectionRendererProps): Recor
   
   // Merge config with individual props (individual props take precedence)
   const mergedConfig: InternalConfig = {
-    theme: props.theme || config.theme || 'romantic_classic',
+    theme: (props.theme as ThemeKey) || (config.theme as ThemeKey) || (DEFAULT_THEME as ThemeKey),
     customerName: props.customerName || '',
     partnerName: props.partnerName || '',
     anniversaryDate: props.anniversaryDate || '',
@@ -133,6 +158,7 @@ const buildProps = (section: Section, props: DynamicSectionRendererProps): Recor
     timeline_events: (config as any).timeline_events || [],
     songAutoplay: (props.songAutoplay !== undefined ? props.songAutoplay : (config as any).media?.song_autoplay) || false,
     section_templates: config.section_templates,
+    section_content: config.section_content,
     home_template: config.home_template,
     gallery_template: config.gallery_template,
     timeline_template: config.timeline_template,
@@ -188,7 +214,7 @@ const buildProps = (section: Section, props: DynamicSectionRendererProps): Recor
       return {
         theme: mergedConfig.theme,
         template: getTemplate('timeline'),
-        events: mergedConfig.timelineEvents || mergedConfig.timeline_events,
+        events: mergedConfig.timelineEvents || mergedConfig.section_content?.timeline,
       };
 
     case 'song':

@@ -5,6 +5,14 @@ import { generateQRCode } from '@/lib/qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import { SiteConfig } from '@/lib/types';
+import { DEFAULT_THEME } from '@/config/defaults';
+import { createHash } from 'crypto';
+import { getIdempotencyReplay, saveIdempotencyResult } from '@/lib/db/idempotency';
+import { validateAndNormalizeSiteConfig } from '@/lib/site-config-validation';
+import { enforceRateLimit } from '@/lib/reliability/rate-limit';
+import { captureError } from '@/lib/reliability/monitoring';
+import { enqueueJob } from '@/lib/reliability/job-queue';
+import { featureFlags } from '@/lib/reliability/feature-flags';
 
 const addMonths = (date: Date, months: number): string => {
   const result = new Date(date);
@@ -13,6 +21,21 @@ const addMonths = (date: Date, months: number): string => {
 };
 
 const DEFAULT_HOSTING_MONTHS = 6;
+
+const normalizeUniqueTextArray = (input: unknown[]): string[] => {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const item of input) {
+    if (typeof item !== 'string') continue;
+    const normalized = item.trim();
+    if (!normalized || seen.has(normalized)) continue;
+    seen.add(normalized);
+    result.push(normalized);
+  }
+
+  return result;
+};
 
 
 const slugify = (text: string): string =>
@@ -26,6 +49,23 @@ const slugify = (text: string): string =>
     .replace(/^-+|-+$/g, '');
 
 const randomSuffix = () => Math.floor(1000 + Math.random() * 9000).toString();
+
+const resolveUniqueWebsiteName = async (base: string): Promise<string> => {
+  const candidateBase = base.trim();
+
+  for (let i = 0; i < 5; i++) {
+    const candidate = `${candidateBase}-${randomSuffix()}`;
+    const { data } = await supabase
+      .from('sites')
+      .select('id')
+      .eq('website_name', candidate)
+      .maybeSingle();
+
+    if (!data) return candidate;
+  }
+
+  return `${candidateBase}-${Date.now()}`;
+};
 
 const normalizePasswordConfig = async (siteConfig: any, passwordInput?: string): Promise<any> => {
   if (!siteConfig) siteConfig = {};
@@ -69,7 +109,6 @@ interface OrderRequest {
   occasion?: 'couple' | 'birthday' | string;
   customer_name?: string;
   partner_name?: string;
-  anniversary_date?: string;
   participants?: { id: string; name: string; role?: string }[];
   specialDate?: string;
   message?: string;
@@ -83,18 +122,49 @@ interface OrderRequest {
 }
 
 export async function POST(req: NextRequest) {
+  const limited = enforceRateLimit(req, {
+    keyPrefix: 'api:order:create',
+    limit: 20,
+    windowMs: 60 * 1000,
+  });
+  if (limited) return limited;
+
   try {
-    const data: OrderRequest = await req.json();
+    const rawBody = await req.text();
+    const data: OrderRequest = JSON.parse(rawBody || '{}');
+    const idempotencyKey = req.headers.get('idempotency-key')?.trim() || '';
+    const requestHash = createHash('sha256').update(rawBody || '{}').digest('hex');
+
+    if (idempotencyKey) {
+      const replay = await getIdempotencyReplay('order:create', idempotencyKey, requestHash);
+      if (replay) {
+        return NextResponse.json(replay.response, { status: replay.statusCode });
+      }
+    }
+
     const occasion = (data.occasion || data.config?.occasion || 'couple').toString();
 
     const customerName = data.customer_name || data.participants?.[0]?.name || '';
     const partnerName = data.partner_name || data.participants?.[1]?.name || '';
-    const specialDate = data.specialDate || data.anniversary_date || '';
+    const specialDate = data.specialDate || '';
     const message = data.message || '';
 
     const requiredFieldsByOccasion: Record<string, string[]> = {
-      couple: ['customer_name', 'partner_name', 'special_date', 'message'],
-      birthday: ['customer_name', 'special_date', 'message'],
+      couple: ['customer_name', 'partner_name', 'special_date'],
+      wedding: ['customer_name', 'partner_name', 'special_date'],
+      birthday: ['customer_name', 'special_date'],
+      anniversary: ['customer_name', 'partner_name', 'special_date'],
+      proposal: ['customer_name', 'partner_name', 'special_date'],
+      graduation: ['customer_name', 'special_date'],
+      baby_shower: ['customer_name', 'special_date'],
+      debut: ['customer_name', 'special_date'],
+      memorial: ['customer_name', 'special_date'],
+      family: ['customer_name', 'special_date'],
+      friendship: ['customer_name', 'special_date'],
+      travel: ['customer_name', 'special_date'],
+      valentines: ['customer_name', 'partner_name', 'special_date'],
+      mothers_day: ['customer_name', 'special_date'],
+      fathers_day: ['customer_name', 'special_date'],
     };
 
     const requiredFields = requiredFieldsByOccasion[occasion] || requiredFieldsByOccasion.couple;
@@ -121,7 +191,7 @@ export async function POST(req: NextRequest) {
     const slug = uuidv4();
     const cleanName = (data.website_name || '').trim();
     const normalized = cleanName ? slugify(cleanName) : slug;
-    const website_name = cleanName ? `${normalized}-${randomSuffix()}` : slug;
+    const website_name = cleanName ? await resolveUniqueWebsiteName(normalized) : slug;
 
     const MAX_SITE_IMAGES = 18;
     // upload pictures (cost-controlled)
@@ -152,10 +222,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const uniquePhotoUrls = normalizeUniqueTextArray(photoUrls);
+
     // Get base URL safely
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://your-domain.vercel.app';
-    const coupleUrl = `${baseUrl}/site/${website_name}`;
-    const qrCodeUrl = await generateQRCode(coupleUrl);
+    const qrRedirectUrl = `${baseUrl}/r/${website_name}`;
+    const qrCodeUrl = await generateQRCode(qrRedirectUrl);
 
     // Build normalized site config for storage
     let heroCoverPhotoUrl: string | undefined = data.config?.hero?.coverPhotoUrl;
@@ -175,17 +247,33 @@ export async function POST(req: NextRequest) {
 
     if (
       typeof data.config?.hero?.coverPhotoIndex === 'number' &&
-      photoUrls[data.config.hero.coverPhotoIndex]
+      uniquePhotoUrls[data.config.hero.coverPhotoIndex]
     ) {
-      heroCoverPhotoUrl = photoUrls[data.config.hero.coverPhotoIndex];
+      heroCoverPhotoUrl = uniquePhotoUrls[data.config.hero.coverPhotoIndex];
     }
 
-    if (typeof data.config?.cover_photo_index === 'number' && !heroCoverPhotoUrl && photoUrls[data.config.cover_photo_index]) {
-      heroCoverPhotoUrl = photoUrls[data.config.cover_photo_index];
+    if (typeof data.config?.cover_photo_index === 'number' && !heroCoverPhotoUrl && uniquePhotoUrls[data.config.cover_photo_index]) {
+      heroCoverPhotoUrl = uniquePhotoUrls[data.config.cover_photo_index];
     }
 
-    let siteConfig = {
-      ...data.config,
+    const rawConfig = (data.config || {}) as any;
+
+    // Remove duplicate template fields and only keep templates object
+    const templates = rawConfig.templates || {
+      home: rawConfig.home_template,
+      gallery: rawConfig.gallery_template,
+      timeline: rawConfig.timeline_template,
+      song: rawConfig.song_template,
+    };
+    // Remove config.participants if present
+    let { participants, ...configWithoutParticipants } = rawConfig;
+    let siteConfig: any = {
+      ...configWithoutParticipants,
+      home_template: undefined,
+      gallery_template: undefined,
+      timeline_template: undefined,
+      song_template: undefined,
+      templates,
       people: {
         primary: customerName,
         secondary: partnerName,
@@ -193,29 +281,38 @@ export async function POST(req: NextRequest) {
       dates: {
         special_date: specialDate,
       },
-      theme: data.config?.theme || data.config?.theme || 'romantic_classic',
-      sections: data.config?.sections || [],
-      templates: {
-        home: data.config?.home_template,
-        gallery: data.config?.gallery_template,
-        timeline: data.config?.timeline_template,
-      },
+      theme: rawConfig.theme || DEFAULT_THEME,
+      sections: rawConfig.sections || [],
       media: {
-        photos: photoUrls,
-        song_link: data.song_link || '',
-        song_autoplay: (data as any).song_autoplay ?? false,
+        photos: uniquePhotoUrls,
+        song_link: rawConfig.media?.song_link || '',
+        song_autoplay: rawConfig.media?.song_autoplay ?? false,
       },
-      timeline: data.config?.timeline_events || [],
-      content: data.config?.section_content || {},
+      timeline: rawConfig.timeline_events || [],
+      section_content: rawConfig.section_content || {},
       message,
-      tagline: data.tagline || data.config?.tagline || '',
+      tagline: data.tagline || rawConfig.tagline || '',
       hero: {
-        ...(data.config?.hero || {}),
+        ...(rawConfig.hero || {}),
         ...(heroCoverPhotoUrl ? { coverPhotoUrl: heroCoverPhotoUrl } : {}),
       },
     };
 
-    siteConfig = await normalizePasswordConfig(siteConfig, data.password_input);
+    const validation = validateAndNormalizeSiteConfig(siteConfig);
+    if (validation.errors.length > 0) {
+      return NextResponse.json(
+        { success: false, message: validation.errors.join('; ') },
+        { status: 400 },
+      );
+    }
+
+    siteConfig = await normalizePasswordConfig(validation.config, data.password_input);
+    siteConfig.meta = {
+      ...(siteConfig.meta || {}),
+      revision: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
     let expiresAt = addMonths(new Date(), DEFAULT_HOSTING_MONTHS);
     if (data.expires_at) {
       const parsed = new Date(data.expires_at);
@@ -258,7 +355,20 @@ export async function POST(req: NextRequest) {
       console.warn('Revalidate path failed on create site:', err);
     }
 
-    return NextResponse.json({
+    if (
+      featureFlags.retryFailedUploads() &&
+      featureFlags.backgroundJobQueue() &&
+      site?.id &&
+      (photoUploadWarnings.length > 0 || heroUploadWarning)
+    ) {
+      try {
+        await enqueueJob('retry_site_media_upload', { siteId: site.id });
+      } catch (queueError) {
+        await captureError('order-create-enqueue-retry', queueError, { siteId: site.id });
+      }
+    }
+
+    const responsePayload = {
       success: true,
       slug,
       website_name,
@@ -267,9 +377,15 @@ export async function POST(req: NextRequest) {
         ...photoUploadWarnings,
         ...(heroUploadWarning ? [heroUploadWarning] : []),
       ],
-    });
+    };
+
+    if (idempotencyKey) {
+      await saveIdempotencyResult('order:create', idempotencyKey, requestHash, 200, responsePayload);
+    }
+
+    return NextResponse.json(responsePayload);
   } catch (err) {
-    console.error('order route exception', err);
+    await captureError('order-create', err);
     return NextResponse.json({ success: false, message: 'Invalid request' }, { status: 400 });
   }
 }

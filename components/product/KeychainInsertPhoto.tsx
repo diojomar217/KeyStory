@@ -2,138 +2,308 @@
 
 import Image from 'next/image';
 import type { CSSProperties } from 'react';
-import { getInsertDimensions } from './KeychainSizeConfig';
+import {
+  getInsertDimensions,
+  type KeychainShape,
+  getHeartClipPath,
+} from './KeychainSizeConfig';
 
 interface KeychainInsertPhotoProps {
   widthMm: number;
   heightMm: number;
+  shape?: KeychainShape;
   coverPhotoUrl?: string;
   coupleNames: string;
+  variant?: 'photo' | 'engraved';
+  subtitle?: string;
   scale?: number;
   printMode?: boolean;
   showGuides?: boolean;
+  photoTransform?: {
+    zoom: number;
+    offsetX: number;
+    offsetY: number;
+  };
 }
 
 export default function KeychainInsertPhoto({
   widthMm,
   heightMm,
+  shape = 'rectangle',
   coverPhotoUrl,
   coupleNames,
+  variant = 'photo',
+  subtitle,
   scale = 1,
   printMode = false,
   showGuides = true,
+  photoTransform,
 }: KeychainInsertPhotoProps) {
-  // Calculate dimensions
   const dimensions = getInsertDimensions(widthMm, heightMm, scale);
 
-  // Photo container size - takes up most of the space
-  const photoSize = Math.min(
-    Number(dimensions.width.replace('px', '')) * 0.85,
-    Number(dimensions.height.replace('px', '')) * 0.65
+  const zoom = Math.max(1, Math.min(2.2, photoTransform?.zoom ?? 1));
+  const offsetX = Math.max(-40, Math.min(40, photoTransform?.offsetX ?? 0));
+  const offsetY = Math.max(-40, Math.min(40, photoTransform?.offsetY ?? 0));
+
+  const objectPosX = 50 + offsetX;
+  const objectPosY = 50 + offsetY;
+
+  const imageStyle: CSSProperties = {
+    objectFit: 'cover',
+    objectPosition: `${objectPosX}% ${objectPosY}%`,
+    transform: `scale(${zoom})`,
+    transformOrigin: 'center center',
+  };
+
+  const nameFontSize =
+    shape === 'heart'
+      ? Math.max(7, Math.min(10, widthMm * 0.16))
+      : Math.max(7, Math.min(10.5, widthMm * 0.19));
+  const subtitleFontSize = Math.max(5.8, Math.min(8.4, widthMm * 0.12));
+
+  const renderEngravedFace = () => (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        padding: printMode ? '1.6mm' : '8%',
+        background:
+          'linear-gradient(145deg, #fbfaf8 0%, #e7ded2 30%, #b9ad9d 55%, #f7f3ed 100%)',
+        color: '#2f261f',
+        boxSizing: 'border-box',
+      }}
+    >
+      <div
+        style={{
+          width: '72%',
+          height: '1px',
+          background: 'rgba(82, 65, 48, 0.35)',
+          marginBottom: printMode ? '1.2mm' : '10%',
+        }}
+      />
+      <p
+        className="font-semibold"
+        style={{
+          fontFamily: 'Georgia, "Times New Roman", serif',
+          fontSize: `${Math.max(nameFontSize, 8.5)}px`,
+          lineHeight: 1.12,
+          letterSpacing: '0.08em',
+          margin: 0,
+          textTransform: 'uppercase',
+          wordBreak: 'break-word',
+        }}
+      >
+        {coupleNames}
+      </p>
+      {subtitle ? (
+        <p
+          style={{
+            fontFamily: 'Georgia, "Times New Roman", serif',
+            fontSize: `${subtitleFontSize}px`,
+            lineHeight: 1.25,
+            letterSpacing: '0.04em',
+            margin: printMode ? '1mm 0 0' : '8% 0 0',
+            opacity: 0.85,
+            wordBreak: 'break-word',
+          }}
+        >
+          {subtitle}
+        </p>
+      ) : null}
+      <div
+        style={{
+          width: '54%',
+          height: '1px',
+          background: 'rgba(82, 65, 48, 0.35)',
+          marginTop: printMode ? '1.2mm' : '10%',
+        }}
+      />
+    </div>
   );
 
-  // Font size based on width
-  const fontSize = Math.max(6, Math.min(12, widthMm * 0.22));
+  if (shape === 'heart') {
+    const heartContainerStyle: CSSProperties = {
+      width: dimensions.width,
+      height: dimensions.height,
+      backgroundColor: '#ffffff',
+      border: showGuides && !printMode ? '2px dashed rgba(0,0,0,0.5)' : 'none',
+      boxShadow: 'none',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+      overflow: 'visible',
+      clipPath: getHeartClipPath(),
+    };
 
-  const polaroidContainerStyle: CSSProperties = {
+    const heartInnerStyle: CSSProperties = {
+      width: '100%',
+      height: '100%',
+      backgroundColor: '#fffefb',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      padding: '6px 4px',
+      boxSizing: 'border-box',
+      overflow: 'hidden',
+    };
+
+    return (
+      <div style={heartContainerStyle}>
+        <div style={heartInnerStyle}>
+          {coupleNames && (
+            <div
+              style={{
+                width: '70%',
+                textAlign: 'center',
+                marginBottom: '4px',
+                padding: '2px 4px',
+                boxSizing: 'border-box',
+                flexShrink: 0,
+              }}
+            >
+              <p
+                className="text-slate-900 font-semibold"
+                style={{
+                  fontFamily: 'Georgia, "Times New Roman", serif',
+                  letterSpacing: '0.04em',
+                  fontSize: `${nameFontSize}px`,
+                  lineHeight: 1.1,
+                  margin: 0,
+                  textShadow: printMode ? 'none' : '0 1px 0 rgba(255,255,255,0.65)',
+                  wordBreak: 'break-word',
+                }}
+              >
+                {coupleNames}
+              </p>
+            </div>
+          )}
+
+          <div
+            className="relative flex-shrink-0 overflow-hidden"
+            style={{
+              flex: 1,
+              width: '70%',
+              backgroundColor: '#f3f2f0',
+              overflow: 'hidden',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 0,
+            }}
+          >
+            {variant === 'engraved' ? renderEngravedFace() : coverPhotoUrl ? (
+              <Image
+                src={coverPhotoUrl}
+                alt="Couple Cover Photo"
+                fill
+                className="object-cover"
+                style={imageStyle}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-slate-400 text-xs">No Photo</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const containerStyle: CSSProperties = {
     width: dimensions.width,
     height: dimensions.height,
     backgroundColor: '#ffffff',
-    border: showGuides ? '0.3mm dashed #444' : 'none',
-    boxShadow: 'none',
-    borderRadius: '0.8rem',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    padding: '4px',
-    paddingBottom: '10px',
+    border: showGuides && !printMode ? '0.3mm dashed #444' : 'none',
     boxSizing: 'border-box',
     position: 'relative',
-    overflow: 'hidden',
+    overflow: 'visible',
+    padding: 0,
+    boxShadow: 'none',
   };
 
-  const frameStyle: CSSProperties = {
+  const polaroidStyle: CSSProperties = {
     width: '100%',
     height: '100%',
     backgroundColor: '#fffefb',
-    border: 'none',
-    borderRadius: '0.55rem',
-    padding: '3px',
+    border: printMode ? 'none' : '1px solid #e7ddd2',
     boxSizing: 'border-box',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    display: 'grid',
+    gridTemplateRows: '1fr auto',
+    overflow: 'hidden',
+    paddingTop: printMode ? '1mm' : '4%',
+    paddingLeft: printMode ? '1mm' : '4%',
+    paddingRight: printMode ? '1mm' : '4%',
+    paddingBottom: printMode ? '1.4mm' : '6%',
+    rowGap: printMode ? '0.8mm' : 0,
+  };
+
+  const photoFrameStyle: CSSProperties = {
+    position: 'relative',
+    width: '100%',
+    minHeight: 0,
+    backgroundColor: '#f3f2f0',
+    border: '1px solid #ddd2c6',
+    overflow: 'hidden',
+  };
+
+  const nameWrapStyle: CSSProperties = {
+    width: '100%',
+    textAlign: 'center',
+    paddingTop: printMode ? '0.2mm' : '6%',
+    paddingLeft: printMode ? '0.6mm' : '4%',
+    paddingRight: printMode ? '0.6mm' : '4%',
+    paddingBottom: 0,
+    backgroundColor: '#fffefb',
+    boxSizing: 'border-box',
   };
 
   return (
-    <div style={polaroidContainerStyle}>
-      <div style={frameStyle}>
-        {/* Polaroid photo area */}
-        <div
-          className="relative flex-shrink-0 overflow-hidden"
-          style={{
-            width: '100%',
-            height: '78%',
-            backgroundColor: '#f3f2f0',
-            borderRadius: '0.35rem',
-            overflow: 'hidden',
-            border: '1px solid #d8cfc3',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '2px',
-          }}
-        >
-        {coverPhotoUrl ? (
-          <Image
-            src={coverPhotoUrl}
-            alt="Couple Cover Photo"
-            fill
-            className="object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="text-slate-400 text-xs">No Photo</span>
+    <div style={containerStyle}>
+      <div style={polaroidStyle}>
+        <div style={photoFrameStyle}>
+          {variant === 'engraved' ? renderEngravedFace() : coverPhotoUrl ? (
+            <Image
+              src={coverPhotoUrl}
+              alt="Couple Cover Photo"
+              fill
+              className="object-cover"
+              style={imageStyle}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="text-slate-400 text-xs">No Photo</span>
+            </div>
+          )}
+        </div>
+
+        {coupleNames && variant !== 'engraved' && (
+          <div style={nameWrapStyle}>
+            <p
+              className="text-slate-900 font-semibold"
+              style={{
+                fontFamily: 'Georgia, "Times New Roman", serif',
+                letterSpacing: '0.03em',
+                fontSize: `${nameFontSize}px`,
+                lineHeight: 1.12,
+                margin: 0,
+                textShadow: printMode ? 'none' : '0 1px 0 rgba(255,255,255,0.65)',
+                wordBreak: 'break-word',
+              }}
+            >
+              {coupleNames}
+            </p>
           </div>
         )}
-      </div>
-
-      {/* Couple Names */}
-      {coupleNames && (
-        <div
-          style={{
-            width: '100%',
-            textAlign: 'center' as const,
-            marginTop: '6px',
-            padding: '8px 10px',
-            backgroundColor: '#fffefb',
-            borderBottomLeftRadius: '0.55rem',
-            borderBottomRightRadius: '0.55rem',
-            minHeight: '22%',
-            boxSizing: 'border-box',
-
-          }}
-        >
-          <p
-            className="text-slate-900 font-semibold"
-            style={{
-              fontFamily: 'Georgia, "Times New Roman", serif',
-              letterSpacing: '0.04em',
-              fontSize: Math.max(7, Math.min(11, widthMm * 0.22)) + 'px',
-              lineHeight: 1.25,
-              maxWidth: '100%',
-              margin: 0,
-              textShadow: '0 1px 0 rgba(255,255,255,0.65)',
-            }}
-          >
-            {coupleNames}
-          </p>
-        </div>
-      )}
       </div>
     </div>
   );
 }
-

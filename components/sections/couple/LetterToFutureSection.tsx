@@ -1,12 +1,13 @@
  'use client';
 
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import SectionHeader from '../../page/SectionHeader';
+import { getSectionCopy } from '@/lib/section-copy';
 import ScrollReveal from '../../ui/ScrollReveal';
 import { useTheme } from '../../builder/ThemeWrapper';
 
 interface LetterToFutureSectionProps {
-  theme: Theme;
+  theme: ThemeKey;
   customerName: string;
   partnerName: string;
   letter?: string;
@@ -83,12 +84,17 @@ export default function LetterToFutureSection({
     <section className="relative py-24 lg:py-32" id="letter-future">
       <div className="max-w-4xl mx-auto px-6 lg:px-8">
         <ScrollReveal animation="fade-up">
-          <SectionHeader
-            icon="💌"
-            title="Letter to Our Future"
-            subtitle={isLocked ? `Available on ${displayDate}` : `Open on ${displayDate}`}
-            theme={theme}
-          />
+          {(() => {
+            const copy = getSectionCopy('letter_future');
+            return (
+              <SectionHeader
+                icon={copy.icon}
+                title={copy.title}
+                subtitle={isLocked ? `Available on ${displayDate}` : `Open on ${displayDate}`}
+                theme={theme}
+              />
+            );
+          })()}
         </ScrollReveal>
 
         <ScrollReveal animation="fade-up" delay={200}>

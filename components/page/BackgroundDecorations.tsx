@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Theme, OccasionType } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
+import { OccasionType } from '@/lib/types';
 import { resolveDecorations } from '@/lib/site-type-utils';
 
 interface BackgroundDecorationsProps {
-  theme: Theme;
+  theme: ThemeKey;
   siteType?: OccasionType;
   className?: string;
 }

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { BuilderStep } from '@/lib/types';
-import { BUILDER_STEPS } from '@/lib/builder-constants';
+import { WIZARD_STEPS } from '@/config/wizardStepsConfig';
 
 interface BuilderStepNavProps {
   currentStep: number;
@@ -15,11 +15,11 @@ export default function BuilderStepNav({
   completedSteps, 
   onStepClick 
 }: BuilderStepNavProps) {
-  const steps = BUILDER_STEPS;
+  const steps = WIZARD_STEPS;
 
   return (
     <nav className="space-y-1">
-      {steps.map((step, index) => {
+      {steps.map((step: any, index: number) => {
         const isActive = currentStep === step.id;
         const isCompleted = completedSteps.includes(step.id);
         const isClickable = step.id <= currentStep || completedSteps.includes(step.id - 1);

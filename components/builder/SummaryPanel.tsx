@@ -2,7 +2,11 @@
 
 import { SiteConfig, CreateOrderPayload, OccasionType } from '@/lib/types';
 import { getOccasionMetadata } from '@/lib/occasion-registry';
-import { THEME_PRESETS, LAYOUT_PRESETS, SECTION_TOGGLES } from '@/lib/builder-constants';
+import { THEME_CONFIG } from '@/config/themeConfig';
+import type { ThemeKey } from '@/config/themeConfig';
+import { DEFAULT_THEME } from '@/config/defaults';
+import { LAYOUT_CONFIG } from '@/config/layoutConfig';
+import { SECTION_CONFIG } from '@/config/sectionConfig';
 
 type LocalForm = Omit<CreateOrderPayload, 'config' | 'photos'> & { photos: File[] };
 
@@ -10,6 +14,8 @@ interface SummaryPanelProps {
   config: SiteConfig;
   form: LocalForm;
   onEditSection?: (step: number) => void;
+  showValidationSummary?: boolean;
+  onValidationStateChange?: (state: { isBlocked: boolean; reasons: string[] }) => void;
 }
 
 // ============================================
@@ -121,15 +127,23 @@ function getSectionContentSummary(
   sectionContent: Record<string, unknown> | undefined,
   form: LocalForm
 ): SectionContentSummary | null {
-  const sectionInfo = SECTION_TOGGLES.find((t) => t.id === sectionId);
+  const sectionInfo = SECTION_CONFIG.find((t) => t.key === sectionId);
   const content = sectionContent?.[sectionId as keyof Record<string, unknown>] as Record<string, unknown> | undefined;
-  
   // Sections handled elsewhere (photos, timeline events)
   if (sectionId === 'gallery' || sectionId === 'timeline') {
     return null;
   }
 
   switch (sectionId) {
+        case 'song': {
+          const songLink = (content?.song_link as string) || '';
+          return {
+            label: sectionInfo?.label || 'Song',
+            icon: '🎵',
+            status: songLink.trim().length > 0 ? 'completed' : 'missing',
+            content: songLink.trim().length > 0 ? 'Song link added' : 'No song link',
+          };
+        }
     // Text content sections
     case 'love_letter': {
       const text = (form.message?.trim() || (content?.content as string) || '').trim();
@@ -138,16 +152,6 @@ function getSectionContentSummary(
         icon: '💌',
         status: text.length > 0 ? 'completed' : 'missing',
         content: text.length > 0 ? truncateText(text, 100) : 'No letter added',
-      };
-    }
-
-    case 'song': {
-      const hasSong = !!form.song_link?.trim();
-      return {
-        label: sectionInfo?.label || 'Song',
-        icon: '🎵',
-        status: hasSong ? 'completed' : 'missing',
-        content: hasSong ? 'Song link added' : 'No song link',
       };
     }
 
@@ -391,9 +395,132 @@ function getSectionContentSummary(
 // SUMMARY PANEL COMPONENT
 // ============================================
 
-export default function SummaryPanel({ config, form, onEditSection }: SummaryPanelProps) {
-  const themePreset = THEME_PRESETS[config.theme] || THEME_PRESETS.romantic_classic;
-  const layoutPreset = LAYOUT_PRESETS.find((p) => p.key === config.layout_preset);
+export default function SummaryPanel({ config, form, onEditSection, showValidationSummary = true, onValidationStateChange }: SummaryPanelProps) {
+    // --- Validation summary logic ---
+    // Collect missing required items grouped by section
+    const missingRequired: { section: string; message: string }[] = [];
+    // Website name
+    if (!form.website_name?.trim()) {
+      missingRequired.push({ section: 'Website', message: 'Website name is required' });
+    }
+    // Occasion/participants
+    if (!form.participants || form.participants.length === 0 || !form.participants[0]?.name?.trim()) {
+      missingRequired.push({ section: 'Participants', message: 'At least one participant name is required' });
+    }
+    if (form.occasion === 'couple' && (!form.participants[1]?.name?.trim())) {
+      missingRequired.push({ section: 'Participants', message: 'Partner name is required for couple occasion' });
+    }
+    // Move occasionMeta and contentSectionsToCheck above their first use
+    const occasionMeta = getOccasionMetadata(form.occasion || 'couple');
+    const contentSectionsToCheck = config.sections?.filter(section =>
+      ['love_letter', 'song', 'our_story', 'first_date', 'special_moments', 'milestones', 
+       'playlist', 'video_memories', 'future_dreams', 'quotes', 'reasons_love_you',
+       'memory_map', 'letter_future', 'gift_section', 'surprise_message'].includes(section)
+    ) || [];
+    if (!form.specialDate) {
+      missingRequired.push({ section: 'Date', message: `${occasionMeta.specialDateLabel} is required` });
+    }
+    // Theme
+    if (!config.theme) {
+      missingRequired.push({ section: 'Style', message: 'Theme is required' });
+    }
+    // Layout/sections
+    if (!config.sections || config.sections.length === 0) {
+      missingRequired.push({ section: 'Page Layout', message: 'At least one section must be enabled' });
+    }
+    // Templates
+    if (config.sections?.includes('home') && !config.home_template) {
+      missingRequired.push({ section: 'Templates', message: 'Home template not selected' });
+    }
+    if (config.sections?.includes('gallery') && !config.gallery_template) {
+      missingRequired.push({ section: 'Templates', message: 'Gallery template not selected' });
+    }
+    if (config.sections?.includes('timeline') && !config.timeline_template) {
+      missingRequired.push({ section: 'Templates', message: 'Timeline template not selected' });
+    }
+    if (config.sections?.includes('song') && !config.song_template) {
+      missingRequired.push({ section: 'Templates', message: 'Song template not selected' });
+    }
+    // Gallery photos
+    if (config.sections?.includes('gallery') && (!form.photos || form.photos.length === 0)) {
+      missingRequired.push({ section: 'Gallery', message: 'At least 1 photo required' });
+    }
+    // Timeline events
+    if (config.sections?.includes('timeline') && (!config.section_content?.timeline || config.section_content.timeline.length === 0)) {
+      missingRequired.push({ section: 'Timeline', message: 'At least 1 event required' });
+    }
+    // Hero message
+    if (config.sections?.includes('love_letter') && !form.message?.trim()) {
+      missingRequired.push({ section: 'Hero', message: 'Tagline or love message missing' });
+    }
+
+    // --- Use config.section_content directly ---
+    const checkSectionContentComplete = (sectionId: string, form: LocalForm): boolean => {
+      const content = config.section_content?.[sectionId as keyof typeof config.section_content];
+      if (sectionId === 'love_letter') {
+        return !!form.message?.trim() || !!(content as { content?: string })?.content;
+      }
+      if (sectionId === 'song') {
+        return !!(content as { song_link?: string })?.song_link?.trim();
+      }
+      if (!content) return false;
+      switch (sectionId) {
+        case 'our_story':
+          return !!(content as { content: string }).content;
+        case 'first_date':
+          return !!(content as { title?: string }).title;
+        case 'special_moments':
+          return ((content as { moments?: unknown[] })?.moments?.length ?? 0) > 0;
+        case 'milestones':
+          return ((content as { milestones?: unknown[] })?.milestones?.length ?? 0) > 0;
+        case 'playlist':
+          return !!(content as { playlistUrl?: string }).playlistUrl;
+        case 'video_memories':
+          return ((content as { videos?: unknown[] })?.videos?.length ?? 0) > 0;
+        case 'future_dreams':
+          return ((content as { dreams?: unknown[] })?.dreams?.length ?? 0) > 0;
+        case 'quotes':
+          return ((content as { quotes?: unknown[] })?.quotes?.length ?? 0) > 0;
+        case 'reasons_love_you':
+          return ((content as { reasons?: unknown[] })?.reasons?.length ?? 0) > 0;
+        case 'memory_map':
+          return ((content as { locations?: unknown[] })?.locations?.length ?? 0) > 0;
+        case 'letter_future':
+          return !!(content as { letter?: string }).letter;
+        case 'gift_section':
+          return ((content as { gifts?: unknown[] })?.gifts?.length ?? 0) > 0;
+        case 'surprise_message':
+          return !!(content as { message?: string }).message;
+        case 'guest_messages':
+          return true; // Guest messages is informational only
+        default:
+          return true;
+      }
+    };
+
+    // Dynamic section content (required only)
+    contentSectionsToCheck.forEach(section => {
+      const isComplete = checkSectionContentComplete(section, form);
+      if (!isComplete) {
+        const sectionInfo = SECTION_CONFIG.find(t => t.key === section);
+        const sectionName = sectionInfo?.label || section;
+        missingRequired.push({ section: sectionName, message: `${sectionName} content required` });
+      }
+    });
+
+    // Group missing required by section
+    const groupedMissing: Record<string, string[]> = {};
+    missingRequired.forEach(({ section, message }) => {
+      if (!groupedMissing[section]) groupedMissing[section] = [];
+      groupedMissing[section].push(message);
+    });
+
+    // Expose validation state to parent if requested
+    if (onValidationStateChange) {
+      onValidationStateChange({ isBlocked: missingRequired.length > 0, reasons: missingRequired.map(m => m.message) });
+    }
+  const themePreset = THEME_CONFIG[config.theme as ThemeKey] || THEME_CONFIG[DEFAULT_THEME];
+  const layoutPreset = LAYOUT_CONFIG.find((p) => p.key === config.layout_preset);
 
   const warnings: string[] = [];
 
@@ -403,17 +530,17 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
   if (config.sections?.includes('gallery') && form.photos.length > 0 && form.photos.length < 3) {
     warnings.push('Consider adding more photos for a better gallery');
   }
-  if (config.sections?.includes('timeline') && (!config.timeline_events || config.timeline_events.length < 2)) {
+  if (config.sections?.includes('timeline') && (!config.section_content?.timeline || config.section_content.timeline.length < 2)) {
     warnings.push('Timeline section needs at least 2 events');
   }
-  if (config.sections?.includes('song') && !form.song_link) {
+  if (config.sections?.includes('song') && !config.section_content?.song?.song_link?.trim()) {
     warnings.push('Song section enabled but no song link added');
   }
   if (form.photos.length > 0 && config.cover_photo_index === undefined && !config.hero?.coverPhotoUrl && config.hero?.coverPhotoIndex === undefined) {
     warnings.push('No cover photo selected - first photo will be used');
   }
 
-  const occasionMeta = getOccasionMetadata(form.occasion || 'couple');
+  // (Removed duplicate occasionMeta)
   const coupleDetailsComplete =
     !!form.website_name && 
     form.participants?.some(p => !!p.name) && 
@@ -458,64 +585,13 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
   const photosComplete = !hasGallerySection || form.photos.length > 0;
   
   // Check timeline events (only required if timeline is enabled)
-  const timelineComplete = !hasTimelineSection || (config.timeline_events && config.timeline_events.length > 0);
+  const timelineComplete = !hasTimelineSection || (config.section_content?.timeline && config.section_content.timeline.length > 0);
   
   // Check dynamic section content
-  const sectionContent = config.section_content;
+  // sectionContent already declared above if needed
   
-  const checkSectionContentComplete = (sectionId: string, form: LocalForm): boolean => {
-    const content = sectionContent?.[sectionId as keyof typeof sectionContent];
-
-    if (sectionId === 'love_letter') {
-      return !!form.message?.trim() || !!(content as { content?: string })?.content;
-    }
-
-    if (sectionId === 'song') {
-      return !!form.song_link?.trim();
-    }
-
-    if (!content) return false;
-    
-    switch (sectionId) {
-      case 'our_story':
-        return !!(content as { content: string }).content;
-      case 'first_date':
-        return !!(content as { title?: string }).title;
-      case 'special_moments':
-        return ((content as { moments?: unknown[] })?.moments?.length ?? 0) > 0;
-      case 'milestones':
-        return ((content as { milestones?: unknown[] })?.milestones?.length ?? 0) > 0;
-      case 'playlist':
-        return !!(content as { playlistUrl?: string }).playlistUrl;
-      case 'video_memories':
-        return ((content as { videos?: unknown[] })?.videos?.length ?? 0) > 0;
-      case 'future_dreams':
-        return ((content as { dreams?: unknown[] })?.dreams?.length ?? 0) > 0;
-      case 'quotes':
-        return ((content as { quotes?: unknown[] })?.quotes?.length ?? 0) > 0;
-      case 'reasons_love_you':
-        return ((content as { reasons?: unknown[] })?.reasons?.length ?? 0) > 0;
-      case 'memory_map':
-        return ((content as { locations?: unknown[] })?.locations?.length ?? 0) > 0;
-      case 'letter_future':
-        return !!(content as { letter?: string }).letter;
-      case 'gift_section':
-        return ((content as { gifts?: unknown[] })?.gifts?.length ?? 0) > 0;
-      case 'surprise_message':
-        return !!(content as { message?: string }).message;
-      case 'guest_messages':
-        return true; // Guest messages is informational only
-      default:
-        return true;
-    }
-  };
   
-  // Check each enabled content section
-  const contentSectionsToCheck = config.sections?.filter(section =>
-    ['love_letter', 'song', 'our_story', 'first_date', 'special_moments', 'milestones', 
-     'playlist', 'video_memories', 'future_dreams', 'quotes', 'reasons_love_you',
-     'memory_map', 'letter_future', 'gift_section', 'surprise_message'].includes(section)
-  ) || [];
+  // (Removed duplicate contentSectionsToCheck)
   
   const allContentSectionsComplete = contentSectionsToCheck.length === 0 || 
     contentSectionsToCheck.every(section => checkSectionContentComplete(section, form));
@@ -538,7 +614,7 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
   contentSectionsToCheck.forEach(section => {
     const isComplete = checkSectionContentComplete(section, form);
     if (!isComplete) {
-      const sectionInfo = SECTION_TOGGLES.find(t => t.id === section);
+      const sectionInfo = SECTION_CONFIG.find(t => t.key === section);
       const sectionName = sectionInfo?.label || section;
       
       switch (section) {
@@ -592,6 +668,34 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
 
   return (
     <div className="space-y-4">
+      {/* Validation summary block */}
+      {showValidationSummary && (
+        <div className={`rounded-xl p-4 mb-2 ${missingRequired.length > 0 ? 'bg-red-50 border border-red-200' : 'bg-emerald-50 border border-emerald-200'}`}>
+          {missingRequired.length > 0 ? (
+            <>
+              <h4 className="text-sm font-semibold text-red-800 mb-2">Missing Required Items</h4>
+              <ul className="space-y-1">
+                {Object.entries(groupedMissing).map(([section, messages]) => (
+                  <li key={section} className="text-xs text-red-700">
+                    <span className="font-semibold">{section}:</span>
+                    <ul className="ml-2 list-disc list-inside">
+                      {messages.map((msg, i) => (
+                        <li key={i}>{msg}</li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <div className="flex items-center gap-2 text-emerald-700 text-sm font-medium">
+              <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              Your website is ready to go!
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Header */}
       <div className="text-center mb-6">
         <h2 className="text-xl font-bold text-slate-800 mb-1">Review Your Love Website</h2>
@@ -712,18 +816,17 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
       >
         <div className="flex flex-wrap gap-2">
           {config.sections?.length > 0 ? (
-            config.sections.map((section) => {
-              const sectionInfo = SECTION_TOGGLES.find((t) => t.id === section);
-              return (
-                <span
-                  key={section}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-xs font-medium text-slate-700"
-                >
-                  <span>{sectionInfo?.icon}</span>
-                  <span>{sectionInfo?.label}</span>
-                </span>
-              );
-            })
+            <>
+              <span className="text-xs text-slate-700 font-medium mr-2">
+                {config.sections.length} section{config.sections.length > 1 ? 's' : ''} selected
+              </span>
+              <span className="text-xs text-slate-500">
+                {config.sections.map((section) => {
+                  const sectionInfo = SECTION_CONFIG.find((t) => t.key === section);
+                  return sectionInfo?.label || section.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                }).join(', ')}
+              </span>
+            </>
           ) : (
             <p className="text-sm text-slate-500">No sections selected</p>
           )}
@@ -747,36 +850,21 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
         onEdit={() => onEditSection?.(5)}
       >
         <div className="space-y-3 text-sm">
-          {config.sections?.includes('home') && (
+          {/* Grouped templates: Home, Timeline, Gallery, Song; others as Default */}
+          {(['home', 'timeline', 'gallery', 'song'] as const).map((key) => (
+            config.sections?.includes(key as any) ? (
+              <div key={key} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white border border-slate-200">
+                <span className="text-slate-700">{key.charAt(0).toUpperCase() + key.slice(1)}</span>
+                <span className="font-medium text-slate-800">{(config as any)[`${key}_template`] || 'Default'}</span>
+              </div>
+            ) : null
+          ))}
+          {/* Others as Default */}
+          {config.sections?.filter(key => !['home', 'timeline', 'gallery', 'song'].includes(key)).length > 0 && (
             <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-white border border-slate-200">
-              <span className="text-slate-700">Home</span>
-              <span className="font-medium text-slate-800">{config.home_template || 'Not selected'}</span>
+              <span className="text-slate-700">Other Sections</span>
+              <span className="font-medium text-slate-800">Default</span>
             </div>
-          )}
-
-          {config.sections?.includes('gallery') && (
-            <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-white border border-slate-200">
-              <span className="text-slate-700">Gallery</span>
-              <span className="font-medium text-slate-800">{config.gallery_template || 'Not selected'}</span>
-            </div>
-          )}
-
-          {config.sections?.includes('timeline') && (
-            <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-white border border-slate-200">
-              <span className="text-slate-700">Timeline</span>
-              <span className="font-medium text-slate-800">{config.timeline_template || 'Not selected'}</span>
-            </div>
-          )}
-
-          {config.sections?.includes('song') && (
-            <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-white border border-slate-200">
-              <span className="text-slate-700">Song</span>
-              <span className="font-medium text-slate-800">{config.song_template || 'Not selected'}</span>
-            </div>
-          )}
-
-          {(!config.sections || config.sections.length === 0) && (
-            <p className="text-slate-500">No sections requiring templates</p>
           )}
         </div>
       </ReviewBlock>
@@ -819,7 +907,7 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
           <div>
             <p className="text-slate-500 text-xs">Timeline Events</p>
             <p className="font-medium text-slate-800">
-              {config.timeline_events?.length || 0} events
+              {config.section_content?.timeline?.length || 0} events
             </p>
           </div>
         </div>
@@ -839,53 +927,59 @@ export default function SummaryPanel({ config, form, onEditSection }: SummaryPan
                 {form.message?.trim() ? 'Added' : 'No message added'}
               </span>
             </div>
-            <div className="flex items-center justify-between text-sm p-2 rounded-lg bg-slate-50">
-              <div className="flex items-center gap-2">
-                <span className="text-base">🎵</span>
-                <span className="font-medium text-slate-700">Song</span>
+            {config.sections?.includes('song') && (
+              <div className="flex items-center justify-between text-sm p-2 rounded-lg bg-slate-50">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🎵</span>
+                  <span className="font-medium text-slate-700">Song</span>
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${config.section_content?.song?.song_link?.trim() ? 'text-emerald-600 bg-emerald-50' : 'text-red-600 bg-red-50'}`}>
+                  {config.section_content?.song?.song_link?.trim() ? 'Added' : 'No song link'}
+                </span>
               </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full ${form.song_link?.trim() ? 'text-emerald-600 bg-emerald-50' : 'text-red-600 bg-red-50'}`}>
-                {form.song_link?.trim() ? 'Added' : 'No song link'}
-              </span>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Dynamic Section Content Summaries */}
+        {/* Grouped Dynamic Section Content Summaries */}
         {config.sections && config.sections.length > 0 && (
           <div className="border-t border-slate-200 pt-4">
             <p className="text-xs font-semibold text-slate-500 mb-3 uppercase tracking-wider">
               Section Content
             </p>
-            <div className="space-y-2">
-              {config.sections.map((sectionId) => {
+            {/* Group completed and empty sections */}
+            {(() => {
+              const completed: string[] = [];
+              const empty: string[] = [];
+              config.sections.forEach((sectionId) => {
                 const summary = getSectionContentSummary(sectionId, config.section_content as Record<string, unknown> | undefined, form);
-                if (!summary) return null;
-                
-                const statusColors = {
-                  completed: 'text-emerald-600 bg-emerald-50',
-                  missing: 'text-red-600 bg-red-50',
-                  attention: 'text-amber-600 bg-amber-50',
-                };
-                
-                return (
-                  <div 
-                    key={sectionId}
-                    className="flex items-center justify-between text-sm p-2 rounded-lg bg-slate-50"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">{summary.icon}</span>
-                      <span className="font-medium text-slate-700">{summary.label}</span>
+                if (!summary) return;
+                if (summary.status === 'completed') {
+                  completed.push(summary.label);
+                } else if (summary.status === 'missing') {
+                  empty.push(summary.label);
+                }
+              });
+              return (
+                <div className="space-y-2">
+                  {completed.length > 0 && (
+                    <div className="flex items-center gap-2 text-xs text-emerald-700">
+                      <span className="font-semibold">Completed:</span>
+                      <span>{completed.join(', ')}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${statusColors[summary.status]}`}>
-                        {summary.content}
-                      </span>
+                  )}
+                  {empty.length > 0 && (
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <span className="font-semibold">No content in:</span>
+                      <span>{empty.join(', ')}</span>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  )}
+                  {completed.length === 0 && empty.length === 0 && (
+                    <span className="text-xs text-slate-400">No dynamic content sections</span>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         )}
       </ReviewBlock>

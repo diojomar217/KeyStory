@@ -49,6 +49,30 @@ export const resolveDisplayName = (
   return primary;
 };
 
+export const resolveParticipantNames = (
+  siteType: OccasionType,
+  participants: Participant[] = [],
+  customerName = '',
+  partnerName = '',
+): { primaryName: string; secondaryName: string; displayName: string } => {
+  const primaryName = participants[0]?.name || customerName || (siteType === 'birthday' ? 'Birthday Star' : 'Your Name');
+  const secondaryName = participants[1]?.name || partnerName || '';
+
+  if (siteType === 'birthday') {
+    return {
+      primaryName,
+      secondaryName: '',
+      displayName: primaryName,
+    };
+  }
+
+  return {
+    primaryName,
+    secondaryName,
+    displayName: secondaryName ? `${primaryName} & ${secondaryName}` : primaryName,
+  };
+};
+
 export const resolveHeroSubtitle = (
   siteType: OccasionType,
   specialDate?: string,
@@ -180,7 +204,7 @@ const optCloudinaryUrl = (url: string, isHero: boolean): string => {
   if (!url.includes(cloudinaryUploadSegment)) return url;
 
   const quality = isHero ? 'auto:good' : 'auto:eco';
-  return url.replace(cloudinaryUploadSegment, `/upload/f_auto,q_${quality},`);
+  return url.replace(cloudinaryUploadSegment, `/upload/f_auto,q_${quality}/`);
 };
 
 export const resolveHeroCoverPhoto = (

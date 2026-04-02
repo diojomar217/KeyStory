@@ -2,24 +2,26 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Theme, GalleryTemplate } from '@/lib/types';
+import type { GalleryTemplate, OccasionType } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../../builder/ThemeWrapper';
 import Lightbox from '../../ui/Lightbox';
 import SectionHeader from '../../page/SectionHeader';
+import { getSectionCopy } from '@/lib/section-copy';
 import ScrollReveal from '../../ui/ScrollReveal';
 
 type Props = {
-  theme: Theme;
+  theme: ThemeKey;
   template: GalleryTemplate;
   photos: string[];
   coverPhotoIndex?: number;
-  siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
+  siteType?: OccasionType;
 };
 
 export default function GallerySection({ theme, template, photos, coverPhotoIndex, siteType = 'couple' }: Props) {
   const styles = useTheme(theme);
   const [currentIndex, setCurrentIndex] = useState(0);
-  
+
   const blurPlaceholder = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxIiBoZWlnaHQ9IjEiPjxzdHlsZT5yZWN0IHdpZHRoOjEwMCU7IGhlaWdodDo1MDAlOyBmaWxsOiNkZGRkZGQ7PC9zdHlsZT48L3N2Zz4=';
   const isShortGallery = photos.length <= 3;
 
@@ -102,24 +104,20 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
   const renderCarousel = () => (
     <div className="relative px-4">
       <ScrollReveal animation="fade-up">
-        <div 
+        <div
           className="relative h-[300px] md:h-[400px] lg:h-[600px] w-full max-w-7xl mx-auto cursor-pointer"
           onClick={() => openLightbox(currentIndex)}
         >
-          <div className="absolute inset-0 rounded-2xl overflow-hidden shadow-2xl">
-            <Image
-              src={photos[currentIndex]}
-              alt={`Photo ${currentIndex + 1}`}
-              fill
-              className="object-cover gallery-zoom-hover"
-              quality={80}
-              placeholder="blur"
-              blurDataURL={blurPlaceholder}
-              loading="lazy"
-              priority
-            />
-          </div>
-          
+          <Image
+            src={photos[currentIndex]}
+            alt={`Photo ${currentIndex + 1}`}
+            fill
+            className="object-cover gallery-zoom-hover"
+            quality={80}
+            placeholder="blur"
+            blurDataURL={blurPlaceholder}
+            priority={currentIndex === 0}
+          />
           {/* Navigation Arrows */}
           {photos.length > 1 && (
             <>
@@ -153,9 +151,8 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
             <button
               key={idx}
               onClick={() => setCurrentIndex(idx)}
-              className={`w-3 h-3 rounded-full transition-all ${
-                idx === currentIndex ? `${styles.accentBg} w-8` : 'bg-gray-300 dark:bg-gray-600'
-              }`}
+              className={`w-3 h-3 rounded-full transition-all ${idx === currentIndex ? `${styles.accentBg} w-8` : 'bg-gray-300 dark:bg-gray-600'
+                }`}
               aria-label={`Go to photo ${idx + 1}`}
             />
           ))}
@@ -209,37 +206,20 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
       <div className="max-w-6xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <ScrollReveal animation="fade-up">
-          <SectionHeader
-            icon={siteType === 'birthday' ? '🎉' : '📸'}
-            title={siteType === 'birthday' ? 'Birthday Memories' : 'Our Memories'}
-            subtitle={siteType === 'birthday' ? 'Celebrating your most joyful moments' : 'Moments we will never forget'}
-            theme={theme}
-          />
+          {(() => {
+            const copy = getSectionCopy('gallery', siteType);
+            return (
+              <SectionHeader
+                icon={copy.icon}
+                title={copy.title}
+                subtitle={copy.subtitle}
+                theme={theme}
+              />
+            );
+          })()}
         </ScrollReveal>
 
-        {/* CTA for short gallery */}
-        {isShortGallery && (
-          <div className="mx-auto mb-8 max-w-3xl px-2">
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white/80 p-5 text-center shadow-sm">
-              <p className="text-sm font-semibold text-slate-700">Looks like your gallery is just getting started.</p>
-              <p className="mt-1 text-xs text-slate-500">Add a few more moments to make your story shine.</p>
-              <div className="mt-4 flex flex-wrap justify-center gap-3">
-                <button
-                  onClick={(e) => e.preventDefault()}
-                  className="rounded-lg bg-teal-500 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-teal-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
-                >
-                  Add memory
-                </button>
-                <button
-                  onClick={(e) => e.preventDefault()}
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
-                >
-                  Edit this piece
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        
 
         {/* Gallery Content */}
         {template === 'grid' && renderGrid()}

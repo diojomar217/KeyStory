@@ -181,36 +181,53 @@ export function getSectionValidationStatus(
     letter_future: 'valid',
     gift_section: 'valid',
     surprise_message: 'valid',
+    wedding_countdown: 'valid',
+    event_details: 'valid',
+    wedding_timeline: 'valid',
+    gift_registry: 'valid',
+    rsvp: 'valid',
+    couple_message: 'valid',
+    graduation_message: 'valid',
+    countdown: 'valid',
+    school_memories: 'valid',
+    achievements: 'valid',
+    future_plans: 'valid',
+    baby_predictions: 'valid',
+    parents_message: 'valid',
+    photo_highlights: 'valid',
+    celebrant_message: 'valid',
+    life_story: 'valid',
+    tributes: 'valid',
+    family_message: 'valid',
+    travel_timeline: 'valid',
+    travel_notes: 'valid',
+    message_letter: 'valid',
   };
   
   // Check gallery
   if (config.sections.includes('gallery')) {
-    if (photos.length === 0) {
-      status.gallery = 'invalid';
-    } else if (photos.length < 3) {
-      status.gallery = 'warning';
-    }
+    status.gallery = photos.length > 0 ? 'valid' : 'invalid';
   }
-  
+
   // Check timeline
   if (config.sections.includes('timeline')) {
-    if (!config.timeline_events || config.timeline_events.length === 0) {
+    const timeline = config.timeline_events || [];
+    if (!timeline.length) {
       status.timeline = 'invalid';
-    } else if (config.timeline_events.length < 3) {
-      status.timeline = 'warning';
+    } else {
+      const invalidEvents = timeline.filter((event) => !event.title?.trim() || !event.date);
+      status.timeline = invalidEvents.length > 0 ? 'invalid' : 'valid';
     }
   }
-  
+
   // Check song
   if (config.sections.includes('song')) {
-    if (songLink.trim()) {
+    if (!songLink.trim()) {
+      status.song = 'warning';
+    } else {
       const isValidYouTube = songLink.includes('youtube.com') || songLink.includes('youtu.be');
       const isValidSpotify = songLink.includes('spotify.com');
-      if (!isValidYouTube && !isValidSpotify) {
-        status.song = 'invalid';
-      }
-    } else {
-      status.song = 'warning'; // Optional but should have a value if enabled
+      status.song = !isValidYouTube && !isValidSpotify ? 'invalid' : 'valid';
     }
   }
   

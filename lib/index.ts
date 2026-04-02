@@ -24,5 +24,5 @@ export {
 export * from './section-validation';
 
 // Constants
-export * from './builder-constants';
+// builder-constants.ts fully deprecated; all constants are now in /config
 

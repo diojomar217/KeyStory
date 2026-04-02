@@ -1,8 +1,10 @@
 'use client';
 
-import type { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import SectionHeader from '../../page/SectionHeader';
+import { getSectionCopy } from '@/lib/section-copy';
 import ScrollReveal from '../../ui/ScrollReveal';
+
 
 interface Gift {
   id: string;
@@ -12,7 +14,7 @@ interface Gift {
 }
 
 interface GiftSectionProps {
-  theme: Theme;
+  theme: ThemeKey;
   partnerName: string;
   gifts?: Gift[];
 }
@@ -34,12 +36,17 @@ export default function GiftSection({
     <section className="relative py-20 md:py-24" id="gifts">
       <div className="max-w-6xl mx-auto px-6 lg:px-8">
         <ScrollReveal animation="fade-up">
-          <SectionHeader
-            icon="🎁"
-            title="Digital Gifts for You"
-            subtitle={`${partnerName}, these are just for you 💕`}
-            theme={theme}
-          />
+          {(() => {
+            const copy = getSectionCopy('gift_section', undefined, { partnerName });
+            return (
+              <SectionHeader
+                icon={copy.icon}
+                title={copy.title}
+                subtitle={copy.subtitle}
+                theme={theme}
+              />
+            );
+          })()}
         </ScrollReveal>
 
         <ScrollReveal animation="fade-up" delay={200}>

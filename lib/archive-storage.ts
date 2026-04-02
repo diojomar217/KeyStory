@@ -19,7 +19,8 @@ export async function uploadArchivePackage(buffer: Buffer, filename: string): Pr
     console.warn('ARCHIVE_PROVIDER=drive not implemented; using local fallback');
   }
 
-  const archiveRoot = path.join(process.cwd(), 'archives');
+  // Use /tmp for writable storage on Vercel (serverless environment)
+  const archiveRoot = path.join('/tmp', 'keystory-archives');
   if (!fs.existsSync(archiveRoot)) fs.mkdirSync(archiveRoot, { recursive: true });
 
   const archivePath = path.join(archiveRoot, filename);

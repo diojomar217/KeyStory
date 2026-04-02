@@ -1,18 +1,19 @@
 'use client';
 
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
+import type { OccasionType } from '@/lib/types';
 import SectionHeader from '../../page/SectionHeader';
 import { useTheme } from '../../builder/ThemeWrapper';
-import { THEME_PRESETS } from '@/lib/builder-constants';
+import { THEME_CONFIG } from '@/config/themeConfig';
 
 interface PlaylistSectionProps {
-  theme: Theme;
-  siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
+  theme: ThemeKey;
+  siteType?: OccasionType;
   songLink?: string;
 }
 
 export default function PlaylistSection({ theme, siteType = 'couple', songLink }: PlaylistSectionProps) {
-  const themeConfig = THEME_PRESETS[theme];
+  const themeConfig = THEME_CONFIG[theme];
   const { colors, typography } = themeConfig;
 
   const getEmbedUrl = (url: string) => {

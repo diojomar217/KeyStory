@@ -1,7 +1,7 @@
 'use client';
-
+import { DEFAULT_THEME } from '@/config/defaults';
 import { Site } from '@/lib/supabase';
-import WebsiteActions from './WebsiteActions';
+import WebsiteActionsDropdown from './WebsiteActionsDropdown';
 
 interface WebsiteRowProps {
   order: Site;
@@ -62,7 +62,7 @@ export default function WebsiteRow({ order, onDelete, selected, onSelect }: Webs
   const coverPhoto = order.config?.media?.photos?.[0] || order.config?.cover_photo || order.photos?.[0] || '';
   const websiteName = order.website_name || order.slug;
 
-  const themeValue = (order.config?.theme as string) || (order.theme as string) || 'romantic_classic';
+  const themeValue = (order.config?.theme as string) || (order.theme as string) || DEFAULT_THEME;
   const status = (order.status || 'active').toLowerCase();
   const expiresAt = order.expires_at ? new Date(order.expires_at) : null;
   const isExpired = expiresAt ? expiresAt.getTime() < Date.now() : false;
@@ -87,42 +87,16 @@ export default function WebsiteRow({ order, onDelete, selected, onSelect }: Webs
           className="h-4 w-4 accent-rose-600"
         />
       </td>
-      {/* Cover Photo */}
-      <td className="px-4 py-3">
-        <div className="w-12 h-12 rounded-md overflow-hidden bg-slate-100 flex-shrink-0">
-          {coverPhoto ? (
-            <img
-              src={typeof coverPhoto === 'string' ? coverPhoto : ''}
-              alt={websiteName}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <HeartIcon className="w-5 h-5 text-rose-300" />
-            </div>
-          )}
+      {/* Website Name + Slug */}
+      <td className="px-4 py-3 max-w-[200px]">
+        <div>
+          <span className="font-semibold text-slate-900 block truncate" title={websiteName}>
+            {websiteName}
+          </span>
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600 mt-1" title={`/${order.slug}`}>
+            /{order.slug}
+          </span>
         </div>
-      </td>
-
-      {/* Website Name */}
-      <td className="px-4 py-3">
-        <span className="font-semibold text-slate-900">
-          {websiteName}
-        </span>
-      </td>
-
-      {/* Site Type */}
-      <td className="px-4 py-3">
-        <span className="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold bg-slate-100 text-slate-700">
-          {order.site_type || 'couple'}
-        </span>
-      </td>
-
-      {/* People */}
-      <td className="px-4 py-3">
-        <span className="font-medium text-slate-700">
-          {peopleDisplay}
-        </span>
       </td>
 
       {/* Theme */}
@@ -163,13 +137,10 @@ export default function WebsiteRow({ order, onDelete, selected, onSelect }: Webs
 
       {/* Actions */}
       <td className="px-4 py-3">
-        <WebsiteActions
-          slug={order.website_name || order.slug}
-          id={order.id!}
-          status={(order.status || 'active').toLowerCase()}
-          expires_at={order.expires_at}
+        <WebsiteActionsDropdown
+          order={order}
           onDelete={onDelete}
-          onStatusChange={() => window.location.reload()}
+          onRefresh={() => window.location.reload()}
         />
       </td>
     </tr>

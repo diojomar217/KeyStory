@@ -1,14 +1,15 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { Theme, GuestMessage, GuestMessageRecord } from '@/lib/types';
+import type { GuestMessage, GuestMessageRecord, OccasionType } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../../builder/ThemeWrapper';
 import { GridSectionLayout } from '../../page/SectionLayouts';
 import ScrollReveal from '../../ui/ScrollReveal';
 
 interface GuestMessagesSectionProps {
-  theme: Theme;
-  siteType?: 'couple' | 'birthday' | 'wedding' | 'proposal' | 'anniversary';
+  theme: ThemeKey;
+  siteType?: OccasionType;
   messages?: GuestMessage[]; // fallback/legacy messages
   approvedMessages?: GuestMessageRecord[]; // from DB
   slug?: string;
@@ -124,21 +125,21 @@ export default function GuestMessagesSection({
       >
       <div className="space-y-4">
         {guestMessages.length === 0 ? (
-          <div className="bg-white dark:bg-zinc-800 rounded-2xl border border-rose-100 dark:border-zinc-700 p-6">
+          <div className={`${styles.card} rounded-2xl border ${styles.cardBorder} p-6`}>
             <p className="text-slate-600 dark:text-zinc-300">No guest messages yet. Be the first to leave one!</p>
           </div>
         ) : (
           guestMessages.map((msg, index) => (
             <ScrollReveal key={msg.id} animation="fade-up" delay={index * 80}>
-              <article className="bg-white dark:bg-zinc-800 rounded-2xl border border-rose-100 dark:border-zinc-700 p-6">
+              <article className={`${styles.card} rounded-2xl border ${styles.cardBorder} p-6`}>
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-full bg-rose-100 dark:bg-zinc-700 flex items-center justify-center text-rose-700 dark:text-rose-300 font-semibold">
+                  <div className={`w-10 h-10 rounded-full ${styles.accentLight} flex items-center justify-center ${styles.accent} font-semibold`}>
                     {msg.name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-rose-900 dark:text-zinc-100 font-semibold">{msg.name}</p>
-                    <p className="text-sm text-rose-500 dark:text-zinc-400">{new Date(msg.created_at).toLocaleDateString()}</p>
-                    <p className="mt-2 text-rose-600 dark:text-zinc-300 whitespace-pre-line">{msg.message}</p>
+                    <p className={`${styles.text} font-semibold`}>{msg.name}</p>
+                    <p className={`text-sm ${styles.textMuted}`}>{new Date(msg.created_at).toLocaleDateString()}</p>
+                    <p className={`mt-2 ${styles.textMuted} whitespace-pre-line`}>{msg.message}</p>
                   </div>
                 </div>
               </article>
@@ -147,7 +148,7 @@ export default function GuestMessagesSection({
         )}
       </div>
 
-      <div className="bg-white dark:bg-zinc-800 rounded-2xl border border-rose-100 dark:border-zinc-700 p-6">
+      <div className={`${styles.card} rounded-2xl border ${styles.cardBorder} p-6`}>
         <h3 className="font-semibold text-slate-800 dark:text-zinc-100">Leave a message</h3>
         <p className="text-sm text-slate-500 dark:text-zinc-400 mb-4">Your note will be reviewed by the site owner before going public.</p>
 
@@ -183,7 +184,7 @@ export default function GuestMessagesSection({
           <button
             type="submit"
             disabled={status === 'loading'}
-            className="w-full inline-flex justify-center items-center rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 text-white py-2 px-4 text-sm font-semibold hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-rose-300 disabled:opacity-50"
+            className={`w-full inline-flex justify-center items-center rounded-xl bg-gradient-to-r ${styles.gradient} text-white py-2 px-4 text-sm font-semibold hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-rose-300 disabled:opacity-50`}
           >
             {status === 'loading' ? 'Submitting...' : 'Submit Message'}
           </button>

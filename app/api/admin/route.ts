@@ -1,6 +1,31 @@
+import { DEFAULT_THEME } from '@/config/defaults';
+import { enforceRateLimit } from '@/lib/reliability/rate-limit';
+import { captureError } from '@/lib/reliability/monitoring';
+import { recordAdminAudit } from '@/lib/reliability/audit';
+import { enqueueJob } from '@/lib/reliability/job-queue';
+import { featureFlags } from '@/lib/reliability/feature-flags';
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, Site } from '@/lib/supabase';
+import { createWebsite as insertSite, updateWebsite as updateSite, deleteWebsite as deleteSite, listWebsites as getSites, getWebsiteById as getSiteById } from '@/lib/db/websites';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import { supabase, Site } from '@/lib/supabase';
+import { createHash } from 'crypto';
+import { getIdempotencyReplay, saveIdempotencyResult } from '@/lib/db/idempotency';
+import { validateAndNormalizeSiteConfig } from '@/lib/site-config-validation';
+
+const normalizeUniqueTextArray = (input: unknown[]): string[] => {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const item of input) {
+    if (typeof item !== 'string') continue;
+    const normalized = item.trim();
+    if (!normalized || seen.has(normalized)) continue;
+    seen.add(normalized);
+    result.push(normalized);
+  }
+
+  return result;
+};
 
 const normalizePasswordConfig = async (siteConfig: any, passwordInput?: string): Promise<any> => {
   if (!siteConfig) siteConfig = {};
@@ -33,38 +58,72 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
 
-  if (id) {
-    const { data, error } = await supabase.from('sites').select('*').eq('id', id).single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ site: data });
+  try {
+    if (id) {
+      const site = await getSiteById(id);
+      return NextResponse.json({ site });
+    }
+    const orders = await getSites();
+    return NextResponse.json({ orders });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
-
-  const { data, error } = await supabase.from('sites').select('*').order('created_at', { ascending: false });
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ orders: data });
 }
 
 // POST - Create new order (legacy, for backwards compatibility)
 export async function POST(req: NextRequest) {
   try {
     const { id, status } = await req.json();
-    const { error } = await supabase.from('sites').update({ status }).eq('id', id);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    await updateSite({ id, status });
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch (err: any) {
     console.error('POST error:', err);
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    return NextResponse.json({ error: err.message || 'Invalid request' }, { status: 400 });
   }
 }
 
 // PUT - Update existing order
 export async function PUT(req: NextRequest) {
+  const limited = enforceRateLimit(req, {
+    keyPrefix: 'api:admin:put',
+    limit: 40,
+    windowMs: 60 * 1000,
+  });
+  if (limited) return limited;
+
   try {
     const body = await req.json();
+    const idempotencyKey = req.headers.get('idempotency-key')?.trim() || '';
+    const requestHash = createHash('sha256').update(JSON.stringify(body || {})).digest('hex');
+
+    if (idempotencyKey) {
+      const replay = await getIdempotencyReplay('admin:update-site', idempotencyKey, requestHash);
+      if (replay) {
+        return NextResponse.json(replay.response, { status: replay.statusCode });
+      }
+    }
+
     const { id, ...updates } = body;
 
     if (!id) {
       return NextResponse.json({ message: 'Order ID is required' }, { status: 400 });
+    }
+
+    const existing = await getSiteById(id);
+    const currentRevision = Number(existing?.config?.meta?.revision || 0);
+    const expectedRevision =
+      typeof body.expectedRevision === 'number' ? body.expectedRevision :
+      typeof updates.config?.meta?.revision === 'number' ? updates.config.meta.revision :
+      null;
+
+    if (expectedRevision !== null && expectedRevision !== currentRevision) {
+      return NextResponse.json(
+        {
+          message: 'Update conflict. Please refresh and retry.',
+          currentRevision,
+        },
+        { status: 409 },
+      );
     }
 
     // Build update object with normalized config in JSONB
@@ -93,6 +152,8 @@ export async function PUT(req: NextRequest) {
       }
     }
 
+    const uniqueProcessedPhotos = normalizeUniqueTextArray(processedPhotos);
+
     let heroCoverPhotoUrl: string | undefined = updates.config?.hero?.coverPhotoUrl;
     let heroUploadWarning: string | null = null;
 
@@ -110,13 +171,13 @@ export async function PUT(req: NextRequest) {
     }
 
     const heroIndex = updates.config?.hero?.coverPhotoIndex;
-    if (typeof heroIndex === 'number' && processedPhotos[heroIndex]) {
-      heroCoverPhotoUrl = processedPhotos[heroIndex];
+    if (typeof heroIndex === 'number' && uniqueProcessedPhotos[heroIndex]) {
+      heroCoverPhotoUrl = uniqueProcessedPhotos[heroIndex];
     }
 
     const legacyCoverIndex = updates.config?.cover_photo_index;
-    if (!heroCoverPhotoUrl && typeof legacyCoverIndex === 'number' && processedPhotos[legacyCoverIndex]) {
-      heroCoverPhotoUrl = processedPhotos[legacyCoverIndex];
+    if (!heroCoverPhotoUrl && typeof legacyCoverIndex === 'number' && uniqueProcessedPhotos[legacyCoverIndex]) {
+      heroCoverPhotoUrl = uniqueProcessedPhotos[legacyCoverIndex];
     }
 
     const updateObj: Partial<Site> = {
@@ -132,10 +193,10 @@ export async function PUT(req: NextRequest) {
           secondary: updates.partner_name || updates.config?.people?.secondary,
         },
         dates: {
-          special_date: updates.specialDate || updates.anniversary_date || updates.config?.dates?.special_date,
+          special_date: updates.specialDate || updates.config?.dates?.special_date,
         },
         occasion: updates.occasion || updates.site_type || updates.config?.occasion || undefined,
-        theme: updates.config?.theme || updates.theme || 'romantic_classic',
+        theme: updates.config?.theme || updates.theme || DEFAULT_THEME,
         sections: updates.config?.sections || updates.sections || [],
         templates: {
           home: updates.config?.home_template || updates.home_template,
@@ -143,12 +204,12 @@ export async function PUT(req: NextRequest) {
           timeline: updates.config?.timeline_template || updates.timeline_template,
         },
         media: {
-          photos: processedPhotos,
+          photos: uniqueProcessedPhotos,
           song_link: updates.song_link || updates.config?.media?.song_link || '',
           song_autoplay: updates.song_autoplay ?? updates.config?.media?.song_autoplay ?? false,
         },
         timeline: updates.config?.timeline || updates.config?.timeline_events || updates.timeline_events || [],
-        content: updates.config?.content || updates.config?.section_content || {},
+        section_content: updates.config?.section_content || {},
         message: updates.message || updates.config?.message || '',
         tagline: updates.tagline || updates.config?.tagline || '',
         hero: {
@@ -168,7 +229,22 @@ export async function PUT(req: NextRequest) {
     //   updateObj.theme = configUpdates.theme;
     // }
 
-    updateObj.config = await normalizePasswordConfig(updateObj.config, (updates as any).password_input);
+    const nextRevision = currentRevision + 1;
+    updateObj.config = {
+      ...updateObj.config,
+      meta: {
+        ...(updateObj.config?.meta || {}),
+        revision: nextRevision,
+        updatedAt: new Date().toISOString(),
+      },
+    };
+
+    const validation = validateAndNormalizeSiteConfig(updateObj.config);
+    if (validation.errors.length > 0) {
+      return NextResponse.json({ message: validation.errors.join('; ') }, { status: 400 });
+    }
+
+    updateObj.config = await normalizePasswordConfig(validation.config, (updates as any).password_input);
 
     const { data, error } = await supabase
       .from('sites')
@@ -194,20 +270,65 @@ export async function PUT(req: NextRequest) {
       console.warn('Revalidation failed in admin update:', err);
     }
 
-    return NextResponse.json({
+    const responsePayload = {
       success: true,
       order: data,
       warnings: [
         ...photoUploadWarnings,
         ...(heroUploadWarning ? [heroUploadWarning] : []),
       ],
+    };
+
+    if (
+      featureFlags.retryFailedUploads() &&
+      featureFlags.backgroundJobQueue() &&
+      id &&
+      responsePayload.warnings.length > 0
+    ) {
+      try {
+        await enqueueJob('retry_site_media_upload', { siteId: id });
+      } catch (queueError) {
+        await captureError('admin-update-enqueue-retry', queueError, { id });
+      }
+    }
+
+    if (idempotencyKey) {
+      await saveIdempotencyResult('admin:update-site', idempotencyKey, requestHash, 200, responsePayload);
+    }
+
+    await recordAdminAudit(req, {
+      action: 'admin.site.update',
+      targetType: 'site',
+      targetId: id,
+      success: true,
+      details: {
+        warnings: responsePayload.warnings,
+      },
     });
+
+    return NextResponse.json(responsePayload);
   } catch (err: any) {
-    const body = req.bodyUsed ? 'body already read' : 'body not read yet';
-    console.error('PUT /api/admin failed:', { 
-      id: body !== 'body not read yet' ? (await req.json()).id : 'unknown', 
-      message: err.message, 
-      stack: err.stack 
+    let idForLog = 'unknown';
+    if (!req.bodyUsed) {
+      try {
+        const parsed = await req.json();
+        idForLog = parsed?.id || 'unknown';
+      } catch {}
+    }
+    await captureError('admin-put', err, { id: idForLog });
+    await recordAdminAudit(req, {
+      action: 'admin.site.update',
+      targetType: 'site',
+      targetId: idForLog,
+      success: false,
+      details: {
+        error: err.message || 'unknown error',
+      },
+    });
+    console.error('PUT /api/admin failed:', {
+      id: idForLog,
+      message: err.message,
+      stack: err.stack
     });
     return NextResponse.json({ 
       message: err.message || 'Update failed - check image sizes and try fewer photos' 
@@ -217,6 +338,13 @@ export async function PUT(req: NextRequest) {
 
 // DELETE - Delete an order
 export async function DELETE(req: NextRequest) {
+  const limited = enforceRateLimit(req, {
+    keyPrefix: 'api:admin:delete',
+    limit: 20,
+    windowMs: 60 * 1000,
+  });
+  if (limited) return limited;
+
   try {
     const { id } = await req.json();
 
@@ -224,14 +352,76 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ message: 'Order ID is required' }, { status: 400 });
     }
 
-    const { error } = await supabase.from('sites').delete().eq('id', id);
+    // Fetch the site config before deleting
+    const { data: site, error: fetchError } = await supabase.from('sites').select('config').eq('id', id).single();
+    if (fetchError) {
+      return NextResponse.json({ message: fetchError.message }, { status: 500 });
+    }
 
+    // Extract and delete Cloudinary images
+    if (site && site.config) {
+      // Inline extractMediaUrls and getCloudinaryPublicId from archiver.ts
+      function extractMediaUrls(config: any): string[] {
+        const results: string[] = [];
+        function recurse(obj: any): void {
+          if (!obj || typeof obj !== 'object') return;
+          if (Array.isArray(obj)) { obj.forEach(recurse); return; }
+          Object.values(obj).forEach((value) => {
+            if (typeof value === 'string' && value.includes('cloudinary.com')) {
+              results.push(value);
+            } else if (typeof value === 'object') {
+              recurse(value);
+            }
+          });
+        }
+        recurse(config);
+        return Array.from(new Set(results));
+      }
+      function getCloudinaryPublicId(url: string): string | null {
+        try {
+          const parsed = new URL(url);
+          const parts = parsed.pathname.split('/').filter(Boolean);
+          const idx = parts.findIndex((part) => /^v\d+$/.test(part));
+          const idParts = idx >= 0 ? parts.slice(idx + 1) : parts;
+          const publicId = idParts.join('/').replace(/\.[^.]+$/, '');
+          return publicId;
+        } catch { return null; }
+      }
+      const mediaUrls = extractMediaUrls(site.config);
+      const cloudinary = (await import('@/lib/cloudinary')).default;
+      for (const mediaUrl of mediaUrls) {
+        const publicId = getCloudinaryPublicId(mediaUrl);
+        if (!publicId) continue;
+        try {
+          await cloudinary.uploader.destroy(publicId, { invalidate: true });
+        } catch (err) {
+          console.warn('Failed to remove Cloudinary media', publicId, err);
+        }
+      }
+    }
+
+    // Now delete the site record
+    const { error } = await supabase.from('sites').delete().eq('id', id);
     if (error) {
       return NextResponse.json({ message: error.message }, { status: 500 });
     }
 
+    await recordAdminAudit(req, {
+      action: 'admin.site.delete',
+      targetType: 'site',
+      targetId: id,
+      success: true,
+    });
+
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch (err: any) {
+    await captureError('admin-delete', err);
+    await recordAdminAudit(req, {
+      action: 'admin.site.delete',
+      targetType: 'site',
+      success: false,
+      details: { error: err.message || 'unknown error' },
+    });
     console.error('DELETE error:', err);
     return NextResponse.json({ message: 'Invalid request' }, { status: 400 });
   }

@@ -1,6 +1,7 @@
+import { DEFAULT_THEME } from '@/config/defaults';
 // app/api/order.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, Site } from '@/lib/supabase';
+import { createWebsite as insertSite } from '@/lib/db/websites';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import { generateQRCode } from '@/lib/qrcode';
 import { v4 as uuidv4 } from 'uuid';
@@ -48,7 +49,8 @@ export async function POST(req: NextRequest) {
   // Generate QR code with safe fallback
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://your-domain.vercel.app';
   const coupleUrl = `${baseUrl}/site/${websiteSlug}`;
-  const qrCodeUrl = await generateQRCode(coupleUrl);
+  const qrRedirectUrl = `${baseUrl}/r/${websiteSlug}`;
+  const qrCodeUrl = await generateQRCode(qrRedirectUrl);
 
   const siteConfig = {
     ...(data.config || {}),
@@ -57,9 +59,9 @@ export async function POST(req: NextRequest) {
       secondary: data.partner_name || data.participants?.[1]?.name || '',
     },
     dates: {
-      special_date: data.specialDate || data.anniversary_date || '',
+      special_date: data.specialDate || '',
     },
-    theme: data.config?.theme || 'romantic_classic',
+    theme: data.config?.theme || DEFAULT_THEME,
     sections: data.config?.sections || [],
     templates: {
       home: data.config?.home_template,
@@ -71,13 +73,13 @@ export async function POST(req: NextRequest) {
       song_link: data.song_link || '',
     },
     timeline: data.config?.timeline_events || [],
-    content: data.config?.section_content || {},
+    section_content: data.config?.section_content || {},
     message: data.message || '',
     tagline: data.tagline || data.config?.tagline || '',
   };
 
-  const { data: site, error } = await supabase.from('sites').insert([
-    {
+  try {
+    await insertSite({
       slug: baseSlug,
       website_name: websiteSlug,
       site_type: data.occasion || 'couple',
@@ -86,12 +88,9 @@ export async function POST(req: NextRequest) {
       archived_at: null,
       qr_code_url: qrCodeUrl,
       config: siteConfig,
-    },
-  ]).select().single();
-
-  if (error) {
+    });
+    return NextResponse.json({ slug: websiteSlug, coupleUrl, qrCodeUrl });
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-
-  return NextResponse.json({ slug: websiteSlug, coupleUrl, qrCodeUrl });
 }

@@ -4,24 +4,7 @@
 // THEME TYPES - 16 Theme Presets
 // ============================================
 
-export type Theme =
-  | 'romantic_classic'
-  | 'cute_pastel'
-  | 'minimal_modern'
-  | 'dark_elegant'
-  | 'soft_pastel'
-  | 'elegant_rose_gold'
-  | 'vintage_love_letter'
-  | 'scrapbook_memories'
-  | 'wedding_style'
-  | 'floral_romance'
-  | 'dreamy_pink'
-  | 'luxury_gold'
-  | 'minimal_white'
-  | 'cute_kawaii'
-  | 'soft_lavender'
-  | 'photo_focus'
-  | 'colorful_celebration';
+// Theme type removed. Use ThemeKey from '@/config/themeConfig' everywhere.
 
 // ============================================
 // SECTION TYPES - Refactored to Remove Redundancy
@@ -58,7 +41,28 @@ export type Section =
   | 'guest_messages'
   | 'letter_future'
   | 'gift_section'
-  | 'surprise_message';
+  | 'surprise_message'
+  | 'wedding_countdown'
+  | 'event_details'
+  | 'wedding_timeline'
+  | 'gift_registry'
+  | 'rsvp'
+  | 'couple_message'
+  | 'graduation_message'
+  | 'countdown'
+  | 'school_memories'
+  | 'achievements'
+  | 'future_plans'
+  | 'baby_predictions'
+  | 'parents_message'
+  | 'photo_highlights'
+  | 'celebrant_message'
+  | 'life_story'
+  | 'tributes'
+  | 'family_message'
+  | 'travel_timeline'
+  | 'travel_notes'
+  | 'message_letter';
 
 // Gallery layout options - replaces separate gallery sections
 export type GalleryLayout = 'grid' | 'polaroid' | 'carousel';
@@ -118,15 +122,7 @@ export interface ThemePresetStyle {
   shadowIntensity: 'none' | 'light' | 'medium' | 'heavy';
 }
 
-export interface ThemePresetConfig {
-  key: Theme;
-  label: string;
-  description: string;
-  colors: ThemePresetColors;
-  typography: ThemePresetTypography;
-  style: ThemePresetStyle;
-  preview: string[]; // Color hex codes for preview
-}
+// ThemePresetConfig is now defined in config/themeConfig.ts. Use ThemeDefinition from there.
 
 // Layout Preset Configuration
 export interface LayoutPresetConfig {
@@ -161,43 +157,36 @@ export interface Participant {
 }
 
 export interface SiteConfig {
-  occasion: OccasionType; // NEW: Core occasion type
-  theme: Theme;
+  occasion: OccasionType;
+  theme: string;
   layout_preset?: LayoutPreset;
   sections: Section[];
-  section_toggles?: Record<Section, boolean>; // Enable/disable individual sections
-  section_templates?: Record<Section, string>;
-  // Legacy template fields (for backward compatibility)
-  home_template?: HomeTemplate;
-  gallery_template?: GalleryTemplate;
+  section_toggles?: Record<Section, boolean>;
+  section_templates?: Partial<Record<Section, string>>;
+  templates?: Partial<Record<Section, string>>;
   gallery_layout?: GalleryLayout;
-  timeline_template?: TimelineTemplate;
-  song_template?: SongTemplate;
   timeline_events?: TimelineEvent[];
   cover_photo_index?: number;
   tagline?: string;
   message?: string;
-  // NEW: Generalized fields (backward compat - populate from legacy)
   participants?: Participant[];
   specialDate?: string;
-  // Media settings for components like song and gallery
   media?: {
     photos?: string[];
     song_link?: string;
     song_autoplay?: boolean;
   };
-  // Password protection config
   password?: {
     enabled: boolean;
     hash?: string;
   };
-  // Temporary plain password field (never persisted)
   password_input?: string;
-
-  // Dynamic section content for each enabled section
   section_content?: SectionContentMap;
-
-  // QR keepsake design configuration
+  // Legacy template fields (use section_templates instead)
+  home_template?: string;
+  gallery_template?: string;
+  timeline_template?: string;
+  song_template?: string;
   qr?: {
     color?: string;
     background?: string;
@@ -207,18 +196,20 @@ export interface SiteConfig {
     subtitle?: string;
     showNames?: boolean;
   };
-
-  // Premium section divider style (site-level)
+  qr_data_url?: string;
+  fulfillment?: {
+    status?: 'draft' | 'paid' | 'in_production' | 'shipped' | 'delivered' | 'activated';
+    note?: string;
+    tracking_number?: string;
+    courier?: string;
+    updated_at?: string;
+  };
   section_divider_style?: 'none' | 'standard' | 'gradient' | 'dots';
-
-  // Dedicated hero cover photo settings (new)
   hero?: {
     coverPhotoUrl?: string;
     publicId?: string;
     coverPhotoIndex?: number;
   };
-
-  // Preset information selected during create flow
   preset?: {
     id: string;
     label: string;
@@ -259,7 +250,7 @@ export interface BuilderFormData {
   website_name: string;
   occasion: OccasionType;
   participants: Participant[]; // Replaces customer_name/partner_name
-  specialDate: string;         // Replaces anniversary_date
+  specialDate: string;         // Canonical date field
   message: string;
   tagline?: string;
   song_link?: string;
@@ -268,7 +259,6 @@ export interface BuilderFormData {
   // Legacy for migration
   customer_name?: string;
   partner_name?: string;
-  anniversary_date?: string;
 }
 
 // Preview State
@@ -291,7 +281,6 @@ export interface CreateOrderPayload {
   // Legacy for migration
   customer_name?: string;
   partner_name?: string;
-  anniversary_date?: string;
   password_input?: string;
   expires_at?: string;
 }
@@ -422,22 +411,52 @@ export interface RelationshipStats {
 
 export interface SectionContentMap {
   love_letter?: {
-    content: string;
+    text?: string;
+    content?: string;
   };
   our_story?: {
-    content: string;
+    text?: string;
+    content?: string;
   };
+  timeline?: TimelineEvent[];
   first_date?: {
-    title: string;
-    date: string;
-    location: string;
-    description: string;
+    content?: string;
+    title?: string;
+    date?: string;
+    location?: string;
+    description?: string;
   };
   special_moments?: {
-    moments: SpecialMoment[];
+    content?: string;
+    moments?: SpecialMoment[];
   };
   milestones?: {
-    milestones: Milestone[];
+    content?: string;
+    milestones?: Milestone[];
+  };
+  travel_notes?: {
+    content?: string;
+  };
+  life_story?: {
+    content?: string;
+  };
+  message_letter?: {
+    content?: string;
+  };
+  couple_message?: {
+    content?: string;
+  };
+  family_message?: {
+    content?: string;
+  };
+  parents_message?: {
+    content?: string;
+  };
+  celebrant_message?: {
+    content?: string;
+  };
+  graduation_message?: {
+    content?: string;
   };
   playlist?: {
     playlistUrl: string;
@@ -446,17 +465,41 @@ export interface SectionContentMap {
   video_memories?: {
     videos: VideoMemory[];
   };
+  song?: {
+    song_link: string;
+    song_autoplay?: boolean;
+  };
   future_dreams?: {
+    dreams: FutureDream[];
+  };
+  future_plans?: {
     dreams: FutureDream[];
   };
   quotes?: {
     quotes: LoveQuote[];
   };
+  tributes?: {
+    quotes: LoveQuote[];
+  };
+  baby_predictions?: {
+    quotes: LoveQuote[];
+  };
   birthday_message?: {
-    content: string;
+    text?: string;
+    content?: string;
   };
   birthday_wishes?: {
     quotes: LoveQuote[];
+  };
+  birthday_timeline?: TimelineEvent[];
+  school_memories?: {
+    events: TimelineEvent[];
+  };
+  achievements?: {
+    events: TimelineEvent[];
+  };
+  travel_timeline?: {
+    events: TimelineEvent[];
   };
   party_details?: {
     location?: string;
@@ -464,8 +507,20 @@ export interface SectionContentMap {
     time?: string;
     dressCode?: string;
   };
+  event_details?: {
+    location?: string;
+    date?: string;
+    time?: string;
+    dressCode?: string;
+  };
   gift_wishlist?: {
     items: string[];
+  };
+  gift_registry?: {
+    items: string[];
+  };
+  photo_highlights?: {
+    photos: string[];
   };
   reasons_love_you?: {
     reasons: ReasonILoveYou[];
@@ -486,6 +541,11 @@ export interface SectionContentMap {
   };
   guest_messages?: {
     enabled: boolean;
+    messages?: GuestMessage[];
+  };
+  rsvp?: {
+    deadline?: string;
+    note?: string;
     messages?: GuestMessage[];
   };
 }

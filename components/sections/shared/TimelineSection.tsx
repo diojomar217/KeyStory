@@ -2,20 +2,25 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Theme, TimelineTemplate, TimelineEvent } from '@/lib/types';
+import type { TimelineTemplate, TimelineEvent } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../../builder/ThemeWrapper';
 import SectionHeader from '../../page/SectionHeader';
+import { getSectionCopy } from '@/lib/section-copy';
+import type { SiteTypeKey } from '@/config/siteTypeConfig';
 import ScrollReveal from '../../ui/ScrollReveal';
 import Lightbox from '../../ui/Lightbox';
 
+
 type Props = {
-  theme: Theme;
+  theme: ThemeKey;
   template: TimelineTemplate;
   events: TimelineEvent[];
   variant?: 'default' | 'alt';
+  siteType?: string;
 };
 
-export default function TimelineSection({ theme, template, events, variant = 'default' }: Props) {
+export default function TimelineSection({ theme, template, events, variant = 'default', siteType }: Props) {
   const styles = useTheme(theme);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -105,7 +110,7 @@ export default function TimelineSection({ theme, template, events, variant = 'de
         <div className="absolute left-5 top-5 z-10">
           <div className={`
             w-7 h-7 rounded-full flex items-center justify-center
-            ${styles.bg.split(' ')[0]} border-4 border-white/20 ${accents.dot}
+            ${(styles && styles.bg ? styles.bg.split(' ')[0] : '')} border-4 border-white/20 ${accents.dot}
             ${isSpecial ? accents.dotGlow : 'shadow-lg'}
             transition-all duration-300
             ${isSpecial ? 'scale-115' : 'hover:scale-115'}
@@ -315,7 +320,7 @@ export default function TimelineSection({ theme, template, events, variant = 'de
               <div className="absolute -left-[14px] top-0">
                 <div className={`
                   w-7 h-7 rounded-full flex items-center justify-center
-                  ${styles.bg.split(' ')[0]} border-4 border-white/20 ${accents.dot}
+                  ${styles && styles.bg ? styles.bg.split(' ')[0] : (() => { console.warn('[TimelineSection] styles.bg is undefined', { styles }); return ''; })()} border-4 border-white/20 ${accents.dot}
                   ${event.isSpecial ? accents.dotGlow : 'shadow-lg'}
                   transition-all duration-300
                   ${event.isSpecial ? 'scale-115' : 'hover:scale-115'}
@@ -411,12 +416,17 @@ export default function TimelineSection({ theme, template, events, variant = 'de
       <div className="max-w-5xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <ScrollReveal animation="fade-up">
-          <SectionHeader
-            icon="📖"
-            title="Our Love Story"
-            subtitle="The beautiful journey of us"
-            theme={theme}
-          />
+          {(() => {
+            const copy = getSectionCopy('timeline', siteType as SiteTypeKey | undefined);
+            return (
+              <SectionHeader
+                icon={copy.icon}
+                title={copy.title}
+                subtitle={copy.subtitle}
+                theme={theme}
+              />
+            );
+          })()}
         </ScrollReveal>
         
         {/* Timeline Content */}

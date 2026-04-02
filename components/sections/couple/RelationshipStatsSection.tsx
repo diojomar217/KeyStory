@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import SectionHeader from '../../page/SectionHeader';
+import { getSectionCopy } from '@/lib/section-copy';
 import { useTheme } from '../../builder/ThemeWrapper';
-import { THEME_PRESETS } from '@/lib/builder-constants';
+import { THEME_CONFIG } from '@/config/themeConfig';
 
 interface RelationshipStatsSectionProps {
-  theme: Theme;
+  theme: ThemeKey;
   anniversaryDate: string;
 }
 
@@ -20,7 +21,7 @@ interface Stats {
 }
 
 export default function RelationshipStatsSection({ theme, anniversaryDate }: RelationshipStatsSectionProps) {
-  const themeConfig = THEME_PRESETS[theme];
+  const themeConfig = THEME_CONFIG[theme];
   const { colors, typography } = themeConfig;
   
   const [stats, setStats] = useState<Stats>({
@@ -64,12 +65,17 @@ export default function RelationshipStatsSection({ theme, anniversaryDate }: Rel
       className="py-16 px-4"
     >
       <div className="max-w-4xl mx-auto">
-        <SectionHeader
-          icon="📊"
-          title="Our Journey Together"
-          subtitle="Stats that show how much time we've shared"
-          theme={theme}
-        />
+        {(() => {
+          const copy = getSectionCopy('relationship_stats');
+          return (
+            <SectionHeader
+              icon={copy.icon}
+              title={copy.title}
+              subtitle={copy.subtitle}
+              theme={theme}
+            />
+          );
+        })()}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {statItems.map((item) => (
             <div

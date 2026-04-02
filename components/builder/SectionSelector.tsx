@@ -1,7 +1,9 @@
 'use client';
 
 import { Section } from '@/lib/types';
-import { SECTION_TOGGLES } from '@/lib/builder-constants';
+import { SECTION_CONFIG } from '@/config/sectionConfig';
+import { getAllowedSections, getDefaultSelections } from '@/lib/config-helpers';
+import type { SiteTypeKey } from '@/config/siteTypeConfig';
 import { getSectionMetadata, getRelatedSectionRecommendations } from '@/lib/section-registry';
 import { OccasionType } from '@/lib/occasion-registry';
 import React, { useState } from 'react';
@@ -111,7 +113,7 @@ function SortableSectionCard({ section, isEnabled, onToggle }: SortableSectionCa
     transition,
   };
 
-  const sectionInfo = SECTION_TOGGLES.find(t => t.id === section);
+  const sectionInfo = SECTION_CONFIG.find(t => t.key === section);
   const isRequired = sectionInfo?.required || false;
 
   return (
@@ -211,7 +213,7 @@ interface LayoutPreviewProps {
 
 function LayoutPreview({ sections }: LayoutPreviewProps) {
   const enabledSections = sections.filter(s => {
-    const info = SECTION_TOGGLES.find(t => t.id === s);
+    const info = SECTION_CONFIG.find(t => t.key === s);
     return info && !info.required;
   });
 
@@ -224,7 +226,7 @@ function LayoutPreview({ sections }: LayoutPreviewProps) {
       
       <div className="space-y-1">
         {sections.map((section, index) => {
-          const info = SECTION_TOGGLES.find(t => t.id === section);
+          const info = SECTION_CONFIG.find(t => t.key === section);
           const isRequired = info?.required;
           
           return (
@@ -273,31 +275,26 @@ function LayoutPreview({ sections }: LayoutPreviewProps) {
 // MAIN SECTION SELECTOR COMPONENT
 // ============================================
 
+
 type Props = {
   value: Section[];
   onChange: (sections: Section[]) => void;
-  occasion?: OccasionType;
+  siteType: string;
 };
 
-export default function SectionSelector({ value, onChange, occasion = 'couple' }: Props) {
+export default function SectionSelector({ value, onChange, siteType }: Props) {
   const [showAllSections, setShowAllSections] = useState(false);
 
-  // Get all available sections by occasion
-  const allSections = SECTION_TOGGLES
-    .map((t) => t.id)
-    .filter((section) => {
-      const metadata = getSectionMetadata(section);
-      return metadata?.supportedOccasions?.includes(occasion);
-    });
-  
-  // Get currently enabled sections (with required sections first)
-  const requiredSections = allSections.filter(id => {
-    const info = SECTION_TOGGLES.find(t => t.id === id);
+  // Get allowed sections for the selected site type
+  const allSections: Section[] = getAllowedSections(siteType as SiteTypeKey);
+
+  // Get required/optional sections from allowed
+  const requiredSections = allSections.filter((id: Section) => {
+    const info = SECTION_CONFIG.find(t => t.key === id);
     return info?.required && (value.includes(id) || info.defaultEnabled);
   });
-  
-  const optionalSections = allSections.filter(id => {
-    const info = SECTION_TOGGLES.find(t => t.id === id);
+  const optionalSections = allSections.filter((id: Section) => {
+    const info = SECTION_CONFIG.find(t => t.key === id);
     return !info?.required;
   });
 
@@ -312,7 +309,7 @@ export default function SectionSelector({ value, onChange, occasion = 'couple' }
 
   // Combine for display: required + enabled optional (in order)
   const displaySections = [
-    ...requiredSections.filter(r => value.includes(r)),
+    ...requiredSections.filter((r: Section) => value.includes(r)),
     ...enabledOptionalSections
   ];
 
@@ -338,7 +335,7 @@ export default function SectionSelector({ value, onChange, occasion = 'couple' }
       const newOrder = arrayMove(displaySections, oldIndex, newIndex);
       
       // Keep required sections at the top, only reorder optional ones
-      const requiredInValue = requiredSections.filter(r => value.includes(r));
+      const requiredInValue = requiredSections.filter((r: Section) => value.includes(r));
       const optionalInValue = newOrder.filter(s => !requiredSections.includes(s));
       
       onChange([...requiredInValue, ...optionalInValue]);
@@ -346,7 +343,7 @@ export default function SectionSelector({ value, onChange, occasion = 'couple' }
   };
 
   const toggleSection = (section: Section, enabled: boolean) => {
-    const sectionInfo = SECTION_TOGGLES.find(t => t.id === section);
+    const sectionInfo = SECTION_CONFIG.find(t => t.key === section);
     if (sectionInfo?.required) return;
 
     if (enabled) {
@@ -361,20 +358,13 @@ export default function SectionSelector({ value, onChange, occasion = 'couple' }
   const isEnabled = (section: Section) => value.includes(section);
 
   const handleSelectPopular = () => {
-    const popular = SECTION_TOGGLES
-      .filter((t) => {
-        const meta = getSectionMetadata(t.id);
-        return t.defaultEnabled && meta?.supportedOccasions?.includes(occasion);
-      })
-      .map((t) => t.id);
-
-    // Keep in-app valid sections only (matching current occasion)
-    const sanitized = popular.filter((section) => allSections.includes(section));
-
+    // Use default sections from config for this site type
+    const { defaultSections } = getDefaultSelections(siteType as SiteTypeKey);
+    // Only include allowed sections
+    const sanitized: Section[] = (defaultSections as Section[] || []).filter((s) => allSections.includes(s));
     // Add related suggestions as part of adaptive defaults
     const autoSuggestions = getRelatedSectionRecommendations(sanitized)
       .filter((section) => allSections.includes(section) && !sanitized.includes(section));
-
     onChange([...sanitized, ...autoSuggestions]);
   };
 
@@ -383,9 +373,10 @@ export default function SectionSelector({ value, onChange, occasion = 'couple' }
   };
 
   const handleClearAll = () => {
-    const required = SECTION_TOGGLES
-      .filter(t => t.required)
-      .map(t => t.id);
+    const required = allSections.filter((id: Section) => {
+      const info = SECTION_CONFIG.find(t => t.key === id);
+      return info?.required;
+    });
     onChange(required);
   };
 
@@ -448,7 +439,7 @@ export default function SectionSelector({ value, onChange, occasion = 'couple' }
           {suggestedSections.length > 0 && (
             <div className="p-3 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs">
               <strong>Suggested sections:</strong> {suggestedSections.map((section) => {
-                const info = SECTION_TOGGLES.find(t => t.id === section);
+                const info = SECTION_CONFIG.find(t => t.key === section);
                 return (
                   <span key={section} className="inline-flex items-center px-2 py-1 mr-2 mt-1 rounded-full bg-white text-emerald-600 border border-emerald-200">
                     {info?.icon} {info?.label}
@@ -507,8 +498,8 @@ export default function SectionSelector({ value, onChange, occasion = 'couple' }
             <div className="bg-white rounded-2xl p-4 border border-slate-200">
               <h4 className="text-sm font-semibold text-slate-700 mb-3">Available Sections</h4>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                {optionalSections.filter(s => !value.includes(s)).map((section) => {
-                  const info = SECTION_TOGGLES.find(t => t.id === section);
+                {optionalSections.filter((s: Section) => !value.includes(s)).map((section: Section) => {
+                  const info = SECTION_CONFIG.find(t => t.key === section);
                   return (
                     <button
                       key={section}

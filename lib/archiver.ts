@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import fetch from 'node-fetch';
 import cloudinary, { uploadToCloudinary } from '@/lib/cloudinary';
-import { supabase, Site } from '@/lib/supabase';
+import { supabase, Site } from '@/lib/supabase'; // No change needed, not direct site CRUD
 import { uploadArchivePackage } from '@/lib/archive-storage';
 
 function sanitizeFileName(url: string): string {
@@ -55,7 +55,8 @@ export async function createArchiveForSite(site: Site): Promise<{ archivePath: s
   const siteConfig = site.config || {};
   const mediaUrls = extractMediaUrls(siteConfig);
 
-  const archiveFolder = path.join(process.cwd(), 'tmp', 'site-archives', site.id);
+  // Use /tmp for writable storage on Vercel (serverless environment)
+  const archiveFolder = path.join('/tmp', 'keystory-site-archives', site.id);
   fs.mkdirSync(archiveFolder, { recursive: true });
 
   // Save metadata and config
@@ -81,7 +82,7 @@ export async function createArchiveForSite(site: Site): Promise<{ archivePath: s
   // Create package
   const ts = Date.now();
   const packageName = `site-${site.id}-${ts}.zip`;
-  const zipPath = path.join(process.cwd(), 'tmp', 'site-archives', packageName);
+  const zipPath = path.join('/tmp', 'keystory-site-archives', packageName);
 
   // minimal zip via compression (no dependency)
   const archiver = await import('archiver');

@@ -26,6 +26,7 @@ export interface WizardStepConfig {
   key: string;
   title: string;
   subtitle: string;
+  helpText?: string;
   validate: ValidationFunction;
 }
 
@@ -132,19 +133,16 @@ export const validateTemplateStep = (
 ): ValidationResult => {
   const sections = config.sections || [];
   
-  if (sections.includes('home') && !config.home_template) {
+  if (sections.includes('home') && !(config.templates && config.templates.home)) {
     return { valid: false, error: 'Please select a home template' };
   }
-  
-  if (sections.includes('gallery') && !config.gallery_template) {
+  if (sections.includes('gallery') && !(config.templates && config.templates.gallery)) {
     return { valid: false, error: 'Please select a gallery template' };
   }
-  
-  if (sections.includes('timeline') && !config.timeline_template) {
+  if (sections.includes('timeline') && !(config.templates && config.templates.timeline)) {
     return { valid: false, error: 'Please select a timeline template' };
   }
-  
-  if (sections.includes('song') && !config.song_template) {
+  if (sections.includes('song') && !(config.templates && config.templates.song)) {
     return { valid: false, error: 'Please select a song template' };
   }
   
@@ -159,7 +157,7 @@ export const validateContentStep = (
   config: SiteConfig
 ): ValidationResult => {
   const sections = config.sections || [];
-  const sectionContent = config.section_content || {};
+  const sectionContent = (config.section_content || {}) as any;
   
   // Gallery requires photos
   if (sections.includes('gallery') && (!form.photos || form.photos.length === 0)) {
@@ -169,7 +167,7 @@ export const validateContentStep = (
   // Timeline requires events
   if (
     sections.includes('timeline') &&
-    (!config.timeline_events || config.timeline_events.length === 0)
+    (!config.section_content?.timeline || config.section_content.timeline.length === 0)
   ) {
     return { valid: false, error: 'Timeline section requires at least one event' };
   }
@@ -211,9 +209,12 @@ export const validateContentStep = (
     return { valid: false, error: 'Love message is required when Love Letter section is selected' };
   }
 
-  // Song requires song link (from form)
-  if (sections.includes('song') && !form.song_link?.trim()) {
-    return { valid: false, error: 'Song section requires a song link' };
+  // Song requires song link (from section_content)
+  if (sections.includes('song')) {
+    const songLink = sectionContent.song?.song_link || '';
+    if (!songLink.trim()) {
+      return { valid: false, error: 'Song section requires a song link' };
+    }
   }
 
   // Birthday Message requires content
@@ -232,6 +233,14 @@ export const validateContentStep = (
     }
   }
 
+  // Birthday Timeline requires events
+  if (
+    sections.includes('birthday_timeline') &&
+    (!config.section_content?.timeline || config.section_content.timeline.length === 0)
+  ) {
+    return { valid: false, error: 'Birthday Timeline section requires at least one event' };
+  }
+
   // Party Details require at least one field
   if (sections.includes('party_details')) {
     const details = sectionContent.party_details || {};
@@ -245,6 +254,220 @@ export const validateContentStep = (
     const items = sectionContent.gift_wishlist?.items || [];
     if (!Array.isArray(items) || items.length === 0) {
       return { valid: false, error: 'Gift Wishlist section requires at least one item' };
+    }
+  }
+
+  // Gift Registry requires at least one item
+  if (sections.includes('gift_registry')) {
+    const items = sectionContent.gift_registry?.items || [];
+    if (!Array.isArray(items) || items.length === 0) {
+      return { valid: false, error: 'Gift Registry section requires at least one item' };
+    }
+  }
+
+  // Gift Section requires at least one gift
+  if (sections.includes('gift_section')) {
+    const gifts = sectionContent.gift_section?.gifts || [];
+    if (!Array.isArray(gifts) || gifts.length === 0) {
+      return { valid: false, error: 'Gift Section requires at least one gift' };
+    }
+  }
+
+  // Quotes section requires at least one quote
+  if (sections.includes('quotes')) {
+    const quotes = sectionContent.quotes?.quotes || [];
+    if (!Array.isArray(quotes) || quotes.length === 0) {
+      return { valid: false, error: 'Quotes section requires at least one quote' };
+    }
+  }
+
+  // Milestones requires content (deprecated but still usable)
+  if (sections.includes('milestones')) {
+    const content = sectionContent.milestones?.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'Milestones section requires content' };
+    }
+  }
+
+  // First Date requires content (deprecated but still usable)
+  if (sections.includes('first_date')) {
+    const content = sectionContent.first_date?.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'First Date section requires content' };
+    }
+  }
+
+  // Special Moments requires content (deprecated but still usable)
+  if (sections.includes('special_moments')) {
+    const content = sectionContent.special_moments?.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'Special Moments section requires content' };
+    }
+  }
+
+  // Wedding Timeline requires events
+  if (
+    sections.includes('wedding_timeline') &&
+    (!config.section_content?.timeline || config.section_content.timeline.length === 0)
+  ) {
+    return { valid: false, error: 'Wedding Timeline section requires at least one event' };
+  }
+
+  // Event Details require at least one field
+  if (sections.includes('event_details')) {
+    const details = sectionContent.event_details || {};
+    if (!details.location && !details.date && !details.time && !details.dressCode) {
+      return { valid: false, error: 'Event Details section requires at least one field filled in' };
+    }
+  }
+
+  // RSVP section requires deadline, note, or messages
+  if (sections.includes('rsvp')) {
+    const rsvp = sectionContent.rsvp || {};
+    if (!rsvp.deadline?.trim() && !rsvp.note?.trim() && (!rsvp.messages || rsvp.messages.length === 0)) {
+      return { valid: false, error: 'RSVP section requires a deadline, note, or guest messages' };
+    }
+  }
+
+  // Memory Map requires at least one location
+  if (sections.includes('memory_map')) {
+    const locations = sectionContent.memory_map?.locations || [];
+    if (!Array.isArray(locations) || locations.length === 0) {
+      return { valid: false, error: 'Memory Map section requires at least one location' };
+    }
+  }
+
+  // Surprise Message requires message or hint
+  if (sections.includes('surprise_message')) {
+    const message = sectionContent.surprise_message?.message || '';
+    const hint = sectionContent.surprise_message?.hint || '';
+    if (!message.trim() && !hint.trim()) {
+      return { valid: false, error: 'Surprise Message section requires a message or hint' };
+    }
+  }
+
+  // School Memories requires events (uses timeline_events)
+  if (
+    sections.includes('school_memories') &&
+    (!config.section_content?.timeline || config.section_content.timeline.length === 0)
+  ) {
+    return { valid: false, error: 'School Memories section requires at least one event' };
+  }
+
+  // Achievements requires events (uses timeline_events)
+  if (
+    sections.includes('achievements') &&
+    (!config.section_content?.timeline || config.section_content.timeline.length === 0)
+  ) {
+    return { valid: false, error: 'Achievements section requires at least one event' };
+  }
+
+  // Travel Timeline requires events
+  if (
+    sections.includes('travel_timeline') &&
+    (!config.section_content?.timeline || config.section_content.timeline.length === 0)
+  ) {
+    return { valid: false, error: 'Travel Timeline section requires at least one event' };
+  }
+
+  // Photo Highlights requires photos
+  if (sections.includes('photo_highlights') && (!form.photos || form.photos.length === 0)) {
+    return { valid: false, error: 'Photo Highlights section requires at least one photo' };
+  }
+
+  // Travel Notes requires content (uses our_story content)
+  if (sections.includes('travel_notes') && sectionContent.travel_notes) {
+    const content = sectionContent.travel_notes.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'Travel Notes section requires content' };
+    }
+  }
+
+  // Life Story requires content (uses love_letter content)
+  if (sections.includes('life_story') && sectionContent.life_story) {
+    const content = sectionContent.life_story.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'Life Story section requires content' };
+    }
+  }
+
+  // Message Letter requires content
+  if (sections.includes('message_letter') && sectionContent.message_letter) {
+    const content = sectionContent.message_letter.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'Message Letter section requires content' };
+    }
+  }
+
+  // Couple Message requires content
+  if (sections.includes('couple_message') && sectionContent.couple_message) {
+    const content = sectionContent.couple_message.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'Couple Message section requires content' };
+    }
+  }
+
+  // Family Message requires content
+  if (sections.includes('family_message') && sectionContent.family_message) {
+    const content = sectionContent.family_message.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'Family Message section requires content' };
+    }
+  }
+
+  // Parents Message requires content
+  if (sections.includes('parents_message') && sectionContent.parents_message) {
+    const content = sectionContent.parents_message.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'Parents Message section requires content' };
+    }
+  }
+
+  // Celebrant Message requires content
+  if (sections.includes('celebrant_message') && sectionContent.celebrant_message) {
+    const content = sectionContent.celebrant_message.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'Celebrant Message section requires content' };
+    }
+  }
+
+  // Graduation Message requires content
+  if (sections.includes('graduation_message') && sectionContent.graduation_message) {
+    const content = sectionContent.graduation_message.content || '';
+    if (!content.trim()) {
+      return { valid: false, error: 'Graduation Message section requires content' };
+    }
+  }
+
+  // Letter to Future requires letter content
+  if (sections.includes('letter_future')) {
+    const letter = sectionContent.letter_future?.letter || '';
+    if (!letter.trim()) {
+      return { valid: false, error: 'Letter to Future section requires a letter' };
+    }
+  }
+
+  // Tributes requires quotes
+  if (sections.includes('tributes')) {
+    const tributes = sectionContent.tributes?.quotes || [];
+    if (!Array.isArray(tributes) || tributes.length === 0) {
+      return { valid: false, error: 'Tributes section requires at least one tribute' };
+    }
+  }
+
+  // Baby Predictions requires quotes
+  if (sections.includes('baby_predictions')) {
+    const predictions = sectionContent.baby_predictions?.quotes || [];
+    if (!Array.isArray(predictions) || predictions.length === 0) {
+      return { valid: false, error: 'Baby Predictions section requires at least one prediction' };
+    }
+  }
+
+  // Future Plans requires dreams
+  if (sections.includes('future_plans')) {
+    const plans = sectionContent.future_plans?.dreams || [];
+    if (!Array.isArray(plans) || plans.length === 0) {
+      return { valid: false, error: 'Future Plans section requires at least one plan' };
     }
   }
   
@@ -315,6 +538,7 @@ export const WIZARD_STEPS: WizardStepConfig[] = [
     key: 'occasion-participants',
     title: 'Occasion & Participants',
     subtitle: 'Choose occasion and names',
+    helpText: 'Select the type of occasion (e.g., birthday, wedding, anniversary) and enter the names of the main participants. This information will personalize your website and help generate the right sections.',
     validate: validateDetailsStep,
   },
   {
@@ -322,6 +546,7 @@ export const WIZARD_STEPS: WizardStepConfig[] = [
     key: 'style',
     title: 'Choose Style',
     subtitle: 'Pick the mood',
+    helpText: 'Select a theme that matches the vibe of your occasion. You can preview different color schemes and font styles to see what fits best.',
     validate: validateStyleStep,
   },
   {
@@ -329,6 +554,7 @@ export const WIZARD_STEPS: WizardStepConfig[] = [
     key: 'layout',
     title: 'Page Layout',
     subtitle: 'Select sections',
+    helpText: 'Choose which sections to include on your website (e.g., gallery, timeline, guestbook). You can reorder or remove sections to customize the flow.',
     validate: validateLayoutStep,
   },
   {
@@ -336,6 +562,7 @@ export const WIZARD_STEPS: WizardStepConfig[] = [
     key: 'templates',
     title: 'Templates',
     subtitle: 'Design picks',
+    helpText: 'Pick templates for each section. Templates control the layout and style of content blocks like your gallery, timeline, or love letter.',
     validate: validateTemplateStep,
   },
   {
@@ -343,6 +570,7 @@ export const WIZARD_STEPS: WizardStepConfig[] = [
     key: 'content',
     title: 'Content',
     subtitle: 'Fill in your sections',
+    helpText: 'Add your story, upload photos, and personalize each section. You can save your progress and come back anytime.',
     validate: validateContentStep,
   },
   {
@@ -350,6 +578,7 @@ export const WIZARD_STEPS: WizardStepConfig[] = [
     key: 'review',
     title: 'Review',
     subtitle: 'Almost done!',
+    helpText: 'Review all your details and make sure everything looks perfect. When you’re ready, submit to publish your website!',
     validate: validateReviewStep,
   },
 ];
@@ -459,5 +688,5 @@ export const canNavigateToStep = (
 // ============================================
 
 // Re-export section toggles for convenience
-export { SECTION_TOGGLES, THEME_PRESETS, LAYOUT_PRESETS } from './builder-constants';
+// No longer re-export from builder-constants; use /config files directly
 

@@ -1,15 +1,15 @@
 'use client';
 
-import { Theme } from '@/lib/types';
-import { THEME_PRESETS } from '@/lib/builder-constants';
+import type { ThemeKey } from '@/config/themeConfig';
+import { THEME_CONFIG } from '@/config/themeConfig';
 
 interface PolaroidGallerySectionProps {
-  theme: Theme;
+  theme: ThemeKey;
   photos: string[];
 }
 
 export default function PolaroidGallerySection({ theme, photos }: PolaroidGallerySectionProps) {
-  const themeConfig = THEME_PRESETS[theme];
+  const themeConfig = THEME_CONFIG[theme];
   const { colors, typography } = themeConfig;
 
   if (!photos || photos.length === 0) {

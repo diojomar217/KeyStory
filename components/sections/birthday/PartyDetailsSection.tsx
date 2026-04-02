@@ -1,11 +1,11 @@
 'use client';
 
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../../builder/ThemeWrapper';
 import SectionHeader from '../../page/SectionHeader';
 
 type Props = {
-  theme: Theme;
+  theme: ThemeKey;
   location?: string;
   date?: string;
   time?: string;

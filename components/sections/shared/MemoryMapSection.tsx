@@ -1,41 +1,48 @@
 'use client';
 
-import { Theme, MemoryMapLocation } from '@/lib/types';
+import type { MemoryMapLocation, OccasionType } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import SectionHeader from '../../page/SectionHeader';
+import { getSectionCopy } from '@/lib/section-copy';
 import { useTheme } from '../../builder/ThemeWrapper';
 import dynamic from 'next/dynamic';
-import { THEME_PRESETS } from '@/lib/builder-constants';
-
+import { THEME_CONFIG } from '@/config/themeConfig';
 
 interface MemoryMapSectionProps {
-  theme: Theme;
+  theme: ThemeKey;
+  siteType?: OccasionType;
   locations?: MemoryMapLocation[];
 }
 
-export default function MemoryMapSection({ theme, locations }: MemoryMapSectionProps) {
+const MemoryMap = dynamic(() => import('./MemoryMap'), {
+  ssr: false,
+});
+
+export default function MemoryMapSection({ theme, siteType = 'couple', locations }: MemoryMapSectionProps) {
   const styles = useTheme(theme);
-  const themeConfig = THEME_PRESETS[theme];
+  const themeConfig = THEME_CONFIG[theme];
   const { colors, typography } = themeConfig;
 
-  // Use provided locations or empty array (MemoryMap handles empty state)
-const displayLocations = locations || [];
-const MemoryMap = dynamic(() => import('./MemoryMap'), { ssr: false });
-
+  const displayLocations = locations || [];
 
   return (
-    <section 
+    <section
       id="memory-map"
       className="relative py-16 px-4"
     >
       <div className="max-w-4xl mx-auto">
-        <SectionHeader
-          icon="🗺️"
-          title="Our Memory Map"
-          subtitle="Places that hold special memories in our relationship"
-          theme={theme}
-        />
-        
-        {/* Interactive Map */}
+        {(() => {
+          const copy = getSectionCopy('memory_map', siteType);
+          return (
+            <SectionHeader
+              icon={copy.icon}
+              title={copy.title}
+              subtitle={copy.subtitle}
+              theme={theme}
+            />
+          );
+        })()}
+
         <MemoryMap locations={displayLocations} />
       </div>
     </section>

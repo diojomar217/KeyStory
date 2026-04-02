@@ -1,28 +1,11 @@
+import { getThemeStyles } from '@/config/themeStyles';
 'use client';
 
 import { useMemo } from 'react';
-import { SiteConfig, Theme } from '@/lib/types';
+import type { SiteConfig } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import { resolveHeroCoverPhoto } from '@/lib/site-type-utils';
 
-const themeStyles: Record<Theme, { bg: string; text: string; accent: string; card: string; gradient: string }> = {
-  romantic_classic: { bg: 'bg-gradient-to-b from-rose-50 to-pink-50', text: 'text-rose-900', accent: 'text-rose-600', card: 'bg-white/80 border-rose-200', gradient: 'from-rose-400 to-pink-500' },
-  cute_pastel: { bg: 'bg-gradient-to-b from-purple-50 to-pink-50', text: 'text-purple-900', accent: 'text-purple-600', card: 'bg-white/80 border-purple-200', gradient: 'from-purple-400 to-pink-500' },
-  minimal_modern: { bg: 'bg-gradient-to-b from-slate-50 to-gray-100', text: 'text-slate-900', accent: 'text-slate-600', card: 'bg-white/90 border-slate-200', gradient: 'from-slate-500 to-slate-700' },
-  dark_elegant: { bg: 'bg-gradient-to-b from-zinc-900 to-slate-900', text: 'text-zinc-100', accent: 'text-amber-400', card: 'bg-zinc-800/80 border-zinc-700', gradient: 'from-amber-400 to-yellow-500' },
-  soft_pastel: { bg: 'bg-gradient-to-b from-amber-50 to-yellow-50', text: 'text-amber-900', accent: 'text-amber-600', card: 'bg-white/80 border-amber-200', gradient: 'from-amber-400 to-yellow-500' },
-  elegant_rose_gold: { bg: 'bg-gradient-to-b from-rose-50 to-pink-50', text: 'text-rose-900', accent: 'text-rose-600', card: 'bg-white/80 border-rose-200', gradient: 'from-rose-400 to-pink-500' },
-  vintage_love_letter: { bg: 'bg-gradient-to-b from-amber-50 to-orange-50', text: 'text-amber-900', accent: 'text-amber-600', card: 'bg-white/80 border-amber-200', gradient: 'from-amber-400 to-orange-500' },
-  scrapbook_memories: { bg: 'bg-gradient-to-b from-orange-50 to-amber-50', text: 'text-orange-900', accent: 'text-orange-600', card: 'bg-white/80 border-orange-200', gradient: 'from-orange-400 to-amber-500' },
-  wedding_style: { bg: 'bg-gradient-to-b from-slate-50 to-gray-100', text: 'text-slate-900', accent: 'text-amber-600', card: 'bg-white/80 border-slate-200', gradient: 'from-slate-400 to-slate-600' },
-  floral_romance: { bg: 'bg-gradient-to-b from-rose-50 to-pink-50', text: 'text-rose-900', accent: 'text-rose-600', card: 'bg-white/80 border-rose-200', gradient: 'from-rose-400 to-pink-500' },
-  dreamy_pink: { bg: 'bg-gradient-to-b from-pink-50 to-rose-50', text: 'text-pink-900', accent: 'text-pink-600', card: 'bg-white/80 border-pink-200', gradient: 'from-pink-400 to-rose-500' },
-  luxury_gold: { bg: 'bg-gradient-to-b from-zinc-900 to-slate-900', text: 'text-yellow-100', accent: 'text-yellow-400', card: 'bg-zinc-800/80 border-zinc-700', gradient: 'from-yellow-400 to-amber-500' },
-  minimal_white: { bg: 'bg-gradient-to-b from-white to-gray-50', text: 'text-slate-900', accent: 'text-slate-600', card: 'bg-white border-slate-200', gradient: 'from-slate-400 to-slate-600' },
-  cute_kawaii: { bg: 'bg-gradient-to-b from-pink-50 to-purple-50', text: 'text-pink-900', accent: 'text-pink-600', card: 'bg-white/80 border-pink-200', gradient: 'from-pink-400 to-purple-500' },
-  soft_lavender: { bg: 'bg-gradient-to-b from-violet-50 to-purple-50', text: 'text-violet-900', accent: 'text-violet-600', card: 'bg-white/80 border-violet-200', gradient: 'from-violet-400 to-purple-500' },
-  photo_focus: { bg: 'bg-gradient-to-b from-gray-50 to-slate-100', text: 'text-slate-900', accent: 'text-slate-600', card: 'bg-white border-slate-200', gradient: 'from-slate-400 to-slate-600' },
-  colorful_celebration: { bg: 'bg-gradient-to-r from-yellow-50 to-orange-50', text: 'text-orange-900', accent: 'text-orange-600', card: 'bg-white/80 border-orange-200', gradient: 'from-orange-400 to-pink-500' },
-};
 
 interface FormData {
   customer_name: string;
@@ -98,7 +81,7 @@ export default function LivePreviewPanel({
   isMobileOpen,
   onMobileClose,
 }: LivePreviewPanelProps) {
-  const theme = themeStyles[config.theme] || themeStyles.romantic_classic;
+  const theme = getThemeStyles(config.theme as ThemeKey);
 
   const coverPhotoUrl = useMemo(() => {
     return resolveHeroCoverPhoto({ hero: config.hero, cover_photo_index: config.cover_photo_index }, photoPreviews);

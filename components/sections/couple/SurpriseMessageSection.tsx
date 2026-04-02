@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import SectionHeader from '../../page/SectionHeader';
+import { getSectionCopy } from '@/lib/section-copy';
 import ScrollReveal from '../../ui/ScrollReveal';
 import { useTheme } from '../../builder/ThemeWrapper';
 
 interface SurpriseMessageSectionProps {
-  theme: Theme;
+  theme: ThemeKey;
   customerName: string;
   partnerName: string;
   message?: string;
@@ -30,12 +31,17 @@ export default function SurpriseMessageSection({
     <section className="relative py-24 lg:py-32" id="surprise">
       <div className="max-w-4xl mx-auto px-6 lg:px-8">
         <ScrollReveal animation="fade-up">
-          <SectionHeader
-            icon="🎉"
-            title="A Surprise for You"
-            subtitle={hint || 'Click the gift to reveal your surprise! 💕'}
-            theme={theme}
-          />
+          {(() => {
+            const copy = getSectionCopy('surprise_message');
+            return (
+              <SectionHeader
+                icon={copy.icon}
+                title={copy.title}
+                subtitle={copy.subtitle}
+                theme={theme}
+              />
+            );
+          })()}
         </ScrollReveal>
 
         <ScrollReveal animation="fade-up" delay={200}>

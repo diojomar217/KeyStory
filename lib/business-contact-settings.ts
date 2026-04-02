@@ -1,6 +1,6 @@
 'use server';
 
-import { supabase } from './supabase';
+import { supabase } from './supabase'; // No change needed, not site CRUD
 
 export type BusinessContactSettings = {
   whatsappNumber: string | null;

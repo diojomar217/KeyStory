@@ -17,7 +17,7 @@ const formatDate = (value?: string) => {
 
 function normalizeSectionContent(site: Site) {
   const cfg = site.config || {};
-  const sectionContent = (cfg.content as Record<string, any>) || (cfg.section_content as Record<string, any>) || {};
+  const sectionContent = (cfg.section_content as Record<string, any>) || {};
 
   return {
     loveLetter: cfg.message || site.message || sectionContent.love_letter || sectionContent.loveLetter || '',
@@ -69,7 +69,7 @@ export default function PdfLayout({ site }: PdfLayoutProps) {
 
   const customerName = config?.people?.primary || site.customer_name || config?.customer_name || '';
   const partnerName = config?.people?.secondary || site.partner_name || config?.partner_name || '';
-  const specialDate = config?.dates?.special_date || site.specialDate || site.anniversary_date || '';
+  const specialDate = config?.dates?.special_date || site.specialDate || '';
   const tagline = config?.tagline || site.tagline || '';
   const qrCodeUrl = site.qr_code_url || config?.qr_data_url || '';
   const { loveLetter, story, reasons, dreams, quotes, birthdayWishes, finalMessage } = normalizeSectionContent(site);

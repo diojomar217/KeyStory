@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from "react";
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
 import SectionHeader from '../../page/SectionHeader';
+import { getSectionCopy } from '@/lib/section-copy';
 import { useTheme } from '../../builder/ThemeWrapper';
 
 interface Reason {
@@ -12,7 +13,7 @@ interface Reason {
 }
 
 interface ReasonsILoveYouSectionProps {
-  theme: Theme;
+  theme: ThemeKey;
   partnerName: string;
   reasons?: Reason[];
   variant?: 'default' | 'alt';
@@ -55,12 +56,17 @@ export default function ReasonsILoveYouSection({
   return (
     <section id="reasons-love-you" className="relative py-24 lg:py-32">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        <SectionHeader
-          icon="💖"
-          title="10 Things I Love About You"
-          subtitle={'❤️ ' + partnerName + ', here are all the reasons I love you'}
-          theme={theme}
-        />
+        {(() => {
+          const copy = getSectionCopy('reasons_love_you', undefined, { partnerName });
+          return (
+            <SectionHeader
+              icon={copy.icon}
+              title={copy.title}
+              subtitle={copy.subtitle}
+              theme={theme}
+            />
+          );
+        })()}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 lg:gap-8">
           {displayReasons.map((reason) => (
             <div key={reason.id} className="group relative h-[200px] lg:h-[220px] perspective-[1200px] cursor-pointer overflow-hidden" onClick={() => toggleFlip(reason.id)}>

@@ -1,14 +1,15 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { Theme } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
+
 import { useTheme } from '../builder/ThemeWrapper';
 
-type Props = {
+interface Props {
   anniversary: string;
-  theme?: Theme;
+  theme?: ThemeKey;
   showSeconds?: boolean;
-};
+}
 
 interface DurationParts {
   years: number;

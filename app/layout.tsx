@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import ServiceWorkerRegister from "@/components/app/ServiceWorkerRegister";
+import WebVitalsReporter from "@/components/app/WebVitalsReporter";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Couple QR Website",
+  title: "KeyStory",
   description: "Create a personalized love website with QR code",
 };
 
@@ -27,6 +29,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <ServiceWorkerRegister />
+        <WebVitalsReporter />
         <main className="min-h-screen w-full">
           {children}
         </main>

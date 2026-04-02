@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Theme } from '@/lib/types';
-import { THEME_PRESETS } from '@/lib/builder-constants';
+import type { ThemeKey } from '@/config/themeConfig';
+import { THEME_CONFIG } from '@/config/themeConfig';
+import SectionHeader from '../../page/SectionHeader';
 
 interface AnniversaryCountdownSectionProps {
-  theme: Theme;
+  theme: ThemeKey;
   anniversaryDate: string;
   yearsTogether?: number;
   variant?: 'default' | 'alt';
@@ -18,160 +19,308 @@ interface Countdown {
   seconds: number;
 }
 
-export default function AnniversaryCountdownSection({ 
-  theme, 
+type Mode = 'countdown' | 'together';
+
+export default function AnniversaryCountdownSection({
+  theme,
   anniversaryDate,
   yearsTogether = 1,
   variant = 'default',
 }: AnniversaryCountdownSectionProps) {
-  const themeConfig = THEME_PRESETS[theme];
+  const themeConfig = THEME_CONFIG[theme];
   const { colors, typography } = themeConfig;
-  const sectionBackground = variant === 'alt' ? colors.secondary : colors.background;
-  
+
+  const [mode, setMode] = useState<Mode>('countdown');
   const [countdown, setCountdown] = useState<Countdown>({
     days: 0,
     hours: 0,
     minutes: 0,
-    seconds: 0
+    seconds: 0,
+  });
+
+  const [timeTogether, setTimeTogether] = useState<Countdown>({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
   });
 
   useEffect(() => {
-  const calculateCountdown = () => {
+    const calculateTimes = () => {
       if (!anniversaryDate || isNaN(new Date(anniversaryDate).getTime())) {
-        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        const empty = { days: 0, hours: 0, minutes: 0, seconds: 0 };
+        setCountdown(empty);
+        setTimeTogether(empty);
         return;
       }
-      
+
       const anniversary = new Date(anniversaryDate);
       const now = new Date();
-      
-      // Get next anniversary
-      let nextAnniversary = new Date(now.getFullYear(), anniversary.getMonth(), anniversary.getDate());
+
+      // Countdown to next anniversary
+      let nextAnniversary = new Date(
+        now.getFullYear(),
+        anniversary.getMonth(),
+        anniversary.getDate()
+      );
+
       if (now > nextAnniversary) {
-        nextAnniversary = new Date(now.getFullYear() + 1, anniversary.getMonth(), anniversary.getDate());
+        nextAnniversary = new Date(
+          now.getFullYear() + 1,
+          anniversary.getMonth(),
+          anniversary.getDate()
+        );
       }
-      
-      const diff = nextAnniversary.getTime() - now.getTime();
-      
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-      
-      setCountdown({ days, hours, minutes, seconds });
+
+      const countdownDiff = nextAnniversary.getTime() - now.getTime();
+
+      setCountdown({
+        days: Math.floor(countdownDiff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((countdownDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        minutes: Math.floor((countdownDiff % (1000 * 60 * 60)) / (1000 * 60)),
+        seconds: Math.floor((countdownDiff % (1000 * 60)) / 1000),
+      });
+
+      // Time together since anniversary/start date
+      const togetherDiff = Math.max(0, now.getTime() - anniversary.getTime());
+
+      setTimeTogether({
+        days: Math.floor(togetherDiff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((togetherDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        minutes: Math.floor((togetherDiff % (1000 * 60 * 60)) / (1000 * 60)),
+        seconds: Math.floor((togetherDiff % (1000 * 60)) / 1000),
+      });
     };
 
-    calculateCountdown();
-    const interval = setInterval(calculateCountdown, 1000);
+    calculateTimes();
+    const interval = setInterval(calculateTimes, 1000);
     return () => clearInterval(interval);
   }, [anniversaryDate]);
 
+  const formatAnniversaryDate = (dateString: string) => {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Invalid anniversary date';
+
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const displayItems =
+    mode === 'countdown'
+      ? [
+        { label: 'Days', value: countdown.days },
+        { label: 'Hours', value: countdown.hours },
+        { label: 'Minutes', value: countdown.minutes },
+        { label: 'Seconds', value: countdown.seconds },
+      ]
+      : [
+        { label: 'Days Together', value: timeTogether.days },
+        { label: 'Hours', value: timeTogether.hours },
+        { label: 'Minutes', value: timeTogether.minutes },
+        { label: 'Seconds', value: timeTogether.seconds },
+      ];
+
   return (
-    <section 
-      className="relative py-16 px-4"
-    >
-      <div className="max-w-4xl mx-auto text-center">
-        <h2 
-          className="text-4xl font-bold mb-4"
-          style={{ 
-            color: colors.primary,
-            fontFamily: typography.headingFont,
-            fontWeight: typography.headingWeight 
+    <section className="relative py-16 md:py-20 px-4 overflow-hidden">
+      {/* Floating hearts */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <span className="absolute left-[8%] top-[20%] text-2xl opacity-20 heart-float">💗</span>
+        <span className="absolute right-[10%] top-[18%] text-3xl opacity-20 heart-float delay-1">💖</span>
+        <span className="absolute left-[14%] bottom-[18%] text-2xl opacity-15 heart-float delay-2">💕</span>
+        <span className="absolute right-[14%] bottom-[20%] text-3xl opacity-15 heart-float delay-3">💞</span>
+        <span className="absolute left-[25%] top-[38%] text-xl opacity-10 heart-float delay-4">✨</span>
+        <span className="absolute right-[24%] top-[45%] text-xl opacity-10 heart-float delay-2">✨</span>
+      </div>
+
+      {/* Soft center glow */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div
+          className="absolute left-1/2 top-[60%] -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] rounded-full blur-3xl opacity-10"
+          style={{
+            background: `radial-gradient(circle, ${colors.primary} 0%, transparent 72%)`,
           }}
-        >
-          ⏰ Counting Down to Our {yearsTogether + 1} Year Anniversary
-        </h2>
-        
-        <p 
-          className="text-lg mb-8"
-          style={{ color: colors.text }}
-        >
-          Every second counts when we're together
-        </p>
-        
-        <div className="flex justify-center gap-4 flex-wrap">
-          <div 
-            className="p-6 rounded-2xl min-w-[100px]"
-            style={{ 
-              backgroundColor: colors.card,
-              borderColor: colors.border,
-              borderWidth: '1px'
+        />
+      </div>
+
+      <div className="relative max-w-5xl mx-auto text-center">
+        <SectionHeader
+          icon="⏰"
+          title={mode === 'countdown' ? `Our ${yearsTogether + 1} Year Anniversary` : 'Our Time Together'}
+          subtitle={
+            mode === 'countdown'
+              ? "Every second counts when we're together"
+              : 'Every moment with you is special'
+          }
+          theme={theme}
+          className="mb-8"
+        />
+
+        {/* Toggle */}
+        <div className="flex justify-center mb-6">
+          <div
+            className="inline-flex p-1 rounded-full"
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.65)',
+              border: `1px solid ${colors.border}`,
+              boxShadow: '0 6px 20px rgba(0,0,0,0.05)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
             }}
           >
-            <div 
-              className="text-4xl font-bold"
-              style={{ 
-                color: colors.primary,
-                fontFamily: typography.headingFont
+            <button
+              type="button"
+              onClick={() => setMode('countdown')}
+              className="px-4 py-2 rounded-full text-sm md:text-base font-medium transition-all duration-300"
+              style={{
+                backgroundColor: mode === 'countdown' ? colors.primary : 'transparent',
+                color: mode === 'countdown' ? '#ffffff' : colors.text,
               }}
             >
-              {countdown.days}
-            </div>
-            <div className="text-sm" style={{ color: colors.text }}>Days</div>
-          </div>
-          
-          <div 
-            className="p-6 rounded-2xl min-w-[100px]"
-            style={{ 
-              backgroundColor: colors.card,
-              borderColor: colors.border,
-              borderWidth: '1px'
-            }}
-          >
-            <div 
-              className="text-4xl font-bold"
-              style={{ 
-                color: colors.primary,
-                fontFamily: typography.headingFont
+              Countdown
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('together')}
+              className="px-4 py-2 rounded-full text-sm md:text-base font-medium transition-all duration-300"
+              style={{
+                backgroundColor: mode === 'together' ? colors.primary : 'transparent',
+                color: mode === 'together' ? '#ffffff' : colors.text,
               }}
             >
-              {countdown.hours}
-            </div>
-            <div className="text-sm" style={{ color: colors.text }}>Hours</div>
-          </div>
-          
-          <div 
-            className="p-6 rounded-2xl min-w-[100px]"
-            style={{ 
-              backgroundColor: colors.card,
-              borderColor: colors.border,
-              borderWidth: '1px'
-            }}
-          >
-            <div 
-              className="text-4xl font-bold"
-              style={{ 
-                color: colors.primary,
-                fontFamily: typography.headingFont
-              }}
-            >
-              {countdown.minutes}
-            </div>
-            <div className="text-sm" style={{ color: colors.text }}>Minutes</div>
-          </div>
-          
-          <div 
-            className="p-6 rounded-2xl min-w-[100px]"
-            style={{ 
-              backgroundColor: colors.card,
-              borderColor: colors.border,
-              borderWidth: '1px'
-            }}
-          >
-            <div 
-              className="text-4xl font-bold"
-              style={{ 
-                color: colors.primary,
-                fontFamily: typography.headingFont
-              }}
-            >
-              {countdown.seconds}
-            </div>
-            <div className="text-sm" style={{ color: colors.text }}>Seconds</div>
+              Time Together
+            </button>
           </div>
         </div>
+
+        {/* Anniversary date */}
+        <p
+          className="mb-8 text-sm md:text-base font-medium opacity-80"
+          style={{ color: colors.text }}
+        >
+          Our special date: <span style={{ color: colors.primary }}>{formatAnniversaryDate(anniversaryDate)}</span>
+        </p>
+
+        <div
+          className="w-20 h-[2px] mx-auto mb-8 rounded-full opacity-60"
+          style={{
+            background: `linear-gradient(to right, transparent, ${colors.primary}, transparent)`
+          }}
+        />
+
+        {/* Cards */}
+        <div className="flex justify-center gap-5 md:gap-6 flex-wrap mt-4">
+          {displayItems.map((item) => {
+            const isSeconds = item.label === 'Seconds';
+
+            return (
+              <div
+                key={item.label}
+                className={`group relative rounded-[28px] min-w-[120px] md:min-w-[135px] px-7 py-7 transition-all duration-300 hover:-translate-y-2 hover:scale-[1.04] ${isSeconds ? 'seconds-pulse' : ''
+                  }`}
+                style={{
+                  background: 'rgba(255,255,255,0.75)',
+                  border: `1px solid ${colors.border}`,
+                  boxShadow:
+                    '0 12px 40px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                <div
+                  className="absolute inset-x-5 top-0 h-px opacity-70"
+                  style={{
+                    background: `linear-gradient(to right, transparent, ${colors.primary}, transparent)`,
+                  }}
+                />
+
+                <div
+                  className="text-4xl md:text-5xl font-bold tracking-tight letterSpacing: '-0.02em', leading-none tracking-tight transition-all duration-300 group-hover:scale-105"
+                  style={{
+                    color: colors.primary,
+                    fontFamily: typography.headingFont,
+                    textShadow: '0 6px 18px rgba(236, 72, 153, 0.12)',
+                  }}
+                >
+                  {item.value}
+                </div>
+
+                <div
+                  className="mt-3 text-base font-medium"
+                  style={{ color: colors.text }}
+                >
+                  {item.label}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
+
+      <style jsx>{`
+        .heart-float {
+          animation: floatHeart 6s ease-in-out infinite;
+        }
+
+        .delay-1 {
+          animation-delay: 1s;
+        }
+
+        .delay-2 {
+          animation-delay: 2s;
+        }
+
+        .delay-3 {
+          animation-delay: 3s;
+        }
+
+        .delay-4 {
+          animation-delay: 4s;
+        }
+
+        .seconds-pulse {
+          animation: softPulse 1.6s ease-in-out infinite;
+        }
+
+        @keyframes floatHeart {
+          0% {
+            transform: translateY(0px);
+            opacity: 0.12;
+          }
+          50% {
+            transform: translateY(-12px);
+            opacity: 0.28;
+          }
+          100% {
+            transform: translateY(0px);
+            opacity: 0.12;
+          }
+        }
+
+        @keyframes softPulse {
+          0% {
+            box-shadow:
+              0 10px 30px rgba(0, 0, 0, 0.05),
+              inset 0 1px 0 rgba(255, 255, 255, 0.7),
+              0 0 0 0 rgba(236, 72, 153, 0.08);
+          }
+          50% {
+            box-shadow:
+              0 10px 30px rgba(0, 0, 0, 0.05),
+              inset 0 1px 0 rgba(255, 255, 255, 0.7),
+              0 0 0 10px rgba(236, 72, 153, 0);
+          }
+          100% {
+            box-shadow:
+              0 10px 30px rgba(0, 0, 0, 0.05),
+              inset 0 1px 0 rgba(255, 255, 255, 0.7),
+              0 0 0 0 rgba(236, 72, 153, 0.08);
+          }
+        }
+      `}</style>
     </section>
   );
 }
-

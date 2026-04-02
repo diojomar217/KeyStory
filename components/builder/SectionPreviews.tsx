@@ -1,43 +1,20 @@
 'use client';
 
-import { SiteConfig, Theme, OccasionType } from '@/lib/types';
-import { THEME_PRESETS } from '@/lib/builder-constants';
+import type { SiteConfig, OccasionType } from '@/lib/types';
+import type { ThemeKey } from '@/config/themeConfig';
+import { getThemeColors, ThemeColors } from '@/config/themeUtils';
+import { DEFAULT_THEME } from '@/config/defaults';
 
 // ============================================
 // THEME STYLES - Theme-specific styling
 // ============================================
-
-type ThemeColors = {
-  primary: string;
-  secondary: string;
-  accent: string;
-  background: string;
-  text: string;
-  card: string;
-  border: string;
-  muted: string;
-};
-
-const getThemeColors = (theme: Theme): ThemeColors => {
-  const preset = THEME_PRESETS[theme] || THEME_PRESETS.romantic_classic;
-  return {
-    primary: preset.colors.primary,
-    secondary: preset.colors.secondary,
-    accent: preset.colors.accent,
-    background: preset.colors.background,
-    text: preset.colors.text,
-    card: preset.colors.card,
-    border: preset.colors.border,
-    muted: preset.colors.text + '99',
-  };
-};
 
 // ============================================
 // HOME SECTION PREVIEW
 // ============================================
 
 interface HomeSectionPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
   siteType?: OccasionType;
   customerName: string;
   partnerName: string;
@@ -70,38 +47,35 @@ export function HomeSectionPreview({
     ? { hasContent: true, text: tagline } 
     : { hasContent: false, text: 'Your tagline will appear here' };
 
-  const isBirthday = siteType === 'birthday';
-
-  const dateString = specialDate || anniversary_date;
+  const isBirthday = siteType === 'birthday';  const dateLabel = isBirthday ? 'Birthday' : 'Anniversary';
+const dateString = specialDate || anniversary_date || '';
   const anniversaryData = dateString
     ? { hasContent: true, text: new Date(dateString).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }
     : { hasContent: false, text: isBirthday ? 'Add your birthday date' : 'Add your special date' };
 
-  const messageData = message?.trim() 
-    ? { hasContent: true, text: message }
-    : { hasContent: false, text: isBirthday ? 'Your birthday message will appear here' : 'Your love message will appear here' };
-
   const heroTitle = isBirthday && customerName?.trim()
     ? `${customerName}'s Birthday`
-    : isBirthday
-      ? 'Birthday Celebration'
-      : nameData.primary;
+    : nameData.primary;
 
   const heroTagline = taglineData.hasContent ? taglineData.text : '';
-  const dateLabel = isBirthday ? '🎂 Birthday' : '💍 Since';
 
   return (
-    <div 
-      className="relative rounded-xl overflow-hidden border border-dashed"
-      style={{ 
-        backgroundColor: colors.background,
-        borderColor: colors.muted.replace('99', '50'),
-        opacity: nameData.hasContent || taglineData.hasContent ? 1 : 0.7
-      }}
-    >
+    <div className="group relative rounded-xl overflow-hidden border border-dashed hover:border-solid cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02]" style={{ 
+      backgroundColor: colors.background,
+      borderColor: colors.muted.replace('99', '50'),
+      opacity: nameData.hasContent || taglineData.hasContent ? 1 : 0.7
+    }}>
+      {/* Parallax background demo */}
+      <div className="absolute inset-0 parallax-bg opacity-20 group-hover:opacity-30 transition-opacity bg-gradient-to-r from-blue-400/20 to-purple-400/20" />
+      
+      {/* Particles mock */}
+      <div className="absolute top-2 right-2 particles-canvas-demo opacity-0 group-hover:opacity-100 w-12 h-12 bg-gradient-to-br from-white/20 to-transparent rounded-full backdrop-blur-sm flex items-center justify-center">
+        <span className="text-lg animate-float">✨</span>
+      </div>
+      
       {/* Hero Area */}
       <div 
-        className="h-24 flex flex-col items-center justify-center text-center px-4 py-2"
+        className="h-24 flex flex-col items-center justify-center text-center px-4 py-2 relative z-10"
         style={{ 
           background: hasCoverPhoto 
             ? `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.4)), url('/placeholder-cover.jpg')`
@@ -113,13 +87,14 @@ export function HomeSectionPreview({
         </div>
         
         <h2 
-          className={`text-sm font-bold leading-tight line-clamp-1 mb-1 transition-opacity ${(nameData.hasContent || isBirthday) ? '' : 'italic'}`}
+          className={`text-sm font-bold leading-tight line-clamp-1 mb-1 transition-opacity typewriter-text-demo ${(!nameData.hasContent && !isBirthday) ? 'italic' : ''}`}
           style={{ 
             color: colors.text,
-            opacity: (nameData.hasContent || isBirthday) ? 1 : 0.5
+            opacity: nameData.hasContent || isBirthday ? 1 : 0.5
           }}
         >
           {heroTitle}
+          <span className="blinking-cursor-demo ml-1 hidden group-hover:block">|</span>
         </h2>
         
         <p 
@@ -138,7 +113,7 @@ export function HomeSectionPreview({
       {anniversaryData.hasContent && (
         <div className="flex justify-center py-2 px-4">
           <span 
-            className="text-xs px-3 py-1.5 rounded-full font-medium transition-all"
+            className="text-xs px-3 py-1.5 rounded-full font-medium transition-all hover-lift"
             style={{ 
               backgroundColor: colors.secondary,
               color: colors.primary,
@@ -150,20 +125,26 @@ export function HomeSectionPreview({
           </span>
         </div>
       )}
+
+      {/* Demo labels */}
+      <div className="absolute bottom-1 right-1 text-[8px] opacity-50 flex gap-1">
+        <span>✨ Parallax + Particles</span>
+      </div>
     </div>
   );
 }
+
 
 // ============================================
 // GALLERY SECTION PREVIEW
 // ============================================
 
 interface GallerySectionPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
   photoCount: number;
 }
 
-export function GallerySectionPreview({
+function GallerySectionPreview({
   theme,
   photoCount,
 }: GallerySectionPreviewProps) {
@@ -228,11 +209,11 @@ export function GallerySectionPreview({
 // ============================================
 
 interface TimelineSectionPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
   eventCount: number;
 }
 
-export function TimelineSectionPreview({
+function TimelineSectionPreview({
   theme,
   eventCount,
 }: TimelineSectionPreviewProps) {
@@ -326,11 +307,11 @@ export function TimelineSectionPreview({
 // ============================================
 
 interface SongSectionPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
   hasSong: boolean;
 }
 
-export function SongSectionPreview({
+function SongSectionPreview({
   theme,
   hasSong,
 }: SongSectionPreviewProps) {
@@ -399,11 +380,11 @@ export function SongSectionPreview({
 // ============================================
 
 interface LoveLetterSectionPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
   hasMessage: boolean;
 }
 
-export function LoveLetterSectionPreview({
+function LoveLetterSectionPreview({
   theme,
   hasMessage,
 }: LoveLetterSectionPreviewProps) {
@@ -444,10 +425,10 @@ export function LoveLetterSectionPreview({
 // ============================================
 
 interface QuotesSectionPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
 }
 
-export function QuotesSectionPreview({ theme }: { theme: Theme }) {
+export function QuotesSectionPreview({ theme }: QuotesSectionPreviewProps) {
   const colors = getThemeColors(theme);
   const quotes = [
     'Love is not about how many days we have been together...',
@@ -492,10 +473,10 @@ export function QuotesSectionPreview({ theme }: { theme: Theme }) {
 // ============================================
 
 interface StatsSectionPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
 }
 
-export function StatsSectionPreview({ theme }: { theme: Theme }) {
+export function StatsSectionPreview({ theme }: StatsSectionPreviewProps) {
   const colors = getThemeColors(theme);
 
   return (
@@ -546,10 +527,10 @@ export function StatsSectionPreview({ theme }: { theme: Theme }) {
 // ============================================
 
 interface MilestonesSectionPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
 }
 
-export function MilestonesSectionPreview({ theme }: { theme: Theme }) {
+export function MilestonesSectionPreview({ theme }: MilestonesSectionPreviewProps) {
   const colors = getThemeColors(theme);
 
   return (
@@ -594,10 +575,10 @@ export function MilestonesSectionPreview({ theme }: { theme: Theme }) {
 // ============================================
 
 interface FutureDreamsSectionPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
 }
 
-export function FutureDreamsSectionPreview({ theme }: { theme: Theme }) {
+export function FutureDreamsSectionPreview({ theme }: FutureDreamsSectionPreviewProps) {
   const colors = getThemeColors(theme);
 
   return (
@@ -647,11 +628,11 @@ export function FutureDreamsSectionPreview({ theme }: { theme: Theme }) {
 // ============================================
 
 interface PolaroidGalleryPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
   photoCount: number;
 }
 
-export function PolaroidGalleryPreview({
+function PolaroidGalleryPreview({
   theme,
   photoCount,
 }: PolaroidGalleryPreviewProps) {
@@ -694,10 +675,10 @@ export function PolaroidGalleryPreview({
 // ============================================
 
 interface AnniversaryCountdownPreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
 }
 
-export function AnniversaryCountdownPreview({ theme }: { theme: Theme }) {
+export function AnniversaryCountdownPreview({ theme }: AnniversaryCountdownPreviewProps) {
   const colors = getThemeColors(theme);
 
   return (
@@ -746,10 +727,10 @@ export function AnniversaryCountdownPreview({ theme }: { theme: Theme }) {
 // ============================================
 
 interface QRKeepsakePreviewProps {
-  theme: Theme;
+  theme: ThemeKey;
 }
 
-export function QRKeepsakePreview({ theme }: { theme: Theme }) {
+export function QRKeepsakePreview({ theme }: QRKeepsakePreviewProps) {
   const colors = getThemeColors(theme);
 
   return (
@@ -789,10 +770,10 @@ export function QRKeepsakePreview({ theme }: { theme: Theme }) {
 
 interface DefaultSectionPreviewProps {
   sectionId: string;
-  theme: Theme;
+  theme: ThemeKey;
 }
 
-export function DefaultSectionPreview({
+function DefaultSectionPreview({
   sectionId,
   theme,
 }: DefaultSectionPreviewProps) {
@@ -851,11 +832,11 @@ interface SectionRendererProps {
 }
 
 export function SectionRenderer({ sectionId, config, occasion, coupleNames, tagline, message, specialDate }: SectionRendererProps) {
-  const theme = config.theme || 'romantic_classic';
+  const theme: ThemeKey = (config.theme as ThemeKey) || DEFAULT_THEME;
   const siteType = occasion || config.occasion || 'couple';
   const hasCoverPhoto = config.cover_photo_index !== undefined;
   const photoCount = config.cover_photo_index !== undefined ? 5 : 0;
-  const eventCount = config.timeline_events?.length || 0;
+  const eventCount = config.section_content?.timeline?.length || 0;
   const hasSong = !!config.sections?.includes('song');
 
   switch (sectionId) {
@@ -872,42 +853,48 @@ export function SectionRenderer({ sectionId, config, occasion, coupleNames, tagl
           hasCoverPhoto={hasCoverPhoto}
         />
       );
-    
     case 'gallery':
+    case 'photo_highlights':
       return <GallerySectionPreview theme={theme} photoCount={photoCount} />;
-    
     case 'timeline':
+    case 'wedding_timeline':
+    case 'travel_timeline':
+    case 'school_memories':
+    case 'achievements':
       return <TimelineSectionPreview theme={theme} eventCount={eventCount} />;
-    
     case 'song':
       return <SongSectionPreview theme={theme} hasSong={hasSong} />;
-    
     case 'love_letter':
+    case 'couple_message':
+    case 'graduation_message':
+    case 'parents_message':
+    case 'celebrant_message':
+    case 'family_message':
+    case 'message_letter':
+    case 'life_story':
+    case 'travel_notes':
       return <LoveLetterSectionPreview theme={theme} hasMessage={true} />;
-    
     case 'quotes':
+    case 'baby_predictions':
+    case 'tributes':
       return <QuotesSectionPreview theme={theme} />;
-    
     case 'relationship_stats':
       return <StatsSectionPreview theme={theme} />;
-    
     case 'milestones':
       return <MilestonesSectionPreview theme={theme} />;
-    
     case 'future_dreams':
+    case 'future_plans':
       return <FutureDreamsSectionPreview theme={theme} />;
-    
     case 'polaroid_gallery':
       return <PolaroidGalleryPreview theme={theme} photoCount={photoCount} />;
-    
     case 'anniversary_countdown':
+    case 'wedding_countdown':
+    case 'countdown':
       return <AnniversaryCountdownPreview theme={theme} />;
-    
     case 'qr_keepsake':
       return <QRKeepsakePreview theme={theme} />;
-    
     default:
-      return <DefaultSectionPreview sectionId={sectionId} theme={theme} />;
+      return <DefaultSectionPreview sectionId={sectionId} theme={theme === 'romantic_classic' ? DEFAULT_THEME : theme} />;
   }
 }
 

@@ -1,122 +1,20 @@
 'use client';
 
-import type { Theme } from '@/lib/types';
-import { useTheme } from '../builder/ThemeWrapper';
+import { getOccasionHeroSpec } from '../../config/occasionHeroConfig';
+import type { ThemeKey } from '@/config/themeConfig';
+import { getThemeVibe } from '@/config/themeConfig';
+import { getThemeAccentClasses } from '@/config/themeStyles';
+import type { OccasionType } from '@/lib/types';
+import { useOccasionType } from './OccasionContext';
 
 interface SectionHeaderProps {
   icon?: string;
   title: string;
   subtitle?: string;
-  theme: Theme;
+  theme: ThemeKey;
   className?: string;
+  siteType?: OccasionType;
 }
-
-// Theme-specific accent colors - simplified for plain subtitle
-const themeAccents: Record<Theme, { icon: string; title: string; subtitle: string; line: string }> = {
-  romantic_classic: {
-    icon: 'text-rose-400',
-    title: 'text-rose-900',
-    subtitle: 'text-rose-600',
-    line: 'from-rose-300 via-pink-300 to-rose-300',
-  },
-  // ... (all other themes unchanged)
-  cute_pastel: {
-    icon: 'text-purple-400',
-    title: 'text-purple-900',
-    subtitle: 'text-purple-600',
-    line: 'from-purple-300 via-pink-300 to-purple-300',
-  },
-  minimal_modern: {
-    icon: 'text-slate-400',
-    title: 'text-slate-900',
-    subtitle: 'text-slate-600',
-    line: 'from-slate-300 via-gray-300 to-slate-300',
-  },
-  dark_elegant: {
-    icon: 'text-amber-400',
-    title: 'text-zinc-100',
-    subtitle: 'text-zinc-300',
-    line: 'from-amber-400 via-yellow-300 to-amber-400',
-  },
-  soft_pastel: {
-    icon: 'text-pink-400',
-    title: 'text-pink-900',
-    subtitle: 'text-pink-600',
-    line: 'from-pink-300 via-rose-300 to-pink-300',
-  },
-  elegant_rose_gold: {
-    icon: 'text-rose-400',
-    title: 'text-rose-900',
-    subtitle: 'text-rose-600',
-    line: 'from-rose-300 via-amber-200 to-rose-300',
-  },
-  vintage_love_letter: {
-    icon: 'text-amber-600',
-    title: 'text-amber-900',
-    subtitle: 'text-amber-600',
-    line: 'from-amber-300 via-yellow-200 to-amber-300',
-  },
-  scrapbook_memories: {
-    icon: 'text-amber-500',
-    title: 'text-amber-900',
-    subtitle: 'text-amber-600',
-    line: 'from-amber-300 via-orange-200 to-amber-300',
-  },
-  wedding_style: {
-    icon: 'text-rose-400',
-    title: 'text-rose-900',
-    subtitle: 'text-rose-600',
-    line: 'from-rose-300 via-pink-200 to-rose-300',
-  },
-  floral_romance: {
-    icon: 'text-pink-500',
-    title: 'text-pink-900',
-    subtitle: 'text-pink-600',
-    line: 'from-pink-300 via-rose-200 to-pink-300',
-  },
-  dreamy_pink: {
-    icon: 'text-pink-400',
-    title: 'text-pink-900',
-    subtitle: 'text-pink-600',
-    line: 'from-pink-300 via-fuchsia-200 to-pink-300',
-  },
-  luxury_gold: {
-    icon: 'text-yellow-500',
-    title: 'text-yellow-900',
-    subtitle: 'text-yellow-600',
-    line: 'from-yellow-300 via-amber-200 to-yellow-300',
-  },
-  minimal_white: {
-    icon: 'text-slate-400',
-    title: 'text-slate-900',
-    subtitle: 'text-slate-600',
-    line: 'from-slate-300 via-gray-200 to-slate-300',
-  },
-  cute_kawaii: {
-    icon: 'text-pink-400',
-    title: 'text-pink-900',
-    subtitle: 'text-pink-600',
-    line: 'from-pink-300 via-rose-200 to-pink-300',
-  },
-  soft_lavender: {
-    icon: 'text-violet-400',
-    title: 'text-violet-900',
-    subtitle: 'text-violet-600',
-    line: 'from-violet-300 via-purple-200 to-violet-300',
-  },
-  colorful_celebration: {
-    icon: 'text-amber-500',
-    title: 'text-orange-900',
-    subtitle: 'text-orange-700',
-    line: 'from-yellow-300 via-orange-300 to-pink-300',
-  },
-  photo_focus: {
-    icon: 'text-slate-500',
-    title: 'text-slate-900',
-    subtitle: 'text-slate-600',
-    line: 'from-slate-400 via-gray-300 to-slate-400',
-  },
-};
 
 export default function SectionHeader({
   icon,
@@ -124,37 +22,128 @@ export default function SectionHeader({
   subtitle,
   theme,
   className = '',
+  siteType,
 }: SectionHeaderProps) {
-  const styles = useTheme(theme);
-  const accents = themeAccents[theme] || themeAccents.romantic_classic;
-  
-  // Determine if this is a romantic theme for shimmer effect
-  const romanticThemes = ['romantic_classic', 'elegant_rose_gold', 'wedding_style', 'floral_romance', 'dreamy_pink', 'cute_pastel', 'soft_pastel'];
-  const isRomantic = romanticThemes.includes(theme);
+  const contextOccasion = useOccasionType();
+  const resolvedSiteType = siteType || contextOccasion;
+  const occasionHero = getOccasionHeroSpec(resolvedSiteType);
+  const accents = getThemeAccentClasses(theme);
+  const vibe = getThemeVibe(theme);
+
+  const shouldShimmer = vibe === 'romantic' || vibe === 'luxury';
+  const shouldGlowIcon = vibe === 'cute' || vibe === 'playful';
+  const shouldUseSoftSubtitle = vibe === 'soft';
+
+  if (resolvedSiteType === 'wedding') {
+    return (
+      <div className={`section-header text-center mb-12 ${className}`}>
+        <div className="inline-flex items-center gap-2 rounded-full border border-amber-200/60 bg-white/75 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-amber-700 shadow-sm backdrop-blur-md">
+          <span>{icon || occasionHero.badge}</span>
+          Ceremony Chapter
+        </div>
+        <h2 className="mt-5 font-serif text-3xl font-semibold tracking-tight text-amber-950 md:text-4xl">
+          {title}
+        </h2>
+        {subtitle && (
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-amber-800/80 md:text-base">
+            {subtitle}
+          </p>
+        )}
+        <div className="mx-auto mt-6 flex max-w-xs items-center gap-4 text-amber-400/80">
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-amber-300 to-transparent" />
+          <span className="text-lg">{occasionHero.badge}</span>
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-amber-300 to-transparent" />
+        </div>
+      </div>
+    );
+  }
+
+  if (resolvedSiteType === 'memorial') {
+    return (
+      <div className={`section-header text-center mb-12 ${className}`}>
+        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-white/55 backdrop-blur-md">
+          <span>{icon || occasionHero.badge}</span>
+          Tribute Chapter
+        </div>
+        <h2 className="mt-5 font-serif text-3xl font-semibold tracking-tight text-white md:text-4xl">
+          {title}
+        </h2>
+        {subtitle && (
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/68 md:text-base">
+            {subtitle}
+          </p>
+        )}
+        <div className="mx-auto mt-6 h-px w-28 bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+      </div>
+    );
+  }
+
+  if (resolvedSiteType === 'travel') {
+    return (
+      <div className={`section-header text-center mb-12 ${className}`}>
+        <div className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white/85 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-600 shadow-sm">
+          <span>{icon || occasionHero.badge}</span>
+          Route Stop
+        </div>
+        <h2 className="mt-5 text-3xl font-black tracking-tight text-slate-900 md:text-4xl">
+          {title}
+        </h2>
+        {subtitle && (
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-slate-600 md:text-base">
+            {subtitle}
+          </p>
+        )}
+        <div className="mx-auto mt-6 flex max-w-sm items-center gap-3 text-slate-400">
+          <span className="text-base">{occasionHero.badge}</span>
+          <div className="h-px flex-1 border-t border-dashed border-slate-300" />
+          <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Journal Marker</span>
+          <div className="h-px flex-1 border-t border-dashed border-slate-300" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className={`text-center mb-16 lg:mb-24 max-w-3xl mx-auto ${className}`}>
+    <div className={`section-header text-center mb-10 ${className}`}>
       {/* Icon */}
       {icon && (
-        <div className="inline-flex items-center justify-center mb-4 p-2 rounded-2xl bg-white/90 backdrop-blur-sm shadow-xl ring-2 ring-offset-2 ring-white/70">
-          <span className={`text-4xl md:text-5xl drop-shadow-2xl ${accents.icon}`}>{icon}</span>
+        <div
+          className={[
+            'mx-auto mb-2 text-3xl',
+            accents.icon,
+            shouldGlowIcon ? 'drop-shadow-[0_0_8px_rgba(244,114,182,0.25)]' : '',
+          ].join(' ')}
+        >
+          {icon}
         </div>
       )}
 
       {/* Title */}
-      <h2 className={`${styles.heading} text-5xl md:text-6xl lg:text-7xl font-black leading-relaxed tracking-tight`}>
-        <span className={`bg-gradient-to-r ${accents.line} bg-clip-text text-transparent`}>{title}</span>
+      <h2 className={`section-title text-2xl md:text-3xl font-bold tracking-tight ${accents.title}`}>
+        {title}
       </h2>
 
       {/* Subtitle */}
       {subtitle && (
-        <p className={`section-subtitle mt-5 text-lg md:text-xl lg:text-2xl font-medium leading-relaxed tracking-wide max-w-xl mx-auto ${accents.subtitle}`}>
+        <p
+          className={[
+            'section-subtitle mt-3 text-sm md:text-base lg:text-lg leading-relaxed tracking-wide max-w-md mx-auto',
+            shouldUseSoftSubtitle ? 'font-normal opacity-90' : 'font-medium',
+            accents.subtitle,
+          ].join(' ')}
+        >
           {subtitle}
         </p>
       )}
 
-      {/* Section rule - with rose shimmer for romantic themes */}
-      <div className={`mx-auto mt-6 h-1 w-24 rounded-full bg-gradient-to-r ${accents.line} shadow-md ${isRomantic ? 'shimmer-rose' : ''}`} />
+      {/* Divider */}
+      <div
+        className={[
+          'mx-auto mt-4 h-1 w-16 rounded-full bg-gradient-to-r opacity-80 transition-all duration-300',
+          accents.line,
+          shouldShimmer ? 'shimmer-rose' : '',
+        ].join(' ')}
+      />
     </div>
   );
 }

@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Theme } from '@/lib/types';
+import { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../../builder/ThemeWrapper';
 import SectionHeader from '../../page/SectionHeader';
+import { getSectionCopy } from '@/lib/section-copy';
 
 interface Props {
-  theme: Theme;
+  theme: ThemeKey;
   birthdayDate: string;
 }
 
@@ -52,19 +53,24 @@ export default function BirthdayCountdownSection({ theme, birthdayDate }: Props)
   return (
     <section className={`py-16 md:py-24 ${styles.sectionBg}`} id="birthday-countdown">
       <div className="max-w-4xl mx-auto px-4 md:px-6">
-        <SectionHeader
-          icon="⏳"
-          title="Birthday Countdown"
-          subtitle={`Count down to ${birthdayDate || 'the special day'}`}
-          theme={theme}
-        />
+        {(() => {
+          const copy = getSectionCopy('birthday_countdown');
+          return (
+            <SectionHeader
+              icon={copy.icon}
+              title={copy.title}
+              subtitle={copy.subtitle}
+              theme={theme}
+            />
+          );
+        })()}
 
         <div className="mt-6 grid grid-cols-4 gap-3 text-center">
           {['Days','Hours','Minutes','Seconds'].map((label, idx) => {
             const value = [countdown.days, countdown.hours, countdown.minutes, countdown.seconds][idx];
             return (
               <div key={label} className={`${styles.card} p-4 rounded-xl border ${styles.border} shadow-md`}>
-                <div className="text-3xl font-bold text-rose-500">{value}</div>
+                <div className={`text-3xl font-bold ${styles.accent}`}>{value}</div>
                 <div className="text-sm text-slate-600 dark:text-slate-300">{label}</div>
               </div>
             );
