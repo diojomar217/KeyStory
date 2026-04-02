@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabase';
 import { recordAdminAudit } from '@/lib/reliability/audit';
 import { captureError } from '@/lib/reliability/monitoring';
 
+export const runtime = 'nodejs';
+
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;

@@ -6,6 +6,8 @@ import { getThemeVibe } from '@/config/themeConfig';
 import { getThemeAccentClasses } from '@/config/themeStyles';
 import type { OccasionType } from '@/lib/types';
 import { useOccasionType } from './OccasionContext';
+import { useThemeUtils } from '../builder/ThemeWrapper';
+import { getHeadingFontClass } from '@/lib/theme-color-helpers';
 
 interface SectionHeaderProps {
   icon?: string;
@@ -29,6 +31,8 @@ export default function SectionHeader({
   const occasionHero = getOccasionHeroSpec(resolvedSiteType);
   const accents = getThemeAccentClasses(theme);
   const vibe = getThemeVibe(theme);
+  const themeUtils = useThemeUtils(theme);
+  const headingFontClass = getHeadingFontClass(theme);
 
   const shouldShimmer = vibe === 'romantic' || vibe === 'luxury';
   const shouldGlowIcon = vibe === 'cute' || vibe === 'playful';
@@ -119,7 +123,7 @@ export default function SectionHeader({
       )}
 
       {/* Title */}
-      <h2 className={`section-title text-2xl md:text-3xl font-bold tracking-tight ${accents.title}`}>
+      <h2 className={`section-title text-2xl md:text-3xl font-bold tracking-tight ${accents.title} ${headingFontClass}`}>
         {title}
       </h2>
 
@@ -136,13 +140,15 @@ export default function SectionHeader({
         </p>
       )}
 
-      {/* Divider */}
+      {/* Divider - use theme accent color */}
       <div
         className={[
-          'mx-auto mt-4 h-1 w-16 rounded-full bg-gradient-to-r opacity-80 transition-all duration-300',
-          accents.line,
+          'mx-auto mt-4 h-1 w-16 rounded-full opacity-80 transition-all duration-300',
           shouldShimmer ? 'shimmer-rose' : '',
         ].join(' ')}
+        style={{
+          backgroundImage: `linear-gradient(to right, ${themeUtils.colors.primary}, ${themeUtils.colors.accent}, ${themeUtils.colors.primary})`
+        }}
       />
     </div>
   );

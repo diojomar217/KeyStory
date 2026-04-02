@@ -4,7 +4,13 @@ import type { ThemeKey } from '@/config/themeConfig';
 import SectionHeader from '../../page/SectionHeader';
 import { getSectionCopy } from '@/lib/section-copy';
 import ScrollReveal from '../../ui/ScrollReveal';
-import { useTheme } from '../../builder/ThemeWrapper';
+import { useThemeUtils } from '../../builder/ThemeWrapper';
+import {
+  getCardStyleClasses,
+  getShadowClass,
+  getSectionSpacingClass,
+  getHeadingFontClass,
+} from '@/lib/theme-color-helpers';
 
 interface LetterToFutureSectionProps {
   theme: ThemeKey;
@@ -30,7 +36,11 @@ export default function LetterToFutureSection({
   letter,
   openDate
 }: LetterToFutureSectionProps) {
-  const styles = useTheme(theme);
+  const themeUtils = useThemeUtils(theme);
+  const cardStyle = getCardStyleClasses(theme);
+  const shadowClass = getShadowClass(theme);
+  const spacingClass = getSectionSpacingClass(theme);
+  const headingFontClass = getHeadingFontClass(theme);
   const content = letter || `${defaultLetter}${customerName} & ${partnerName}`;
 
   const now = new Date();
@@ -81,7 +91,7 @@ export default function LetterToFutureSection({
     : getDateKey(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000 * 3));
 
   return (
-    <section className="relative py-24 lg:py-32" id="letter-future">
+    <section className={`relative ${spacingClass}`} id="letter-future">
       <div className="max-w-4xl mx-auto px-6 lg:px-8">
         <ScrollReveal animation="fade-up">
           {(() => {
@@ -98,23 +108,38 @@ export default function LetterToFutureSection({
         </ScrollReveal>
 
         <ScrollReveal animation="fade-up" delay={200}>
-          <div className="
-            bg-white/95 backdrop-blur-xl border border-white/40 rounded-3xl lg:rounded-[3rem] shadow-2xl lg:shadow-[0_35px_60px_-15px_rgba(0,0,0,0.1)] p-12 lg:p-16 xl:p-20
-            hover:shadow-[0_35px_60px_-15px_rgba(244,114,182,0.15)] hover:border-rose-200/50 hover:-translate-y-2
-            transition-all duration-500 ease-out relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-rose-50/50 before:to-transparent before:blur-xl before:-z-10
-            max-w-3xl mx-auto
-          ">
+          <div
+            className={`
+              ${cardStyle} ${shadowClass} border backdrop-blur-xl p-12 lg:p-16 xl:p-20
+              transition-all duration-500 ease-out relative overflow-hidden max-w-3xl mx-auto hover:-translate-y-2
+            `}
+            style={{
+              backgroundColor: `${themeUtils.colors.card}F2`,
+              borderColor: `${themeUtils.colors.border}B3`,
+              boxShadow: `0 35px 60px -15px ${themeUtils.colors.primary}22`,
+            }}
+          >
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                backgroundImage: `linear-gradient(135deg, ${themeUtils.colors.secondary}44, transparent)`,
+              }}
+            />
             {isLocked ? (
-              <div className="text-center text-rose-700 text-lg font-medium p-10">
+              <div className={`text-center text-lg font-medium p-10 ${headingFontClass}`} style={{ color: themeUtils.colors.text }}>
                 Your letter is locked until {displayDate}. Come back then to see your message to the future.
               </div>
             ) : (
-              <div className="prose prose-lg text-rose-800 leading-relaxed">
-                <p className="text-2xl italic mb-8 font-light text-center">"</p>
+              <div className="prose prose-lg leading-relaxed" style={{ color: themeUtils.colors.text }}>
+                <p className={`text-2xl italic mb-8 font-light text-center ${headingFontClass}`} style={{ color: themeUtils.colors.primary }}>
+                  "
+                </p>
                 <div className="whitespace-pre-wrap text-lg leading-8">
                   {content}
                 </div>
-                <p className="text-2xl italic mt-8 font-light text-center">"</p>
+                <p className={`text-2xl italic mt-8 font-light text-center ${headingFontClass}`} style={{ color: themeUtils.colors.primary }}>
+                  "
+                </p>
               </div>
             )}
           </div>

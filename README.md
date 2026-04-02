@@ -58,6 +58,32 @@ A full-stack web application for generating personalized couple websites with QR
    npm run job:process-queue
    ```
 
+## Vercel Deployment Notes
+- Required env vars:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `CLOUDINARY_CLOUD_NAME`
+   - `CLOUDINARY_API_KEY`
+   - `CLOUDINARY_API_SECRET`
+   - `NEXT_PUBLIC_BASE_URL`
+- Optional reliability env vars:
+   - `FEATURE_STRICT_RATE_LIMITING`
+   - `FEATURE_AUDIT_LOGS`
+   - `FEATURE_RETRY_FAILED_UPLOADS`
+   - `FEATURE_BACKGROUND_JOB_QUEUE`
+   - `NEXT_PUBLIC_FEATURE_WEB_VITALS`
+   - `FEATURE_MONITORING_ALERTS`
+   - `ALERT_WEBHOOK_URL`
+- Archive storage on Vercel production:
+   - Do not use `ARCHIVE_PROVIDER=local`.
+   - Use `ARCHIVE_PROVIDER=s3` for durable archive/restore workflows.
+   - Set S3 env vars:
+      - `AWS_S3_ARCHIVE_BUCKET`
+      - `AWS_REGION` (or `AWS_DEFAULT_REGION`)
+      - `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` (or provide IAM role credentials)
+      - Optional: `AWS_S3_ARCHIVE_PREFIX` (default: `keystory-archives`)
+      - Optional: `AWS_S3_ENDPOINT` and `AWS_S3_FORCE_PATH_STYLE=true` (S3-compatible providers)
+
 ## Folder Structure
 - `/app` - Next.js App Router pages
 - `/components` - React components

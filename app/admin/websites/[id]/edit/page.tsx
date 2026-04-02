@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
 import { useRouter, useParams } from 'next/navigation';
@@ -28,6 +28,15 @@ import { SITE_TYPES } from '@/config/siteTypeConfig';
 import type { SiteTypeKey } from '@/config/siteTypeConfig';
 import { getParticipantFieldsForOccasion, OCCASION_DATE_LABELS } from '@/config/occasionFormConfig';
 import bcrypt from 'bcryptjs';
+import {
+  analyzeImageQuality,
+  buildPublishChecklist,
+  detectDuplicateParticipantNames,
+  loadLocalTemplates,
+  saveLocalTemplate,
+  type ChecklistItem,
+  type LocalTemplate,
+} from '@/lib/builder-experience';
 
 type LocalForm = {
   website_name: string;
@@ -150,9 +159,42 @@ export default function EditWebsitePage() {
   const [passwordEnabled, setPasswordEnabled] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
+  const [photoQualityWarnings, setPhotoQualityWarnings] = useState<string[]>([]);
+  const [localTemplates, setLocalTemplates] = useState<LocalTemplate[]>([]);
+  const [selectedLocalTemplateId, setSelectedLocalTemplateId] = useState('');
+
+  const [history, setHistory] = useState<Array<{
+    form: LocalForm;
+    config: SiteConfig;
+    currentStep: number;
+    completedSteps: number[];
+    createdAt: string;
+  }>>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const isRestoringHistoryRef = useRef(false);
 
   const [expirationMode, setExpirationMode] = useState<'3_months'|'6_months'|'1_year'|'custom'>('6_months');
   const [customExpirationDate, setCustomExpirationDate] = useState('');
+
+  const duplicateParticipantNames = useMemo(
+    () => detectDuplicateParticipantNames(form.participants || []),
+    [form.participants]
+  );
+
+  const publishChecklist: ChecklistItem[] = useMemo(
+    () =>
+      buildPublishChecklist({
+        websiteName: form.website_name,
+        participants: form.participants,
+        specialDate: form.specialDate,
+        photosCount: (photoPreviews.length || 0) + (form.existingPhotos?.length || 0),
+        sections: config.sections,
+        templates: config.templates as Record<string, string | undefined>,
+        message: form.message,
+        tagline: form.tagline,
+      }),
+    [form, config, photoPreviews.length]
+  );
 
   const formatSelectedExpiration = () => {
     try {
@@ -181,6 +223,78 @@ export default function EditWebsitePage() {
       }
     };
   }, [photoPreviews, heroPhotoPreview]);
+
+  useEffect(() => {
+    setLocalTemplates(loadLocalTemplates());
+  }, []);
+
+  useEffect(() => {
+    if (isRestoringHistoryRef.current) {
+      isRestoringHistoryRef.current = false;
+      return;
+    }
+
+    const snapshot = {
+      form,
+      config,
+      currentStep,
+      completedSteps,
+      createdAt: new Date().toISOString(),
+    };
+
+    setHistory((prev) => {
+      const base = historyIndex >= 0 ? prev.slice(0, historyIndex + 1) : prev;
+      const last = base[base.length - 1];
+      const isDuplicate =
+        last &&
+        JSON.stringify(last.form) === JSON.stringify(snapshot.form) &&
+        JSON.stringify(last.config) === JSON.stringify(snapshot.config) &&
+        last.currentStep === snapshot.currentStep &&
+        JSON.stringify(last.completedSteps) === JSON.stringify(snapshot.completedSteps);
+
+      if (isDuplicate) return prev;
+      const next = [...base, snapshot].slice(-30);
+      setHistoryIndex(next.length - 1);
+      return next;
+    });
+  }, [form, config, currentStep, completedSteps, historyIndex]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const isUndo = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !event.shiftKey;
+      const isRedo =
+        (event.ctrlKey || event.metaKey) &&
+        (event.key.toLowerCase() === 'y' || (event.shiftKey && event.key.toLowerCase() === 'z'));
+
+      if (!isUndo && !isRedo) return;
+      event.preventDefault();
+
+      if (isUndo && historyIndex > 0) {
+        const target = history[historyIndex - 1];
+        if (!target) return;
+        isRestoringHistoryRef.current = true;
+        setForm(target.form);
+        setConfig(target.config);
+        setCurrentStep(target.currentStep);
+        setCompletedSteps(target.completedSteps);
+        setHistoryIndex(historyIndex - 1);
+      }
+
+      if (isRedo && historyIndex < history.length - 1) {
+        const target = history[historyIndex + 1];
+        if (!target) return;
+        isRestoringHistoryRef.current = true;
+        setForm(target.form);
+        setConfig(target.config);
+        setCurrentStep(target.currentStep);
+        setCompletedSteps(target.completedSteps);
+        setHistoryIndex(historyIndex + 1);
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [history, historyIndex]);
 
   const fetchOrder = async () => {
     try {
@@ -546,6 +660,10 @@ export default function EditWebsitePage() {
     const newPreviews = validImages.map((file) => URL.createObjectURL(file));
     setPhotoPreviews(newPreviews);
 
+    analyzeImageQuality(validImages)
+      .then((warnings) => setPhotoQualityWarnings(warnings.slice(0, 4)))
+      .catch(() => setPhotoQualityWarnings([]));
+
     // Always keep gallery section_content in sync with all gallery images (existing + new)
     setConfig((prev) => {
       const allGallery = [
@@ -782,6 +900,114 @@ export default function EditWebsitePage() {
     }));
   };
 
+  const handleUndo = () => {
+    if (historyIndex <= 0) return;
+    const target = history[historyIndex - 1];
+    if (!target) return;
+    isRestoringHistoryRef.current = true;
+    setForm(target.form);
+    setConfig(target.config);
+    setCurrentStep(target.currentStep);
+    setCompletedSteps(target.completedSteps);
+    setHistoryIndex(historyIndex - 1);
+  };
+
+  const handleRedo = () => {
+    if (historyIndex >= history.length - 1) return;
+    const target = history[historyIndex + 1];
+    if (!target) return;
+    isRestoringHistoryRef.current = true;
+    setForm(target.form);
+    setConfig(target.config);
+    setCurrentStep(target.currentStep);
+    setCompletedSteps(target.completedSteps);
+    setHistoryIndex(historyIndex + 1);
+  };
+
+  const handleSaveAsTemplate = () => {
+    const name = window.prompt('Template name');
+    if (!name || !name.trim()) return;
+
+    const template: LocalTemplate = {
+      id: `${Date.now()}`,
+      name: name.trim(),
+      createdAt: new Date().toISOString(),
+      form: {
+        occasion: form.occasion,
+        participants: form.participants,
+        specialDate: form.specialDate,
+        tagline: form.tagline,
+        message: form.message,
+        song_link: form.song_link,
+      },
+      config: {
+        occasion: config.occasion,
+        theme: config.theme,
+        layout_preset: config.layout_preset,
+        sections: config.sections,
+        templates: config.templates,
+        section_content: config.section_content,
+      },
+    };
+
+    const next = saveLocalTemplate(template);
+    setLocalTemplates(next);
+    setSelectedLocalTemplateId(template.id);
+  };
+
+  const handleApplyLocalTemplate = (templateId: string) => {
+    const template = localTemplates.find((item) => item.id === templateId);
+    if (!template) return;
+    setSelectedLocalTemplateId(templateId);
+    const sanitizedParticipants = (template.form.participants || [])
+      .filter((participant) => !!participant.name)
+      .map((participant, index) => ({
+        id: participant.id || `participant-${index + 1}`,
+        name: participant.name || '',
+        role: participant.role,
+      }));
+
+    setForm((prev) => ({
+      ...prev,
+      occasion: (template.form.occasion as OccasionType) || prev.occasion,
+      participants: sanitizedParticipants.length > 0 ? sanitizedParticipants : prev.participants,
+      specialDate: template.form.specialDate || prev.specialDate,
+      tagline: template.form.tagline || prev.tagline,
+      message: template.form.message || prev.message,
+      song_link: template.form.song_link || prev.song_link,
+    }));
+
+    setConfig((prev) => ({
+      ...prev,
+      ...template.config,
+      occasion: (template.form.occasion as OccasionType) || prev.occasion,
+    }));
+  };
+
+  const handleCloneToNewWebsite = () => {
+    const cloneDraftKey = 'create-website-draft-v1';
+    const clonePayload = {
+      form: {
+        website_name: `${form.website_name}-copy`,
+        occasion: form.occasion,
+        participants: form.participants,
+        specialDate: form.specialDate,
+        message: form.message,
+        tagline: form.tagline,
+        song_link: form.song_link,
+        song_autoplay: form.song_autoplay,
+      },
+      config,
+      currentStep: 1,
+      completedSteps: [],
+      clonedFromId: id,
+      updatedAt: new Date().toISOString(),
+    };
+
+    window.localStorage.setItem(cloneDraftKey, JSON.stringify(clonePayload));
+    router.push('/admin/websites/create');
+  };
+
   const renderStepContent = () => {
     const stepInfo = WIZARD_STEPS.find((s) => s.id === currentStep);
 
@@ -815,6 +1041,7 @@ export default function EditWebsitePage() {
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1.5">
                   Website Name (used in URL)
+                  <span className="ml-1 text-slate-400" title="Used for the public URL. Keep it short and readable.">?</span>
                 </label>
                 <div className="flex items-center gap-2">
                   <span className="text-slate-400 text-sm">yoursite.com/</span>
@@ -875,7 +1102,34 @@ export default function EditWebsitePage() {
                     </button>
                   ))}
                 </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveAsTemplate}
+                    className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700"
+                  >
+                    Save As Template
+                  </button>
+                  <select
+                    value={selectedLocalTemplateId}
+                    onChange={(e) => handleApplyLocalTemplate(e.target.value)}
+                    className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-700"
+                  >
+                    <option value="">Load saved template</option>
+                    {localTemplates.map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
+
+              {duplicateParticipantNames.length > 0 && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                  Duplicate field detection: repeated participant name(s) detected ({duplicateParticipantNames.join(', ')}).
+                </div>
+              )}
 
               {/* Dynamic participant fields based on occasion */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -903,6 +1157,7 @@ export default function EditWebsitePage() {
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1.5">
                   {OCCASION_DATE_LABELS[form.occasion] || 'Special Date'}
+                  <span className="ml-1 text-slate-400" title="Used by countdown/timeline sections.">?</span>
                 </label>
                 <input
                   name="specialDate"
@@ -1154,38 +1409,51 @@ export default function EditWebsitePage() {
                 <p className="text-sm">No sections enabled yet. Go back to Step 3 to select sections and continue.</p>
               </div>
             ) : (
-              <SectionContentInputs
-                config={config}
-                onSectionContentChange={(sectionKey: string, content: any) => handleSectionContentChange(sectionKey as keyof SectionContentMap, content)}
-                validationErrors={(() => {
-                  const errors: Record<string, boolean> = {};
-                  const { sections = [], section_content = {} } = config;
-                  sections.forEach((key: string) => {
-                    const meta = getSectionMetadata(key as Section);
-                    if (meta?.required) {
-                      if (key === 'gallery' && (photoPreviews.length === 0 && (!form.existingPhotos || form.existingPhotos.length === 0))) {
-                        errors[key] = true;
-                      } else if (key === 'timeline' && (!config.section_content?.timeline || !Array.isArray(config.section_content.timeline) || config.section_content.timeline.length === 0)) {
-                        errors[key] = true;
-                      } else if (key === 'love_letter' && (!(section_content as any).love_letter || !((section_content as any).love_letter?.content || (section_content as any).love_letter?.text)?.trim())) {
-                        errors[key] = true;
+              <>
+                {photoQualityWarnings.length > 0 && (
+                  <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">
+                    <div className="font-semibold mb-1">Photo quality checker</div>
+                    <ul className="list-disc ml-4 space-y-1">
+                      {photoQualityWarnings.map((warning, index) => (
+                        <li key={index}>{warning}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <SectionContentInputs
+                  config={config}
+                  onSectionContentChange={(sectionKey: string, content: any) => handleSectionContentChange(sectionKey as keyof SectionContentMap, content)}
+                  validationErrors={(() => {
+                    const errors: Record<string, boolean> = {};
+                    const { sections = [], section_content = {} } = config;
+                    sections.forEach((key: string) => {
+                      const meta = getSectionMetadata(key as Section);
+                      if (meta?.required) {
+                        if (key === 'gallery' && (photoPreviews.length === 0 && (!form.existingPhotos || form.existingPhotos.length === 0))) {
+                          errors[key] = true;
+                        } else if (key === 'timeline' && (!config.section_content?.timeline || !Array.isArray(config.section_content.timeline) || config.section_content.timeline.length === 0)) {
+                          errors[key] = true;
+                        } else if (key === 'love_letter' && (!(section_content as any).love_letter || !((section_content as any).love_letter?.content || (section_content as any).love_letter?.text)?.trim())) {
+                          errors[key] = true;
+                        }
                       }
-                    }
-                  });
-                  return errors;
-                })()}
-                photoPreviews={photoPreviews}
-                handlePhotos={handlePhotos}
-                heroPhotoPreview={heroPhotoPreview}
-                crop={crop}
-                zoom={zoom}
-                setCrop={setCrop}
-                setZoom={setZoom}
-                setCroppedAreaPixels={setCroppedAreaPixels}
-                handleHeroPhotoUpload={handleHeroPhotoUpload}
-                handleHeroPhotoSelect={handleHeroPhotoSelect}
-                handleRemoveHeroPhoto={handleRemoveHeroPhoto}
-              />
+                    });
+                    return errors;
+                  })()}
+                  photoPreviews={photoPreviews}
+                  handlePhotos={handlePhotos}
+                  heroPhotoPreview={heroPhotoPreview}
+                  crop={crop}
+                  zoom={zoom}
+                  setCrop={setCrop}
+                  setZoom={setZoom}
+                  setCroppedAreaPixels={setCroppedAreaPixels}
+                  handleHeroPhotoUpload={handleHeroPhotoUpload}
+                  handleHeroPhotoSelect={handleHeroPhotoSelect}
+                  handleRemoveHeroPhoto={handleRemoveHeroPhoto}
+                />
+              </>
             )}
           </div>
         );
@@ -1372,6 +1640,33 @@ export default function EditWebsitePage() {
                 </div>
               </div>
             </div>
+            <div className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-bold text-slate-800">Publish Readiness Checklist</h3>
+                <span className="text-xs text-slate-500">
+                  {publishChecklist.filter((item) => item.ok).length}/{publishChecklist.length} complete
+                </span>
+              </div>
+              <div className="space-y-2">
+                {publishChecklist.map((item) => (
+                  <div key={item.key} className="flex items-start justify-between gap-3 text-sm">
+                    <div className={item.ok ? 'text-emerald-700' : 'text-amber-700'}>
+                      {item.ok ? 'OK' : 'Fix'} {item.label}
+                    </div>
+                    {!item.ok && (
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStep(item.fixStep)}
+                        className="text-xs px-2 py-1 rounded-md border border-amber-200 bg-amber-50 text-amber-700"
+                        title={item.suggestion}
+                      >
+                        Fix in Step {item.fixStep}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
             <div className={needsAttention.length > 0
               ? "bg-gradient-to-r from-amber-50 to-white rounded-2xl p-5 border border-amber-200 shadow"
               : "bg-gradient-to-r from-emerald-50 to-white rounded-2xl p-5 border border-emerald-200 shadow"
@@ -1454,7 +1749,14 @@ export default function EditWebsitePage() {
           </p>
         </div>
 
-        <div className="flex justify-end mb-4">
+        <div className="flex flex-wrap justify-end items-center gap-2 mb-4">
+          <button
+            type="button"
+            onClick={handleCloneToNewWebsite}
+            className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700"
+          >
+            Clone Existing Website
+          </button>
           <a href="/admin/websites" className="text-rose-600 hover:text-rose-700 font-medium text-sm">
             ← Back to Websites
           </a>
@@ -1484,6 +1786,27 @@ export default function EditWebsitePage() {
               }
             }}
           />
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+            <button
+              type="button"
+              onClick={handleUndo}
+              disabled={historyIndex <= 0}
+              className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white disabled:opacity-50"
+              title="Undo (Ctrl/Cmd+Z)"
+            >
+              Undo
+            </button>
+            <button
+              type="button"
+              onClick={handleRedo}
+              disabled={historyIndex >= history.length - 1}
+              className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white disabled:opacity-50"
+              title="Redo (Ctrl/Cmd+Y)"
+            >
+              Redo
+            </button>
+            <span>Version history: {Math.max(history.length, 1)} snapshots</span>
+          </div>
         </div>
 
         {error && (

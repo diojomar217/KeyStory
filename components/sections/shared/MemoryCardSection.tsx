@@ -6,7 +6,8 @@ import { toPng } from 'html-to-image';
 import type { ThemeKey } from '@/config/themeConfig';
 import type { OccasionType } from '@/lib/types';
 import type { QrCardStyle } from '@/components/qr/QrKeepsakeCard';
-import { useTheme } from '../../builder/ThemeWrapper';
+import { useTheme, useThemeUtils } from '../../builder/ThemeWrapper';
+import { getCardStyleClasses, getShadowClass } from '@/lib/theme-color-helpers';
 
 import ScrollReveal from '../../ui/ScrollReveal'; // Fixed import path
 
@@ -40,6 +41,9 @@ export default function MemoryCardSection({
   qrConfig = {},
 }: Props) {
   const styles = useTheme(theme);
+    const themeUtils = useThemeUtils(theme);
+    const cardStyle = getCardStyleClasses(theme);
+    const shadowClass = getShadowClass(theme);
   const coupleNames = `${customerName} & ${partnerName}`;
   const isBirthday = siteType === 'birthday';
 
@@ -245,17 +249,15 @@ export default function MemoryCardSection({
         <ScrollReveal animation="fade-up" delay={150}>
           <div 
             ref={cardRef}
-            className={`
-            relative 
-            bg-gradient-to-br from-white to-rose-50
-            dark:from-zinc-800 dark:to-zinc-900
-            rounded-3xl 
-            shadow-[0_20px_60px_rgba(0,0,0,0.15)]
-            border border-rose-100/50 dark:border-zinc-700/50
-            p-6 md:p-10
-            max-w-2xl mx-auto
-            overflow-hidden
-          `}>
+            className={`relative rounded-3xl p-6 md:p-10 max-w-2xl mx-auto overflow-hidden`}
+            style={{
+              background: `linear-gradient(135deg, ${themeUtils.colors.card} 0%, ${themeUtils.colors.background} 100%)`,
+              borderColor: themeUtils.colors.border,
+              borderWidth: '1px',
+              borderStyle: 'solid',
+              color: themeUtils.colors.text,
+            }}
+          >
             {/* Decorative corner elements */}
             <div className="absolute top-0 left-0 w-16 h-16 opacity-10">
               <svg viewBox="0 0 100 100" className="w-full h-full text-rose-400">

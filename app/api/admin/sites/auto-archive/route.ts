@@ -3,6 +3,8 @@ import { supabase, Site } from '@/lib/supabase';
 import { needsAutoArchive } from '@/lib/site-status';
 import { createArchiveForSite } from '@/lib/archiver';
 
+export const runtime = 'nodejs';
+
 export async function POST(req: NextRequest) {
   try {
     const { graceDays = 7 } = await req.json().catch(() => ({}));

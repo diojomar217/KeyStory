@@ -3,8 +3,9 @@
 import type { ThemeKey } from '@/config/themeConfig';
 import type { OccasionType } from '@/lib/types';
 import SectionHeader from '../../page/SectionHeader';
-import { useTheme } from '../../builder/ThemeWrapper';
-import { THEME_CONFIG } from '@/config/themeConfig';
+import { useThemeUtils } from '../../builder/ThemeWrapper';
+import { getCardStyleClasses, getShadowClass, getSectionSpacingClass } from '@/lib/theme-color-helpers';
+import ScrollReveal from '../../ui/ScrollReveal';
 
 interface PlaylistSectionProps {
   theme: ThemeKey;
@@ -13,8 +14,10 @@ interface PlaylistSectionProps {
 }
 
 export default function PlaylistSection({ theme, siteType = 'couple', songLink }: PlaylistSectionProps) {
-  const themeConfig = THEME_CONFIG[theme];
-  const { colors, typography } = themeConfig;
+  const themeUtils = useThemeUtils(theme);
+  const cardStyle = getCardStyleClasses(theme);
+  const shadowClass = getShadowClass(theme);
+  const spacingClass = getSectionSpacingClass(theme);
 
   const getEmbedUrl = (url: string) => {
     // Spotify
@@ -39,33 +42,39 @@ export default function PlaylistSection({ theme, siteType = 'couple', songLink }
   }
 
   return (
-    <section 
+    <section
       id="playlist"
-      className="py-16 px-4"
+      className={spacingClass}
     >
       <div className="max-w-4xl mx-auto">
-        <SectionHeader
-          icon={siteType === 'birthday' ? '🎵' : '🎶'}
-          title={siteType === 'birthday' ? 'Birthday Playlist' : 'Our Playlist'}
-          subtitle={siteType === 'birthday' ? 'Tunes to celebrate the day' : 'Songs that define our relationship'}
-          theme={theme}
-        />
-        
-        <div 
-          className="rounded-2xl overflow-hidden"
-          style={{ 
-            backgroundColor: colors.card,
-            borderColor: colors.border,
-            borderWidth: '1px'
-          }}
-        >
-          <iframe
-            src={getEmbedUrl(songLink)}
-            className="w-full h-96"
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-            allowFullScreen
+        <ScrollReveal>
+          <SectionHeader
+            icon={siteType === 'birthday' ? '🎵' : '🎶'}
+            title={siteType === 'birthday' ? 'Birthday Playlist' : 'Our Playlist'}
+            subtitle={siteType === 'birthday' ? 'Tunes to celebrate the day' : 'Songs that define our relationship'}
+            theme={theme}
           />
-        </div>
+        </ScrollReveal>
+
+        <ScrollReveal delay={120}>
+          <div
+            className={`overflow-hidden border ${cardStyle} ${shadowClass}`}
+            style={{
+              backgroundColor: themeUtils.colors.card,
+              borderColor: themeUtils.colors.border,
+              borderWidth: '1px',
+              color: themeUtils.colors.text,
+              boxShadow: `0 0 0 1px ${themeUtils.colors.primary}22`,
+            }}
+          >
+            <iframe
+              src={getEmbedUrl(songLink)}
+              className="w-full h-96"
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </ScrollReveal>
       </div>
     </section>
   );

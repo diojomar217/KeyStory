@@ -1,7 +1,13 @@
 'use client';
 
 import type { ThemeKey } from '@/config/themeConfig';
-import { getThemeStyles } from '@/config/themeStyles';
+import { useThemeUtils } from '../../builder/ThemeWrapper';
+import {
+  getCardStyleClasses,
+  getShadowClass,
+  getSectionSpacingClass,
+  getHeadingFontClass,
+} from '@/lib/theme-color-helpers';
 import ScrollReveal from '../../ui/ScrollReveal';
 
 interface Props {
@@ -13,24 +19,50 @@ interface Props {
 }
 
 export default function QRKeepsakeSection({ theme, slug, coupleNames, qrCodeUrl, qrDataUrl }: Props) {
-  const styles = getThemeStyles(theme);
+  const themeUtils = useThemeUtils(theme);
+  const { colors, styles } = themeUtils;
+  const cardStyle = getCardStyleClasses(theme);
+  const shadowClass = getShadowClass(theme);
+  const spacingClass = getSectionSpacingClass(theme);
+  const headingFontClass = getHeadingFontClass(theme);
   const destination = qrDataUrl || (slug ? `/r/${slug}` : '#');
 
   return (
-    <section className={`py-16 md:py-24 ${styles.sectionBgAlt}`} id="qr-keepsake">
+    <section className={`${spacingClass} ${styles.sectionBgAlt}`} id="qr-keepsake">
       <div className="max-w-3xl mx-auto px-4 md:px-6">
         <ScrollReveal animation="fade-up">
-          <div className={`${styles.card} border ${styles.cardBorder} rounded-3xl p-8 shadow-xl text-center`}>
+          <div
+            className={`${styles.card} ${cardStyle} ${shadowClass} border p-8 text-center`}
+            style={{
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+            }}
+          >
             <div className="text-5xl mb-4">🎴</div>
-            <h2 className={`text-2xl font-bold mb-2 ${styles.text}`}>A Keepsake You Can Carry</h2>
-            <p className={`${styles.textMuted} mb-6`}>
+            <h2 className={`text-2xl font-bold mb-2 ${headingFontClass}`} style={{ color: colors.text }}>A Keepsake You Can Carry</h2>
+            <p className="mb-6" style={{ color: colors.text }}>
               Scan this QR code anytime to revisit {coupleNames || 'this story'}.
             </p>
 
             {qrCodeUrl ? (
-              <img src={qrCodeUrl} alt="QR keepsake" className="mx-auto w-48 h-48 rounded-2xl shadow-md bg-white p-3" />
+              <img
+                src={qrCodeUrl}
+                alt="QR keepsake"
+                className="mx-auto w-48 h-48 rounded-2xl p-3"
+                style={{
+                  boxShadow: '0 8px 20px rgba(0, 0, 0, 0.14)',
+                  backgroundColor: colors.background,
+                }}
+              />
             ) : (
-              <div className="mx-auto w-48 h-48 rounded-2xl border border-dashed border-slate-300 flex items-center justify-center text-slate-400 bg-white">
+              <div
+                className="mx-auto w-48 h-48 rounded-2xl border border-dashed flex items-center justify-center"
+                style={{
+                  borderColor: colors.border,
+                  color: colors.text,
+                  backgroundColor: colors.background,
+                }}
+              >
                 QR preview unavailable
               </div>
             )}
@@ -38,7 +70,11 @@ export default function QRKeepsakeSection({ theme, slug, coupleNames, qrCodeUrl,
             <div className="mt-6">
               <a
                 href={destination}
-                className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl text-white ${styles.accentBg}`}
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl"
+                style={{
+                  backgroundColor: colors.accent,
+                  color: colors.background,
+                }}
               >
                 Open Link
               </a>

@@ -3,8 +3,9 @@
 import type { ThemeKey } from '@/config/themeConfig';
 import type { OccasionType } from '@/lib/types';
 import SectionHeader from '../../page/SectionHeader';
-import { getThemeStyles } from '@/config/themeStyles';
-import { THEME_CONFIG } from '@/config/themeConfig';
+import { useThemeUtils } from '../../builder/ThemeWrapper';
+import { getCardStyleClasses, getShadowClass, getSectionSpacingClass } from '@/lib/theme-color-helpers';
+import ScrollReveal from '../../ui/ScrollReveal';
 
 interface VideoMemory {
   id: string;
@@ -21,9 +22,10 @@ interface VideoMemoriesSectionProps {
 }
 
 export default function VideoMemoriesSection({ theme, siteType, videos = [] }: VideoMemoriesSectionProps) {
-  const styles = getThemeStyles(theme);
-  const themeConfig = THEME_CONFIG[theme];
-  const { colors, typography } = themeConfig;
+  const themeUtils = useThemeUtils(theme);
+  const cardStyle = getCardStyleClasses(theme);
+  const shadowClass = getShadowClass(theme);
+  const spacingClass = getSectionSpacingClass(theme);
 
   // Extract YouTube/Vimeo ID from URL
   const getEmbedUrl = (url: string) => {
@@ -42,27 +44,30 @@ export default function VideoMemoriesSection({ theme, siteType, videos = [] }: V
     return (
       <section 
         id="video-memories"
-        className="relative py-16 px-4"
+        className={`relative ${spacingClass}`}
       >
         <div className="max-w-4xl mx-auto">
-        <SectionHeader
-          icon={siteType === 'birthday' ? '🎬' : '🎬'}
-          title={siteType === 'birthday' ? 'Birthday Videos' : 'Video Memories'}
-          subtitle={siteType === 'birthday' ? 'Special birthday moments on video' : 'Relive your most precious moments together'}
-          theme={theme}
-        />
-          <div 
-            className="text-center p-12 rounded-2xl"
-            style={{ 
-              backgroundColor: colors.card,
-              borderColor: colors.border,
-              borderWidth: '1px'
-            }}
-          >
-            <p style={{ color: colors.text }}>
-              Add your favorite video memories to share special moments together.
-            </p>
-          </div>
+          <ScrollReveal>
+            <SectionHeader
+              icon={siteType === 'birthday' ? '🎬' : '🎬'}
+              title={siteType === 'birthday' ? 'Birthday Videos' : 'Video Memories'}
+              subtitle={siteType === 'birthday' ? 'Special birthday moments on video' : 'Relive your most precious moments together'}
+              theme={theme}
+            />
+          </ScrollReveal>
+          <ScrollReveal delay={120}>
+            <div
+              className={`text-center p-12 border ${cardStyle} ${shadowClass}`}
+              style={{
+                backgroundColor: themeUtils.colors.card,
+                borderColor: themeUtils.colors.border,
+              }}
+            >
+              <p style={{ color: themeUtils.colors.text }}>
+                Add your favorite video memories to share special moments together.
+              </p>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
     );
@@ -71,55 +76,57 @@ export default function VideoMemoriesSection({ theme, siteType, videos = [] }: V
   return (
     <section 
       id="video-memories"
-      className="py-16 px-4"
+      className={spacingClass}
     >
       <div className="max-w-4xl mx-auto">
-        <SectionHeader
-          icon={siteType === 'birthday' ? '🎬' : '🎬'}
-          title={siteType === 'birthday' ? 'Birthday Videos' : 'Video Memories'}
-          subtitle={siteType === 'birthday' ? 'Special birthday moments on video' : 'Relive your most precious moments together'}
-          theme={theme}
-        />
+        <ScrollReveal>
+          <SectionHeader
+            icon={siteType === 'birthday' ? '🎬' : '🎬'}
+            title={siteType === 'birthday' ? 'Birthday Videos' : 'Video Memories'}
+            subtitle={siteType === 'birthday' ? 'Special birthday moments on video' : 'Relive your most precious moments together'}
+            theme={theme}
+          />
+        </ScrollReveal>
         
         <div className="grid gap-8">
-          {videos.map((video: VideoMemory) => (
-            <div
-              key={video.id}
-              className="rounded-2xl overflow-hidden"
-              style={{ 
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-                borderWidth: '1px'
-              }}
-            >
-              <div className="aspect-video">
-                <iframe
-                  src={getEmbedUrl(video.url)}
-                  title={video.title}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-              {(video.title || video.description) && (
-                <div className="p-6">
-                  {video.title && (
-                    <h3 
-                      className="text-xl font-bold mb-2"
-                      style={{ 
-                        color: colors.primary,
-                        fontFamily: typography.headingFont
-                      }}
-                    >
-                      {video.title}
-                    </h3>
-                  )}
-                  {video.description && (
-                    <p style={{ color: colors.text }}>{video.description}</p>
-                  )}
+          {videos.map((video: VideoMemory, index: number) => (
+            <ScrollReveal key={video.id} delay={index * 100}>
+              <div
+                className={`overflow-hidden border ${cardStyle} ${shadowClass}`}
+                style={{
+                  backgroundColor: themeUtils.colors.card,
+                  borderColor: themeUtils.colors.border,
+                }}
+              >
+                <div className="aspect-video">
+                  <iframe
+                    src={getEmbedUrl(video.url)}
+                    title={video.title}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
                 </div>
-              )}
-            </div>
+                {(video.title || video.description) && (
+                  <div className="p-6">
+                    {video.title && (
+                      <h3
+                        className="text-xl font-bold mb-2"
+                        style={{
+                          color: themeUtils.colors.primary,
+                          fontFamily: themeUtils.typography.headingFont,
+                        }}
+                      >
+                        {video.title}
+                      </h3>
+                    )}
+                    {video.description && (
+                      <p style={{ color: themeUtils.colors.text }}>{video.description}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </ScrollReveal>
           ))}
         </div>
       </div>

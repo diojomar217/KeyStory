@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Image from 'next/image';
 import type { TimelineTemplate, TimelineEvent } from '@/lib/types';
 import type { ThemeKey } from '@/config/themeConfig';
-import { useTheme } from '../../builder/ThemeWrapper';
+import { useTheme, useThemeUtils } from '../../builder/ThemeWrapper';
+import { getCardStyleClasses, getShadowClass, getColorStyle } from '@/lib/theme-color-helpers';
 import SectionHeader from '../../page/SectionHeader';
 import { getSectionCopy } from '@/lib/section-copy';
 import type { SiteTypeKey } from '@/config/siteTypeConfig';
@@ -22,6 +23,9 @@ type Props = {
 
 export default function TimelineSection({ theme, template, events, variant = 'default', siteType }: Props) {
   const styles = useTheme(theme);
+  const themeUtils = useThemeUtils(theme);
+  const cardStyle = getCardStyleClasses(theme);
+  const shadowClass = getShadowClass(theme);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [selectedPhoto, setSelectedPhoto] = useState('');
@@ -34,50 +38,16 @@ export default function TimelineSection({ theme, template, events, variant = 'de
     new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
-  // Get accent colors based on theme - refined for more elegant, romantic look
+  // Get accent colors based on theme utilities
   const getAccentColors = () => {
-    switch (theme) {
-      case 'dark_elegant':
-        return { 
-          line: 'bg-gradient-to-b from-amber-400/20 via-amber-500/40 to-amber-400/20', 
-          dot: 'bg-gradient-to-br from-amber-400 to-amber-600',
-          dotGlow: 'shadow-[0_0_16px_rgba(245,158,11,0.6)]',
-          heart: 'text-amber-400',
-          special: 'from-amber-400 to-rose-500',
-          specialGlow: 'shadow-[0_0_24px_rgba(245,158,11,0.5)]',
-          cardGlow: 'hover:shadow-[0_8px_30px_rgba(245,158,11,0.15)]'
-        };
-      case 'cute_pastel':
-        return { 
-          line: 'bg-gradient-to-b from-purple-400/20 via-purple-500/40 to-pink-400/20', 
-          dot: 'bg-gradient-to-br from-purple-400 to-pink-500',
-          dotGlow: 'shadow-[0_0_16px_rgba(168,85,247,0.6)]',
-          heart: 'text-purple-400',
-          special: 'from-purple-400 to-pink-500',
-          specialGlow: 'shadow-[0_0_24px_rgba(168,85,247,0.5)]',
-          cardGlow: 'hover:shadow-[0_8px_30px_rgba(168,85,247,0.15)]'
-        };
-      case 'minimal_modern':
-        return { 
-          line: 'bg-gradient-to-b from-slate-400/20 via-slate-500/40 to-slate-400/20', 
-          dot: 'bg-gradient-to-br from-slate-400 to-slate-600',
-          dotGlow: 'shadow-[0_0_16px_rgba(100,116,139,0.6)]',
-          heart: 'text-slate-400',
-          special: 'from-slate-400 to-slate-600',
-          specialGlow: 'shadow-[0_0_24px_rgba(100,116,139,0.5)]',
-          cardGlow: 'hover:shadow-[0_8px_30px_rgba(100,116,139,0.1)]'
-        };
-      default:
-        return { 
-          line: 'bg-gradient-to-b from-rose-300/30 via-rose-400/50 to-pink-300/30', 
-          dot: 'bg-gradient-to-br from-rose-400 to-pink-500',
-          dotGlow: 'shadow-[0_0_16px_rgba(244,63,94,0.6)]',
-          heart: 'text-rose-400',
-          special: 'from-rose-400 to-pink-500',
-          specialGlow: 'shadow-[0_0_24px_rgba(244,63,94,0.5)]',
-          cardGlow: 'hover:shadow-[0_8px_30px_rgba(244,63,94,0.12)]'
-        };
-    }
+    return {
+      primaryColor: themeUtils.colors.primary,
+      secondaryColor: themeUtils.colors.secondary,
+      accentColor: themeUtils.colors.accent,
+      textColor: themeUtils.colors.text,
+      cardColor: themeUtils.colors.card,
+      borderColor: themeUtils.colors.border,
+    };
   };
 
   // Get default icons for chapters
@@ -108,14 +78,20 @@ export default function TimelineSection({ theme, template, events, variant = 'de
       >
         {/* Circle on timeline with enhanced marker */}
         <div className="absolute left-5 top-5 z-10">
-          <div className={`
-            w-7 h-7 rounded-full flex items-center justify-center
-            ${(styles && styles.bg ? styles.bg.split(' ')[0] : '')} border-4 border-white/20 ${accents.dot}
-            ${isSpecial ? accents.dotGlow : 'shadow-lg'}
-            transition-all duration-300
-            ${isSpecial ? 'scale-115' : 'hover:scale-115'}
-          `}>
-            <span className={`text-sm ${accents.heart} animate-gentle-pulse`}>
+          <div 
+            className={`
+              w-7 h-7 rounded-full flex items-center justify-center
+              border-4 border-white/20
+              ${isSpecial ? 'shadow-lg drop-shadow-lg' : 'shadow-lg'}
+              transition-all duration-300
+              ${isSpecial ? 'scale-115' : 'hover:scale-115'}
+            `}
+            style={{
+              backgroundImage: `linear-gradient(135deg, ${accents.primaryColor}, ${accents.secondaryColor})`,
+              boxShadow: isSpecial ? `0 0 24px ${accents.accentColor}80` : `0 0 16px ${accents.primaryColor}60`,
+            }}
+          >
+            <span className={`text-sm animate-gentle-pulse`} style={{ color: accents.accentColor }}>
               {isSpecial ? '💖' : '❤️'}
             </span>
           </div>
@@ -150,17 +126,22 @@ export default function TimelineSection({ theme, template, events, variant = 'de
           )}
           
           {/* Card Content */}
-          <div className={`
-            ${styles.card} rounded-3xl ${styles.cardBorder} border 
-            p-6 md:p-8
-            ${isSpecial 
-              ? `shadow-xl ${accents.specialGlow} ring-1 ring-${accents.dot.split(' ')[0].replace('bg-', '')}/30` 
-              : `shadow-lg hover:shadow-2xl ${accents.cardGlow || ''}`
-            }
-            transition-all duration-300 
-            hover:-translate-y-1.5 hover:scale-[1.01]
-            ${showSidePhoto ? 'md:flex-1' : ''}
-          `}>
+          <div 
+            className={`
+              rounded-3xl border 
+              p-6 md:p-8
+              transition-all duration-300 
+              hover:-translate-y-1.5 hover:scale-[1.01]
+              ${showSidePhoto ? 'md:flex-1' : ''}
+            `}
+            style={{
+              backgroundColor: accents.cardColor,
+              borderColor: accents.borderColor,
+              boxShadow: isSpecial 
+                ? `0 20px 25px -5px ${accents.accentColor}30` 
+                : '0 10px 15px -3px rgba(0,0,0,0.1)',
+            }}
+          >
             {/* Header: Chapter + Date + Special Badge */}
             <div className="flex flex-wrap items-center gap-3 mb-4">
               {/* Chapter Label */}
@@ -174,12 +155,16 @@ export default function TimelineSection({ theme, template, events, variant = 'de
               
               {/* Special Moment Badge */}
               {isSpecial && (
-                <span className={`
-                  text-xs font-semibold px-3 py-1 rounded-full
-                  bg-gradient-to-r ${accents.special}
-                  text-white shadow-lg animate-gentle-pulse
-                  flex items-center gap-1
-                `}>
+                <span 
+                  className={`
+                    text-xs font-semibold px-3 py-1 rounded-full
+                    text-white shadow-lg animate-gentle-pulse
+                    flex items-center gap-1
+                  `}
+                  style={{
+                    backgroundImage: `linear-gradient(90deg, ${accents.primaryColor}, ${accents.accentColor})`,
+                  }}
+                >
                   ✨ Special Moment
                 </span>
               )}
@@ -196,13 +181,16 @@ export default function TimelineSection({ theme, template, events, variant = 'de
             </div>
             
             {/* Title */}
-            <h3 className={`
-              text-xl md:text-2xl font-bold 
-              ${styles.text} 
-              mb-3 
-              ${styles.heading}
-              ${isSpecial ? 'bg-gradient-to-r from-rose-500 to-pink-500 bg-clip-text text-transparent' : ''}
-            `}>
+            <h3 
+              className={`
+                text-xl md:text-2xl font-bold 
+                mb-3 
+                ${styles.heading}
+              `}
+              style={{
+                color: isSpecial ? accents.accentColor : accents.textColor,
+              }}
+            >
               {event.title}
             </h3>
             
@@ -220,7 +208,12 @@ export default function TimelineSection({ theme, template, events, variant = 'de
     <div className="relative px-4 md:px-8" id="timeline">
       {/* Enhanced Vertical Line with gradient and glow */}
       <div className="absolute left-8 top-0 bottom-0">
-        <div className={`w-0.5 h-full ${accents.line}`} />
+        <div 
+          className="w-0.5 h-full"
+          style={{
+            backgroundImage: `linear-gradient(to bottom, ${accents.primaryColor}30, ${accents.accentColor}50, ${accents.primaryColor}30)`,
+          }}
+        />
       </div>
 
       <div className="space-y-12">
@@ -239,15 +232,20 @@ export default function TimelineSection({ theme, template, events, variant = 'de
         <ScrollReveal key={idx} animation="fade-up" delay={idx * 100}>
           <div
             className={`
-              ${styles.card} rounded-3xl ${styles.cardBorder} border 
-              p-6 shadow-lg hover:shadow-2xl 
+              rounded-3xl border 
+              p-6 
               hover:-translate-y-2 hover:scale-[1.02]
               transition-all duration-300
-              ${event.isSpecial ? accents.specialGlow : accents.cardGlow || ''}
-              ${event.isSpecial ? 'ring-1 ring-rose-400/30' : ''}
+              ${event.isSpecial ? 'ring-1' : ''}
             `}
+            style={{
+              backgroundColor: accents.cardColor,
+              borderColor: accents.borderColor,
+              boxShadow: event.isSpecial 
+                ? `0 20px 25px -5px ${accents.accentColor}30` 
+                : '0 10px 15px -3px rgba(0,0,0,0.1)',
+            }}
           >
-            {/* Optional Photo */}
             {event.photo && (
               <div 
                 className="relative h-40 mb-5 rounded-xl overflow-hidden cursor-pointer group"
@@ -264,13 +262,17 @@ export default function TimelineSection({ theme, template, events, variant = 'de
             )}
             
             {/* Milestone Icon with glow for special */}
-            <div className={`
-              w-14 h-14 rounded-2xl 
-              ${styles.accentBg} 
-              flex items-center justify-center mb-4
-              ${event.isSpecial ? accents.dotGlow : ''}
-              transition-all duration-300
-            `}>
+            <div 
+              className={`
+                w-14 h-14 rounded-2xl 
+                flex items-center justify-center mb-4
+                transition-all duration-300
+              `}
+              style={{
+                backgroundColor: accents.primaryColor,
+                boxShadow: event.isSpecial ? `0 0 24px ${accents.accentColor}60` : 'none',
+              }}
+            >
               <span className="text-3xl">
                 {event.icon || (event.isSpecial ? '💖' : getDefaultIcons(idx))}
               </span>
@@ -278,30 +280,45 @@ export default function TimelineSection({ theme, template, events, variant = 'de
             
             {/* Special Badge */}
             {event.isSpecial && (
-              <div className={`
-                inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold
-                bg-gradient-to-r ${accents.special}
-                text-white mb-3
-              `}>
+              <div 
+                className={`
+                  inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold
+                  text-white mb-3
+                `}
+                style={{
+                  backgroundImage: `linear-gradient(90deg, ${accents.primaryColor}, ${accents.accentColor})`,
+                }}
+              >
                 ✨ Special
               </div>
             )}
             
             {/* Date Badge */}
-            <div className={`
-              inline-block px-3 py-1 rounded-full text-xs font-semibold 
-              ${styles.accentLight} ${styles.accent} mb-3
-            `}>
+            <div 
+              className={`
+                inline-block px-3 py-1 rounded-full text-xs font-semibold  mb-3
+              `}
+              style={{
+                backgroundColor: accents.primaryColor,
+                color: 'white',
+              }}
+            >
               📅 {new Date(event.date).toLocaleDateString('en-US', { 
                 year: 'numeric', 
                 month: 'long', 
                 day: 'numeric' 
               })}
             </div>
-            <h3 className={`text-xl font-bold ${styles.text} mb-3 ${styles.heading}`}>
+            <h3 
+              className={`text-xl font-bold mb-3 ${styles.heading}`}
+              style={{ color: accents.textColor }}
+            >
               {event.title}
             </h3>
-            <p className={`text-base leading-relaxed ${styles.textMuted}`}>
+            <p 
+              className={`text-base leading-relaxed`}
+              style={{ color: accents.textColor }}
+            >
               {event.description}
             </p>
           </div>
@@ -315,30 +332,46 @@ export default function TimelineSection({ theme, template, events, variant = 'de
       <div className="space-y-12">
         {sortedEvents.map((event, idx) => (
           <ScrollReveal key={idx} animation="fade-up" delay={idx * 100}>
-            <div className="relative pl-10 pb-12 last:pb-0 border-l-2 border-rose-200/30">
+            <div 
+              className="relative pl-10 pb-12 last:pb-0 border-l-2"
+              style={{ borderColor: accents.borderColor }}
+            >
               {/* Chapter Marker with enhanced styling */}
               <div className="absolute -left-[14px] top-0">
-                <div className={`
-                  w-7 h-7 rounded-full flex items-center justify-center
-                  ${styles && styles.bg ? styles.bg.split(' ')[0] : (() => { console.warn('[TimelineSection] styles.bg is undefined', { styles }); return ''; })()} border-4 border-white/20 ${accents.dot}
-                  ${event.isSpecial ? accents.dotGlow : 'shadow-lg'}
-                  transition-all duration-300
-                  ${event.isSpecial ? 'scale-115' : 'hover:scale-115'}
-                `}>
-                  <span className={`text-sm ${accents.heart} animate-gentle-pulse`}>
+                <div 
+                  className={`
+                    w-7 h-7 rounded-full flex items-center justify-center
+                    border-4 border-white/20
+                    transition-all duration-300
+                    ${event.isSpecial ? 'scale-115' : 'hover:scale-115'}
+                    shadow-lg
+                  `}
+                  style={{
+                    backgroundImage: `linear-gradient(135deg, ${accents.primaryColor}, ${accents.secondaryColor})`,
+                    boxShadow: event.isSpecial ? `0 0 24px ${accents.accentColor}80` : `0 0 16px ${accents.primaryColor}60`,
+                  }}
+                >
+                  <span className={`text-sm animate-gentle-pulse`} style={{ color: accents.accentColor }}>
                     {event.isSpecial ? '💖' : '❤️'}
                   </span>
                 </div>
               </div>
               
-              <div className={`
-                ${styles.card} rounded-3xl ${styles.cardBorder} border 
-                p-6 md:p-8 
-                shadow-lg hover:shadow-2xl
-                transition-all duration-300 hover:-translate-y-1.5
-                ${event.isSpecial ? accents.specialGlow : accents.cardGlow || ''}
-                ${event.isSpecial ? 'ring-1 ring-rose-400/30' : ''}
-              `}>
+              <div 
+                className={`
+                  rounded-3xl border 
+                  p-6 md:p-8 
+                  transition-all duration-300 hover:-translate-y-1.5
+                  ${event.isSpecial ? 'ring-1' : ''}
+                `}
+                style={{
+                  backgroundColor: accents.cardColor,
+                  borderColor: accents.borderColor,
+                  boxShadow: event.isSpecial 
+                    ? `0 20px 25px -5px ${accents.accentColor}30` 
+                    : '0 10px 15px -3px rgba(0,0,0,0.1)',
+                }}
+              >
               {/* Optional Photo */}
               {event.photo && (
                 <div 
@@ -357,27 +390,34 @@ export default function TimelineSection({ theme, template, events, variant = 'de
               
               {/* Chapter Header */}
               <div className="flex flex-wrap items-center gap-3 mb-4">
-                <span className={`
-                  text-sm font-bold uppercase tracking-widest
-                  px-4 py-1.5 rounded-full
-                  ${styles.accentLight} ${styles.accent}
-                `}>
+                <span 
+                  className={`
+                    text-sm font-bold uppercase tracking-widest
+                    px-4 py-1.5 rounded-full
+                    text-white
+                  `}
+                  style={{ backgroundColor: accents.primaryColor }}
+                >
                   {event.icon || getDefaultIcons(idx)} Chapter {idx + 1}
                 </span>
                 
                 {event.isSpecial && (
-                  <span className={`
-                    text-xs font-semibold px-3 py-1 rounded-full
-                    bg-gradient-to-r ${accents.special}
-                    text-white shadow-lg
-                  `}>
+                  <span 
+                    className={`
+                      text-xs font-semibold px-3 py-1 rounded-full
+                      text-white shadow-lg
+                    `}
+                    style={{
+                      backgroundImage: `linear-gradient(90deg, ${accents.primaryColor}, ${accents.accentColor})`,
+                    }}
+                  >
                     ✨ Special Moment
                   </span>
                 )}
               </div>
               
               {/* Date */}
-              <div className={`flex items-center gap-2 text-sm mb-4 ${styles.textMuted}`}>
+              <div className={`flex items-center gap-2 text-sm mb-4`} style={{ color: accents.textColor }}>
                 <span>📅</span>
                 <span className="font-medium">
                   {new Date(event.date).toLocaleDateString('en-US', { 
@@ -389,18 +429,24 @@ export default function TimelineSection({ theme, template, events, variant = 'de
               </div>
               
               {/* Title */}
-              <h3 className={`
-                text-2xl md:text-3xl font-bold 
-                ${styles.text} 
-                mb-4 
-                ${styles.heading}
-                ${event.isSpecial ? 'bg-gradient-to-r from-rose-500 to-pink-500 bg-clip-text text-transparent' : ''}
-              `}>
+              <h3 
+                className={`
+                  text-2xl md:text-3xl font-bold 
+                  mb-4 
+                  ${styles.heading}
+                `}
+                style={{
+                  color: event.isSpecial ? accents.accentColor : accents.textColor,
+                }}
+              >
                 {event.title}
               </h3>
               
               {/* Description */}
-              <p className={`text-lg leading-relaxed ${styles.textMuted}`}>
+              <p 
+                className={`text-lg leading-relaxed`}
+                style={{ color: accents.textColor }}
+              >
                 {event.description}
               </p>
             </div>

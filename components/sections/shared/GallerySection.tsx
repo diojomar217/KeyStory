@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Image from 'next/image';
 import type { GalleryTemplate, OccasionType } from '@/lib/types';
 import type { ThemeKey } from '@/config/themeConfig';
-import { useTheme } from '../../builder/ThemeWrapper';
+import { useTheme, useThemeUtils } from '../../builder/ThemeWrapper';
+import { getCardStyleClasses, getShadowClass, getColorStyle } from '@/lib/theme-color-helpers';
 import Lightbox from '../../ui/Lightbox';
 import SectionHeader from '../../page/SectionHeader';
 import { getSectionCopy } from '@/lib/section-copy';
@@ -20,6 +21,9 @@ type Props = {
 
 export default function GallerySection({ theme, template, photos, coverPhotoIndex, siteType = 'couple' }: Props) {
   const styles = useTheme(theme);
+  const themeUtils = useThemeUtils(theme);
+  const cardStyle = getCardStyleClasses(theme);
+  const shadowClass = getShadowClass(theme);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const blurPlaceholder = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxIiBoZWlnaHQ9IjEiPjxzdHlsZT5yZWN0IHdpZHRoOjEwMCU7IGhlaWdodDo1MDAlOyBmaWxsOiNkZGRkZGQ7PC9zdHlsZT48L3N2Zz4=';
@@ -64,15 +68,26 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
           <div
             onClick={() => openLightbox(idx)}
             className={`
-              relative aspect-square rounded-xl overflow-hidden shadow-lg 
+              relative aspect-square ${cardStyle} overflow-hidden ${shadowClass}
               ${styles.cardBorder} border-2 cursor-pointer group
               gallery-zoom-hover
-              ${idx === 0 && coverPhotoIndex !== undefined && coverPhotoIndex > 0 ? 'ring-4 ring-rose-400/30 md:col-span-2 md:aspect-[2/1]' : ''}
+              ${idx === 0 && coverPhotoIndex !== undefined && coverPhotoIndex > 0 ? 'md:col-span-2 md:aspect-[2/1]' : ''}
             `}
+            style={
+              idx === 0 && coverPhotoIndex !== undefined && coverPhotoIndex > 0 
+                ? { 
+                    boxShadow: `0 0 0 4px ${themeUtils.colors.primary}40`,
+                    borderColor: themeUtils.colors.border
+                  }
+                : { borderColor: themeUtils.colors.border }
+            }
           >
             {/* Cover Photo Badge */}
             {idx === 0 && coverPhotoIndex !== undefined && coverPhotoIndex > 0 && (
-              <div className="absolute top-3 left-3 z-10 px-3 py-1 bg-rose-500/90 text-white text-xs font-medium rounded-full flex items-center gap-1 shadow-lg">
+              <div 
+                className="absolute top-3 left-3 z-10 px-3 py-1 text-white text-xs font-medium rounded-full flex items-center gap-1 shadow-lg"
+                style={{ backgroundColor: themeUtils.colors.accent }}
+              >
                 <span>📸</span> Cover Photo
               </div>
             )}
@@ -169,14 +184,14 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
           <div
             onClick={() => openLightbox(idx)}
             className={`
-              ${styles.card} p-3 pb-8 rounded-sm shadow-xl 
+              p-3 pb-8 rounded-sm ${shadowClass}
               transform hover:-translate-y-2 hover:rotate-1 
               transition-all duration-300 cursor-pointer group
             `}
             style={{
-              backgroundColor: '#fff',
+              backgroundColor: themeUtils.colors.card,
               transform: `rotate(${(idx % 5 - 2) * 2}deg)`,
-              border: '1px solid rgba(148,163,184,0.35)',
+              border: `1px solid ${themeUtils.colors.border}`,
             }}
           >
             <div className="relative w-32 h-32 md:w-40 md:h-40 overflow-hidden rounded-sm">
@@ -192,7 +207,7 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
                 loading={idx < 2 ? 'eager' : 'lazy'}
               />
             </div>
-            <div className="text-center mt-2 text-slate-700 dark:text-slate-200 text-sm font-handwriting">
+            <div className="text-center mt-2 text-sm font-handwriting" style={{ color: themeUtils.colors.text }}>
               #{idx + 1}
             </div>
           </div>
