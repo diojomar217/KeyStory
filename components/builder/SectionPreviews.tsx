@@ -4,6 +4,8 @@ import type { SiteConfig, OccasionType } from '@/lib/types';
 import type { ThemeKey } from '@/config/themeConfig';
 import { getThemeColors, ThemeColors } from '@/config/themeUtils';
 import { DEFAULT_THEME } from '@/config/defaults';
+import { getSectionCopy } from '@/lib/section-copy';
+import { formatOccasionDisplayName, getOccasionPublicCopy } from '@/lib/public-site-copy';
 
 // ============================================
 // THEME STYLES - Theme-specific styling
@@ -37,21 +39,24 @@ export function HomeSectionPreview({
   hasCoverPhoto,
 }: HomeSectionPreviewProps) {
   const colors = getThemeColors(theme);
+  const isSingleNameOccasion = ['birthday', 'graduation', 'debut', 'memorial', 'mothers_day', 'fathers_day'].includes(siteType);
 
   // Proper empty state helpers matching BuilderPreview
-  const nameData = customerName?.trim() && partnerName?.trim() 
-    ? { hasContent: true, primary: `${customerName} & ${partnerName}` }
+  const displayName = formatOccasionDisplayName(siteType, customerName || '', partnerName || '');
+  const nameData = displayName?.trim()
+    ? { hasContent: true, primary: displayName }
     : { hasContent: false, primary: 'Add your names' };
 
   const taglineData = tagline?.trim() 
     ? { hasContent: true, text: tagline } 
     : { hasContent: false, text: 'Your tagline will appear here' };
 
-  const isBirthday = siteType === 'birthday';  const dateLabel = isBirthday ? 'Birthday' : 'Anniversary';
-const dateString = specialDate || anniversary_date || '';
+  const isBirthday = siteType === 'birthday';
+  const dateLabel = isBirthday ? 'Birthday' : 'Special Date';
+  const dateString = specialDate || anniversary_date || '';
   const anniversaryData = dateString
     ? { hasContent: true, text: new Date(dateString).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }
-    : { hasContent: false, text: isBirthday ? 'Add your birthday date' : 'Add your special date' };
+    : { hasContent: false, text: isBirthday ? 'Add your birthday date' : 'Add your milestone date' };
 
   const heroTitle = isBirthday && customerName?.trim()
     ? `${customerName}'s Birthday`
@@ -93,7 +98,7 @@ const dateString = specialDate || anniversary_date || '';
             opacity: nameData.hasContent || isBirthday ? 1 : 0.5
           }}
         >
-          {heroTitle}
+          {heroTitle || (isSingleNameOccasion ? 'Add your name' : 'Add names')}
           <span className="blinking-cursor-demo ml-1 hidden group-hover:block">|</span>
         </h2>
         
@@ -141,14 +146,17 @@ const dateString = specialDate || anniversary_date || '';
 
 interface GallerySectionPreviewProps {
   theme: ThemeKey;
+  siteType?: OccasionType;
   photoCount: number;
 }
 
 function GallerySectionPreview({
   theme,
+  siteType = 'couple',
   photoCount,
 }: GallerySectionPreviewProps) {
   const colors = getThemeColors(theme);
+  const copy = getSectionCopy('gallery', siteType);
 
   if (photoCount === 0) {
     return (
@@ -158,7 +166,7 @@ function GallerySectionPreview({
       >
         <div className="text-2xl mb-2">📸</div>
         <p className="text-xs" style={{ color: colors.muted }}>
-          Your gallery photos will appear here
+          {copy.emptyState || 'Your gallery photos will appear here'}
         </p>
         <p className="text-[10px] mt-1" style={{ color: colors.muted }}>
           Add photos in the Content step
@@ -176,7 +184,7 @@ function GallerySectionPreview({
         className="text-xs font-semibold mb-2 flex items-center gap-1"
         style={{ color: colors.text }}
       >
-        <span>📸</span> Our Gallery
+        <span>{copy.icon || '📸'}</span> {copy.title}
       </h3>
       
       <div className="grid grid-cols-3 gap-1.5">
@@ -210,14 +218,17 @@ function GallerySectionPreview({
 
 interface TimelineSectionPreviewProps {
   theme: ThemeKey;
+  siteType?: OccasionType;
   eventCount: number;
 }
 
 function TimelineSectionPreview({
   theme,
+  siteType = 'couple',
   eventCount,
 }: TimelineSectionPreviewProps) {
   const colors = getThemeColors(theme);
+  const copy = getSectionCopy('timeline', siteType);
 
   if (eventCount === 0) {
     return (
@@ -227,7 +238,7 @@ function TimelineSectionPreview({
       >
         <div className="text-2xl mb-2">📅</div>
         <p className="text-xs" style={{ color: colors.muted }}>
-          Your love story timeline will appear here
+          {copy.subtitle}
         </p>
         <p className="text-[10px] mt-1" style={{ color: colors.muted }}>
           Add events in the Content step
@@ -251,7 +262,7 @@ function TimelineSectionPreview({
         className="text-xs font-semibold mb-3 flex items-center gap-1"
         style={{ color: colors.text }}
       >
-        <span>📅</span> Our Timeline
+        <span>{copy.icon || '📅'}</span> {copy.title}
       </h3>
       
       <div className="space-y-2">
@@ -308,14 +319,17 @@ function TimelineSectionPreview({
 
 interface SongSectionPreviewProps {
   theme: ThemeKey;
+  siteType?: OccasionType;
   hasSong: boolean;
 }
 
 function SongSectionPreview({
   theme,
+  siteType = 'couple',
   hasSong,
 }: SongSectionPreviewProps) {
   const colors = getThemeColors(theme);
+  const copy = getSectionCopy('song', siteType);
 
   if (!hasSong) {
     return (
@@ -343,7 +357,7 @@ function SongSectionPreview({
         className="text-xs font-semibold mb-2 flex items-center gap-1"
         style={{ color: colors.text }}
       >
-        <span>🎵</span> Our Song
+        <span>{copy.icon || '🎵'}</span> {copy.title}
       </h3>
       
       <div 
@@ -381,14 +395,17 @@ function SongSectionPreview({
 
 interface LoveLetterSectionPreviewProps {
   theme: ThemeKey;
+  siteType?: OccasionType;
   hasMessage: boolean;
 }
 
 function LoveLetterSectionPreview({
   theme,
+  siteType = 'couple',
   hasMessage,
 }: LoveLetterSectionPreviewProps) {
   const colors = getThemeColors(theme);
+  const copy = getSectionCopy('love_letter', siteType);
 
   return (
     <div 
@@ -399,7 +416,7 @@ function LoveLetterSectionPreview({
         className="text-xs font-semibold mb-2 flex items-center gap-1"
         style={{ color: colors.text }}
       >
-        <span>💌</span> Love Letter
+        <span>{copy.icon || '💌'}</span> {copy.title}
       </h3>
       
       <div 
@@ -411,8 +428,8 @@ function LoveLetterSectionPreview({
           style={{ color: colors.text }}
         >
           {hasMessage 
-            ? 'Your heartfelt love message will be displayed here in a beautiful letter format...'
-            : 'Your love letter will appear here...'
+            ? `${copy.subtitle}...`
+            : `${copy.title} preview will appear here...`
           }
         </p>
       </div>
@@ -426,14 +443,16 @@ function LoveLetterSectionPreview({
 
 interface QuotesSectionPreviewProps {
   theme: ThemeKey;
+  siteType?: OccasionType;
 }
 
-export function QuotesSectionPreview({ theme }: QuotesSectionPreviewProps) {
+export function QuotesSectionPreview({ theme, siteType = 'couple' }: QuotesSectionPreviewProps) {
   const colors = getThemeColors(theme);
+  const copy = getSectionCopy('quotes', siteType);
   const quotes = [
-    'Love is not about how many days we have been together...',
-    'You are my today and all of my tomorrows.',
-    'In all the world, there is no heart for me like yours.',
+    copy.subtitle,
+    'Preview quote one',
+    'Preview quote two',
   ];
 
   return (
@@ -445,7 +464,7 @@ export function QuotesSectionPreview({ theme }: QuotesSectionPreviewProps) {
         className="text-xs font-semibold mb-2 flex items-center gap-1"
         style={{ color: colors.text }}
       >
-        <span>💕</span> Love Quotes
+        <span>{copy.icon || '💕'}</span> {copy.title}
       </h3>
       
       <div className="space-y-2">
@@ -474,10 +493,12 @@ export function QuotesSectionPreview({ theme }: QuotesSectionPreviewProps) {
 
 interface StatsSectionPreviewProps {
   theme: ThemeKey;
+  siteType?: OccasionType;
 }
 
-export function StatsSectionPreview({ theme }: StatsSectionPreviewProps) {
+export function StatsSectionPreview({ theme, siteType = 'couple' }: StatsSectionPreviewProps) {
   const colors = getThemeColors(theme);
+  const copy = getSectionCopy('relationship_stats', siteType);
 
   return (
     <div 
@@ -488,7 +509,7 @@ export function StatsSectionPreview({ theme }: StatsSectionPreviewProps) {
         className="text-xs font-semibold mb-2 flex items-center gap-1"
         style={{ color: colors.text }}
       >
-        <span>📊</span> Our Stats
+        <span>{copy.icon || '📊'}</span> {copy.title}
       </h3>
       
       <div className="grid grid-cols-2 gap-2">
@@ -576,10 +597,12 @@ export function MilestonesSectionPreview({ theme }: MilestonesSectionPreviewProp
 
 interface FutureDreamsSectionPreviewProps {
   theme: ThemeKey;
+  siteType?: OccasionType;
 }
 
-export function FutureDreamsSectionPreview({ theme }: FutureDreamsSectionPreviewProps) {
+export function FutureDreamsSectionPreview({ theme, siteType = 'couple' }: FutureDreamsSectionPreviewProps) {
   const colors = getThemeColors(theme);
+  const copy = getSectionCopy('future_dreams', siteType);
 
   return (
     <div 
@@ -590,7 +613,7 @@ export function FutureDreamsSectionPreview({ theme }: FutureDreamsSectionPreview
         className="text-xs font-semibold mb-2 flex items-center gap-1"
         style={{ color: colors.text }}
       >
-        <span>💭</span> Future Dreams
+        <span>{copy.icon || '💭'}</span> {copy.title}
       </h3>
       
       <div className="space-y-2">
@@ -676,10 +699,19 @@ function PolaroidGalleryPreview({
 
 interface AnniversaryCountdownPreviewProps {
   theme: ThemeKey;
+  siteType?: OccasionType;
+  sectionId?: string;
 }
 
-export function AnniversaryCountdownPreview({ theme }: AnniversaryCountdownPreviewProps) {
+export function AnniversaryCountdownPreview({ theme, siteType = 'couple', sectionId = 'anniversary_countdown' }: AnniversaryCountdownPreviewProps) {
   const colors = getThemeColors(theme);
+  const heading = sectionId === 'birthday_countdown'
+    ? (getSectionCopy('birthday_countdown', siteType).title || 'Birthday Countdown')
+    : sectionId === 'wedding_countdown'
+      ? 'Wedding Countdown'
+      : sectionId === 'countdown'
+        ? 'Countdown'
+        : 'Next Milestone';
 
   return (
     <div 
@@ -690,7 +722,7 @@ export function AnniversaryCountdownPreview({ theme }: AnniversaryCountdownPrevi
         className="text-xs font-semibold mb-2 flex items-center justify-center gap-1"
         style={{ color: colors.text }}
       >
-        <span>⏰</span> Next Anniversary
+        <span>⏰</span> {heading}
       </h3>
       
       <div 
@@ -728,10 +760,12 @@ export function AnniversaryCountdownPreview({ theme }: AnniversaryCountdownPrevi
 
 interface QRKeepsakePreviewProps {
   theme: ThemeKey;
+  siteType?: OccasionType;
 }
 
-export function QRKeepsakePreview({ theme }: QRKeepsakePreviewProps) {
+export function QRKeepsakePreview({ theme, siteType = 'couple' }: QRKeepsakePreviewProps) {
   const colors = getThemeColors(theme);
+  const copy = getOccasionPublicCopy(siteType);
 
   return (
     <div 
@@ -742,7 +776,7 @@ export function QRKeepsakePreview({ theme }: QRKeepsakePreviewProps) {
         className="text-xs font-semibold mb-2 flex items-center justify-center gap-1"
         style={{ color: colors.text }}
       >
-        <span>🎴</span> QR Keepsake
+        <span>🎴</span> {copy.keepsake.title}
       </h3>
       
       <div className="inline-block p-2 rounded-lg bg-white shadow-sm">
@@ -758,7 +792,7 @@ export function QRKeepsakePreview({ theme }: QRKeepsakePreviewProps) {
         </div>
       </div>
       <p className="text-[10px] mt-2" style={{ color: colors.muted }}>
-        Scan to view your love website
+        {copy.qr.scanLabel}
       </p>
     </div>
   );
@@ -836,7 +870,8 @@ export function SectionRenderer({ sectionId, config, occasion, coupleNames, tagl
   const siteType = occasion || config.occasion || 'couple';
   const hasCoverPhoto = config.cover_photo_index !== undefined;
   const photoCount = config.cover_photo_index !== undefined ? 5 : 0;
-  const eventCount = config.section_content?.timeline?.length || 0;
+  const timelineData = (config.section_content as any)?.[sectionId]?.events || (config.section_content as any)?.timeline;
+  const eventCount = Array.isArray(timelineData) ? timelineData.length : 0;
   const hasSong = !!config.sections?.includes('song');
 
   switch (sectionId) {
@@ -855,15 +890,15 @@ export function SectionRenderer({ sectionId, config, occasion, coupleNames, tagl
       );
     case 'gallery':
     case 'photo_highlights':
-      return <GallerySectionPreview theme={theme} photoCount={photoCount} />;
+      return <GallerySectionPreview theme={theme} siteType={siteType} photoCount={photoCount} />;
     case 'timeline':
     case 'wedding_timeline':
     case 'travel_timeline':
     case 'school_memories':
     case 'achievements':
-      return <TimelineSectionPreview theme={theme} eventCount={eventCount} />;
+      return <TimelineSectionPreview theme={theme} siteType={siteType} eventCount={eventCount} />;
     case 'song':
-      return <SongSectionPreview theme={theme} hasSong={hasSong} />;
+      return <SongSectionPreview theme={theme} siteType={siteType} hasSong={hasSong} />;
     case 'love_letter':
     case 'couple_message':
     case 'graduation_message':
@@ -873,26 +908,27 @@ export function SectionRenderer({ sectionId, config, occasion, coupleNames, tagl
     case 'message_letter':
     case 'life_story':
     case 'travel_notes':
-      return <LoveLetterSectionPreview theme={theme} hasMessage={true} />;
+      return <LoveLetterSectionPreview theme={theme} siteType={siteType} hasMessage={true} />;
     case 'quotes':
     case 'baby_predictions':
     case 'tributes':
-      return <QuotesSectionPreview theme={theme} />;
+      return <QuotesSectionPreview theme={theme} siteType={siteType} />;
     case 'relationship_stats':
-      return <StatsSectionPreview theme={theme} />;
+      return <StatsSectionPreview theme={theme} siteType={siteType} />;
     case 'milestones':
       return <MilestonesSectionPreview theme={theme} />;
     case 'future_dreams':
     case 'future_plans':
-      return <FutureDreamsSectionPreview theme={theme} />;
+      return <FutureDreamsSectionPreview theme={theme} siteType={siteType} />;
     case 'polaroid_gallery':
       return <PolaroidGalleryPreview theme={theme} photoCount={photoCount} />;
     case 'anniversary_countdown':
+    case 'birthday_countdown':
     case 'wedding_countdown':
     case 'countdown':
-      return <AnniversaryCountdownPreview theme={theme} />;
+      return <AnniversaryCountdownPreview theme={theme} siteType={siteType} sectionId={sectionId} />;
     case 'qr_keepsake':
-      return <QRKeepsakePreview theme={theme} />;
+      return <QRKeepsakePreview theme={theme} siteType={siteType} />;
     default:
       return <DefaultSectionPreview sectionId={sectionId} theme={theme === 'romantic_classic' ? DEFAULT_THEME : theme} />;
   }

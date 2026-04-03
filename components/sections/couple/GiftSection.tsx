@@ -1,6 +1,7 @@
 'use client';
 
 import type { ThemeKey } from '@/config/themeConfig';
+import type { OccasionType } from '@/lib/types';
 import { useThemeUtils } from '../../builder/ThemeWrapper';
 import SectionHeader from '../../page/SectionHeader';
 import { getSectionCopy } from '@/lib/section-copy';
@@ -17,22 +18,45 @@ interface Gift {
 
 interface GiftSectionProps {
   theme: ThemeKey;
+  siteType?: OccasionType;
   partnerName: string;
   gifts?: Gift[];
 }
 
-const defaultGifts: Gift[] = [
-  { id: '1', title: 'Digital Love Letter', description: 'A personalized love letter just for you' },
-  { id: '2', title: 'Memory Collage', description: 'Our best moments together in one place' },
-  { id: '3', title: 'Playlist of Us', description: 'Songs that remind me of you' },
-];
-
 export default function GiftSection({ 
   theme, 
+  siteType = 'couple',
   partnerName,
   gifts
 }: GiftSectionProps) {
-  const displayGifts = gifts && gifts.length > 0 ? gifts : defaultGifts;
+  const displayGifts = gifts && gifts.length > 0 ? gifts : (() => {
+    switch (siteType) {
+      case 'graduation':
+        return [
+          { id: '1', title: 'Milestone Letter', description: 'A keepsake message celebrating how far you have come' },
+          { id: '2', title: 'Achievement Collage', description: 'A visual recap of the moments that led here' },
+          { id: '3', title: 'Next Chapter Playlist', description: 'Songs for what comes next' },
+        ];
+      case 'travel':
+        return [
+          { id: '1', title: 'Digital Postcard', description: 'A keepsake card from the journey' },
+          { id: '2', title: 'Trip Collage', description: 'A collection of the best moments from the route' },
+          { id: '3', title: 'Roadtrip Playlist', description: 'Songs that bring the journey back instantly' },
+        ];
+      case 'family':
+        return [
+          { id: '1', title: 'Family Letter', description: 'A heartfelt keepsake message for the people who matter most' },
+          { id: '2', title: 'Memory Collage', description: 'A collection of shared moments in one place' },
+          { id: '3', title: 'Home Playlist', description: 'Songs tied to family traditions and memories' },
+        ];
+      default:
+        return [
+          { id: '1', title: 'Digital Love Letter', description: 'A personalized love letter just for you' },
+          { id: '2', title: 'Memory Collage', description: 'Our best moments together in one place' },
+          { id: '3', title: 'Playlist of Us', description: 'Songs that remind me of you' },
+        ];
+    }
+  })();
   const themeUtils = useThemeUtils(theme);
   const cardStyle = getCardStyleClasses(theme);
   const shadowClass = getShadowClass(theme);
@@ -43,7 +67,7 @@ export default function GiftSection({
       <div className="max-w-6xl mx-auto px-6 lg:px-8">
         <ScrollReveal animation="fade-up">
           {(() => {
-            const copy = getSectionCopy('gift_section', undefined, { partnerName });
+            const copy = getSectionCopy('gift_section', siteType, { partnerName, celebrantName: partnerName });
             return (
               <SectionHeader
                 icon={copy.icon}

@@ -6,6 +6,7 @@ import { useThemeUtils } from '../builder/ThemeWrapper';
 import { useEffect, useState } from 'react';
 import { resolveDecorations, resolveDefaultCTA } from '@/lib/site-type-utils';
 import { OccasionType } from '@/lib/occasion-registry';
+import { getOccasionHeroSpec } from '@/config/occasionHeroConfig';
 
 type Props = {
   theme: ThemeKey;
@@ -113,7 +114,6 @@ export function HeroDecorations({
   siteType = 'couple',
   variant = 'centered',
 }: { theme: ThemeKey; siteType?: OccasionType; variant?: 'centered' | 'full' }) {
-  const isBirthday = siteType === 'birthday';
   const prefersReducedMotion = usePrefersReducedMotion();
   const decorations = resolveDecorations(siteType);
   const { colors } = useThemeUtils(theme);
@@ -123,6 +123,21 @@ export function HeroDecorations({
       : decorations.themeTone === 'celebration'
         ? colors.secondary
         : colors.primary;
+  const animationClass = (() => {
+    if (prefersReducedMotion) return '';
+
+    switch (decorations.themeTone) {
+      case 'celebration':
+        return 'animate-birthday-confetti';
+      case 'elegant':
+        return 'animate-twinkle';
+      case 'soft':
+        return 'animate-petal-float';
+      case 'romantic':
+      default:
+        return 'animate-float-heart';
+    }
+  })();
 
 
   // Different positioning based on variant
@@ -170,7 +185,7 @@ export function HeroDecorations({
       {items.map((item) => (
         <div
           key={item.id}
-          className={`absolute ${prefersReducedMotion ? '' : isBirthday ? 'animate-birthday-confetti' : 'animate-float-heart'}`}
+          className={`absolute ${animationClass}`}
           style={{
             left: `${item.x}%`,
             top: `${item.y}%`,
@@ -186,8 +201,7 @@ export function HeroDecorations({
         </div>
       ))}
 
-      {/* Add some additional star/bubble highlights for birthdays */}
-      {isBirthday && (
+      {decorations.themeTone === 'celebration' && (
         <>
           <div
             className={`absolute top-10 left-1/4 w-3 h-3 rounded-full ${prefersReducedMotion ? '' : 'animate-pulse-slow'}`}
@@ -219,7 +233,7 @@ export function ScrollIndicator({ targetId = 'our-story' }: { targetId?: string 
     <button
       onClick={scrollToContent}
       className="absolute bottom-10 left-1/2 -translate-x-1/2 group cursor-pointer"
-      aria-label="Start our story"
+      aria-label="Open story"
     >
       <div className="flex flex-col items-center gap-3">
         <div className="
@@ -235,7 +249,7 @@ export function ScrollIndicator({ targetId = 'our-story' }: { targetId?: string 
         ">
           <span className="flex items-center gap-2">
             <span className={prefersReducedMotion ? '' : 'animate-heartbeat'}>💕</span>
-            Start Our Story
+            Open Story
             <span className={prefersReducedMotion ? '' : 'animate-bounce-subtle'}>↓</span>
           </span>
         </div>
@@ -254,8 +268,8 @@ export function PremiumDualCTAs({
   primaryTarget?: string;
   secondaryTarget?: string;
 }) {
+  const heroSpec = getOccasionHeroSpec(siteType);
   const ctaConfig = resolveDefaultCTA(siteType);
-  const isBirthday = siteType === 'birthday';
   const prefersReducedMotion = usePrefersReducedMotion();
   const [activeSection, setActiveSection] = useState<string | null>(null);
 
@@ -300,14 +314,12 @@ export function PremiumDualCTAs({
     window.location.hash = targetId;
   };
 
-  const primaryDestination =
-    !isBirthday && activeSection === primaryTarget ? secondaryTarget : primaryTarget;
-  const primaryLabel =
-    !isBirthday && activeSection === primaryTarget ? ctaConfig.secondary : ctaConfig.primary;
-  const primaryIcon =
-    !isBirthday && activeSection === primaryTarget ? ctaConfig.endIcon : ctaConfig.startIcon;
-  const primaryArrow =
-    !isBirthday && activeSection === primaryTarget ? '→' : isBirthday ? '🎂' : '↓';
+  const shouldRenderSecondary = heroSpec.showSecondaryCta && Boolean(secondaryTarget);
+  const shouldPromoteSecondary = shouldRenderSecondary && activeSection === primaryTarget;
+  const primaryDestination = shouldPromoteSecondary ? secondaryTarget : primaryTarget;
+  const primaryLabel = shouldPromoteSecondary ? ctaConfig.secondary : ctaConfig.primary;
+  const primaryIcon = shouldPromoteSecondary ? ctaConfig.endIcon : ctaConfig.startIcon;
+  const primaryArrow = shouldPromoteSecondary ? '→' : '↓';
 
   return (
     <div 
@@ -351,7 +363,7 @@ export function PremiumDualCTAs({
           <span>{primaryArrow}</span>
         </a>
 
-        {!isBirthday && (
+        {shouldRenderSecondary && (
           <a
             href={`#${secondaryTarget}`}
             className="
@@ -421,7 +433,7 @@ export function CompactCTA({ targetId = 'our-story' }: { targetId?: string }) {
       "
     >
       <span className={prefersReducedMotion ? '' : 'animate-heartbeat'}>💕</span>
-      Start Our Story
+      Open Story
     </button>
   );
 }

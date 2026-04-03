@@ -50,106 +50,85 @@ export default function BackgroundDecorations({ theme, siteType = 'couple', clas
   };
 
   const colors = getDecorationColors();
-  const isBirthday = siteType === 'birthday';
   const decorations = resolveDecorations(siteType);
+  const motionClassByTone = {
+    romantic: ['animate-float-heart-slow', 'animate-float-heart', 'animate-float-heart-reverse'],
+    celebration: ['animate-celebration-float', 'animate-celebration-bob', 'animate-celebration-float'],
+    elegant: ['animate-twinkle', 'animate-twinkle-slow', 'animate-glow-float'],
+    soft: ['animate-petal-float', 'animate-petal-fall', 'animate-glow-slow'],
+  } as const;
+
+  const floatingDecorations = Array.from({ length: 8 }, (_, index) => ({
+    id: index,
+    icon: decorations.iconSet[index % decorations.iconSet.length],
+    left: 8 + ((index * 11) % 84),
+    top: 6 + ((index * 13) % 82),
+    size: 18 + ((index * 5) % 18),
+    opacity: decorations.themeTone === 'elegant' ? 0.16 : decorations.themeTone === 'soft' ? 0.18 : 0.26,
+    animationClass: motionClassByTone[decorations.themeTone][index % motionClassByTone[decorations.themeTone].length],
+    animationDuration: `${18 + (index % 4) * 5}s`,
+    animationDelay: `${(index * 1.2) % 5}s`,
+  }));
+
+  const ambientDots = Array.from({ length: decorations.themeTone === 'celebration' ? 16 : 8 }, (_, index) => ({
+    id: index,
+    left: 4 + ((index * 9) % 92),
+    top: 8 + ((index * 7) % 84),
+    size: 4 + ((index * 3) % 8),
+    opacity: decorations.themeTone === 'celebration' ? 0.45 : 0.22,
+    animationDuration: `${6 + (index % 5) * 1.6}s`,
+    animationDelay: `${(index * 0.2) % 2.4}s`,
+  }));
 
   return (
     <div className={`fixed inset-0 pointer-events-none overflow-hidden z-0 ${className}`}>
-      {isBirthday ? (
-        <>
-          {/* Birthday celebration decorations: confetti and balloons */}
-          {Array.from({ length: 20 }).map((_, index) => {
-            const left = (index * 7) % 100;
-            const top = (index * 11) % 90;
-            const size = 6 + ((index * 3) % 10);
-            const color = ['#F59E0B', '#F43F5E', '#A855F7', '#38BDF8', '#34D399'][index % 5];
-            return (
-              <div
-                key={`confetti-${index}`}
-                className="absolute rounded-full animate-birthday-confetti"
-                style={{
-                  left: `${left}%`,
-                  top: `${top}%`,
-                  width: `${size}px`,
-                  height: `${size}px`,
-                  backgroundColor: color,
-                  opacity: 0.65,
-                  animationDuration: `${6 + (index % 5) * 1.4}s`,
-                  animationDelay: `${(index * 0.1) % 2}s`,
-                }}
-              />
-            );
-          })}
+      {floatingDecorations.map((item) => (
+        <div
+          key={`floating-${item.id}`}
+          className={`absolute ${item.animationClass}`}
+          style={{
+            left: `${item.left}%`,
+            top: `${item.top}%`,
+            fontSize: `${item.size}px`,
+            opacity: item.opacity,
+            animationDuration: item.animationDuration,
+            animationDelay: item.animationDelay,
+          }}
+        >
+          <span className={colors.primary}>{item.icon}</span>
+        </div>
+      ))}
 
+      {ambientDots.map((item) => (
+        <div
+          key={`dot-${item.id}`}
+          className={`absolute rounded-full ${decorations.themeTone === 'celebration' ? 'animate-birthday-confetti' : 'animate-glow-pulse'}`}
+          style={{
+            left: `${item.left}%`,
+            top: `${item.top}%`,
+            width: `${item.size}px`,
+            height: `${item.size}px`,
+            backgroundColor: decorations.themeTone === 'celebration'
+              ? ['#F59E0B', '#F43F5E', '#A855F7', '#38BDF8', '#34D399'][item.id % 5]
+              : 'rgba(255,255,255,0.24)',
+            opacity: item.opacity,
+            animationDuration: item.animationDuration,
+            animationDelay: item.animationDelay,
+          }}
+        />
+      ))}
+
+      {decorations.themeTone === 'celebration' && (
+        <>
           <div className="absolute bottom-14 left-10 w-8 h-12 bg-pink-300/70 rounded-full blur-sm animate-birthday-balloon" />
           <div className="absolute bottom-18 right-16 w-9 h-14 bg-blue-300/70 rounded-full blur-sm animate-birthday-balloon" />
           <div className="absolute bottom-20 left-72 w-7 h-10 bg-yellow-300/70 rounded-full blur-sm animate-birthday-balloon" />
-
-          <div className={`absolute top-[5%] left-[20%] w-40 h-40 ${colors.accent} rounded-full blur-3xl animate-glow-pulse`} style={{ opacity: 0.35 }} />
-          <div className={`absolute bottom-[15%] right-[30%] w-44 h-44 ${colors.accent} rounded-full blur-[4rem] animate-glow-float`} style={{ opacity: 0.25 }} />
-        </>
-      ) : (
-        <>
-          {/* Default couple/love decorations */}
-          <div className={`absolute top-[8%] left-[8%] w-8 h-8 ${colors.primary} animate-float-heart-slow`} style={{ animationDelay: '0s', animationDuration: '25s' }}>
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-            </svg>
-          </div>
-
-          <div className={`absolute top-[15%] right-[10%] w-7 h-7 ${colors.primary} animate-float-heart`} style={{ animationDelay: '6s', animationDuration: '22s' }}>
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-            </svg>
-          </div>
-
-          <div className={`absolute bottom-[25%] left-[12%] w-9 h-9 ${colors.primary} animate-float-heart-reverse`} style={{ animationDelay: '12s', animationDuration: '28s' }}>
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-            </svg>
-          </div>
-
-          <div className={`absolute bottom-[35%] right-[8%] w-6 h-6 ${colors.primary} animate-float-heart-slow`} style={{ animationDelay: '3s', animationDuration: '20s' }}>
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-            </svg>
-          </div>
-
-          <div className={`absolute top-[25%] left-[25%] w-5 h-5 ${colors.secondary} animate-twinkle`} style={{ animationDelay: '1s', animationDuration: '3s' }}>
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
-            </svg>
-          </div>
-
-          <div className={`absolute top-[55%] right-[25%] w-4 h-4 ${colors.secondary} animate-twinkle`} style={{ animationDelay: '4s', animationDuration: '2.5s' }}>
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
-            </svg>
-          </div>
-
-          <div className={`absolute bottom-[40%] left-[25%] w-6 h-6 ${colors.secondary} animate-twinkle-slow`} style={{ animationDelay: '8s', animationDuration: '4s' }}>
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
-            </svg>
-          </div>
-
-          <div className={`absolute top-[20%] right-[20%] w-6 h-6 ${colors.secondary} animate-petal-fall`} style={{ animationDelay: '2s', animationDuration: '15s' }}>
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2a10 10 0 1 1 -10 10 10 10 0 0 1 10 -10m0 -2a12 12 0 1 0 12 -12a12 12 0 0 1 -12 12z"/>
-            </svg>
-          </div>
-
-          <div className={`absolute bottom-[15%] left-[25%] w-5 h-5 ${colors.secondary} animate-petal-float`} style={{ animationDelay: '5s', animationDuration: '18s' }}>
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2a10 10 0 1 1 -10 10 10 10 0 0 1 10 -10m0 -2a12 12 0 1 0 12 -12a12 12 0 0 1 -12 12z"/>
-            </svg>
-          </div>
-
-          <div className={`absolute top-[5%] left-[35%] w-36 h-36 ${colors.accent} rounded-full blur-3xl animate-glow-pulse`} style={{ animationDelay: '0s' }} />
-          <div className={`absolute bottom-[8%] right-[30%] w-48 h-48 ${colors.accent} rounded-full blur-[4rem] animate-glow-float`} style={{ animationDelay: '7s' }} />
-          <div className={`absolute top-[70%] left-[5%] w-28 h-28 ${colors.accent} rounded-full blur-2xl animate-glow-slow`} style={{ animationDelay: '10s' }} />
         </>
       )}
+
+      <div className={`absolute top-[5%] left-[20%] w-40 h-40 ${colors.accent} rounded-full blur-3xl animate-glow-pulse`} style={{ opacity: decorations.themeTone === 'soft' ? 0.22 : 0.35 }} />
+      <div className={`absolute bottom-[15%] right-[30%] w-44 h-44 ${colors.accent} rounded-full blur-[4rem] animate-glow-float`} style={{ opacity: decorations.themeTone === 'elegant' ? 0.18 : 0.25 }} />
+      <div className={`absolute top-[70%] left-[5%] w-28 h-28 ${colors.accent} rounded-full blur-2xl animate-glow-slow`} style={{ opacity: decorations.themeTone === 'romantic' ? 0.2 : 0.14 }} />
 
       <style jsx>{`
         @keyframes float-heart {
@@ -185,6 +164,15 @@ export default function BackgroundDecorations({ theme, siteType = 'couple', clas
           50% { transform: translateY(-15px) scale(1.05); }
         }
         @keyframes glow-slow { animation-duration: 35s; }
+        @keyframes celebration-float {
+          0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+          30% { transform: translateY(-18px) rotate(8deg) scale(1.08); }
+          65% { transform: translateY(8px) rotate(-8deg) scale(0.96); }
+        }
+        @keyframes celebration-bob {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-12px); }
+        }
 
         @keyframes birthday-confetti {
           0% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
@@ -203,6 +191,16 @@ export default function BackgroundDecorations({ theme, siteType = 'couple', clas
         }
         .animate-birthday-balloon {
           animation-name: birthday-balloon;
+          animation-iteration-count: infinite;
+          animation-timing-function: ease-in-out;
+        }
+        .animate-celebration-float {
+          animation-name: celebration-float;
+          animation-iteration-count: infinite;
+          animation-timing-function: ease-in-out;
+        }
+        .animate-celebration-bob {
+          animation-name: celebration-bob;
           animation-iteration-count: infinite;
           animation-timing-function: ease-in-out;
         }

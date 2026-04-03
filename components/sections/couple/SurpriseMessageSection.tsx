@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { ThemeKey } from '@/config/themeConfig';
+import type { OccasionType } from '@/lib/types';
 import SectionHeader from '../../page/SectionHeader';
 import { getSectionCopy } from '@/lib/section-copy';
 import ScrollReveal from '../../ui/ScrollReveal';
@@ -15,16 +16,16 @@ import {
 
 interface SurpriseMessageSectionProps {
   theme: ThemeKey;
+  siteType?: OccasionType;
   customerName: string;
   partnerName: string;
   message?: string;
   hint?: string;
 }
 
-const defaultMessage = 'I love you more than words can say! 💖';
-
 export default function SurpriseMessageSection({ 
   theme, 
+  siteType = 'couple',
   customerName,
   partnerName,
   message,
@@ -35,24 +36,56 @@ export default function SurpriseMessageSection({
   const shadowClass = getShadowClass(theme);
   const spacingClass = getSectionSpacingClass(theme);
   const headingFontClass = getHeadingFontClass(theme);
-  const displayMessage = message || defaultMessage;
+  const displayMessage = message || (() => {
+    switch (siteType) {
+      case 'birthday':
+        return 'Wishing you a celebration as joyful as you are! 🎉';
+      case 'graduation':
+        return 'You did it, and this is only the beginning. 🎓';
+      case 'family':
+        return 'Some of the best memories begin right here with family. 🏡';
+      default:
+        return 'I love you more than words can say! 💖';
+    }
+  })();
   const [isRevealed, setIsRevealed] = useState(false);
+  const copy = getSectionCopy('surprise_message', siteType);
+  const revealLabel = (() => {
+    switch (siteType) {
+      case 'birthday':
+      case 'proposal':
+      case 'valentines':
+        return 'Open Surprise';
+      case 'graduation':
+        return 'Open Congratulations';
+      default:
+        return 'Open Message';
+    }
+  })();
+  const revealHeading = partnerName || customerName || 'You';
+  const revealIntro = (() => {
+    switch (siteType) {
+      case 'birthday':
+        return `${customerName || 'Someone special'} wanted to brighten your celebration...`;
+      case 'graduation':
+        return `${customerName || 'Someone special'} wanted to celebrate this milestone with you...`;
+      case 'family':
+        return `${customerName || 'Your family'} wanted to share something special...`;
+      default:
+        return `${customerName} wanted to tell you something special...`;
+    }
+  })();
 
   return (
     <section className={`relative ${spacingClass}`} id="surprise">
       <div className="max-w-4xl mx-auto px-6 lg:px-8">
         <ScrollReveal animation="fade-up">
-          {(() => {
-            const copy = getSectionCopy('surprise_message');
-            return (
-              <SectionHeader
-                icon={copy.icon}
-                title={copy.title}
-                subtitle={copy.subtitle}
-                theme={theme}
-              />
-            );
-          })()}
+          <SectionHeader
+            icon={copy.icon}
+            title={copy.title}
+            subtitle={copy.subtitle}
+            theme={theme}
+          />
         </ScrollReveal>
 
         <ScrollReveal animation="fade-up" delay={200}>
@@ -85,7 +118,7 @@ export default function SurpriseMessageSection({
                     backgroundImage: `linear-gradient(to right, ${themeUtils.colors.primary}, ${themeUtils.colors.secondary})`,
                   }}
                 >
-                  Open Surprise
+                  {revealLabel}
                 </button>
               </div>
             ) : (
@@ -111,10 +144,10 @@ export default function SurpriseMessageSection({
                   className={`text-3xl lg:text-4xl font-bold mb-6 ${headingFontClass}`}
                   style={{ color: themeUtils.colors.primary }}
                 >
-                  Hey {partnerName}!
+                  Hey {revealHeading}!
                 </h3>
                 <p className="text-xl mb-6" style={{ color: themeUtils.colors.text }}>
-                  {customerName} wanted to tell you something special...
+                  {revealIntro}
                 </p>
                 <p
                   className={`text-4xl lg:text-5xl font-bold mb-8 animate-pulse ${headingFontClass}`}

@@ -56,6 +56,7 @@ export interface DynamicSectionRendererProps {
 // ============================================
 
 interface InternalConfig {
+  siteType: SiteConfig['occasion'];
   theme: ThemeKey;
   customerName: string;
   partnerName: string;
@@ -141,16 +142,20 @@ const RENDERER_COMPONENTS: Record<Section, React.ComponentType<any>> = {
 
 const buildProps = (section: Section, props: DynamicSectionRendererProps): Record<string, any> => {
   const { config, ...rest } = props;
+  const primaryParticipant = config.participants?.[0]?.name || '';
+  const secondaryParticipant = config.participants?.[1]?.name || '';
+  const sectionContent = (config.section_content || {}) as Record<string, any>;
   
   // Merge config with individual props (individual props take precedence)
   const mergedConfig: InternalConfig = {
+    siteType: config.occasion,
     theme: (props.theme as ThemeKey) || (config.theme as ThemeKey) || (DEFAULT_THEME as ThemeKey),
-    customerName: props.customerName || '',
-    partnerName: props.partnerName || '',
-    anniversaryDate: props.anniversaryDate || '',
-    message: props.message || '',
+    customerName: props.customerName || primaryParticipant,
+    partnerName: props.partnerName || secondaryParticipant,
+    anniversaryDate: props.anniversaryDate || config.specialDate || '',
+    message: props.message || config.message || '',
     tagline: props.tagline || config.tagline,
-    photos: props.photos || [],
+    photos: props.photos || config.media?.photos || [],
     coverPhotoIndex: props.coverPhotoIndex ?? config.cover_photo_index,
     songLink: props.songLink || (config as any).song_link,
     song_link: (config as any).song_link,
@@ -192,6 +197,8 @@ const buildProps = (section: Section, props: DynamicSectionRendererProps): Recor
     case 'home':
       return {
         theme: mergedConfig.theme,
+        siteType: mergedConfig.siteType,
+        config,
         template: getTemplate('home'),
         customerName: mergedConfig.customerName,
         partnerName: mergedConfig.partnerName,
@@ -203,18 +210,26 @@ const buildProps = (section: Section, props: DynamicSectionRendererProps): Recor
       };
 
     case 'gallery':
+    case 'photo_highlights':
       return {
         theme: mergedConfig.theme,
+        siteType: mergedConfig.siteType,
         template: getTemplate('gallery'),
         photos: mergedConfig.photos,
         coverPhotoIndex: mergedConfig.coverPhotoIndex,
       };
 
     case 'timeline':
+    case 'birthday_timeline':
+    case 'wedding_timeline':
+    case 'school_memories':
+    case 'achievements':
+    case 'travel_timeline':
       return {
         theme: mergedConfig.theme,
+        siteType: mergedConfig.siteType,
         template: getTemplate('timeline'),
-        events: mergedConfig.timelineEvents || mergedConfig.section_content?.timeline,
+        events: sectionContent[section]?.events || mergedConfig.timelineEvents || mergedConfig.section_content?.timeline,
       };
 
     case 'song':
@@ -229,39 +244,104 @@ const buildProps = (section: Section, props: DynamicSectionRendererProps): Recor
       };
 
     case 'love_letter':
+    case 'birthday_message':
+    case 'couple_message':
+    case 'graduation_message':
+    case 'parents_message':
+    case 'celebrant_message':
+    case 'family_message':
+    case 'message_letter':
       return {
         theme: mergedConfig.theme,
-        message: mergedConfig.message,
+        siteType: mergedConfig.siteType,
+        message: sectionContent[section]?.content || sectionContent[section]?.text || mergedConfig.message,
       };
 
     case 'our_story':
     case 'first_date':
+    case 'life_story':
+    case 'travel_notes':
+    case 'party_details':
+    case 'event_details':
       return {
         theme: mergedConfig.theme,
+        siteType: mergedConfig.siteType,
         customerName: mergedConfig.customerName,
         partnerName: mergedConfig.partnerName,
+        story: sectionContent[section]?.content || sectionContent[section]?.story,
       };
 
     case 'relationship_stats':
+      return {
+        theme: mergedConfig.theme,
+        siteType: mergedConfig.siteType,
+        anniversaryDate: mergedConfig.anniversaryDate,
+      };
+
     case 'anniversary_countdown':
+    case 'countdown':
+    case 'birthday_countdown':
+    case 'wedding_countdown':
       return {
         theme: mergedConfig.theme,
         anniversaryDate: mergedConfig.anniversaryDate,
       };
 
+    case 'future_dreams':
+    case 'future_plans':
+      return {
+        theme: mergedConfig.theme,
+        siteType: mergedConfig.siteType,
+        dreams: sectionContent[section]?.dreams || sectionContent.future_dreams?.dreams,
+      };
+
+    case 'quotes':
+    case 'baby_predictions':
+    case 'tributes':
+    case 'birthday_wishes':
+      return {
+        theme: mergedConfig.theme,
+        siteType: mergedConfig.siteType,
+        quotes: sectionContent[section]?.quotes || sectionContent.quotes?.quotes,
+      };
+
     case 'reasons_love_you':
       return {
         theme: mergedConfig.theme,
+        siteType: mergedConfig.siteType,
         partnerName: mergedConfig.partnerName,
+        reasons: sectionContent.reasons_love_you?.reasons,
       };
 
     case 'letter_future':
+      return {
+        theme: mergedConfig.theme,
+        siteType: mergedConfig.siteType,
+        customerName: mergedConfig.customerName,
+        partnerName: mergedConfig.partnerName,
+        letter: sectionContent.letter_future?.letter,
+        openDate: sectionContent.letter_future?.openDate,
+      };
+
     case 'gift_section':
+    case 'gift_wishlist':
+    case 'gift_registry':
+      return {
+        theme: mergedConfig.theme,
+        siteType: mergedConfig.siteType,
+        partnerName: mergedConfig.partnerName || mergedConfig.customerName,
+        gifts: sectionContent[section]?.gifts || sectionContent[section]?.items,
+        items: sectionContent[section]?.items,
+      };
+
     case 'surprise_message':
       return {
         theme: mergedConfig.theme,
+        siteType: mergedConfig.siteType,
         customerName: mergedConfig.customerName,
         partnerName: mergedConfig.partnerName,
+        message: sectionContent.surprise_message?.message,
+        hint: sectionContent.surprise_message?.hint,
       };
 
     case 'polaroid_gallery':
@@ -274,6 +354,21 @@ const buildProps = (section: Section, props: DynamicSectionRendererProps): Recor
       return {
         theme: mergedConfig.theme,
         songLink: mergedConfig.songLink || mergedConfig.song_link,
+      };
+
+    case 'memory_map':
+      return {
+        theme: mergedConfig.theme,
+        siteType: mergedConfig.siteType,
+        locations: sectionContent.memory_map?.locations,
+      };
+
+    case 'guest_messages':
+    case 'rsvp':
+      return {
+        theme: mergedConfig.theme,
+        siteType: mergedConfig.siteType,
+        messages: sectionContent[section]?.messages || sectionContent.guest_messages?.messages,
       };
 
     // Sections with no special props
@@ -307,7 +402,7 @@ export default function DynamicSectionRenderer({ section, ...props }: DynamicSec
   }
 
   // Build props for this section
-  const sectionProps = { section, ...props };
+  const sectionProps = buildProps(section, { section, ...props });
 
   // Don't render if _skip flag is set (e.g., missing required data)
   if (sectionProps && (sectionProps as any)._skip) {

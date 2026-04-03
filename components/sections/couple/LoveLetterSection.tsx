@@ -1,6 +1,7 @@
 'use client';
 
 import type { ThemeKey } from '@/config/themeConfig';
+import type { OccasionType } from '@/lib/types';
 import { useThemeUtils } from '../../builder/ThemeWrapper';
 import TypingText from '../../ui/TypingText';
 import SectionHeader from '../../page/SectionHeader';
@@ -11,14 +12,34 @@ import { getHeadingFontClass, getSectionSpacingClass } from '@/lib/theme-color-h
 type Props = {
   message: string;
   theme: ThemeKey;
+  siteType?: OccasionType;
   variant?: 'default' | 'alt';
 };
 
-export default function LoveLetterSection({ message, theme, variant = 'default' }: Props) {
-  const copy = getSectionCopy('love_letter');
+export default function LoveLetterSection({ message, theme, siteType = 'couple', variant = 'default' }: Props) {
+  const copy = getSectionCopy('love_letter', siteType);
   const themeUtils = useThemeUtils(theme);
   const spacingClass = getSectionSpacingClass(theme);
   const headingFontClass = getHeadingFontClass(theme);
+  const closing = (() => {
+    switch (siteType) {
+      case 'graduation':
+        return { signoff: 'With pride,', signature: 'Always cheering for you' };
+      case 'baby_shower':
+        return { signoff: 'With love,', signature: 'For the family ahead' };
+      case 'debut':
+        return { signoff: 'With admiration,', signature: 'Shine brightly' };
+      case 'family':
+        return { signoff: 'With love,', signature: 'Your family story' };
+      case 'mothers_day':
+        return { signoff: 'With gratitude,', signature: 'Always with love' };
+      case 'fathers_day':
+        return { signoff: 'With gratitude,', signature: 'With love and respect' };
+      default:
+        return { signoff: 'Forever yours,', signature: 'My Love' };
+    }
+  })();
+  const footerIcon = ['couple', 'anniversary', 'proposal', 'valentines'].includes(siteType) ? '💕' : copy.icon || '✦';
 
   return (
     <section className={`relative overflow-hidden ${spacingClass}`} id="love-letter">
@@ -115,7 +136,7 @@ export default function LoveLetterSection({ message, theme, variant = 'default' 
                 {/* closing */}
                 <div className="mt-6 space-y-1">
                   <p className="text-sm md:text-base opacity-70" style={{ color: themeUtils.colors.text }}>
-                    Forever yours,
+                    {closing.signoff}
                   </p>
                   <p
                     className={`text-lg md:text-xl italic font-semibold ${headingFontClass}`}
@@ -125,7 +146,7 @@ export default function LoveLetterSection({ message, theme, variant = 'default' 
                         '"Brush Script MT", "Lucida Handwriting", "Segoe Script", cursive',
                     }}
                   >
-                    My Love
+                    {closing.signature}
                   </p>
                 </div>
               </div>
@@ -134,7 +155,7 @@ export default function LoveLetterSection({ message, theme, variant = 'default' 
         </ScrollReveal>
 
         <div className="text-center mt-6">
-          <span className="text-lg opacity-20" style={{ color: themeUtils.colors.primary }}>💕</span>
+          <span className="text-lg opacity-20" style={{ color: themeUtils.colors.primary }}>{footerIcon}</span>
         </div>
       </div>
     </section>

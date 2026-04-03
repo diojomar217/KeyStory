@@ -378,6 +378,7 @@ export default function ClientPage({
               key={section}
               message={contentForSection?.content || message}
               theme={theme}
+              siteType={siteType}
             />
           );
 
@@ -386,6 +387,7 @@ export default function ClientPage({
             <OurStorySection
               key={section}
               theme={theme}
+              siteType={siteType}
               customerName={resolvedCustomerName}
               partnerName={resolvedPartnerName}
               story={contentForSection?.content}
@@ -399,6 +401,7 @@ export default function ClientPage({
             <OurStorySection
               key={section}
               theme={theme}
+              siteType={siteType}
               customerName={resolvedCustomerName}
               partnerName={resolvedPartnerName}
               story={contentForSection?.content}
@@ -495,6 +498,7 @@ export default function ClientPage({
             <RelationshipStatsSection
               key="relationship_stats"
               theme={theme}
+              siteType={siteType}
               anniversaryDate={anniversaryDate}
             />
           );
@@ -610,6 +614,7 @@ export default function ClientPage({
             <FutureDreamsSection
               key={section}
               theme={theme}
+              siteType={siteType}
               dreams={contentForSection?.dreams || sectionContent?.future_dreams?.dreams}
               variant={variant}
             />
@@ -620,6 +625,7 @@ export default function ClientPage({
             <ReasonsILoveYouSection
               key="reasons_love_you"
               theme={theme}
+              siteType={siteType}
               partnerName={resolvedPartnerName || resolvedCustomerName}
               reasons={sectionContent?.reasons_love_you?.reasons}
               variant={variant}
@@ -633,6 +639,7 @@ export default function ClientPage({
             <QuotesSection
               key={section}
               theme={theme}
+              siteType={siteType}
               quotes={contentForSection?.quotes || sectionContent?.quotes?.quotes}
               variant={variant}
             />
@@ -649,6 +656,7 @@ export default function ClientPage({
               key={section}
               message={contentForSection?.content || contentForSection?.text || message}
               theme={theme}
+              siteType={siteType}
             />
           );
 
@@ -719,6 +727,7 @@ export default function ClientPage({
             <LetterToFutureSection
               key={section}
               theme={theme}
+              siteType={siteType}
               customerName={resolvedCustomerName}
               partnerName={resolvedPartnerName}
               letter={contentForSection?.letter || sectionContent?.letter_future?.letter}
@@ -731,6 +740,7 @@ export default function ClientPage({
             <GiftSection
               key={section}
               theme={theme}
+              siteType={siteType}
               partnerName={resolvedPartnerName || resolvedCustomerName}
               gifts={contentForSection?.gifts || sectionContent?.gift_section?.gifts}
             />
@@ -741,6 +751,7 @@ export default function ClientPage({
             <SurpriseMessageSection
               key={section}
               theme={theme}
+              siteType={siteType}
               customerName={resolvedCustomerName}
               partnerName={resolvedPartnerName}
               message={contentForSection?.message || sectionContent?.surprise_message?.message}

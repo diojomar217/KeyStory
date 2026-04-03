@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { ThemeKey } from '@/config/themeConfig';
+import type { OccasionType } from '@/lib/types';
 import SectionHeader from '../../page/SectionHeader';
 import { getSectionCopy } from '@/lib/section-copy';
 import { useThemeUtils } from '../../builder/ThemeWrapper';
@@ -10,6 +11,7 @@ import ScrollReveal from '../../ui/ScrollReveal';
 
 interface RelationshipStatsSectionProps {
   theme: ThemeKey;
+  siteType?: OccasionType;
   anniversaryDate: string;
 }
 
@@ -21,7 +23,7 @@ interface Stats {
   minutes: number;
 }
 
-export default function RelationshipStatsSection({ theme, anniversaryDate }: RelationshipStatsSectionProps) {
+export default function RelationshipStatsSection({ theme, siteType = 'couple', anniversaryDate }: RelationshipStatsSectionProps) {
   const themeUtils = useThemeUtils(theme);
   const cardStyle = getCardStyleClasses(theme);
   const shadowClass = getShadowClass(theme);
@@ -55,11 +57,18 @@ export default function RelationshipStatsSection({ theme, anniversaryDate }: Rel
     return () => clearInterval(interval);
   }, [anniversaryDate]);
 
+  const statPrefix = siteType === 'travel'
+    ? 'On The Journey'
+    : siteType === 'friendship'
+      ? 'Connected'
+      : siteType === 'family'
+        ? 'Shared'
+        : 'Together';
   const statItems = [
-    { label: 'Days Together', value: stats.days, icon: '📅' },
-    { label: 'Months Together', value: stats.months, icon: '🗓️' },
-    { label: 'Years Together', value: stats.years, icon: '🎉' },
-    { label: 'Hours Together', value: stats.hours, icon: '⏰' },
+    { label: `Days ${statPrefix}`, value: stats.days, icon: '📅' },
+    { label: `Months ${statPrefix}`, value: stats.months, icon: '🗓️' },
+    { label: `Years ${statPrefix}`, value: stats.years, icon: '🎉' },
+    { label: `Hours ${statPrefix}`, value: stats.hours, icon: '⏰' },
   ];
 
   return (
@@ -70,7 +79,7 @@ export default function RelationshipStatsSection({ theme, anniversaryDate }: Rel
       <div className="max-w-4xl mx-auto">
         <ScrollReveal animation="fade-up">
           {(() => {
-            const copy = getSectionCopy('relationship_stats');
+            const copy = getSectionCopy('relationship_stats', siteType);
             return (
               <SectionHeader
                 icon={copy.icon}

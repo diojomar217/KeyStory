@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { ThemeKey } from '@/config/themeConfig';
+import type { OccasionType } from '@/lib/types';
 import SectionHeader from '../../page/SectionHeader';
 import { getSectionCopy } from '@/lib/section-copy';
 import { useThemeUtils } from '../../builder/ThemeWrapper';
@@ -20,6 +21,7 @@ interface Reason {
 
 interface ReasonsILoveYouSectionProps {
   theme: ThemeKey;
+  siteType?: OccasionType;
   partnerName: string;
   reasons?: Reason[];
   variant?: 'default' | 'alt';
@@ -40,6 +42,7 @@ const defaultReasons: Reason[] = [
 
 export default function ReasonsILoveYouSection({ 
   theme, 
+  siteType = 'couple',
   partnerName,
   reasons,
   variant = 'default'
@@ -72,7 +75,7 @@ export default function ReasonsILoveYouSection({
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <ScrollReveal animation="fade-up">
           {(() => {
-            const copy = getSectionCopy('reasons_love_you', undefined, { partnerName });
+            const copy = getSectionCopy('reasons_love_you', siteType, { partnerName });
             return (
               <SectionHeader
                 icon={copy.icon}
