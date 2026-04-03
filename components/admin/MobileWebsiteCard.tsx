@@ -18,10 +18,6 @@ export default function MobileWebsiteCard({
   onSelect,
   pendingGuestMessages = 0,
 }: MobileWebsiteCardProps) {
-  type NfcNoticeTone = 'success' | 'error' | 'info';
-
-  const [isWritingNfc, setIsWritingNfc] = useState(false);
-  const [nfcNotice, setNfcNotice] = useState<{ tone: NfcNoticeTone; text: string } | null>(null);
   const siteType = order.site_type || 'couple';
   const customerName = order.config?.people?.primary || (order as any).customer_name || '';
   const partnerName = order.config?.people?.secondary || (order as any).partner_name || '';
@@ -33,19 +29,6 @@ export default function MobileWebsiteCard({
   const themeValue = (order.config?.theme as string) || (order as any).theme || DEFAULT_THEME;
   const coverPhoto = order.config?.media?.photos?.[0] || order.config?.cover_photo || order.photos?.[0] || '';
   const websiteName = order.website_name || order.slug;
-  const siteStatus = (order.status || 'active').toLowerCase();
-  const canWriteNfc = siteStatus !== 'archived' && siteStatus !== 'expired';
-
-  const pushNfcNotice = (tone: NfcNoticeTone, text: string) => {
-    setNfcNotice({ tone, text });
-    window.setTimeout(() => setNfcNotice(null), 6000);
-  };
-
-  const getNfcUrl = () => {
-    const slug = order.website_name || order.slug;
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://key-story.vercel.app';
-    return `${origin}/r/${slug}`;
-  };
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
@@ -73,76 +56,6 @@ export default function MobileWebsiteCard({
         return 'bg-purple-100 text-purple-700';
       default:
         return 'bg-slate-100 text-slate-700';
-    }
-  };
-
-  const writeNfcTag = async () => {
-    const slug = order.website_name || order.slug;
-    if (!slug) {
-      pushNfcNotice('error', 'Missing website slug for NFC writing.');
-      return;
-    }
-
-    if (!canWriteNfc) {
-      pushNfcNotice('info', 'NFC writing is disabled for archived or expired sites. Renew/restore this site first.');
-      return;
-    }
-
-    const nfcUrl = getNfcUrl();
-
-    if (typeof window === 'undefined' || !window.isSecureContext) {
-      pushNfcNotice('error', 'NFC writing requires HTTPS (secure context).');
-      return;
-    }
-
-    if (!('NDEFReader' in window)) {
-      try {
-        if (navigator.clipboard?.writeText) {
-          await navigator.clipboard.writeText(nfcUrl);
-          pushNfcNotice('info', 'Web NFC is not supported here. Link copied for external NFC tools.');
-          return;
-        }
-      } catch (_error) {
-        // Fallback alert below when clipboard permission is blocked.
-      }
-
-      pushNfcNotice('info', `Web NFC is not supported on this device/browser. NFC URL: ${nfcUrl}`);
-      return;
-    }
-
-    setIsWritingNfc(true);
-    try {
-      const ReaderCtor = (window as Window & { NDEFReader?: new () => { write: (data: string) => Promise<void> } }).NDEFReader;
-      if (!ReaderCtor) throw new Error('NDEFReader is unavailable');
-
-      const ndef = new ReaderCtor();
-      await ndef.write(nfcUrl);
-      pushNfcNotice('success', `NFC tag written: ${nfcUrl}`);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown NFC write error';
-      const hint = message.toLowerCase().includes('permission')
-        ? 'NFC permission was denied.'
-        : message.toLowerCase().includes('abort')
-          ? 'NFC write was canceled.'
-          : 'Keep the NFC tag near the phone and try again.';
-      pushNfcNotice('error', `NFC write failed: ${hint}`);
-    } finally {
-      setIsWritingNfc(false);
-    }
-  };
-
-  const copyNfcUrl = async () => {
-    const slug = order.website_name || order.slug;
-    if (!slug) {
-      pushNfcNotice('error', 'Missing website slug to copy NFC URL.');
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(getNfcUrl());
-      pushNfcNotice('success', 'NFC URL copied to clipboard.');
-    } catch (_error) {
-      pushNfcNotice('error', `Could not copy automatically. URL: ${getNfcUrl()}`);
     }
   };
 
@@ -242,25 +155,15 @@ export default function MobileWebsiteCard({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h8M8 14h5m-7 6 2.8-2.8a2 2 0 011.414-.586H19a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h1v4z" />
                 </svg>
               </a>
-              <button
-                onClick={writeNfcTag}
-                disabled={isWritingNfc || !canWriteNfc}
-                className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50"
-                title="Write NFC Tag"
+              <a
+                href={`/admin/websites/${order.id}/nfc-lock`}
+                className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                title="NFC Studio"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3v18M7.5 6.5a6.5 6.5 0 000 11M16.5 6.5a6.5 6.5 0 010 11M4.5 9.5a9.5 9.5 0 000 5M19.5 9.5a9.5 9.5 0 010 5" />
                 </svg>
-              </button>
-              <button
-                onClick={copyNfcUrl}
-                className="p-2 text-sky-600 hover:bg-sky-50 rounded-lg transition-colors"
-                title="Copy NFC URL"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 010 5.656l-2 2a4 4 0 01-5.656-5.656l1-1m9.656 2.828a4 4 0 010-5.656l-2-2a4 4 0 10-5.656 5.656" />
-                </svg>
-              </button>
+              </a>
               <button
                 onClick={() => order.id && onDelete(order.id)}
                 className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -272,20 +175,7 @@ export default function MobileWebsiteCard({
               </button>
             </div>
           </div>
-          <p className="mt-2 text-[11px] text-slate-500">NFC direct write works best on Android Chrome over HTTPS.</p>
-          {nfcNotice && (
-            <p
-              className={`mt-2 rounded-md px-2 py-1.5 text-[11px] font-medium ${
-                nfcNotice.tone === 'success'
-                  ? 'bg-emerald-50 text-emerald-700'
-                  : nfcNotice.tone === 'error'
-                    ? 'bg-rose-50 text-rose-700'
-                    : 'bg-sky-50 text-sky-700'
-              }`}
-            >
-              {nfcNotice.text}
-            </p>
-          )}
+          <p className="mt-2 text-[11px] text-slate-500">Use the NFC Studio button to open the dedicated NFC tools screen.</p>
         </div>
       </div>
     </div>
