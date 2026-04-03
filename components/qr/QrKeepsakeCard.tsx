@@ -122,7 +122,15 @@ export function QrKeepsakeCard({
   useEffect(() => {
     if (!qrRef.current || !qrDataUrl || !isClient) return;
 
-    const visualDesign = qrConfig.qrDesign;
+    const visualDesign = {
+      dotsColor: qrConfig.qrDesign?.dotsColor ?? qrConfig.color,
+      backgroundColor: qrConfig.qrDesign?.backgroundColor ?? '#ffffff',
+      cornersColor: qrConfig.qrDesign?.cornersColor ?? qrConfig.color,
+      dotsType: qrConfig.qrDesign?.dotsType ?? (qrConfig.style === 'square' ? 'square' : 'rounded'),
+      cornersType: qrConfig.qrDesign?.cornersType ?? 'extra-rounded',
+      cornersDotType: qrConfig.qrDesign?.cornersDotType ?? 'dot',
+      logoUrl: qrConfig.qrDesign?.logoUrl,
+    };
 
     const qr = new QRCodeStyling({
       width: size.qr,
@@ -130,29 +138,28 @@ export function QrKeepsakeCard({
       data: qrDataUrl,
       type: 'canvas',
       dotsOptions: {
-        color: visualDesign?.dotsColor ?? qrConfig.color,
-        type: visualDesign?.dotsType ?? (qrConfig.style === 'square' ? 'square' : 'rounded'),
+        color: visualDesign.dotsColor,
+        type: visualDesign.dotsType,
       },
       backgroundOptions: {
-        color: visualDesign?.backgroundColor ?? '#ffffff',
+        color: visualDesign.backgroundColor,
       },
       cornersSquareOptions: {
-        color: visualDesign?.cornersColor ?? qrConfig.color,
-        type: visualDesign?.cornersType ?? 'extra-rounded',
+        color: visualDesign.cornersColor,
+        type: visualDesign.cornersType,
       },
       cornersDotOptions: {
-        color: visualDesign?.cornersColor ?? qrConfig.color,
-        type: visualDesign?.cornersDotType ?? 'dot',
+        color: visualDesign.cornersColor,
+        type: visualDesign.cornersDotType,
       },
-      image: visualDesign?.logoUrl,
-      imageOptions: visualDesign?.logoUrl
-        ? {
-            hideBackgroundDots: true,
-            imageSize: 0.28,
-            margin: 4,
-            crossOrigin: 'anonymous',
-          }
-        : undefined,
+      image: visualDesign.logoUrl,
+      // Keep imageOptions defined to avoid runtime crashes in older qr-code-styling internals.
+      imageOptions: {
+        hideBackgroundDots: true,
+        imageSize: 0.28,
+        margin: 4,
+        crossOrigin: 'anonymous',
+      },
       qrOptions: {
         errorCorrectionLevel: 'H',
       },

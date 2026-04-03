@@ -40,17 +40,41 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     setIsMobileOpen(false);
   }, [pathname]);
 
-  // Check authentication
+  // Check authentication and keep cookie in sync with localStorage token
   useEffect(() => {
     const checkAuth = () => {
-      if (typeof window !== 'undefined') {
-        const session = localStorage.getItem('admin_session');
-        if (!session && pathname !== '/admin/login') {
-          router.push('/admin/login');
-        } else {
-          setIsLoading(false);
-        }
+      if (typeof window === 'undefined') return;
+
+      const sessionRaw = localStorage.getItem('admin_session');
+
+      if (!sessionRaw) {
+        if (pathname !== '/admin/login') router.push('/admin/login');
+        return;
       }
+
+      try {
+        const session = JSON.parse(sessionRaw) as { token?: string; expiresAt?: number };
+
+        // Redirect when the stored session has explicitly expired
+        if (session.expiresAt && Date.now() > session.expiresAt) {
+          localStorage.removeItem('admin_session');
+          router.push('/admin/login');
+          return;
+        }
+
+        // Re-set the cookie from the stored token on every page load so API
+        // routes that verify the cookie never see a stale / missing value.
+        if (session.token) {
+          document.cookie = `admin_session=${session.token}; path=/; max-age=${24 * 60 * 60}; SameSite=Strict`;
+        }
+      } catch {
+        // Corrupted entry — force fresh login
+        localStorage.removeItem('admin_session');
+        router.push('/admin/login');
+        return;
+      }
+
+      setIsLoading(false);
     };
 
     checkAuth();

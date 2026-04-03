@@ -121,6 +121,9 @@ export default function WebsitesTable({
         const data = await response.json();
 
         if (!response.ok) {
+          // Silently skip when the admin session cookie hasn't been synced yet
+          // (e.g. first render before AdminLayout re-sets the cookie).
+          if (response.status === 401) return;
           throw new Error(data.error || 'Failed to load guest message counts');
         }
 

@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState, use } from 'react';
-import { DEFAULT_THEME } from '@/config/defaults';
+import KeychainTypeSelector from '@/components/product/KeychainTypeSelector';
+import KeychainInsertPreview from '@/components/product/KeychainInsertPreview';
+import KeychainPrintSheet from '@/components/product/KeychainPrintSheet';
 import { Site } from '@/lib/supabase';
-import { getSite, updateSite } from '@/lib/api/sites';
-import type { ThemeKey } from '@/config/themeConfig';
+import { getSite } from '@/lib/api/sites';
+import { KeychainSize, KEYCHAIN_SIZES, findKeychainSize } from '@/components/product/KeychainSizeConfig';
 import {
   createDefaultPhotoTransform,
   duplicateConfig,
@@ -16,132 +18,48 @@ import {
   validateScanability,
 } from '@/components/product/print-builder-shared';
 import {
-  cx,
-  FieldLabel,
-  PhotoTransformControls,
-  SectionCard,
-  SegmentedButton,
-} from '@/components/product/BuilderUI';
-import { QrKeepsakeCard, QrCardStyle, QrVisualDesign } from '@/components/qr/QrKeepsakeCard';
+  PRODUCT_EXPANSION_PRESETS,
+  getProductExpansionPreset,
+  type ProductExpansionPreset,
+} from '@/config/productExpansion';
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-type CardPrintConfig = {
-  cardStyle: QrCardStyle;
-  cardSize: 'small' | 'large';
-  title: string;
+type InsertConfig = {
+  productPresetId: ProductExpansionPreset['id'];
+  size: KeychainSize;
+  customWidth: number;
+  customHeight: number;
+  caption: string;
   subtitle: string;
-  showNames: boolean;
   copies: number;
   photoIndex: number;
   photoTransform: PhotoTransform;
+  sheetMode: 'front-back-pair' | 'qr-only';
+  backSideVariant: 'photo' | 'engraved';
   useCustomQr: boolean;
   qrPreset: QrPreset;
   qrDesign: SharedQrDesign;
 };
 
-function getCardSizeMm(cardSize: 'small' | 'large') {
-  return cardSize === 'small'
-    ? { widthMm: 55, heightMm: 40 }
-    : { widthMm: 62, heightMm: 41 };
-}
+const buildInsertConfigFromPreset = (presetId: ProductExpansionPreset['id']): InsertConfig => {
+  const preset = getProductExpansionPreset(presetId) || PRODUCT_EXPANSION_PRESETS[0];
+  const size = findKeychainSize(preset.sizeLabel) || KEYCHAIN_SIZES[1];
 
-function QrCardPrintSheet({
-  config,
-  cardsPerRow,
-  cardGapMm,
-  showGuides,
-  customerName,
-  partnerName,
-  qrDataUrl,
-  photoUrl,
-}: any) {
-  const items = Array.from({ length: config.copies });
-
-  const guideInsetMm = showGuides ? 0.5 : 0;
-  const guideLenMm = 2.5;
-
-  return (
-    <div
-      className="grid justify-center"
-      style={{
-        gridTemplateColumns: `repeat(${cardsPerRow}, max-content)`,
-        gap: `${Math.max(1.2, cardGapMm)}mm`,
-      }}
-    >
-      {items.map((_: any, idx: number) => (
-        <div
-          key={idx}
-          className="relative"
-          style={{
-            padding: showGuides ? `${guideInsetMm}mm` : 0,
-          }}
-        >
-          {showGuides && (
-            <>
-              {/* CUTLINES */}
-              {['tl','tr','bl','br'].map((pos, i) => {
-                const s: any = {
-                  position: 'absolute',
-                  width: `${guideLenMm}mm`,
-                  height: `${guideLenMm}mm`,
-                };
-
-                if (pos === 'tl') {
-                  s.top = 0; s.left = 0;
-                  s.borderTop = '1px solid black';
-                  s.borderLeft = '1px solid black';
-                }
-                if (pos === 'tr') {
-                  s.top = 0; s.right = 0;
-                  s.borderTop = '1px solid black';
-                  s.borderRight = '1px solid black';
-                }
-                if (pos === 'bl') {
-                  s.bottom = 0; s.left = 0;
-                  s.borderBottom = '1px solid black';
-                  s.borderLeft = '1px solid black';
-                }
-                if (pos === 'br') {
-                  s.bottom = 0; s.right = 0;
-                  s.borderBottom = '1px solid black';
-                  s.borderRight = '1px solid black';
-                }
-
-                return <span key={i} style={s} />;
-              })}
-            </>
-          )}
-
-          <QrKeepsakeCard
-            customerName={customerName}
-            partnerName={partnerName}
-            qrDataUrl={qrDataUrl}
-            config={config}
-            cardSize={config.cardSize}
-            photoUrl={photoUrl}
-            photoTransform={config.photoTransform}
-          />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-export default function QRCardPage({ params }: PageProps) {
-  const { id } = use(params);
-
-  const createDefaultCardConfig = (): CardPrintConfig => ({
-    cardStyle: 'love_card',
-    cardSize: 'large',
-    title: 'Scan our love story ❤️',
-    subtitle: 'Our digital keepsake',
-    showNames: true,
-    copies: 6,
+  return {
+    productPresetId: preset.id,
+    size,
+    customWidth: size.width_mm || 35,
+    customHeight: size.height_mm || 50,
+    caption: preset.defaultCaption,
+    subtitle: preset.defaultSubtitle,
+    copies: preset.defaultCopies,
     photoIndex: 0,
     photoTransform: createDefaultPhotoTransform(),
+    sheetMode: preset.sheetMode,
+    backSideVariant: preset.backSideVariant,
     useCustomQr: false,
     qrPreset: 'classic',
     qrDesign: {
@@ -153,21 +71,21 @@ export default function QRCardPage({ params }: PageProps) {
       cornersDotType: 'dot',
       logoUrl: '/heart-icon.svg',
     },
-  });
+  };
+};
+
+export default function KeychainPrintPage({ params }: PageProps) {
+  const { id } = use(params);
 
   const [order, setOrder] = useState<Site | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [cardConfigs, setCardConfigs] = useState<CardPrintConfig[]>([createDefaultCardConfig()]);
+  const [insertConfigs, setInsertConfigs] = useState<InsertConfig[]>([buildInsertConfigFromPreset('nfc_keychain')]);
   const [activeConfigIndex, setActiveConfigIndex] = useState(0);
-
-  const [cardsPerRow, setCardsPerRow] = useState(3);
+  const [pairsPerRow, setPairsPerRow] = useState(2);
   const [showGuides, setShowGuides] = useState(true);
-  const [cardGapMm, setCardGapMm] = useState(4);
-
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveMsg, setSaveMsg] = useState<string | null>(null);
+  const [qrScale, setQrScale] = useState(1);
 
   useEffect(() => {
     if (id) fetchOrder();
@@ -175,36 +93,9 @@ export default function QRCardPage({ params }: PageProps) {
 
   const fetchOrder = async () => {
     try {
-      const siteData = await getSite(id);
-
-      if (siteData) {
-        setOrder(siteData);
-
-        const incomingQr = siteData.config?.qr || {};
-        const initial = createDefaultCardConfig();
-
-        setCardConfigs([
-          {
-            ...initial,
-            cardStyle:
-              incomingQr.cardStyle ||
-              (siteData.site_type === 'birthday' ? 'birthday_card' : 'love_card'),
-            title:
-              incomingQr.title ||
-              (siteData.site_type === 'birthday'
-                ? 'Scan the birthday surprise 🎉'
-                : 'Scan our love story ❤️'),
-            subtitle: incomingQr.subtitle || 'Our digital keepsake',
-            showNames:
-              typeof incomingQr.showNames === 'boolean'
-                ? incomingQr.showNames
-                : siteData.site_type !== 'birthday',
-            qrDesign: {
-              ...initial.qrDesign,
-              ...(incomingQr.qrDesign || {}),
-            },
-          },
-        ]);
+      const site = await getSite(id);
+      if (site) {
+        setOrder(site as Site);
       } else {
         setError('Website not found');
       }
@@ -216,17 +107,58 @@ export default function QRCardPage({ params }: PageProps) {
     }
   };
 
-  const updateCardConfig = (index: number, updater: (config: CardPrintConfig) => CardPrintConfig) => {
-    setCardConfigs((prev) => prev.map((cfg, i) => (i === index ? updater(cfg) : cfg)));
+  const getActualDimensions = (config: {
+    size: KeychainSize;
+    customWidth: number;
+    customHeight: number;
+  }) => {
+    if (config.size.label === 'Custom Size') {
+      return { widthMm: config.customWidth, heightMm: config.customHeight };
+    }
+    return { widthMm: config.size.width_mm, heightMm: config.size.height_mm };
   };
 
-  const duplicateCardConfig = (index: number) => {
-    const configToDuplicate = cardConfigs[index];
+  const updateInsertConfig = (index: number, updater: (config: InsertConfig) => InsertConfig) => {
+    setInsertConfigs((prev) => prev.map((cfg, i) => (i === index ? updater(cfg) : cfg)));
+  };
+
+  const applyProductPreset = (index: number, presetId: ProductExpansionPreset['id']) => {
+    const presetConfig = buildInsertConfigFromPreset(presetId);
+    updateInsertConfig(index, (prev) => ({
+      ...prev,
+      productPresetId: presetConfig.productPresetId,
+      size: presetConfig.size,
+      customWidth: presetConfig.customWidth,
+      customHeight: presetConfig.customHeight,
+      caption: presetConfig.caption,
+      subtitle: presetConfig.subtitle,
+      copies: presetConfig.copies,
+      sheetMode: presetConfig.sheetMode,
+      backSideVariant: presetConfig.backSideVariant,
+    }));
+  };
+
+  const removeInsertConfig = (index: number) => {
+    setInsertConfigs((prev) => {
+      if (prev.length <= 1) return prev;
+      return prev.filter((_, i) => i !== index);
+    });
+
+    setActiveConfigIndex((prev) => {
+      if (insertConfigs.length <= 1) return 0;
+      if (prev > index) return prev - 1;
+      if (prev === index) return Math.max(0, prev - 1);
+      return prev;
+    });
+  };
+
+  const duplicateInsertConfig = (index: number) => {
+    const configToDuplicate = insertConfigs[index];
     if (!configToDuplicate) return;
 
     const duplicated = duplicateConfig(configToDuplicate);
 
-    setCardConfigs((prev) => {
+    setInsertConfigs((prev) => {
       const next = [...prev];
       next.splice(index + 1, 0, duplicated);
       return next;
@@ -235,96 +167,39 @@ export default function QRCardPage({ params }: PageProps) {
     setActiveConfigIndex(index + 1);
   };
 
-  const removeCardConfig = (index: number) => {
-    setCardConfigs((prev) => {
-      if (prev.length <= 1) return prev;
-      return prev.filter((_, i) => i !== index);
-    });
-
-    setActiveConfigIndex((prev) => {
-      if (cardConfigs.length <= 1) return 0;
-      if (prev > index) return prev - 1;
-      if (prev === index) return Math.max(0, prev - 1);
-      return prev;
-    });
-  };
-
   const resetPhotoTransform = (index: number) => {
-    updateCardConfig(index, (prev) => ({
+    updateInsertConfig(index, (prev) => ({
       ...prev,
       photoTransform: createDefaultPhotoTransform(),
     }));
   };
 
-  const handleSave = async () => {
-    if (!order?.id) return;
-
-    setIsSaving(true);
-    setSaveMsg(null);
-
-    try {
-      const activeCard = cardConfigs[activeConfigIndex] ?? cardConfigs[0];
-
-      const qrToSave = {
-        title: activeCard.title,
-        subtitle: activeCard.subtitle,
-        showNames: activeCard.showNames,
-        cardStyle: activeCard.cardStyle,
-        qrDesign: activeCard.useCustomQr ? activeCard.qrDesign : undefined,
-      };
-
-      const updatedConfig = { ...order.config, qr: qrToSave };
-
-      const data = await updateSite({
-        id: order.id,
-        config: updatedConfig,
-        website_name: order.website_name,
-        site_type: order.site_type,
-        status: order.status,
-      });
-
-      if (!data?.success) {
-        throw new Error(data.message || 'Unable to save');
-      }
-
-      setOrder((prev) => (prev ? { ...prev, config: updatedConfig } : prev));
-      setSaveMsg('Saved successfully.');
-    } catch (err) {
-      console.error(err);
-      setSaveMsg('Save failed.');
-    } finally {
-      setIsSaving(false);
-      setTimeout(() => setSaveMsg(null), 3000);
-    }
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const activeConfig = cardConfigs[activeConfigIndex] ?? cardConfigs[0];
-
   const config = order?.config || {};
-  const theme: ThemeKey = (config.theme as ThemeKey) || DEFAULT_THEME;
   const customerName = config?.people?.primary || order?.customer_name || 'Your Name';
   const partnerName = config?.people?.secondary || order?.partner_name || 'Partner Name';
   const coupleNames = `${customerName} & ${partnerName}`;
 
-  const photos = Array.isArray(config?.media?.photos) ? config.media.photos : [];
+  const photos = Array.isArray(config?.media?.photos) ? config.media.photos : order?.photos || [];
   const websiteUrl = order?.website_name
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/site/${order.website_name}`
-    : undefined;
-
-  const qrRedirectUrl = order?.website_name
-    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/r/${order.website_name}`
     : undefined;
 
   const qrDataUrl =
     typeof config.qr_data_url === 'string' && config.qr_data_url.trim() !== ''
       ? config.qr_data_url
-      : qrRedirectUrl || websiteUrl;
+      : websiteUrl;
 
   const qrCodeUrl = order?.qr_code_url;
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const activeConfig = insertConfigs[activeConfigIndex] ?? insertConfigs[0];
+  const { widthMm, heightMm } = activeConfig
+    ? getActualDimensions(activeConfig)
+    : { widthMm: 35, heightMm: 50 };
+
   const activePhotoUrl = photos[activeConfig?.photoIndex ?? 0] || '';
 
   const activeWarning =
@@ -338,42 +213,45 @@ export default function QRCardPage({ params }: PageProps) {
   const estimatedSummary = useMemo(() => {
     if (!activeConfig) {
       return {
-        cardWidthMm: 0,
-        cardHeightMm: 0,
-        estimatedCardsPerRow: 0,
+        pairWidthMm: 0,
+        estimatedPairsPerRow: 0,
         estimatedRowsPerPage: 0,
-        estimatedCardsPerPage: 0,
+        estimatedPairsPerPage: 0,
       };
     }
 
     const pageWidthMm = 210;
     const pageHeightMm = 297;
-    const outerMarginMm = 8;
+    const outerMarginMm = 2;
+    const horizontalGapMm = 0.8;
+    const verticalGapMm = 0.8;
+
     const usableWidthMm = pageWidthMm - outerMarginMm * 2;
     const usableHeightMm = pageHeightMm - outerMarginMm * 2;
 
-    const { widthMm, heightMm } = getCardSizeMm(activeConfig.cardSize);
-
-    const estimatedCardsPerRow = Math.max(
+    const pairWidthMm = activeConfig.sheetMode === 'qr-only' ? widthMm : widthMm * 2;
+    const estimatedPairsPerRow = Math.max(
       1,
-      Math.min(cardsPerRow, Math.floor((usableWidthMm + cardGapMm) / (widthMm + cardGapMm)))
+      Math.min(
+        pairsPerRow,
+        Math.floor((usableWidthMm + horizontalGapMm) / (pairWidthMm + horizontalGapMm))
+      )
     );
 
     const estimatedRowsPerPage = Math.max(
       1,
-      Math.floor((usableHeightMm + cardGapMm) / (heightMm + cardGapMm))
+      Math.floor((usableHeightMm + verticalGapMm) / (heightMm + verticalGapMm))
     );
 
     return {
-      cardWidthMm: widthMm,
-      cardHeightMm: heightMm,
-      estimatedCardsPerRow,
+      pairWidthMm,
+      estimatedPairsPerRow,
       estimatedRowsPerPage,
-      estimatedCardsPerPage: estimatedCardsPerRow * estimatedRowsPerPage,
+      estimatedPairsPerPage: estimatedPairsPerRow * estimatedRowsPerPage,
     };
-  }, [activeConfig, cardsPerRow, cardGapMm]);
+  }, [activeConfig, widthMm, heightMm, pairsPerRow]);
 
-  const totalCopiesAcrossConfigs = cardConfigs.reduce((sum, cfg) => sum + cfg.copies, 0);
+  const totalCopiesAcrossConfigs = insertConfigs.reduce((sum, cfg) => sum + cfg.copies, 0);
 
   if (loading) {
     return (
@@ -404,15 +282,24 @@ export default function QRCardPage({ params }: PageProps) {
         @media print {
           @page {
             size: A4 portrait;
-            margin: 8mm;
+            margin: 2mm;
           }
 
-          html, body {
+          html,
+          body {
             margin: 0 !important;
             padding: 0 !important;
             width: 210mm !important;
-            min-height: 297mm !important;
+            min-height: auto !important;
+            height: auto !important;
             background: #ffffff !important;
+            overflow: visible !important;
+          }
+
+          #__next {
+            width: 210mm !important;
+            min-height: auto !important;
+            height: auto !important;
             overflow: visible !important;
           }
 
@@ -421,6 +308,36 @@ export default function QRCardPage({ params }: PageProps) {
             print-color-adjust: exact;
             color-adjust: exact;
             background: #ffffff !important;
+          }
+
+          #__next,
+          main {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 210mm !important;
+            min-height: auto !important;
+            height: auto !important;
+            background: #ffffff !important;
+            overflow: visible !important;
+            max-height: none !important;
+          }
+
+          .h-screen,
+          .min-h-screen,
+          .overflow-hidden,
+          .overflow-y-auto,
+          .overflow-x-auto {
+            height: auto !important;
+            min-height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+          }
+
+          .max-w-7xl {
+            max-width: none !important;
+            width: 210mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
           }
 
           .print\\:hidden,
@@ -439,22 +356,15 @@ export default function QRCardPage({ params }: PageProps) {
             display: block !important;
           }
 
-          .qr-print-root {
+          .print-root {
             display: block !important;
-            width: 100% !important;
-            min-height: 297mm !important;
+            width: 210mm !important;
+            min-height: auto !important;
             margin: 0 !important;
             padding: 0 !important;
             background: #ffffff !important;
-          }
-
-          .qr-print-page-break {
-            break-after: page;
-            page-break-after: always;
-          }
-
-          .qr-print-sheet {
-            margin-bottom: 8mm;
+            overflow: visible !important;
+            max-height: none !important;
           }
         }
       `}</style>
@@ -462,18 +372,16 @@ export default function QRCardPage({ params }: PageProps) {
       <div className="print:hidden mb-6">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">QR Card Print Maker</h1>
-            <p className="text-slate-500 mt-1">
-              {coupleNames} • {activeConfig.cardStyle.replace('_', ' ')}
-            </p>
+            <h1 className="text-2xl font-bold text-slate-900">Product Print Maker</h1>
+            
           </div>
 
           <div className="flex items-center gap-3">
             <a
-              href={`/admin/websites/${id}/insert-print`}
+              href={`/admin/websites/${id}/qr-card`}
               className="text-rose-600 hover:text-rose-700 font-medium"
             >
-              ← Insert Print Studio
+              &larr; QR Card
             </a>
             <a href="/admin/websites" className="text-slate-600 hover:text-slate-700 font-medium">
               Back to Websites
@@ -485,11 +393,11 @@ export default function QRCardPage({ params }: PageProps) {
       <div className="print:hidden">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-4 space-y-6">
-            <h2 className="text-lg font-semibold mb-2">Select Card Designs, Copies & QR Style</h2>
+            <h2 className="text-lg font-semibold mb-2">Select Product Formats, Captions & Quantities</h2>
 
             <div className="space-y-4">
-              {cardConfigs.map((cfg, idx) => {
-                const { widthMm, heightMm } = getCardSizeMm(cfg.cardSize);
+              {insertConfigs.map((cfg, idx) => {
+                const { widthMm: configWidth, heightMm: configHeight } = getActualDimensions(cfg);
 
                 return (
                   <div key={idx} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
@@ -504,10 +412,10 @@ export default function QRCardPage({ params }: PageProps) {
                               : 'text-slate-700 hover:text-rose-600'
                           }`}
                         >
-                          Card {idx + 1}
+                          Insert {idx + 1}
                         </button>
                         <span className="text-xs text-slate-500">
-                          ({widthMm}mm × {heightMm}mm)
+                          ({configWidth}mm x {configHeight}mm)
                         </span>
                       </div>
 
@@ -515,7 +423,7 @@ export default function QRCardPage({ params }: PageProps) {
                         <button
                           type="button"
                           className="text-sky-600 hover:text-sky-700 text-sm"
-                          onClick={() => duplicateCardConfig(idx)}
+                          onClick={() => duplicateInsertConfig(idx)}
                         >
                           Duplicate
                         </button>
@@ -523,12 +431,12 @@ export default function QRCardPage({ params }: PageProps) {
                         <button
                           type="button"
                           className={`text-sm ${
-                            cardConfigs.length <= 1
+                            insertConfigs.length <= 1
                               ? 'text-slate-300 cursor-not-allowed'
                               : 'text-red-500 hover:text-red-700'
                           }`}
-                          onClick={() => removeCardConfig(idx)}
-                          disabled={cardConfigs.length <= 1}
+                          onClick={() => removeInsertConfig(idx)}
+                          disabled={insertConfigs.length <= 1}
                         >
                           Remove
                         </button>
@@ -536,79 +444,109 @@ export default function QRCardPage({ params }: PageProps) {
                     </div>
 
                     <div className="mt-3 space-y-3">
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                         <label className="flex flex-col text-sm font-semibold text-slate-800">
-                          Card Style
+                          Product preset
                           <select
-                            value={cfg.cardStyle}
-                            onChange={(e) => {
-                              updateCardConfig(idx, (prev) => ({
-                                ...prev,
-                                cardStyle: e.target.value as QrCardStyle,
-                              }));
-                            }}
+                            value={cfg.productPresetId}
+                            onChange={(e) => applyProductPreset(idx, e.target.value as ProductExpansionPreset['id'])}
                             className="mt-1 border rounded px-2 py-1 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-slate-900"
                           >
-                            <option value="love_card">Love Card</option>
-                            <option value="birthday_card">Birthday Card</option>
-                            <option value="minimal_card">Minimal Card</option>
-                            <option value="polaroid">Polaroid</option>
-                            <option value="none">Plain</option>
+                            {PRODUCT_EXPANSION_PRESETS.map((preset) => (
+                              <option key={preset.id} value={preset.id}>
+                                {preset.label}
+                              </option>
+                            ))}
                           </select>
                         </label>
+                        <p className="mt-2 text-xs text-slate-500">
+                          {getProductExpansionPreset(cfg.productPresetId)?.description}
+                        </p>
+                      </div>
 
-                        <label className="flex flex-col text-sm font-semibold text-slate-800">
-                          Card Size
-                          <div className="mt-1 grid grid-cols-2 gap-2">
-                            <SegmentedButton
-                              active={cfg.cardSize === 'small'}
-                              label="Small"
-                              sublabel="5.5 × 4"
-                              onClick={() =>
-                                updateCardConfig(idx, (prev) => ({ ...prev, cardSize: 'small' }))
-                              }
-                            />
-                            <SegmentedButton
-                              active={cfg.cardSize === 'large'}
-                              label="Large"
-                              sublabel="6.2 × 4.1"
-                              onClick={() =>
-                                updateCardConfig(idx, (prev) => ({ ...prev, cardSize: 'large' }))
-                              }
-                            />
-                          </div>
-                        </label>
+                      <KeychainTypeSelector
+                        selectedSize={cfg.size}
+                        onSizeChange={(size) => {
+                          updateInsertConfig(idx, (prev) => ({ ...prev, size }));
+                        }}
+                        customWidth={cfg.customWidth}
+                        customHeight={cfg.customHeight}
+                        onCustomWidthChange={(w) => {
+                          updateInsertConfig(idx, (prev) => ({ ...prev, customWidth: w }));
+                        }}
+                        onCustomHeightChange={(h) => {
+                          updateInsertConfig(idx, (prev) => ({ ...prev, customHeight: h }));
+                        }}
+                      />
 
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <label className="flex flex-col text-sm font-semibold text-slate-800">
-                          Title
+                          Caption
                           <input
                             type="text"
-                            value={cfg.title}
+                            value={cfg.caption}
                             onChange={(e) => {
-                              updateCardConfig(idx, (prev) => ({
+                              updateInsertConfig(idx, (prev) => ({
                                 ...prev,
-                                title: e.target.value,
+                                caption: e.target.value,
                               }));
                             }}
+                            placeholder="Caption"
                             className="mt-1 border rounded px-2 py-1 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-slate-900"
-                            maxLength={50}
+                            maxLength={30}
                           />
                         </label>
 
                         <label className="flex flex-col text-sm font-semibold text-slate-800">
-                          Subtitle
+                          Back-side note
                           <input
                             type="text"
                             value={cfg.subtitle}
                             onChange={(e) => {
-                              updateCardConfig(idx, (prev) => ({
+                              updateInsertConfig(idx, (prev) => ({
                                 ...prev,
                                 subtitle: e.target.value,
                               }));
                             }}
+                            placeholder="Back-side note"
                             className="mt-1 border rounded px-2 py-1 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-slate-900"
-                            maxLength={50}
+                            maxLength={60}
                           />
+                        </label>
+
+                        <label className="flex flex-col text-sm font-semibold text-slate-800">
+                          Sheet mode
+                          <select
+                            value={cfg.sheetMode}
+                            onChange={(e) => {
+                              updateInsertConfig(idx, (prev) => ({
+                                ...prev,
+                                sheetMode: e.target.value as InsertConfig['sheetMode'],
+                              }));
+                            }}
+                            className="mt-1 border rounded px-2 py-1 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-slate-900"
+                          >
+                            <option value="front-back-pair">Front + back pair</option>
+                            <option value="qr-only">QR-only sheet</option>
+                          </select>
+                        </label>
+
+                        <label className="flex flex-col text-sm font-semibold text-slate-800">
+                          Back side style
+                          <select
+                            value={cfg.backSideVariant}
+                            onChange={(e) => {
+                              updateInsertConfig(idx, (prev) => ({
+                                ...prev,
+                                backSideVariant: e.target.value as InsertConfig['backSideVariant'],
+                              }));
+                            }}
+                            disabled={cfg.sheetMode === 'qr-only'}
+                            className="mt-1 border rounded px-2 py-1 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-slate-900 disabled:bg-slate-100"
+                          >
+                            <option value="photo">Photo back</option>
+                            <option value="engraved">Engraved back</option>
+                          </select>
                         </label>
 
                         <label className="flex flex-col text-sm font-semibold text-slate-800">
@@ -619,7 +557,7 @@ export default function QRCardPage({ params }: PageProps) {
                             max="100"
                             value={cfg.copies}
                             onChange={(e) => {
-                              updateCardConfig(idx, (prev) => ({
+                              updateInsertConfig(idx, (prev) => ({
                                 ...prev,
                                 copies: Math.max(1, Math.min(100, parseInt(e.target.value) || 1)),
                               }));
@@ -633,7 +571,7 @@ export default function QRCardPage({ params }: PageProps) {
                           <select
                             value={cfg.photoIndex}
                             onChange={(e) => {
-                              updateCardConfig(idx, (prev) => ({
+                              updateInsertConfig(idx, (prev) => ({
                                 ...prev,
                                 photoIndex: Number(e.target.value),
                               }));
@@ -649,45 +587,94 @@ export default function QRCardPage({ params }: PageProps) {
                         </label>
                       </div>
 
-                      <label className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                        <input
-                          type="checkbox"
-                          checked={cfg.showNames}
-                          onChange={(e) => {
-                            updateCardConfig(idx, (prev) => ({
-                              ...prev,
-                              showNames: e.target.checked,
-                            }));
-                          }}
-                          className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
-                        />
-                        Show couple names
-                      </label>
+                      <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-semibold text-slate-800">Photo Position</h4>
+                          <button
+                            type="button"
+                            className="text-xs text-slate-500 hover:text-slate-700 underline"
+                            onClick={() => resetPhotoTransform(idx)}
+                          >
+                            Reset
+                          </button>
+                        </div>
 
-                      <PhotoTransformControls
-                        zoom={cfg.photoTransform.zoom}
-                        offsetX={cfg.photoTransform.offsetX}
-                        offsetY={cfg.photoTransform.offsetY}
-                        onZoomChange={(value) =>
-                          updateCardConfig(idx, (prev) => ({
-                            ...prev,
-                            photoTransform: { ...prev.photoTransform, zoom: value },
-                          }))
-                        }
-                        onOffsetXChange={(value) =>
-                          updateCardConfig(idx, (prev) => ({
-                            ...prev,
-                            photoTransform: { ...prev.photoTransform, offsetX: value },
-                          }))
-                        }
-                        onOffsetYChange={(value) =>
-                          updateCardConfig(idx, (prev) => ({
-                            ...prev,
-                            photoTransform: { ...prev.photoTransform, offsetY: value },
-                          }))
-                        }
-                        onReset={() => resetPhotoTransform(idx)}
-                      />
+                        <div className="mt-3 grid grid-cols-1 gap-3">
+                          <label className="flex flex-col text-sm font-semibold text-slate-800">
+                            Zoom
+                            <input
+                              type="range"
+                              min="1"
+                              max="2.2"
+                              step="0.01"
+                              value={cfg.photoTransform.zoom}
+                              onChange={(e) => {
+                                updateInsertConfig(idx, (prev) => ({
+                                  ...prev,
+                                  photoTransform: {
+                                    ...prev.photoTransform,
+                                    zoom: Number(e.target.value),
+                                  },
+                                }));
+                              }}
+                              className="mt-2"
+                            />
+                            <span className="mt-1 text-xs font-normal text-slate-500">
+                              {cfg.photoTransform.zoom.toFixed(2)}x
+                            </span>
+                          </label>
+
+                          <label className="flex flex-col text-sm font-semibold text-slate-800">
+                            Move Left / Right
+                            <input
+                              type="range"
+                              min="-40"
+                              max="40"
+                              step="1"
+                              value={cfg.photoTransform.offsetX}
+                              onChange={(e) => {
+                                updateInsertConfig(idx, (prev) => ({
+                                  ...prev,
+                                  photoTransform: {
+                                    ...prev.photoTransform,
+                                    offsetX: Number(e.target.value),
+                                  },
+                                }));
+                              }}
+                              className="mt-2"
+                            />
+                            <span className="mt-1 text-xs font-normal text-slate-500">
+                              {cfg.photoTransform.offsetX > 0 ? '+' : ''}
+                              {cfg.photoTransform.offsetX}
+                            </span>
+                          </label>
+
+                          <label className="flex flex-col text-sm font-semibold text-slate-800">
+                            Move Up / Down
+                            <input
+                              type="range"
+                              min="-40"
+                              max="40"
+                              step="1"
+                              value={cfg.photoTransform.offsetY}
+                              onChange={(e) => {
+                                updateInsertConfig(idx, (prev) => ({
+                                  ...prev,
+                                  photoTransform: {
+                                    ...prev.photoTransform,
+                                    offsetY: Number(e.target.value),
+                                  },
+                                }));
+                              }}
+                              className="mt-2"
+                            />
+                            <span className="mt-1 text-xs font-normal text-slate-500">
+                              {cfg.photoTransform.offsetY > 0 ? '+' : ''}
+                              {cfg.photoTransform.offsetY}
+                            </span>
+                          </label>
+                        </div>
+                      </div>
 
                       <div className="mt-4 pt-4 border-t border-slate-200">
                         <div className="flex items-center gap-2 mb-3">
@@ -695,7 +682,7 @@ export default function QRCardPage({ params }: PageProps) {
                             type="checkbox"
                             checked={cfg.useCustomQr}
                             onChange={(e) => {
-                              updateCardConfig(idx, (prev) => ({
+                              updateInsertConfig(idx, (prev) => ({
                                 ...prev,
                                 useCustomQr: e.target.checked,
                               }));
@@ -715,7 +702,7 @@ export default function QRCardPage({ params }: PageProps) {
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    updateCardConfig(idx, (prev) => ({
+                                    updateInsertConfig(idx, (prev) => ({
                                       ...prev,
                                       qrDesign: {
                                         dotsColor: '#e11d48',
@@ -743,7 +730,7 @@ export default function QRCardPage({ params }: PageProps) {
                                       const selected = e.target.value as QrPreset;
                                       if (!(selected in QR_PRESETS)) return;
 
-                                      updateCardConfig(idx, (prev) => ({
+                                      updateInsertConfig(idx, (prev) => ({
                                         ...prev,
                                         qrPreset: selected,
                                         qrDesign: { ...QR_PRESETS[selected] },
@@ -767,7 +754,7 @@ export default function QRCardPage({ params }: PageProps) {
                                     type="color"
                                     value={cfg.qrDesign.dotsColor}
                                     onChange={(e) => {
-                                      updateCardConfig(idx, (prev) => ({
+                                      updateInsertConfig(idx, (prev) => ({
                                         ...prev,
                                         qrDesign: {
                                           ...prev.qrDesign,
@@ -785,7 +772,7 @@ export default function QRCardPage({ params }: PageProps) {
                                     type="color"
                                     value={cfg.qrDesign.backgroundColor}
                                     onChange={(e) => {
-                                      updateCardConfig(idx, (prev) => ({
+                                      updateInsertConfig(idx, (prev) => ({
                                         ...prev,
                                         qrDesign: {
                                           ...prev.qrDesign,
@@ -803,7 +790,7 @@ export default function QRCardPage({ params }: PageProps) {
                                     type="color"
                                     value={cfg.qrDesign.cornersColor}
                                     onChange={(e) => {
-                                      updateCardConfig(idx, (prev) => ({
+                                      updateInsertConfig(idx, (prev) => ({
                                         ...prev,
                                         qrDesign: {
                                           ...prev.qrDesign,
@@ -820,7 +807,7 @@ export default function QRCardPage({ params }: PageProps) {
                                   <select
                                     value={cfg.qrDesign.dotsType}
                                     onChange={(e) => {
-                                      updateCardConfig(idx, (prev) => ({
+                                      updateInsertConfig(idx, (prev) => ({
                                         ...prev,
                                         qrDesign: {
                                           ...prev.qrDesign,
@@ -844,7 +831,7 @@ export default function QRCardPage({ params }: PageProps) {
                                   <select
                                     value={cfg.qrDesign.cornersType}
                                     onChange={(e) => {
-                                      updateCardConfig(idx, (prev) => ({
+                                      updateInsertConfig(idx, (prev) => ({
                                         ...prev,
                                         qrDesign: {
                                           ...prev.qrDesign,
@@ -865,7 +852,7 @@ export default function QRCardPage({ params }: PageProps) {
                                   <select
                                     value={cfg.qrDesign.cornersDotType}
                                     onChange={(e) => {
-                                      updateCardConfig(idx, (prev) => ({
+                                      updateInsertConfig(idx, (prev) => ({
                                         ...prev,
                                         qrDesign: {
                                           ...prev.qrDesign,
@@ -887,7 +874,7 @@ export default function QRCardPage({ params }: PageProps) {
                                   value={cfg.qrDesign.logoUrl || ''}
                                   onChange={(e) => {
                                     const value = e.target.value || undefined;
-                                    updateCardConfig(idx, (prev) => ({
+                                    updateInsertConfig(idx, (prev) => ({
                                       ...prev,
                                       qrDesign: {
                                         ...prev.qrDesign,
@@ -907,7 +894,7 @@ export default function QRCardPage({ params }: PageProps) {
                             </div>
 
                             <p className="text-xs text-slate-500">
-                              Test scan first if you use light colors or decorative presets.
+                              Leave QR Image URL empty to auto-generate from data.
                             </p>
                           </div>
                         )}
@@ -921,27 +908,29 @@ export default function QRCardPage({ params }: PageProps) {
                 type="button"
                 className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-rose-100 rounded-xl text-rose-700 font-medium hover:bg-rose-200"
                 onClick={() => {
-                  setCardConfigs((prev) => [...prev, createDefaultCardConfig()]);
-                  setActiveConfigIndex(cardConfigs.length);
+                  setInsertConfigs((prev) => [...prev, buildInsertConfigFromPreset('wallet_insert')]);
+                  setActiveConfigIndex(insertConfigs.length);
                 }}
               >
-                Add Card Design
+                Add Insert
               </button>
 
               <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
                 <div>
                   <h3 className="text-lg font-semibold text-slate-900">Print Options</h3>
                   <p className="text-sm text-slate-500 mt-1">
-                    Same print-style workflow as your keychain editor.
+                    Simple and reliable settings for clean A4 printing.
                   </p>
                 </div>
 
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between gap-3">
-                    <label className="text-sm font-semibold text-slate-700">Cards per row</label>
+                    <label className="text-sm font-semibold text-slate-700">
+                      {activeConfig.sheetMode === 'qr-only' ? 'Pieces per row' : 'Pairs per row'}
+                    </label>
                     <select
-                      value={cardsPerRow}
-                      onChange={(e) => setCardsPerRow(Number(e.target.value))}
+                      value={pairsPerRow}
+                      onChange={(e) => setPairsPerRow(Number(e.target.value))}
                       className="border rounded px-2 py-1 text-slate-900"
                     >
                       <option value={1}>1</option>
@@ -951,16 +940,16 @@ export default function QRCardPage({ params }: PageProps) {
                   </div>
 
                   <div className="flex items-center justify-between gap-3">
-                    <label className="text-sm font-semibold text-slate-700">Gap</label>
+                    <label className="text-sm font-semibold text-slate-700">QR size preset</label>
                     <select
-                      value={cardGapMm}
-                      onChange={(e) => setCardGapMm(Number(e.target.value))}
+                      id="qr-scale-select"
+                      value={qrScale}
+                      onChange={(e) => setQrScale(Number(e.target.value))}
                       className="border rounded px-2 py-1 text-slate-900"
                     >
-                      <option value={2}>2 mm</option>
-                      <option value={3}>3 mm</option>
-                      <option value={4}>4 mm</option>
-                      <option value={5}>5 mm</option>
+                      <option value={0.97}>Small</option>
+                      <option value={1}>Medium</option>
+                      <option value={1.03}>Large</option>
                     </select>
                   </div>
 
@@ -978,39 +967,24 @@ export default function QRCardPage({ params }: PageProps) {
                     onClick={handlePrint}
                     className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-xl transition-all duration-200 hover:scale-[1.02] shadow-md"
                   >
-                    Print Cards
+                    Print Inserts
                   </button>
-
-                 
-
-                  {saveMsg ? (
-                    <div
-                      className={cx(
-                        'rounded-lg border px-4 py-3 text-sm font-semibold',
-                        saveMsg.includes('success')
-                          ? 'border-green-200 bg-green-50 text-green-700'
-                          : 'border-rose-200 bg-rose-50 text-rose-700'
-                      )}
-                    >
-                      {saveMsg}
-                    </div>
-                  ) : null}
                 </div>
 
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                   <h4 className="text-sm font-semibold text-slate-800 mb-2">Estimated Layout</h4>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div className="rounded-md bg-white border border-slate-200 px-3 py-2">
-                      <p className="text-slate-500">Card size</p>
+                      <p className="text-slate-500">Pair width</p>
                       <p className="font-semibold text-slate-900">
-                        {estimatedSummary.cardWidthMm} × {estimatedSummary.cardHeightMm} mm
+                        {estimatedSummary.pairWidthMm.toFixed(1)} mm
                       </p>
                     </div>
 
                     <div className="rounded-md bg-white border border-slate-200 px-3 py-2">
-                      <p className="text-slate-500">Cards / row</p>
+                      <p className="text-slate-500">Pairs / row</p>
                       <p className="font-semibold text-slate-900">
-                        {estimatedSummary.estimatedCardsPerRow}
+                        {estimatedSummary.estimatedPairsPerRow}
                       </p>
                     </div>
 
@@ -1022,15 +996,15 @@ export default function QRCardPage({ params }: PageProps) {
                     </div>
 
                     <div className="rounded-md bg-white border border-slate-200 px-3 py-2">
-                      <p className="text-slate-500">Cards / page</p>
+                      <p className="text-slate-500">Pairs / page</p>
                       <p className="font-semibold text-slate-900">
-                        {estimatedSummary.estimatedCardsPerPage}
+                        {estimatedSummary.estimatedPairsPerPage}
                       </p>
                     </div>
                   </div>
 
                   <p className="text-xs text-slate-500 mt-3">
-                    Total copies across all card designs: <strong>{totalCopiesAcrossConfigs}</strong>
+                    Total copies across all inserts: <strong>{totalCopiesAcrossConfigs}</strong>
                   </p>
                 </div>
 
@@ -1050,91 +1024,85 @@ export default function QRCardPage({ params }: PageProps) {
               </div>
             )}
 
-            <SectionCard title="Live Preview" subtitle="Preview the active QR card design.">
-              <div className="bg-slate-50 rounded-xl border border-slate-200 p-6">
-                <div className="flex items-start justify-center overflow-x-auto overflow-y-visible">
-                  <div className="shrink-0">
-                    <QrKeepsakeCard
-                      theme={theme}
-                      siteType={order.site_type as 'couple' | 'birthday' | string}
-                      customerName={customerName}
-                      partnerName={partnerName}
-                      qrDataUrl={qrDataUrl}
-                      qrCodeUrl={qrCodeUrl}
-                      slug={order.website_name || order.slug}
-                      config={{
-                        title: activeConfig.title,
-                        subtitle: activeConfig.subtitle,
-                        showNames: activeConfig.showNames,
-                        cardStyle: activeConfig.cardStyle,
-                        qrDesign: activeConfig.useCustomQr ? (activeConfig.qrDesign as QrVisualDesign) : undefined,
-                      }}
-                      cardSize={activeConfig.cardSize}
-                      photoUrl={activePhotoUrl}
-                      photoTransform={activeConfig.photoTransform}
-                    />
-                  </div>
-                </div>
-              </div>
-            </SectionCard>
+            <KeychainInsertPreview
+              widthMm={widthMm}
+              heightMm={heightMm}
+              shape={activeConfig.size.shape}
+              qrDataUrl={qrDataUrl}
+              qrCodeUrl={qrCodeUrl}
+              coverPhotoUrl={activePhotoUrl}
+              coupleNames={coupleNames}
+              caption={activeConfig.caption}
+              sheetMode={activeConfig.sheetMode}
+              backSideVariant={activeConfig.backSideVariant}
+              backSideSubtitle={activeConfig.subtitle}
+              printModeLabel={getProductExpansionPreset(activeConfig.productPresetId)?.label}
+              qrScale={qrScale}
+              qrDesign={activeConfig.useCustomQr ? activeConfig.qrDesign : undefined}
+              photoTransform={activeConfig.photoTransform}
+            />
 
-            <SectionCard title="Print Sheet Preview" subtitle="Preview all cards as they will be repeated on paper.">
-              <div className="space-y-8">
-                {cardConfigs.map((cfg, idx) => {
-                  const photoUrl = photos[cfg.photoIndex] || '';
+            <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">Print Sheet Preview</h3>
 
-                  return (
-                    <div key={idx} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                      <div className="mb-3 flex items-center justify-between gap-3">
-                        <div>
-                          <h4 className="font-semibold text-slate-900">Card Design {idx + 1}</h4>
-                          <p className="text-xs text-slate-500">
-                            {cfg.cardStyle.replace('_', ' ')} • {cfg.copies} copies
-                          </p>
-                        </div>
-                      </div>
+              {insertConfigs.map((cfg, idx) => {
+                const { widthMm: cfgWidth, heightMm: cfgHeight } = getActualDimensions(cfg);
+                const photoUrl = photos[cfg.photoIndex] || '';
 
-                      <QrCardPrintSheet
-                        config={cfg}
-                        cardsPerRow={cardsPerRow}
-                        cardGapMm={cardGapMm}
-                        showGuides={showGuides}
-                        customerName={customerName}
-                        partnerName={partnerName}
-                        qrDataUrl={qrDataUrl}
-                        qrCodeUrl={qrCodeUrl}
-                        photoUrl={photoUrl}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </SectionCard>
+                return (
+                  <KeychainPrintSheet
+                    key={idx}
+                    widthMm={cfgWidth}
+                    heightMm={cfgHeight}
+                    shape={cfg.size.shape}
+                    qrDataUrl={qrDataUrl}
+                    qrCodeUrl={qrCodeUrl}
+                    coverPhotoUrl={photoUrl}
+                    coupleNames={coupleNames}
+                    caption={cfg.caption}
+                    copies={cfg.copies}
+                    pairsPerRow={pairsPerRow}
+                    showGuides={showGuides}
+                    sheetMode={cfg.sheetMode}
+                    backSideVariant={cfg.backSideVariant}
+                    backSideSubtitle={cfg.subtitle}
+                    qrScale={qrScale}
+                    qrDesign={cfg.useCustomQr ? cfg.qrDesign : undefined}
+                    photoTransform={cfg.photoTransform}
+                  />
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="hidden print:block qr-print-root">
-        {cardConfigs.map((cfg, idx) => {
+      <div className="hidden print:block print-root">
+        {insertConfigs.map((cfg, idx) => {
+          const { widthMm: cfgWidth, heightMm: cfgHeight } = getActualDimensions(cfg);
           const photoUrl = photos[cfg.photoIndex] || '';
 
           return (
-            <div
+            <KeychainPrintSheet
               key={idx}
-              className={idx < cardConfigs.length - 1 ? 'qr-print-page-break qr-print-sheet' : 'qr-print-sheet'}
-            >
-              <QrCardPrintSheet
-                config={cfg}
-                cardsPerRow={cardsPerRow}
-                cardGapMm={cardGapMm}
-                showGuides={showGuides}
-                customerName={customerName}
-                partnerName={partnerName}
-                qrDataUrl={qrDataUrl}
-                qrCodeUrl={qrCodeUrl}
-                photoUrl={photoUrl}
-              />
-            </div>
+              widthMm={cfgWidth}
+              heightMm={cfgHeight}
+              shape={cfg.size.shape}
+              qrDataUrl={qrDataUrl}
+              qrCodeUrl={qrCodeUrl}
+              coverPhotoUrl={photoUrl}
+              coupleNames={coupleNames}
+              caption={cfg.caption}
+              copies={cfg.copies}
+              pairsPerRow={pairsPerRow}
+              showGuides={showGuides}
+              sheetMode={cfg.sheetMode}
+              backSideVariant={cfg.backSideVariant}
+              backSideSubtitle={cfg.subtitle}
+              qrScale={qrScale}
+              qrDesign={cfg.useCustomQr ? cfg.qrDesign : undefined}
+              photoTransform={cfg.photoTransform}
+            />
           );
         })}
       </div>

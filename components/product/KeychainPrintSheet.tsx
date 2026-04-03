@@ -304,18 +304,22 @@ export default function KeychainPrintSheet({
             background: #ffffff !important;
           }
 
-          .Print-page {
+          .Print-sheet > .Print-page {
             width: 210mm !important;
-            min-height: 297mm !important;
+            min-height: auto !important;
+            height: auto !important;
             margin: 0 !important;
             padding: 0 !important;
             background: #ffffff !important;
             overflow: visible !important;
-            page-break-after: always !important;
+            page-break-after: auto !important;
+            break-after: auto !important;
+            box-sizing: border-box !important;
           }
 
-          .Print-page:last-child {
-            page-break-after: auto !important;
+          .Print-sheet > .Print-page:not(:last-of-type) {
+            page-break-after: always !important;
+            break-after: page !important;
           }
 
           .Print-grid {
@@ -401,7 +405,7 @@ export default function KeychainPrintSheet({
         </div>
       ))}
 
-      <div className="print:hidden text-center mt-4 text-sm text-slate-500">
+      <section className="print:hidden text-center mt-4 text-sm text-slate-500">
         <p>
           Printing {copies} {sheetMode === 'qr-only' ? 'panels' : 'inserts'} ({actualPairsPerRow} {sheetMode === 'qr-only' ? 'pieces' : 'pairs'}/row × {totalRows} rows)
         </p>
@@ -413,7 +417,7 @@ export default function KeychainPrintSheet({
         <p className="text-xs mt-1 text-rose-600">
           Print using Actual Size / 100% for best alignment
         </p>
-      </div>
+      </section>
     </div>
   );
 }

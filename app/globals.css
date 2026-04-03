@@ -1399,7 +1399,7 @@ html {
     break-inside: avoid !important;
   }
 
-  /* Keychain print sheet - ensure proper page breaks */
+  /* Insert print sheet - ensure proper page breaks */
   .print-sheet {
     page-break-after: always;
   }
@@ -1409,7 +1409,7 @@ html {
     break-inside: avoid;
   }
 
-  /* Print grid for keychain inserts */
+  /* Print grid for product inserts */
   .print-grid {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr) !important;

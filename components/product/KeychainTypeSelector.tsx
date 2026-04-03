@@ -140,10 +140,11 @@ export default function KeychainTypeSelector({
       <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
         <p className="text-sm font-semibold text-slate-800 mb-2">Keychain Insert Sizes (portrait by default)</p>
         <ul className="text-xs text-slate-600 list-disc list-inside space-y-1">
-          <li>Small Portrait: 32mm × 46mm</li>
+          <li>Small Portrait: 30mm × 45mm</li>
           <li>Medium Portrait: 35mm × 50mm (recommended for clear acrylic)</li>
           <li>Large Portrait: 40mm × 60mm</li>
-          <li>Square: 32mm × 32mm</li>
+          <li>Square: 35mm × 35mm</li>
+          <li>NFC Tap Keychain: 35mm × 50mm</li>
         </ul>
       </div>
 
