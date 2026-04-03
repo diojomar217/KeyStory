@@ -1,7 +1,14 @@
 'use client';
 
 import type { ThemeKey } from '@/config/themeConfig';
-import { THEME_CONFIG } from '@/config/themeConfig';
+import { useThemeUtils } from '../../builder/ThemeWrapper';
+import {
+  getCardStyleClasses,
+  getShadowClass,
+  getSectionSpacingClass,
+  getHeadingFontClass,
+} from '@/lib/theme-color-helpers';
+import ScrollReveal from '../../ui/ScrollReveal';
 
 interface FirstDateSectionProps {
   theme: ThemeKey;
@@ -21,87 +28,78 @@ export default function FirstDateSection({
   partnerName,
   firstDateInfo 
 }: FirstDateSectionProps) {
-  const themeConfig = THEME_CONFIG[theme];
-  const { colors, typography } = themeConfig;
+  const themeUtils = useThemeUtils(theme);
+  const cardStyle = getCardStyleClasses(theme);
+  const shadowClass = getShadowClass(theme);
+  const spacingClass = getSectionSpacingClass(theme);
+  const headingFontClass = getHeadingFontClass(theme);
 
   return (
-    <section 
-      className="py-16 px-4"
-    >
+    <section className={spacingClass}>
       <div className="max-w-4xl mx-auto">
-        <h2 
-          className="text-4xl font-bold text-center mb-8"
-          style={{ 
-            color: colors.primary,
-            fontFamily: typography.headingFont,
-            fontWeight: typography.headingWeight 
-          }}
-        >
-          🌹 Our First Date
-        </h2>
-        
-        <div 
-          className="p-8 rounded-2xl"
-          style={{ 
-            backgroundColor: colors.card,
-            borderColor: colors.border,
-            borderWidth: '1px'
-          }}
-        >
-          <div className="text-center mb-6">
-            <div 
-              className="inline-block p-4 rounded-full mb-4"
-              style={{ backgroundColor: colors.secondary }}
-            >
-              <span className="text-5xl">💕</span>
+        <ScrollReveal animation="fade-up">
+          <h2
+            className={`text-4xl font-bold text-center mb-8 ${headingFontClass}`}
+            style={{ color: themeUtils.colors.primary }}
+          >
+            🌹 Our First Date
+          </h2>
+        </ScrollReveal>
+
+        <ScrollReveal animation="fade-up" delay={150}>
+          <div
+            className={`p-8 border ${cardStyle} ${shadowClass}`}
+            style={{
+              backgroundColor: themeUtils.colors.card,
+              borderColor: themeUtils.colors.border,
+            }}
+          >
+            <div className="text-center mb-6">
+              <div
+                className="inline-block p-4 rounded-full mb-4"
+                style={{ backgroundColor: themeUtils.colors.secondary }}
+              >
+                <span className="text-5xl">💕</span>
+              </div>
+              <h3
+                className={`text-2xl font-bold ${headingFontClass}`}
+                style={{ color: themeUtils.colors.primary }}
+              >
+                {customerName} & {partnerName}
+              </h3>
             </div>
-            <h3 
-              className="text-2xl font-bold"
-              style={{ 
-                color: colors.primary,
-                fontFamily: typography.headingFont
-              }}
-            >
-              {customerName} & {partnerName}
-            </h3>
+
+            {(firstDateInfo?.date || firstDateInfo?.location) && (
+              <div className="flex justify-center gap-6 mb-6">
+                {firstDateInfo?.date && (
+                  <div className="text-center">
+                    <div className="text-2xl mb-1">📅</div>
+                    <div style={{ color: themeUtils.colors.text }}>{firstDateInfo.date}</div>
+                  </div>
+                )}
+                {firstDateInfo?.location && (
+                  <div className="text-center">
+                    <div className="text-2xl mb-1">📍</div>
+                    <div style={{ color: themeUtils.colors.text }}>{firstDateInfo.location}</div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {firstDateInfo?.description && (
+              <p className="text-center text-lg" style={{ color: themeUtils.colors.text }}>
+                {firstDateInfo.description}
+              </p>
+            )}
+
+            {!firstDateInfo?.description && (
+              <p className="text-center text-lg" style={{ color: themeUtils.colors.text }}>
+                The day that started it all. The moment when everything changed.
+                Neither of us knew that this would be the beginning of our forever.
+              </p>
+            )}
           </div>
-          
-          {(firstDateInfo?.date || firstDateInfo?.location) && (
-            <div className="flex justify-center gap-6 mb-6">
-              {firstDateInfo?.date && (
-                <div className="text-center">
-                  <div className="text-2xl mb-1">📅</div>
-                  <div style={{ color: colors.text }}>{firstDateInfo.date}</div>
-                </div>
-              )}
-              {firstDateInfo?.location && (
-                <div className="text-center">
-                  <div className="text-2xl mb-1">📍</div>
-                  <div style={{ color: colors.text }}>{firstDateInfo.location}</div>
-                </div>
-              )}
-            </div>
-          )}
-          
-          {firstDateInfo?.description && (
-            <p 
-              className="text-center text-lg"
-              style={{ color: colors.text }}
-            >
-              {firstDateInfo.description}
-            </p>
-          )}
-          
-          {!firstDateInfo?.description && (
-            <p 
-              className="text-center text-lg"
-              style={{ color: colors.text }}
-            >
-              The day that started it all. The moment when everything changed. 
-              Neither of us knew that this would be the beginning of our forever.
-            </p>
-          )}
-        </div>
+        </ScrollReveal>
       </div>
     </section>
   );

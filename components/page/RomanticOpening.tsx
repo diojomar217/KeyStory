@@ -25,11 +25,12 @@ export default function RomanticOpening({
   const [isHiding, setIsHiding] = useState(false);
   const [showBurst, setShowBurst] = useState(false);
 
-  const isBirthday = siteType === 'birthday';
-  const participants = isBirthday
-    ? [{ id: 'customer', name: customerName || 'Celebrant' }]
-    : [{ id: 'customer', name: customerName || 'You' }, { id: 'partner', name: partnerName || 'Partner' }];
+  const participants = [
+    { id: 'customer', name: customerName || 'You' },
+    ...(partnerName ? [{ id: 'partner', name: partnerName }] : []),
+  ];
   const heroConfig = resolveHeroConfig(siteType || 'couple', participants, undefined);
+  const floatingIcons = heroConfig.decorations.iconSet.slice(0, 5);
 
   // Get theme-specific classes
   const getThemeClasses = () => {
@@ -123,23 +124,9 @@ export default function RomanticOpening({
         }`}
       >
         {/* Occasion-aware decoration */}
-        {isBirthday ? (
-          <>
-            <span className="opening-floating-heart">🎉</span>
-            <span className="opening-floating-heart">🎈</span>
-            <span className="opening-floating-heart">✨</span>
-            <span className="opening-floating-heart">🥳</span>
-            <span className="opening-floating-heart">🎂</span>
-          </>
-        ) : (
-          <>
-            <span className="opening-floating-heart">💕</span>
-            <span className="opening-floating-heart">❤️</span>
-            <span className="opening-floating-heart">💗</span>
-            <span className="opening-floating-heart">💖</span>
-            <span className="opening-floating-heart">💘</span>
-          </>
-        )}
+        {floatingIcons.map((icon, index) => (
+          <span key={`${icon}-${index}`} className="opening-floating-heart">{icon}</span>
+        ))}
 
         <div className={`opening-content ${isHiding ? 'hiding' : ''}`}>
           {/* Title */}

@@ -51,7 +51,7 @@ BEGIN
   ) THEN
     ALTER TABLE public.site_analytics_events
       ADD CONSTRAINT site_analytics_events_event_type_check
-      CHECK (event_type IN ('page_view', 'qr_scan'));
+      CHECK (event_type IN ('page_view', 'qr_scan', 'section_view', 'share_click', 'download_card', 'music_play', 'opening_reveal'));
   END IF;
 END $$;
 

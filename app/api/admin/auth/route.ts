@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { v4 as uuidv4 } from 'uuid';
 import { enforceRateLimit } from '@/lib/reliability/rate-limit';
 import { captureError } from '@/lib/reliability/monitoring';
 import { recordAdminAudit } from '@/lib/reliability/audit';
+import { createAdminSessionToken } from '@/lib/api/admin-auth';
 
 // Simple token-based auth (in production, use proper JWT/sessions)
 export async function POST(req: NextRequest) {
@@ -29,8 +29,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (email === adminEmail && password === adminPassword) {
-      // Generate a simple token
-      const token = uuidv4();
+      const token = createAdminSessionToken();
 
       await recordAdminAudit(req, {
         action: 'admin.auth.login',

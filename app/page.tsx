@@ -45,9 +45,8 @@ const STARTUP_PROMISES = [
 ];
 
 const VARIANT_OPTIONS = [
-  { id: 'acrylic', label: 'Classic Acrylic', basePrice: 199 },
-  { id: 'metal', label: 'Metal Luxe', basePrice: 399 },
-  { id: 'bundle', label: 'Gift-Ready Bundle', basePrice: 599 },
+  { id: 'qr_only', label: 'QR Code Only', basePrice: 199 },
+  { id: 'qr_nfc', label: 'QR Code + NFC', basePrice: 299 },
 ] as const;
 
 const FINISH_OPTIONS = [
@@ -68,8 +67,8 @@ const PROMO_CODES = {
 
 const INCLUDED_ITEMS = [
   'Physical premium keychain (double-sided print)',
-  'Mobile-friendly personal website connected to QR',
-  'QR generation and publishing setup',
+  'Mobile-friendly personal website linked to your keychain',
+  'Access setup based on package: QR only or QR + NFC tap',
   'Basic updates and support after delivery',
 ];
 
@@ -94,19 +93,14 @@ const FAQS = [
 
 const PRODUCT_HIGHLIGHTS = [
   {
-    title: 'Classic Acrylic Keychain',
-    subtitle: 'Premium print and waterproof finish',
+    title: 'QR Code Only',
+    subtitle: 'Scan-ready keychain linked to your personal website',
     price: 'From PHP 199',
   },
   {
-    title: 'Metal Luxe Keychain',
-    subtitle: 'Brushed steel frame and elevated look',
-    price: 'From PHP 399',
-  },
-  {
-    title: 'Gift-Ready Bundle',
-    subtitle: 'Keychain plus ready-to-gift packaging',
-    price: 'From PHP 599',
+    title: 'QR Code + NFC',
+    subtitle: 'Scan or tap access with NFC-enabled experience',
+    price: 'From PHP 299',
   },
 ];
 
@@ -119,8 +113,9 @@ const PRODUCT_EXPANSION_COLLECTIONS = PRODUCT_EXPANSION_PRESETS.map((preset) => 
 }));
 
 const BENEFITS = [
-  'Custom website connected to your QR keychain',
+  'Choose between QR-only or QR + NFC keychain access',
   'Fast production with quality control checks',
+  'Tap-to-open NFC option for compatible phones',
   'Easy re-order and renewal support',
   'Perfect for couples, birthdays, and milestones',
 ];
@@ -136,7 +131,7 @@ export default function Home() {
   });
   const [orderResult, setOrderResult] = useState<OrderResult | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [selectedVariant, setSelectedVariant] = useState<(typeof VARIANT_OPTIONS)[number]['id']>('acrylic');
+  const [selectedVariant, setSelectedVariant] = useState<(typeof VARIANT_OPTIONS)[number]['id']>('qr_only');
   const [selectedFinish, setSelectedFinish] = useState<(typeof FINISH_OPTIONS)[number]['id']>('standard');
   const [selectedZone, setSelectedZone] = useState<(typeof SHIPPING_ZONES)[number]['id']>('metro');
   const [giftWrap, setGiftWrap] = useState(false);
@@ -170,7 +165,7 @@ export default function Home() {
     ? `/api/qr?data=${encodeURIComponent(`https://keystory.app/r/${previewState.website_name}`)}`
     : undefined;
 
-  const heroQrUrl = '/api/qr?data=' + encodeURIComponent('https://keystory.app/r/demo');
+  const heroQrUrl = '/api/qr?data=' + encodeURIComponent('https://key-story.vercel.app/');
 
   const trackEvent = (eventName: string, payload?: Record<string, string | number | boolean>) => {
     if (typeof window === 'undefined') return;
@@ -283,33 +278,18 @@ export default function Home() {
       </header>
 
       <main className="mx-auto w-full max-w-7xl px-4 pb-20 md:px-6">
-        <section className="pt-4">
-          <div className="hero-urgency rounded-2xl border border-[#0f172a]/10 bg-[#111827] px-4 py-3 text-sm text-white md:flex md:items-center md:justify-between">
-            <p>
-              Place your order within <span className="font-extrabold text-[#fdba74]">{hoursToCutoff}h</span> to secure today&apos;s production queue.
-            </p>
-            <p className="mt-1 text-xs text-slate-300 md:mt-0">Estimated ship window starts in 24 to 48 hours after approval.</p>
-          </div>
-        </section>
-
-        <section className="pt-6">
-          <div className="info-strip grid gap-3 rounded-2xl border border-[#0f172a]/10 bg-white/80 p-4 text-sm text-[#334155] md:grid-cols-3">
-            <div className="rounded-xl bg-[#f8fafc] px-3 py-2 font-medium">Shipping nationwide: Metro Manila, Luzon, Visayas, Mindanao</div>
-            <div className="rounded-xl bg-[#f8fafc] px-3 py-2 font-medium">Payment via Shopee checkout and manual support fallback</div>
-            <div className="rounded-xl bg-[#f8fafc] px-3 py-2 font-medium">Support and revisions via direct chat with our team</div>
-          </div>
-        </section>
+        
 
         <section className="grid items-center gap-10 py-14 md:grid-cols-2 md:py-20">
           <div className="reveal-up">
             <p className="inline-flex rounded-full border border-[#0f172a]/15 bg-white/80 px-3 py-1 text-xs font-semibold tracking-wide text-[#0f172a]">
-              Premium QR Keepsake Store
+              QR Only or QR + NFC Products
             </p>
             <h1 className="display-title mt-5 text-4xl font-black leading-tight text-[#111827] md:text-6xl">
-              Premium Keychains That Open Your Story Online
+              Premium Keychains That Open Your Story by Scan or Tap
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-[#475569]">
-              We build beautiful personal websites linked to custom QR keychains. Perfect for gifts, couple memories, birthdays, and milestone moments.
+              We build beautiful personal websites linked to custom QR + NFC keychains. Perfect for gifts, couple memories, birthdays, and milestone moments.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a
@@ -343,11 +323,11 @@ export default function Home() {
                 View Sample Websites
               </a>
             </div>
-            <div className="mt-10 grid grid-cols-2 gap-4 text-sm text-[#334155] sm:grid-cols-4">
+              <div className="mt-10 grid grid-cols-2 gap-4 text-sm text-[#334155] sm:grid-cols-4">
               <div className="rounded-2xl border border-white/70 bg-white/70 p-3 text-center shadow-sm">Fast Turnaround</div>
               <div className="rounded-2xl border border-white/70 bg-white/70 p-3 text-center shadow-sm">Waterproof Print</div>
               <div className="rounded-2xl border border-white/70 bg-white/70 p-3 text-center shadow-sm">Gift Ready</div>
-              <div className="rounded-2xl border border-white/70 bg-white/70 p-3 text-center shadow-sm">Mobile Friendly Site</div>
+              <div className="rounded-2xl border border-white/70 bg-white/70 p-3 text-center shadow-sm">QR or NFC Access</div>
             </div>
 
             <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -360,65 +340,65 @@ export default function Home() {
           </div>
 
           <div className="relative float-card">
-            <div className="absolute -right-3 -top-3 rounded-xl bg-[#0f172a] px-3 py-1 text-xs font-semibold text-white shadow-lg">
-              Best Seller
-            </div>
-            <div className="showcase-shell rounded-3xl border border-[#0f172a]/10 bg-gradient-to-b from-[#0f172a] to-[#1f2f4a] p-6 shadow-[0_30px_80px_-24px_rgba(15,23,42,0.8)]">
-              <div className="mb-5 flex items-center justify-between">
+            <div className="showcase-shell rounded-3xl border border-[#0f172a]/10 bg-gradient-to-b from-[#0b1733] via-[#162748] to-[#23365a] p-6 shadow-[0_34px_90px_-24px_rgba(15,23,42,0.85)]">
+              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="text-xl font-bold text-white">Signature Couple Keychain</h2>
-                <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white">Premium Finish</span>
+                <span className="self-start rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white sm:self-auto">Premium Finish</span>
               </div>
 
-              <div className="showcase-frame relative overflow-hidden rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur">
+              <div className="showcase-frame keychain-stage relative overflow-hidden rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur">
                 <div className="absolute -left-16 -top-12 h-32 w-32 rounded-full bg-[#f97316]/35 blur-2xl" />
                 <div className="absolute -right-10 bottom-0 h-28 w-28 rounded-full bg-[#38bdf8]/35 blur-2xl" />
+                <div className="keychain-shimmer" />
 
                 <div className="relative">
-                  <div className="mb-3 flex items-center justify-between text-xs uppercase tracking-widest text-slate-200/90">
-                    <span>Keychain Render</span>
-                    <span>50mm x 30mm</span>
+                  <div className="mb-3 flex items-center justify-between rounded-xl border border-white/15 bg-white/10 px-3 py-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-200">Keychain Render</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-300">50mm x 30mm</p>
                   </div>
 
-                  <div className="relative rounded-2xl border border-white/20 bg-[#f8fafc] p-4 shadow-inner">
-                    <div className="absolute left-3 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full border-4 border-slate-300 bg-slate-100" />
-                    <div className="ml-10 grid grid-cols-2 gap-3 rounded-xl border border-dashed border-slate-300 bg-white p-3">
-                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">
-                        <p className="mb-2 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-500">QR Side</p>
-                        <div className="flex aspect-square items-center justify-center rounded-md border border-slate-200 bg-white">
-                          <img src={heroQrUrl} alt="Sample QR" className="h-20 w-20 object-contain" />
+                  <div className="keychain-metal relative rounded-2xl border border-white/25 bg-[#f8fafc] p-3 shadow-inner sm:p-4">
+                    <div className="rounded-xl border border-slate-200 bg-gradient-to-b from-white to-slate-100 p-3">
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div className="keychain-panel rounded-lg border border-slate-200 bg-slate-50 p-2">
+                          <p className="mb-2 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">QR Side</p>
+                          <div className="flex aspect-square items-center justify-center rounded-md border border-slate-200 bg-white">
+                            <img src={heroQrUrl} alt="Sample QR" className="h-24 w-24 object-contain sm:h-20 sm:w-20" />
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">
-                        <p className="mb-2 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-500">Photo Side</p>
-                        <div className="flex aspect-square items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-white">
-                          {previewState.coverPhotoPreviewUrl ? (
-                            <img src={previewState.coverPhotoPreviewUrl} alt="Cover preview" className="h-full w-full object-cover" />
-                          ) : (
-                            <div className="text-center text-xs text-slate-400">Your photo here</div>
-                          )}
+                        <div className="keychain-panel rounded-lg border border-slate-200 bg-slate-50 p-2">
+                          <p className="mb-2 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Photo Side</p>
+                          <div className="flex aspect-square items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-white">
+                            {previewState.coverPhotoPreviewUrl ? (
+                              <img src={previewState.coverPhotoPreviewUrl} alt="Cover preview" className="h-full w-full object-cover" />
+                            ) : (
+                              <img src="/photo.png" alt="Sample preview" className="h-full w-full object-cover" />
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-4 rounded-xl border border-white/15 bg-white/10 p-3">
+                  <div className="keychain-label-strip mt-4 rounded-xl border border-white/20 bg-gradient-to-r from-white/10 to-[#7dd3fc]/20 p-3">
                     <p className="text-center text-sm font-semibold text-white">{previewState.coupleNames || 'Ari and Kai'}</p>
                     <p className="mt-1 text-center text-xs text-slate-200">Scan to open your story</p>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-5 flex items-end justify-between">
+              <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-widest text-slate-300">Starting Price</p>
                   <p className="text-2xl font-black text-white">PHP {selectedVariantConfig.basePrice}</p>
                   <p className="mt-1 text-xs text-slate-300">Buy 3+ items and save 8%</p>
+                  <p className="mt-1 text-xs font-semibold text-sky-200">Available in QR-only and QR + NFC options</p>
                 </div>
                 <a
                   href="#build"
                   onClick={() => trackEvent('hero_customize_click')}
-                  className="rounded-full bg-[#f97316] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#ea580c]"
+                  className="w-full rounded-full bg-[#f97316] px-5 py-2.5 text-center text-sm font-bold text-white transition hover:bg-[#ea580c] sm:w-auto"
                 >
                   Customize
                 </a>
@@ -454,7 +434,7 @@ export default function Home() {
               View full catalog
             </a>
           </div>
-          <div className="grid gap-5 md:grid-cols-3">
+          <div className="grid gap-5 md:grid-cols-2">
             {PRODUCT_HIGHLIGHTS.map((item) => (
               <article key={item.title} className="product-tile group rounded-3xl border border-[#0f172a]/10 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
                 <div className="product-media h-44 rounded-2xl bg-gradient-to-br from-[#dbeafe] via-[#ffedd5] to-[#fef9c3]" />
@@ -562,7 +542,7 @@ export default function Home() {
                 { id: '01', title: 'Choose product', desc: 'Pick your keychain style and finish.' },
                 { id: '02', title: 'Customize content', desc: 'Add names, photos, and your message.' },
                 { id: '03', title: 'We generate and print', desc: 'Your QR and page are prepared instantly.' },
-                { id: '04', title: 'Deliver and scan', desc: 'Open your page anytime through the keychain QR.' },
+                { id: '04', title: 'Deliver, scan, or tap', desc: 'Open your page anytime through QR or NFC tap.' },
               ].map((step) => (
                 <div key={step.id} className="flex gap-3 rounded-2xl border border-[#0f172a]/10 bg-white p-4">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0f172a] text-sm font-bold text-white">{step.id}</div>
@@ -1054,6 +1034,31 @@ export default function Home() {
           box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
         }
 
+        .keychain-stage {
+          background-image: linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(148, 163, 184, 0.04));
+        }
+
+        .keychain-shimmer {
+          position: absolute;
+          inset: -15% -40%;
+          background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.2), transparent 70%);
+          transform: translateX(-45%);
+          animation: shimmerPass 4.4s ease-in-out infinite;
+          pointer-events: none;
+        }
+
+        .keychain-metal {
+          background-image: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+        }
+
+        .keychain-panel {
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+
+        .keychain-label-strip {
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+        }
+
         .product-tile {
           background-image: linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(248, 250, 252, 0.9));
         }
@@ -1129,6 +1134,23 @@ export default function Home() {
           }
           100% {
             box-shadow: 0 0 0 18px rgba(249, 115, 22, 0);
+          }
+        }
+
+        @keyframes shimmerPass {
+          0% {
+            transform: translateX(-45%);
+            opacity: 0;
+          }
+          20% {
+            opacity: 0.9;
+          }
+          60% {
+            opacity: 0.8;
+          }
+          100% {
+            transform: translateX(45%);
+            opacity: 0;
           }
         }
       `}</style>

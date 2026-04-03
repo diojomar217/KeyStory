@@ -1,5 +1,7 @@
 import Cropper from 'react-easy-crop';
 import TimelineEditor from '@/components/builder/TimelineEditor';
+import { getSectionCopy } from '@/lib/section-copy';
+import { SECTION_COPY_CONFIG, type SectionCopyKey } from '@/config/sectionCopyConfig';
 
 type SectionContentInputsProps = {
 	config: {
@@ -8,6 +10,7 @@ type SectionContentInputsProps = {
 		tagline?: string;
 		hero?: any;
 		timeline_events?: any[];
+		occasion?: string;
 	};
 	onSectionContentChange: (sectionKey: string, content: any) => void;
 	validationErrors?: Record<string, string | boolean | undefined>;
@@ -60,6 +63,14 @@ export default function SectionContentInputs({
 	handlePhotos,
 }: SectionContentInputsProps) {
 	const { sections = [], section_content = {} } = config || {};
+	const siteType = config?.occasion || 'couple';
+
+	const isSectionCopyKey = (key: string): key is SectionCopyKey => key in SECTION_COPY_CONFIG;
+
+	const resolveSectionCopy = (key: string) => {
+		if (!isSectionCopyKey(key)) return null;
+		return getSectionCopy(key, siteType as any);
+	};
 
 	// Accordion state: openSectionKey is the key of the currently open section
 	const [openSectionKey, setOpenSectionKey] = useState<string | null>(sections?.[0] || null);
@@ -181,17 +192,22 @@ export default function SectionContentInputs({
 			       <div>
 					       {enabledSections.map((section) => {
 						       const { status, label: statusLabel } = getSectionStatusAndLabel(section);
+							       const copy = resolveSectionCopy(section.key);
+							       const sectionTitle = copy?.title || section.label;
+							       const sectionFormTitle = copy?.formTitle || sectionTitle;
+							       const sectionSubtitle = copy?.subtitle || '';
+							       const sectionIcon = copy?.icon || section.icon;
 						       let content = null;
 						       switch (section.key) {
 					case 'home':
 						content = (
 							<div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-4">
-								<span className="font-semibold text-lg">Hero Content</span>
+								<span className="font-semibold text-lg">{sectionFormTitle}</span>
 								<label className="block text-sm font-medium text-slate-600 mb-1.5">Hero Tagline</label>
 								<input
 									name="tagline"
 									maxLength={120}
-									placeholder="Every love story is beautiful, but ours is my favorite."
+									placeholder="Write a short opening line for your page"
 									value={section_content.home?.tagline ?? config.tagline ?? ''}
 									className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
 									onChange={e => {
@@ -202,7 +218,7 @@ export default function SectionContentInputs({
 									}
 								}}
 								/>
-								<p className="text-xs text-slate-400 mt-1">A short romantic line shown in the hero section. (Max 120 characters)</p>
+								<p className="text-xs text-slate-400 mt-1">A short opening line shown in the hero section. (Max 120 characters)</p>
 								<label className="block text-sm font-medium text-slate-600 mb-1.5 mt-4">Dedicated Hero Cover Photo</label>
 								<input
 									name="hero_photo"
@@ -300,14 +316,14 @@ export default function SectionContentInputs({
 					   case 'timeline':
 						   content = (
 							   <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 max-h-[70vh] overflow-y-auto">
-								   <span className="font-semibold text-lg">Timeline Events</span>
+								   <span className="font-semibold text-lg">{sectionFormTitle}</span>
 								   <TimelineEditor
 									   events={config.section_content?.timeline || []}
 									   onChange={timeline => onSectionContentChange('timeline', timeline)}
 								   />
 								   {(!config.section_content?.timeline || config.section_content.timeline.length === 0) && (
 									   <p className="text-xs text-amber-600 mt-2">
-										   Timeline section requires at least one event
+										   {sectionTitle} section requires at least one event
 									   </p>
 								   )}
 							   </div>
@@ -329,10 +345,10 @@ export default function SectionContentInputs({
 					case 'milestones':
 						content = (
 							<TextContentInput
-								label={section.label}
+								label={sectionTitle}
 								value={section_content?.[section.key]?.content || section_content?.[section.key]?.text || ''}
 								onChange={(content: string) => onSectionContentChange(section.key, { content })}
-								placeholder="Write your heartfelt love letter here..."
+								placeholder={`Write content for ${sectionTitle.toLowerCase()}...`}
 								rows={6}
 							/>
 						);
@@ -359,7 +375,7 @@ export default function SectionContentInputs({
 					case 'birthday_timeline':
 						content = (
 							<div className="bg-slate-50 rounded-xl p-4 border border-slate-200 max-h-[70vh] overflow-y-auto">
-								<span className="font-semibold text-lg">Birthday Timeline</span>
+								<span className="font-semibold text-lg">{sectionFormTitle}</span>
 								<TimelineEditor
 									events={section_content?.birthday_timeline || config.section_content?.timeline || []}
 									onChange={timeline => onSectionContentChange('birthday_timeline', timeline)}
@@ -372,7 +388,7 @@ export default function SectionContentInputs({
 						const details = section_content?.[section.key] || {};
 						content = (
 							<div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3">
-								<span className="font-semibold text-lg">{section.label}</span>
+								<span className="font-semibold text-lg">{sectionTitle}</span>
 								<input
 									className="w-full px-3 py-2 rounded-lg border border-slate-200"
 									placeholder="Location"
@@ -409,7 +425,7 @@ export default function SectionContentInputs({
 						const itemsText = Array.isArray(wishlist.items) ? wishlist.items.join('\n') : '';
 						content = (
 							<div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3">
-								<span className="font-semibold text-lg">{section.label}</span>
+								<span className="font-semibold text-lg">{sectionTitle}</span>
 								<textarea
 									className="w-full px-3 py-2 rounded-lg border border-slate-200 min-h-[120px]"
 									placeholder="One gift item per line"
@@ -455,7 +471,7 @@ export default function SectionContentInputs({
 					case 'achievements':
 						content = (
 							<div className="bg-slate-50 rounded-xl p-4 border border-slate-200 max-h-[70vh] overflow-y-auto">
-								<span className="font-semibold text-lg">{section.label}</span>
+								<span className="font-semibold text-lg">{sectionTitle}</span>
 								<TimelineEditor
 									events={section_content?.[section.key] || config.section_content?.timeline || []}
 									onChange={timeline => onSectionContentChange(section.key, timeline)}
@@ -561,9 +577,9 @@ export default function SectionContentInputs({
 							       content = (
 								       <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
 									       <div className="flex items-center gap-2 mb-2">
-										       <span className="font-semibold text-slate-700">Guest Messages</span>
+										       <span className="font-semibold text-slate-700">{sectionTitle}</span>
 									       </div>
-									       <div className="text-slate-600 text-sm mb-1">This feature allows friends and family to leave messages for you. Messages will be collected and displayed on your website.</div>
+									       <div className="text-slate-600 text-sm mb-1">{sectionSubtitle || 'This section allows visitors to leave messages that appear on your website.'}</div>
 								       </div>
 							       );
 						       } else {
@@ -579,10 +595,10 @@ export default function SectionContentInputs({
 							       content = (
 								       <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
 									       <div className="flex items-center gap-2 mb-2">
-										       <span className="font-semibold text-slate-700">Relationship Stats</span>
+										       <span className="font-semibold text-slate-700">{sectionTitle}</span>
 										       <span className="ml-2 text-xs font-medium bg-sky-100 text-sky-600 rounded-full px-2 py-0.5">Auto-generated</span>
 									       </div>
-									       <div className="text-slate-600 text-sm mb-1">This section is generated automatically from your anniversary/start date and timeline data.</div>
+									       <div className="text-slate-600 text-sm mb-1">{copy?.emptyState || 'This section is generated automatically from your date and timeline data.'}</div>
 									       <ul className="text-xs text-slate-400 list-disc pl-5">
 										       <li>Depends on: anniversary/start date</li>
 										       <li>Depends on: timeline events</li>
@@ -596,10 +612,10 @@ export default function SectionContentInputs({
 							       content = (
 								       <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
 									       <div className="flex items-center gap-2 mb-2">
-										       <span className="font-semibold text-slate-700">{section.label}</span>
+										       <span className="font-semibold text-slate-700">{sectionTitle}</span>
 										       <span className="ml-2 text-xs font-medium bg-sky-100 text-sky-600 rounded-full px-2 py-0.5">Auto-generated</span>
 									       </div>
-									       <div className="text-slate-600 text-sm mb-1">This section automatically counts down to your selected special date.</div>
+									       <div className="text-slate-600 text-sm mb-1">{copy?.emptyState || 'This section automatically counts down to your selected special date.'}</div>
 									       <ul className="text-xs text-slate-400 list-disc pl-5">
 										       <li>Depends on: special date</li>
 									       </ul>
@@ -610,10 +626,10 @@ export default function SectionContentInputs({
 							       content = (
 								       <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
 									       <div className="flex items-center gap-2 mb-2">
-										       <span className="font-semibold text-slate-700">QR Keepsake</span>
+										       <span className="font-semibold text-slate-700">{sectionTitle}</span>
 										       <span className="ml-2 text-xs font-medium bg-sky-100 text-sky-600 rounded-full px-2 py-0.5">Auto-generated</span>
 									       </div>
-									       <div className="text-slate-600 text-sm mb-1">This section automatically generates a QR code for your website keepsake.</div>
+									       <div className="text-slate-600 text-sm mb-1">{copy?.emptyState || 'This section automatically generates a QR code for your website keepsake.'}</div>
 									       <ul className="text-xs text-slate-400 list-disc pl-5">
 										       <li>Depends on: website URL</li>
 									       </ul>
@@ -623,10 +639,10 @@ export default function SectionContentInputs({
 					       default:
 						       content = (
 							       <TextContentInput
-								       label={section.label}
+								       label={sectionTitle}
 								       value={section_content?.[section.key]?.content || ''}
 								       onChange={(content: string) => onSectionContentChange(section.key, { content })}
-								       placeholder={`Write content for ${section.label.toLowerCase()}...`}
+								       placeholder={`Write content for ${sectionTitle.toLowerCase()}...`}
 								       rows={5}
 							       />
 						       );
@@ -644,8 +660,8 @@ export default function SectionContentInputs({
 										       onClick={() => setOpenSectionKey(openSectionKey === section.key ? null : section.key)}
 									       >
 										       <div className="flex items-center gap-2">
-											       <span className={`text-xl ${statusColors[status].icon}`}>{section.icon}</span>
-											       <span className="font-semibold text-slate-700">{section.label}</span>
+											       <span className={`text-xl ${statusColors[status].icon}`}>{sectionIcon}</span>
+											       <span className="font-semibold text-slate-700">{sectionTitle}</span>
 											       {/* Status badge */}
 											       <span className={`ml-2 text-xs font-medium rounded-full px-2 py-0.5 ${isAutoGenerated ? 'bg-sky-100 text-sky-600' : status === 'error' ? 'bg-rose-100 text-rose-600' : status === 'complete' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>{statusLabel}</span>
 										       </div>

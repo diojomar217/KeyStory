@@ -1,8 +1,8 @@
 'use client';
 
-import { SiteConfig, Participant } from '@/lib/types';
+import { SiteConfig } from '@/lib/types';
 import type { ThemeKey } from '@/config/themeConfig';
-import { useTheme } from '../builder/ThemeWrapper';
+import { useTheme, useThemeUtils } from '../builder/ThemeWrapper';
 import { OccasionType } from '@/lib/occasion-registry';
 import { resolveFooterConfig, resolveDisplayName } from '@/lib/site-type-utils';
 
@@ -14,8 +14,6 @@ type Props = {
   config?: SiteConfig;
   customerName?: string;
   partnerName?: string;
-  qrCodeUrl?: string;
-  qrDataUrl?: string;
 };
 
 export default function FooterSection({
@@ -24,10 +22,9 @@ export default function FooterSection({
   config,
   customerName = '',
   partnerName = '',
-  qrCodeUrl,
-  qrDataUrl,
 }: Props) {
   const styles = useTheme(theme);
+  const themeUtils = useThemeUtils(theme);
   const resolvedSiteType: SiteType = siteType || 'couple';
 
   const displayName = resolveDisplayName(
@@ -39,62 +36,51 @@ export default function FooterSection({
 
   const activeFooter = resolveFooterConfig(resolvedSiteType, displayName);
 
-  // Only show the QR section if MemoryCardSection is not shown (no QR URL)
-  const showLegacyQR = qrCodeUrl && !qrDataUrl;
+  const footerColors = {
+    title: theme === 'dark_elegant' ? themeUtils.colors.text : '#FFFFFF',
+    body: theme === 'dark_elegant' ? `${themeUtils.colors.text}D9` : 'rgba(255, 255, 255, 0.84)',
+    faint: theme === 'dark_elegant' ? `${themeUtils.colors.text}99` : 'rgba(255, 255, 255, 0.62)',
+    divider: themeUtils.colors.accent,
+    decoration: themeUtils.colors.accent,
+  };
 
   return (
-    <footer className={`${styles.footerBg} text-white`}>
-      {/* Legacy QR Section (only if Memory Card is not shown) */}
-      {showLegacyQR && (
-        <div className={theme === 'dark_elegant' ? 'bg-zinc-800/50' : 'bg-white/50'}>
-          <div className="max-w-4xl mx-auto px-4 md:px-6 py-8 text-center">
-            <h3 className={`${styles.heading} text-lg font-semibold mb-3`}>
-              Keep Our Story Close
-            </h3>
-            <p className={`${styles.textMuted} text-sm mb-4`}>
-              Scan to revisit our special moments
-            </p>
-            <div className="inline-block bg-white rounded-xl p-3 shadow-lg">
-              <img
-                src={qrCodeUrl}
-                alt="QR Code"
-                className="w-32 h-32 object-contain"
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
+    <footer className={`${styles.footerBg} ${themeUtils.bodyFontClass}`}>
       {/* Footer Content - Occasion-aware closing */}
       <div className="max-w-4xl mx-auto px-4 md:px-6 py-12 text-center">
         {/* Decorative motif */}
         <div className="flex items-center justify-center gap-3 mb-6">
           {activeFooter.decorations.map((icon, idx) => (
-            <span key={idx} className={activeFooter.decorationClasses || 'text-white'}>
+            <span
+              key={idx}
+              className="text-lg md:text-xl"
+              style={{ color: footerColors.decoration, opacity: 0.92 }}
+            >
               {icon}
             </span>
           ))}
         </div>
 
         {/* Person name */}
-        <h3 className="font-serif text-2xl md:text-3xl mb-3 tracking-wide">
+        <h3 className={`${styles.heading} text-2xl md:text-3xl mb-3 tracking-wide`} style={{ color: footerColors.title }}>
           {displayName}
         </h3>
 
         {/* Closing tagline */}
-        <p className="text-white/80 mb-6 font-light italic">{activeFooter.tagline}</p>
+        <p className="mb-6 font-light italic" style={{ color: footerColors.body }}>{activeFooter.tagline}</p>
 
-        {/* Decorative divider */}
-        <div className="w-24 h-px mx-auto bg-gradient-to-r from-transparent via-rose-400/50 to-transparent mb-6" />
-
-        {/* Made with */}
-        <div className="pt-4">
-          <p className="text-white/50 text-sm flex items-center justify-center gap-2">{activeFooter.madeWith}</p>
-        </div>
+        {/* Decorative divider - use accent color */}
+        <div 
+          className="w-24 h-px mx-auto mb-6" 
+          style={{
+            backgroundImage: `linear-gradient(to right, transparent, ${footerColors.divider}, transparent)`,
+            opacity: 0.5
+          }}
+        />
 
         {/* Year */}
-        <p className="text-white/30 text-xs mt-3">
-          © {new Date().getFullYear()} {displayName}. All rights reserved.
+        <p className="text-xs mt-3" style={{ color: footerColors.faint }}>
+          © {new Date().getFullYear()} {displayName}
         </p>
       </div>
     </footer>

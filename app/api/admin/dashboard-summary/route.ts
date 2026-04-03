@@ -1,5 +1,6 @@
 
 import { NextResponse } from 'next/server';
+import { isAdminRequestAuthorized, unauthorizedAdminResponse } from '@/lib/api/admin-auth';
 import { supabase } from '@/lib/supabase';
 import { listWebsites as getSites } from '@/lib/db/websites';
 
@@ -71,7 +72,11 @@ function normalizeError(err: unknown, context: string) {
 }
 
 
-export async function GET() {
+export async function GET(request: Request) {
+  if (!isAdminRequestAuthorized(request)) {
+    return unauthorizedAdminResponse();
+  }
+
   const nowTime = Date.now();
   if (cachedData && nowTime - cachedAt < CACHE_TTL) {
     return NextResponse.json(cachedData);
@@ -128,13 +133,81 @@ export async function GET() {
     .or('status.eq.archived,status.eq.expired')
     .lte('expires_at', now.toISOString());
 
+  const { count: pendingGuestMessages, error: pendingGuestMessagesError } = await supabase
+    .from('guest_messages')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'pending');
+
+  const { data: pendingGuestMessageSites, error: pendingGuestMessageSitesError } = await supabase
+    .from('guest_messages')
+    .select('site_id')
+    .eq('status', 'pending');
+
+  const sitesWithPendingGuestMessages = new Set(
+    (pendingGuestMessageSites || [])
+      .map((entry) => entry.site_id)
+      .filter((siteId): siteId is string => typeof siteId === 'string' && siteId.length > 0)
+  ).size;
+
+  // Get recent activity from audit logs (last 6 entries)
+  let recentActivity: Array<{
+    id: string;
+    label: string;
+    timestamp: string;
+    action: string;
+    details: Record<string, any>;
+  }> = [];
+  let recentActivityError = null;
+  try {
+    const { data: auditLogs, error: auditError } = await supabase
+      .from('admin_audit_logs')
+      .select('id, action, created_at, details')
+      .order('created_at', { ascending: false })
+      .limit(6);
+
+    if (auditError) {
+      recentActivityError = auditError;
+    } else {
+      recentActivity = (auditLogs || []).map((log) => {
+        // Human-readable action labels
+        const actionLabels: Record<string, string> = {
+          'admin.site.create': 'Website created',
+          'admin.site.update': 'Website updated',
+          'admin.site.delete': 'Website deleted',
+          'admin.site.archive': 'Website archived',
+          'admin.site.restore': 'Website restored',
+          'admin.guest_message.update_status': 'Guest message reviewed',
+          'admin.guest_message.delete': 'Guest message deleted',
+          'admin.auth.login': 'Admin logged in',
+          'admin.auth.logout': 'Admin logged out',
+        };
+
+        const label = actionLabels[log.action] || log.action.replace(/admin\./, '').replace(/_/g, ' ');
+        const timestamp = new Date(log.created_at);
+
+        return {
+          id: log.id,
+          label,
+          timestamp: timestamp.toISOString(),
+          action: log.action,
+          details: log.details || {},
+        };
+      });
+    }
+  } catch (err) {
+    recentActivityError = err;
+  }
+
   const result = {
     totalWebsites: totalWebsites || 0,
     thisMonthCount: thisMonthCount || 0,
     publishedWebsites: publishedWebsites || 0,
     expiringSoon: expiringSoon || 0,
     expiredSites: expiredSites || 0,
+    pendingGuestMessages: pendingGuestMessages || 0,
+    sitesWithPendingGuestMessages,
     recentWebsites: recentWebsites || [],
+    recentActivity: recentActivity || [],
     errors: [
       normalizeError(countError, 'countError'),
       normalizeError(monthError, 'monthError'),
@@ -142,6 +215,9 @@ export async function GET() {
       normalizeError(publishedError, 'publishedError'),
       normalizeError(soonError, 'soonError'),
       normalizeError(expiredError, 'expiredError'),
+      normalizeError(pendingGuestMessagesError, 'pendingGuestMessagesError'),
+      normalizeError(pendingGuestMessageSitesError, 'pendingGuestMessageSitesError'),
+      normalizeError(recentActivityError, 'recentActivityError'),
     ].filter(Boolean)
   };
   cachedData = result;

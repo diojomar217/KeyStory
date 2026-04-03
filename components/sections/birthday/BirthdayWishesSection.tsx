@@ -1,10 +1,11 @@
 'use client';
 
 import type { ThemeKey } from '@/config/themeConfig';
-import { useTheme } from '../../builder/ThemeWrapper';
+import { useThemeUtils } from '../../builder/ThemeWrapper';
 import SectionHeader from '../../page/SectionHeader';
 import { getSectionCopy } from '@/lib/section-copy';
 import ScrollReveal from '../../ui/ScrollReveal';
+import { getCardStyleClasses, getShadowClass, getSectionSpacingClass } from '@/lib/theme-color-helpers';
 
 type Props = {
   theme: ThemeKey;
@@ -12,10 +13,13 @@ type Props = {
 };
 
 export default function BirthdayWishesSection({ theme, wishes = [] }: Props) {
-  const styles = useTheme(theme);
+  const themeUtils = useThemeUtils(theme);
+  const cardStyle = getCardStyleClasses(theme);
+  const shadowClass = getShadowClass(theme);
+  const spacingClass = getSectionSpacingClass(theme);
 
   return (
-    <section className={`py-16 md:py-24 ${styles.sectionBg}`} id="birthday-wishes">
+    <section className={`${spacingClass}`} id="birthday-wishes">
       <div className="max-w-5xl mx-auto px-4 md:px-6">
         <ScrollReveal animation="fade-up">
           {(() => {
@@ -38,8 +42,16 @@ export default function BirthdayWishesSection({ theme, wishes = [] }: Props) {
             'Enjoy every moment of your special day – you deserve it!',
           ]).map((wish, index) => (
             <ScrollReveal key={index} animation="fade-up" delay={70 * index}>
-              <blockquote className={`${styles.glassCard} ${styles.glassBorder} border rounded-xl p-5`}>
-                <p className="text-sm md:text-base text-slate-700 dark:text-slate-200 leading-relaxed">“{wish}”</p>
+              <blockquote
+                className={`${cardStyle} ${shadowClass} border p-5`}
+                style={{
+                  backgroundColor: themeUtils.colors.card,
+                  borderColor: themeUtils.colors.border,
+                }}
+              >
+                <p className="text-sm md:text-base leading-relaxed" style={{ color: themeUtils.colors.text }}>
+                  “{wish}”
+                </p>
               </blockquote>
             </ScrollReveal>
           ))}

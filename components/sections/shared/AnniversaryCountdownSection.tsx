@@ -1,9 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import type { CSSProperties } from 'react';
 import type { ThemeKey } from '@/config/themeConfig';
-import { THEME_CONFIG } from '@/config/themeConfig';
+import { useThemeUtils } from '../../builder/ThemeWrapper';
+import {
+  getCardStyleClasses,
+  getShadowClass,
+  getSectionSpacingClass,
+  getHeadingFontClass,
+} from '@/lib/theme-color-helpers';
 import SectionHeader from '../../page/SectionHeader';
+import ScrollReveal from '../../ui/ScrollReveal';
 
 interface AnniversaryCountdownSectionProps {
   theme: ThemeKey;
@@ -27,8 +35,12 @@ export default function AnniversaryCountdownSection({
   yearsTogether = 1,
   variant = 'default',
 }: AnniversaryCountdownSectionProps) {
-  const themeConfig = THEME_CONFIG[theme];
-  const { colors, typography } = themeConfig;
+  const themeUtils = useThemeUtils(theme);
+  const { colors, typography, styles } = themeUtils;
+  const cardStyle = getCardStyleClasses(theme);
+  const shadowClass = getShadowClass(theme);
+  const spacingClass = getSectionSpacingClass(theme);
+  const headingFontClass = getHeadingFontClass(theme);
 
   const [mode, setMode] = useState<Mode>('countdown');
   const [countdown, setCountdown] = useState<Countdown>({
@@ -123,8 +135,18 @@ export default function AnniversaryCountdownSection({
         { label: 'Seconds', value: timeTogether.seconds },
       ];
 
+  const sectionVars = {
+    '--countdown-primary': colors.primary,
+    '--countdown-text': colors.text,
+    '--countdown-card': colors.card,
+    '--countdown-border': colors.border,
+  } as CSSProperties;
+
   return (
-    <section className="relative py-16 md:py-20 px-4 overflow-hidden">
+    <section
+      className={`relative overflow-hidden ${styles.sectionBgAlt} ${spacingClass}`}
+      style={sectionVars}
+    >
       {/* Floating hearts */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <span className="absolute left-[8%] top-[20%] text-2xl opacity-20 heart-float">💗</span>
@@ -146,62 +168,68 @@ export default function AnniversaryCountdownSection({
       </div>
 
       <div className="relative max-w-5xl mx-auto text-center">
-        <SectionHeader
-          icon="⏰"
-          title={mode === 'countdown' ? `Our ${yearsTogether + 1} Year Anniversary` : 'Our Time Together'}
-          subtitle={
-            mode === 'countdown'
-              ? "Every second counts when we're together"
-              : 'Every moment with you is special'
-          }
-          theme={theme}
-          className="mb-8"
-        />
+        <ScrollReveal animation="fade-up">
+          <SectionHeader
+            icon="⏰"
+            title={mode === 'countdown' ? `Our ${yearsTogether + 1} Year Anniversary` : 'Our Time Together'}
+            subtitle={
+              mode === 'countdown'
+                ? "Every second counts when we're together"
+                : 'Every moment with you is special'
+            }
+            theme={theme}
+            className="mb-8"
+          />
+        </ScrollReveal>
 
         {/* Toggle */}
-        <div className="flex justify-center mb-6">
-          <div
-            className="inline-flex p-1 rounded-full"
-            style={{
-              backgroundColor: 'rgba(255,255,255,0.65)',
-              border: `1px solid ${colors.border}`,
-              boxShadow: '0 6px 20px rgba(0,0,0,0.05)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => setMode('countdown')}
-              className="px-4 py-2 rounded-full text-sm md:text-base font-medium transition-all duration-300"
+        <ScrollReveal animation="fade-up" delay={120}>
+          <div className="flex justify-center mb-6">
+            <div
+              className="inline-flex p-1 rounded-full"
               style={{
-                backgroundColor: mode === 'countdown' ? colors.primary : 'transparent',
-                color: mode === 'countdown' ? '#ffffff' : colors.text,
+                backgroundColor: colors.card,
+                border: `1px solid ${colors.border}`,
+                boxShadow: `0 6px 20px color-mix(in srgb, ${colors.primary} 20%, transparent)`,
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
               }}
             >
-              Countdown
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('together')}
-              className="px-4 py-2 rounded-full text-sm md:text-base font-medium transition-all duration-300"
-              style={{
-                backgroundColor: mode === 'together' ? colors.primary : 'transparent',
-                color: mode === 'together' ? '#ffffff' : colors.text,
-              }}
-            >
-              Time Together
-            </button>
+              <button
+                type="button"
+                onClick={() => setMode('countdown')}
+                className="px-4 py-2 rounded-full text-sm md:text-base font-medium transition-all duration-300"
+                style={{
+                  backgroundColor: mode === 'countdown' ? colors.primary : 'transparent',
+                  color: mode === 'countdown' ? colors.background : colors.text,
+                }}
+              >
+                Countdown
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('together')}
+                className="px-4 py-2 rounded-full text-sm md:text-base font-medium transition-all duration-300"
+                style={{
+                  backgroundColor: mode === 'together' ? colors.primary : 'transparent',
+                  color: mode === 'together' ? colors.background : colors.text,
+                }}
+              >
+                Time Together
+              </button>
+            </div>
           </div>
-        </div>
+        </ScrollReveal>
 
         {/* Anniversary date */}
-        <p
-          className="mb-8 text-sm md:text-base font-medium opacity-80"
-          style={{ color: colors.text }}
-        >
-          Our special date: <span style={{ color: colors.primary }}>{formatAnniversaryDate(anniversaryDate)}</span>
-        </p>
+        <ScrollReveal animation="fade-up" delay={180}>
+          <p
+            className="mb-8 text-sm md:text-base font-medium opacity-80"
+            style={{ color: colors.text }}
+          >
+            Our special date: <span style={{ color: colors.primary }}>{formatAnniversaryDate(anniversaryDate)}</span>
+          </p>
+        </ScrollReveal>
 
         <div
           className="w-20 h-[2px] mx-auto mb-8 rounded-full opacity-60"
@@ -216,45 +244,45 @@ export default function AnniversaryCountdownSection({
             const isSeconds = item.label === 'Seconds';
 
             return (
-              <div
-                key={item.label}
-                className={`group relative rounded-[28px] min-w-[120px] md:min-w-[135px] px-7 py-7 transition-all duration-300 hover:-translate-y-2 hover:scale-[1.04] ${isSeconds ? 'seconds-pulse' : ''
-                  }`}
-                style={{
-                  background: 'rgba(255,255,255,0.75)',
-                  border: `1px solid ${colors.border}`,
-                  boxShadow:
-                    '0 12px 40px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
-                  transition: 'all 0.3s ease',
-                }}
-              >
+              <ScrollReveal key={item.label} animation="scale" delay={220 + displayItems.indexOf(item) * 90}>
                 <div
-                  className="absolute inset-x-5 top-0 h-px opacity-70"
+                  className={`group relative ${cardStyle} ${shadowClass} min-w-[120px] md:min-w-[135px] px-7 py-7 transition-all duration-300 hover:-translate-y-2 hover:scale-[1.04] ${isSeconds ? 'seconds-pulse' : ''}`}
                   style={{
-                    background: `linear-gradient(to right, transparent, ${colors.primary}, transparent)`,
-                  }}
-                />
-
-                <div
-                  className="text-4xl md:text-5xl font-bold tracking-tight letterSpacing: '-0.02em', leading-none tracking-tight transition-all duration-300 group-hover:scale-105"
-                  style={{
-                    color: colors.primary,
-                    fontFamily: typography.headingFont,
-                    textShadow: '0 6px 18px rgba(236, 72, 153, 0.12)',
+                    backgroundColor: colors.card,
+                    border: `1px solid ${colors.border}`,
+                    boxShadow: `0 12px 40px color-mix(in srgb, ${colors.primary} 25%, transparent), inset 0 1px 0 color-mix(in srgb, ${colors.background} 70%, transparent)`,
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    transition: 'all 0.3s ease',
                   }}
                 >
-                  {item.value}
-                </div>
+                  <div
+                    className="absolute inset-x-5 top-0 h-px opacity-70"
+                    style={{
+                      background: `linear-gradient(to right, transparent, ${colors.primary}, transparent)`,
+                    }}
+                  />
 
-                <div
-                  className="mt-3 text-base font-medium"
-                  style={{ color: colors.text }}
-                >
-                  {item.label}
+                  <div
+                    className={`text-4xl md:text-5xl font-bold leading-none tracking-tight transition-all duration-300 group-hover:scale-105 ${headingFontClass}`}
+                    style={{
+                      color: colors.primary,
+                      fontFamily: typography.headingFont,
+                      letterSpacing: '-0.02em',
+                      textShadow: `0 6px 18px color-mix(in srgb, ${colors.primary} 25%, transparent)`,
+                    }}
+                  >
+                    {item.value}
+                  </div>
+
+                  <div
+                    className="mt-3 text-base font-medium"
+                    style={{ color: colors.text }}
+                  >
+                    {item.label}
+                  </div>
                 </div>
-              </div>
+              </ScrollReveal>
             );
           })}
         </div>
@@ -303,21 +331,21 @@ export default function AnniversaryCountdownSection({
         @keyframes softPulse {
           0% {
             box-shadow:
-              0 10px 30px rgba(0, 0, 0, 0.05),
-              inset 0 1px 0 rgba(255, 255, 255, 0.7),
-              0 0 0 0 rgba(236, 72, 153, 0.08);
+              0 10px 30px color-mix(in srgb, var(--countdown-text) 12%, transparent),
+              inset 0 1px 0 color-mix(in srgb, var(--countdown-card) 72%, transparent),
+              0 0 0 0 color-mix(in srgb, var(--countdown-primary) 22%, transparent);
           }
           50% {
             box-shadow:
-              0 10px 30px rgba(0, 0, 0, 0.05),
-              inset 0 1px 0 rgba(255, 255, 255, 0.7),
-              0 0 0 10px rgba(236, 72, 153, 0);
+              0 10px 30px color-mix(in srgb, var(--countdown-text) 12%, transparent),
+              inset 0 1px 0 color-mix(in srgb, var(--countdown-card) 72%, transparent),
+              0 0 0 10px color-mix(in srgb, var(--countdown-primary) 0%, transparent);
           }
           100% {
             box-shadow:
-              0 10px 30px rgba(0, 0, 0, 0.05),
-              inset 0 1px 0 rgba(255, 255, 255, 0.7),
-              0 0 0 0 rgba(236, 72, 153, 0.08);
+              0 10px 30px color-mix(in srgb, var(--countdown-text) 12%, transparent),
+              inset 0 1px 0 color-mix(in srgb, var(--countdown-card) 72%, transparent),
+              0 0 0 0 color-mix(in srgb, var(--countdown-primary) 22%, transparent);
           }
         }
       `}</style>

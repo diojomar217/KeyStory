@@ -2,7 +2,7 @@
 'use client';
 import React from 'react';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import bcrypt from 'bcryptjs';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
@@ -22,6 +22,7 @@ import {
 import { getTemplateSections, getSectionMetadata, getSectionTemplates } from '@/lib/section-registry';
 import { getDefaultSelections } from '@/lib/config-helpers';
 import { getPresetsForOccasion, getPresetById } from '@/lib/preset-registry';
+import { applyLayoutPresetToConfig } from '@/lib/layout-preset';
 import { SITE_TYPES } from '@/config/siteTypeConfig';
 import type { SiteTypeKey } from '@/config/siteTypeConfig';
 import {
@@ -55,6 +56,15 @@ import {
   GuestMessagesInput,
 } from '@/components/builder/ContentInputComponents';
 import { SectionContentMap, Section } from '@/lib/types';
+import {
+  analyzeImageQuality,
+  buildPublishChecklist,
+  detectDuplicateParticipantNames,
+  loadLocalTemplates,
+  saveLocalTemplate,
+  type ChecklistItem,
+  type LocalTemplate,
+} from '@/lib/builder-experience';
 
 
 type LocalForm = Omit<CreateOrderPayload, 'config' | 'photos'> & { occasion: OccasionType; photos: File[]; heroPhoto?: File | null; heroPhotoIndex?: number; song_autoplay?: boolean; password_input?: string };
@@ -248,6 +258,39 @@ export default function CreateWebsitePage() {
   // ...existing code...
   const [currentStep, setCurrentStep] = useState(initialStep);
   const [completedSteps, setCompletedSteps] = useState<number[]>(initialCompleted);
+  const [photoQualityWarnings, setPhotoQualityWarnings] = useState<string[]>([]);
+  const [localTemplates, setLocalTemplates] = useState<LocalTemplate[]>([]);
+  const [selectedLocalTemplateId, setSelectedLocalTemplateId] = useState('');
+
+  const [history, setHistory] = useState<Array<{
+    form: LocalForm;
+    config: SiteConfig;
+    currentStep: number;
+    completedSteps: number[];
+    createdAt: string;
+  }>>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const isRestoringHistoryRef = useRef(false);
+
+  const duplicateParticipantNames = useMemo(
+    () => detectDuplicateParticipantNames(form.participants || []),
+    [form.participants]
+  );
+
+  const publishChecklist: ChecklistItem[] = useMemo(
+    () =>
+      buildPublishChecklist({
+        websiteName: form.website_name,
+        participants: form.participants,
+        specialDate: form.specialDate,
+        photosCount: form.photos?.length || 0,
+        sections: config.sections,
+        templates: config.templates as Record<string, string | undefined>,
+        message: form.message,
+        tagline: form.tagline,
+      }),
+    [form, config]
+  );
   useEffect(() => {
     if (typeof window === 'undefined') return;
     // Don't save photos or previews (too large)
@@ -269,6 +312,79 @@ export default function CreateWebsitePage() {
       window.localStorage.removeItem(DRAFT_KEY);
     }
   }, [result]);
+
+  useEffect(() => {
+    setLocalTemplates(loadLocalTemplates());
+  }, []);
+
+  useEffect(() => {
+    if (isRestoringHistoryRef.current) {
+      isRestoringHistoryRef.current = false;
+      return;
+    }
+
+    const snapshot = {
+      form,
+      config,
+      currentStep,
+      completedSteps,
+      createdAt: new Date().toISOString(),
+    };
+
+    setHistory((prev) => {
+      const base = historyIndex >= 0 ? prev.slice(0, historyIndex + 1) : prev;
+      const last = base[base.length - 1];
+      const isDuplicate =
+        last &&
+        JSON.stringify(last.form) === JSON.stringify(snapshot.form) &&
+        JSON.stringify(last.config) === JSON.stringify(snapshot.config) &&
+        last.currentStep === snapshot.currentStep &&
+        JSON.stringify(last.completedSteps) === JSON.stringify(snapshot.completedSteps);
+
+      if (isDuplicate) return prev;
+
+      const next = [...base, snapshot].slice(-30);
+      setHistoryIndex(next.length - 1);
+      return next;
+    });
+  }, [form, config, currentStep, completedSteps, historyIndex]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const isUndo = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !event.shiftKey;
+      const isRedo =
+        (event.ctrlKey || event.metaKey) &&
+        (event.key.toLowerCase() === 'y' || (event.shiftKey && event.key.toLowerCase() === 'z'));
+
+      if (!isUndo && !isRedo) return;
+      event.preventDefault();
+
+      if (isUndo && historyIndex > 0) {
+        const target = history[historyIndex - 1];
+        if (!target) return;
+        isRestoringHistoryRef.current = true;
+        setForm(target.form);
+        setConfig(target.config);
+        setCurrentStep(target.currentStep);
+        setCompletedSteps(target.completedSteps);
+        setHistoryIndex(historyIndex - 1);
+      }
+
+      if (isRedo && historyIndex < history.length - 1) {
+        const target = history[historyIndex + 1];
+        if (!target) return;
+        isRestoringHistoryRef.current = true;
+        setForm(target.form);
+        setConfig(target.config);
+        setCurrentStep(target.currentStep);
+        setCompletedSteps(target.completedSteps);
+        setHistoryIndex(historyIndex + 1);
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [history, historyIndex]);
 
   // ...existing code...
 
@@ -482,6 +598,10 @@ export default function CreateWebsitePage() {
     setForm((prev) => ({ ...prev, photos: validImages }));
     setPhotoPreviews(newPreviews);
 
+    analyzeImageQuality(validImages)
+      .then((warnings) => setPhotoQualityWarnings(warnings.slice(0, 4)))
+      .catch(() => setPhotoQualityWarnings([]));
+
     if (
       config.cover_photo_index !== undefined &&
       config.cover_photo_index >= validImages.length
@@ -573,6 +693,91 @@ export default function CreateWebsitePage() {
       },
       tagline: preset.defaults.copy?.tagline || prev.tagline,
       message: preset.defaults.copy?.message || prev.message,
+    }));
+  };
+
+  const handleUndo = () => {
+    if (historyIndex <= 0) return;
+    const target = history[historyIndex - 1];
+    if (!target) return;
+    isRestoringHistoryRef.current = true;
+    setForm(target.form);
+    setConfig(target.config);
+    setCurrentStep(target.currentStep);
+    setCompletedSteps(target.completedSteps);
+    setHistoryIndex(historyIndex - 1);
+  };
+
+  const handleRedo = () => {
+    if (historyIndex >= history.length - 1) return;
+    const target = history[historyIndex + 1];
+    if (!target) return;
+    isRestoringHistoryRef.current = true;
+    setForm(target.form);
+    setConfig(target.config);
+    setCurrentStep(target.currentStep);
+    setCompletedSteps(target.completedSteps);
+    setHistoryIndex(historyIndex + 1);
+  };
+
+  const handleSaveAsTemplate = () => {
+    const name = window.prompt('Template name');
+    if (!name || !name.trim()) return;
+
+    const template: LocalTemplate = {
+      id: `${Date.now()}`,
+      name: name.trim(),
+      createdAt: new Date().toISOString(),
+      form: {
+        occasion: form.occasion,
+        participants: form.participants,
+        specialDate: form.specialDate,
+        tagline: form.tagline,
+        message: form.message,
+        song_link: form.song_link,
+      },
+      config: {
+        occasion: config.occasion,
+        theme: config.theme,
+        layout_preset: config.layout_preset,
+        sections: config.sections,
+        templates: config.templates,
+        section_content: config.section_content,
+      },
+    };
+
+    const next = saveLocalTemplate(template);
+    setLocalTemplates(next);
+    setSelectedLocalTemplateId(template.id);
+  };
+
+  const handleApplyLocalTemplate = (templateId: string) => {
+    const template = localTemplates.find((item) => item.id === templateId);
+    if (!template) return;
+
+    setSelectedLocalTemplateId(templateId);
+    const sanitizedParticipants = (template.form.participants || [])
+      .filter((participant) => !!participant.name)
+      .map((participant, index) => ({
+        id: participant.id || `participant-${index + 1}`,
+        name: participant.name || '',
+        role: participant.role,
+      }));
+
+    setForm((prev) => ({
+      ...prev,
+      occasion: (template.form.occasion as OccasionType) || prev.occasion,
+      participants: sanitizedParticipants.length > 0 ? sanitizedParticipants : prev.participants,
+      specialDate: template.form.specialDate || prev.specialDate,
+      tagline: template.form.tagline || prev.tagline,
+      message: template.form.message || prev.message,
+      song_link: template.form.song_link || prev.song_link,
+    }));
+
+    setConfig((prev) => ({
+      ...prev,
+      ...template.config,
+      occasion: (template.form.occasion as OccasionType) || prev.occasion,
     }));
   };
 
@@ -799,6 +1004,7 @@ export default function CreateWebsitePage() {
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1.5">
                   Website Name (used in URL)
+                  <span className="ml-1 text-slate-400" title="Used for the public URL. Use short, readable slugs.">?</span>
                 </label>
                 <div className="flex items-center gap-2">
                   <span className="text-slate-400 text-sm">yoursite.com/</span>
@@ -859,7 +1065,34 @@ export default function CreateWebsitePage() {
                     </button>
                   ))}
                 </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveAsTemplate}
+                    className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700"
+                  >
+                    Save As Template
+                  </button>
+                  <select
+                    value={selectedLocalTemplateId}
+                    onChange={(e) => handleApplyLocalTemplate(e.target.value)}
+                    className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-700"
+                  >
+                    <option value="">Load saved template</option>
+                    {localTemplates.map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
+
+              {duplicateParticipantNames.length > 0 && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                  Duplicate field detection: repeated participant name(s) detected ({duplicateParticipantNames.join(', ')}). Use unique names so sections render correctly.
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                
                 {getParticipantFieldsForOccasion(form.occasion).map((field, index) => (
@@ -886,6 +1119,7 @@ export default function CreateWebsitePage() {
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1.5">
                   {OCCASION_DATE_LABELS[form.occasion] || 'Special Date'}
+                  <span className="ml-1 text-slate-400" title="Shown in countdown and timeline sections.">?</span>
                 </label>
                 <input
                   name="specialDate"
@@ -1016,6 +1250,7 @@ export default function CreateWebsitePage() {
 
             <ThemeSelector
               value={config.theme as ThemeKey}
+              occasion={config.occasion}
               onChange={(theme) => handleConfigChange({ theme })}
             />
 
@@ -1046,7 +1281,9 @@ export default function CreateWebsitePage() {
                   <div className="pt-6 border-t border-slate-200">
                     <LayoutPresetSelector
                       value={config.layout_preset}
-                      onChange={(layout_preset) => handleConfigChange({ layout_preset })}
+                      onChange={(layout_preset) => {
+                        handleConfigChange(applyLayoutPresetToConfig(config, layout_preset));
+                      }}
                     />
                   </div>
                 </div>
@@ -1167,6 +1404,16 @@ export default function CreateWebsitePage() {
               </div>
             ) : (
               <>
+                {photoQualityWarnings.length > 0 && (
+                  <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">
+                    <div className="font-semibold mb-1">Photo quality checker</div>
+                    <ul className="list-disc ml-4 space-y-1">
+                      {photoQualityWarnings.map((warning, index) => (
+                        <li key={index}>{warning}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
                 <SectionContentInputs
                   config={config}
@@ -1487,6 +1734,34 @@ export default function CreateWebsitePage() {
               </div>
             </div>
 
+            <div className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-bold text-slate-800">Publish Readiness Checklist</h3>
+                <span className="text-xs text-slate-500">
+                  {publishChecklist.filter((item) => item.ok).length}/{publishChecklist.length} complete
+                </span>
+              </div>
+              <div className="space-y-2">
+                {publishChecklist.map((item) => (
+                  <div key={item.key} className="flex items-start justify-between gap-3 text-sm">
+                    <div className={item.ok ? 'text-emerald-700' : 'text-amber-700'}>
+                      {item.ok ? 'OK' : 'Fix'} {item.label}
+                    </div>
+                    {!item.ok && (
+                      <button
+                        type="button"
+                        onClick={() => handleEditSection(item.fixStep)}
+                        className="text-xs px-2 py-1 rounded-md border border-amber-200 bg-amber-50 text-amber-700"
+                        title={item.suggestion}
+                      >
+                        Fix in Step {item.fixStep}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* --- Validation Status & Helper Message --- */}
             <div className={
               reviewBlocked && reviewBlockReasons.length > 0
@@ -1627,6 +1902,27 @@ export default function CreateWebsitePage() {
             completedSteps={completedSteps}
             onStepClick={handleStepClick}
           />
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+            <button
+              type="button"
+              onClick={handleUndo}
+              disabled={historyIndex <= 0}
+              className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white disabled:opacity-50"
+              title="Undo (Ctrl/Cmd+Z)"
+            >
+              Undo
+            </button>
+            <button
+              type="button"
+              onClick={handleRedo}
+              disabled={historyIndex >= history.length - 1}
+              className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white disabled:opacity-50"
+              title="Redo (Ctrl/Cmd+Y)"
+            >
+              Redo
+            </button>
+            <span>Version history: {Math.max(history.length, 1)} snapshots</span>
+          </div>
         </div>
 
         {error && (

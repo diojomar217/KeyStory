@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminRequestAuthorized, unauthorizedAdminResponse } from '@/lib/api/admin-auth';
 import { supabase } from '@/lib/supabase';
 import { enforceRateLimit } from '@/lib/reliability/rate-limit';
 import { captureError } from '@/lib/reliability/monitoring';
 
 export async function GET(req: NextRequest) {
+  if (!isAdminRequestAuthorized(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   const limited = enforceRateLimit(req, {
     keyPrefix: 'api:admin:audit-logs:get',
     limit: 30,

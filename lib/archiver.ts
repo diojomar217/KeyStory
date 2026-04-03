@@ -3,7 +3,7 @@ import path from 'path';
 import fetch from 'node-fetch';
 import cloudinary, { uploadToCloudinary } from '@/lib/cloudinary';
 import { supabase, Site } from '@/lib/supabase'; // No change needed, not direct site CRUD
-import { uploadArchivePackage } from '@/lib/archive-storage';
+import { downloadArchivePackage, uploadArchivePackage } from '@/lib/archive-storage';
 
 function sanitizeFileName(url: string): string {
   const p = new URL(url);
@@ -142,7 +142,7 @@ export async function restoreSiteFromArchive(site: Site): Promise<Site> {
   if (!site.config?.archive?.archivePath) throw new Error('Missing archive path');
 
   const archivePath = site.config.archive.archivePath;
-  const buffer = fs.readFileSync(archivePath);
+  const buffer = await downloadArchivePackage(archivePath);
   if (!buffer) throw new Error('Archive file not found');
 
   // unzip

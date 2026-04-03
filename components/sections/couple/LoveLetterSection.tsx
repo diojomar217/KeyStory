@@ -1,67 +1,48 @@
 'use client';
 
 import type { ThemeKey } from '@/config/themeConfig';
-import { useTheme } from '../../builder/ThemeWrapper';
+import type { OccasionType } from '@/lib/types';
+import { useThemeUtils } from '../../builder/ThemeWrapper';
 import TypingText from '../../ui/TypingText';
 import SectionHeader from '../../page/SectionHeader';
 import { getSectionCopy } from '@/lib/section-copy';
 import ScrollReveal from '../../ui/ScrollReveal';
+import { getHeadingFontClass, getSectionSpacingClass } from '@/lib/theme-color-helpers';
 
 type Props = {
   message: string;
   theme: ThemeKey;
+  siteType?: OccasionType;
   variant?: 'default' | 'alt';
 };
 
-export default function LoveLetterSection({ message, theme, variant = 'default' }: Props) {
-  const copy = getSectionCopy('love_letter');
-  const styles = useTheme(theme);
-
-  const getAccentClasses = () => {
-    switch (theme) {
-      case 'dark_elegant':
-        return {
-          text: 'text-amber-400',
-          softText: 'text-amber-300/30',
-          line: 'via-amber-400/30',
-          paperBg: 'rgba(255, 250, 240, 0.06)',
-          paperBorder: 'rgba(251, 191, 36, 0.15)',
-          signature: 'text-amber-300',
-        };
-      case 'cute_pastel':
-        return {
-          text: 'text-purple-400',
-          softText: 'text-purple-300/25',
-          line: 'via-purple-300/30',
-          paperBg: 'rgba(255, 255, 255, 0.72)',
-          paperBorder: 'rgba(196, 181, 253, 0.35)',
-          signature: 'text-purple-500',
-        };
-      case 'minimal_modern':
-        return {
-          text: 'text-slate-400',
-          softText: 'text-slate-300/25',
-          line: 'via-slate-300/30',
-          paperBg: 'rgba(255, 255, 255, 0.82)',
-          paperBorder: 'rgba(203, 213, 225, 0.45)',
-          signature: 'text-slate-500',
-        };
+export default function LoveLetterSection({ message, theme, siteType = 'couple', variant = 'default' }: Props) {
+  const copy = getSectionCopy('love_letter', siteType);
+  const themeUtils = useThemeUtils(theme);
+  const spacingClass = getSectionSpacingClass(theme);
+  const headingFontClass = getHeadingFontClass(theme);
+  const closing = (() => {
+    switch (siteType) {
+      case 'graduation':
+        return { signoff: 'With pride,', signature: 'Always cheering for you' };
+      case 'baby_shower':
+        return { signoff: 'With love,', signature: 'For the family ahead' };
+      case 'debut':
+        return { signoff: 'With admiration,', signature: 'Shine brightly' };
+      case 'family':
+        return { signoff: 'With love,', signature: 'Your family story' };
+      case 'mothers_day':
+        return { signoff: 'With gratitude,', signature: 'Always with love' };
+      case 'fathers_day':
+        return { signoff: 'With gratitude,', signature: 'With love and respect' };
       default:
-        return {
-          text: 'text-rose-400',
-          softText: 'text-rose-300/25',
-          line: 'via-rose-300/35',
-          paperBg: 'rgba(255, 255, 255, 0.76)',
-          paperBorder: 'rgba(251, 182, 206, 0.42)',
-          signature: 'text-rose-500',
-        };
+        return { signoff: 'Forever yours,', signature: 'My Love' };
     }
-  };
-
-  const accent = getAccentClasses();
+  })();
+  const footerIcon = ['couple', 'anniversary', 'proposal', 'valentines'].includes(siteType) ? '💕' : copy.icon || '✦';
 
   return (
-    <section className="relative py-12 md:py-20 overflow-hidden" id="love-letter">
+    <section className={`relative overflow-hidden ${spacingClass}`} id="love-letter">
       <div className="max-w-5xl mx-auto px-4 md:px-6">
         <ScrollReveal animation="fade-up">
           <SectionHeader
@@ -89,8 +70,8 @@ export default function LoveLetterSection({ message, theme, variant = 'default' 
                 overflow-hidden
               "
               style={{
-                background: accent.paperBg,
-                border: `1px solid ${accent.paperBorder}`,
+                backgroundColor: `${themeUtils.colors.card}C2`,
+                border: `1px solid ${themeUtils.colors.border}99`,
                 backdropFilter: 'blur(8px)',
                 WebkitBackdropFilter: 'blur(8px)',
               }}
@@ -106,13 +87,15 @@ export default function LoveLetterSection({ message, theme, variant = 'default' 
 
               {/* corner quotes */}
               <span
-                className={`absolute left-6 top-4 text-4xl md:text-5xl font-serif ${accent.softText}`}
+                className="absolute left-6 top-4 text-4xl md:text-5xl font-serif"
+                style={{ color: themeUtils.colors.accent, opacity: 0.28 }}
                 aria-hidden="true"
               >
                 &ldquo;
               </span>
               <span
-                className={`absolute right-6 bottom-4 text-4xl md:text-5xl font-serif ${accent.softText}`}
+                className="absolute right-6 bottom-4 text-4xl md:text-5xl font-serif"
+                style={{ color: themeUtils.colors.accent, opacity: 0.28 }}
                 aria-hidden="true"
               >
                 &rdquo;
@@ -128,41 +111,42 @@ export default function LoveLetterSection({ message, theme, variant = 'default' 
                     leading-9
                     md:leading-10
                     px-3
-                    ${styles.text}
+                    ${headingFontClass}
                     font-light
                     italic
                   `}
+                  style={{ color: themeUtils.colors.text }}
                 >
                   <TypingText text={message} speed={40} />
                 </div>
 
                 {/* decorative line */}
                 <div
-                  className={`
+                  className="
                     mt-8
                     h-px
                     w-28
                     mx-auto
-                    bg-gradient-to-r
-                    from-transparent
-                    ${accent.line}
-                    to-transparent
-                  `}
+                  "
+                  style={{
+                    backgroundImage: `linear-gradient(to right, transparent, ${themeUtils.colors.accent}66, transparent)`,
+                  }}
                 />
 
                 {/* closing */}
                 <div className="mt-6 space-y-1">
-                  <p className={`text-sm md:text-base opacity-70 ${styles.text}`}>
-                    Forever yours,
+                  <p className="text-sm md:text-base opacity-70" style={{ color: themeUtils.colors.text }}>
+                    {closing.signoff}
                   </p>
                   <p
-                    className={`text-lg md:text-xl italic font-semibold ${accent.signature}`}
+                    className={`text-lg md:text-xl italic font-semibold ${headingFontClass}`}
                     style={{
+                      color: themeUtils.colors.primary,
                       fontFamily:
                         '"Brush Script MT", "Lucida Handwriting", "Segoe Script", cursive',
                     }}
                   >
-                    My Love
+                    {closing.signature}
                   </p>
                 </div>
               </div>
@@ -171,7 +155,7 @@ export default function LoveLetterSection({ message, theme, variant = 'default' 
         </ScrollReveal>
 
         <div className="text-center mt-6">
-          <span className={`text-lg opacity-20 ${accent.text}`}>💕</span>
+          <span className="text-lg opacity-20" style={{ color: themeUtils.colors.primary }}>{footerIcon}</span>
         </div>
       </div>
     </section>

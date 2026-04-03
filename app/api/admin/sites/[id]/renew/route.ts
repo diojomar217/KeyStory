@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminRequestAuthorized, unauthorizedAdminResponse } from '@/lib/api/admin-auth';
 import { getWebsiteByIdWithConfig } from '@/lib/db/websites';
 import { supabase } from '@/lib/supabase';
 
@@ -14,6 +15,10 @@ const durationMap: Record<string, number> = {
 };
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!isAdminRequestAuthorized(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   try {
     const { id } = await params;
     const body = await req.json();

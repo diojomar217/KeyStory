@@ -138,6 +138,7 @@ export function CardSectionLayout({
               p-6 sm:p-8 md:p-10 lg:p-16 xl:p-20
               hover:shadow-[0_35px_60px_-15px_rgba(0,0,0,0.18)] hover:border-white/60 hover:-translate-y-2
               transition-all duration-500 ease-out relative overflow-hidden
+              premium-interactive-card
               before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/30 before:to-transparent before:blur-xl before:-z-10
             `}>
               {children}
@@ -200,6 +201,7 @@ export function GridSectionLayout({
                   rounded-xl md:rounded-2xl lg:rounded-3xl shadow-lg md:shadow-xl lg:shadow-2xl p-5 sm:p-6 md:p-8 lg:p-10
                   hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.18)] hover:-translate-y-3 hover:scale-[1.02]
                   transition-all duration-500 ease-out hover:border-white/60
+                  premium-interactive-card
                   relative before:absolute before:inset-0 before:rounded-xl md:before:rounded-2xl before:bg-gradient-to-br before:from-white/35 before:to-transparent before:blur-md before:-z-10 before:opacity-0 group-hover:before:opacity-100 before:transition-all before:duration-500
                 `}>
                   {child}
@@ -275,8 +277,9 @@ export function SectionSeparator({
   nextVariant?: 'default' | 'alt';
 }) {
   const siteType = useOccasionType();
-  const startColor = getSectionBgColor(theme ?? 'romantic_classic').default;
-  const endColor = getSectionBgColor(theme ?? 'romantic_classic').alt;
+  const sectionColors = getSectionBgColor(theme ?? 'romantic_classic');
+  const startColor = prevVariant === 'alt' ? sectionColors.alt : sectionColors.default;
+  const endColor = nextVariant === 'alt' ? sectionColors.alt : sectionColors.default;
   const separatorUi = getSeparatorPresentation(siteType, theme);
 
   const separatorGradient =
@@ -285,11 +288,15 @@ export function SectionSeparator({
       : `linear-gradient(to bottom, ${startColor} 0%, ${startColor} 44%, ${endColor} 56%, ${endColor} 100%)`;
 
   return (
-    <div className="relative z-20 section-separator flex justify-center items-center -mt-10 -mb-10 md:-mt-12 md:-mb-12" role="img" aria-label="section separator">
+    <div className="relative z-20 section-separator flex justify-center items-center -mt-10 -mb-10 md:-mt-12 md:-mb-12 animate-fade-in-up motion-reduce:animate-none" role="img" aria-label="section separator">
       <div
         className="w-full max-w-3xl relative z-10 h-20 md:h-24 rounded-xl overflow-hidden"
         style={{ background: separatorGradient }}
       >
+        <div
+          className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px"
+          style={{ background: `linear-gradient(to right, transparent, ${separatorUi.lineStyle}, transparent)` }}
+        />
         <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-2 bg-white/15 backdrop-blur-sm" />
         <div className="absolute z-30 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full shadow-lg px-4 py-1.5">
           <div
@@ -300,7 +307,7 @@ export function SectionSeparator({
             }}
             aria-hidden="true"
           >
-            <span className={`relative z-40 block text-xl ${separatorUi.accentClass} animate-gentle-pulse text-center leading-none`} aria-hidden="true">
+            <span className={`relative z-40 block text-xl ${separatorUi.accentClass} animate-gentle-pulse motion-reduce:animate-none text-center leading-none`} aria-hidden="true">
               {separatorUi.icon}
             </span>
           </div>
@@ -324,19 +331,19 @@ export function GradientSeparator({ theme = 'romantic_classic' }: { theme?: Them
             ? '#3f3f46'
             : '#fce7f3';
   return (
-    <div className={`relative ${SEPARATOR_VERTICAL_PADDING} flex justify-center`}>
+    <div className={`relative ${SEPARATOR_VERTICAL_PADDING} flex justify-center animate-fade-in-up motion-reduce:animate-none`}>
       <div className="flex items-center gap-3">
-        <span className={`text-lg ${separatorUi.accentClass}`}>{separatorUi.dotsLeft}</span>
+        <span className={`text-lg ${separatorUi.accentClass} animate-fade-in motion-reduce:animate-none`}>{separatorUi.dotsLeft}</span>
         <div
           className="h-2 w-40 rounded-full shadow-xl blur-sm opacity-90"
           style={{ background: lineColor }}
         />
-        <span className={`text-lg ${separatorUi.accentClass}`}>{separatorUi.icon}</span>
+        <span className={`text-lg ${separatorUi.accentClass} animate-gentle-pulse motion-reduce:animate-none`}>{separatorUi.icon}</span>
         <div
           className="h-2 w-40 rounded-full shadow-xl blur-sm opacity-90"
           style={{ background: lineColor }}
         />
-        <span className={`text-lg ${separatorUi.accentClass}`}>{separatorUi.dotsRight}</span>
+        <span className={`text-lg ${separatorUi.accentClass} animate-fade-in motion-reduce:animate-none`}>{separatorUi.dotsRight}</span>
       </div>
     </div>
   );
@@ -346,13 +353,13 @@ export function DotsSeparator({ theme = 'romantic_classic' }: { theme?: ThemeKey
   const siteType = useOccasionType();
   const separatorUi = getSeparatorPresentation(siteType, theme);
   return (
-    <div className={`relative ${SEPARATOR_VERTICAL_PADDING} flex items-center justify-center`}>
+    <div className={`relative ${SEPARATOR_VERTICAL_PADDING} flex items-center justify-center animate-fade-in-up motion-reduce:animate-none`}>
       <div className="flex items-center gap-4">
-        <span className={`text-2xl animate-pulse-slow ${separatorUi.accentClass}`}>{separatorUi.dotsLeft}</span>
+        <span className={`text-2xl animate-pulse-slow motion-reduce:animate-none ${separatorUi.accentClass}`}>{separatorUi.dotsLeft}</span>
         <span className={`text-xl ${separatorUi.accentClass}`}>•</span>
-        <span className={`text-3xl animate-gentle-pulse ${separatorUi.accentClass}`}>{separatorUi.icon}</span>
+        <span className={`text-3xl animate-gentle-pulse motion-reduce:animate-none ${separatorUi.accentClass}`}>{separatorUi.icon}</span>
         <span className={`text-xl ${separatorUi.accentClass}`}>•</span>
-        <span className={`text-2xl animate-pulse-slow ${separatorUi.accentClass}`}>{separatorUi.dotsRight}</span>
+        <span className={`text-2xl animate-pulse-slow motion-reduce:animate-none ${separatorUi.accentClass}`}>{separatorUi.dotsRight}</span>
       </div>
     </div>
   );

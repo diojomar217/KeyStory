@@ -61,6 +61,42 @@ export const SECTION_COPY_CONFIG = {
       icon: '💌',
       formTitle: 'Your Love Letter',
     },
+    graduation: {
+      title: 'Graduation Message',
+      subtitle: 'A heartfelt message celebrating this milestone',
+      icon: '🎓',
+      formTitle: 'Graduation Message',
+    },
+    baby_shower: {
+      title: 'Parents Message',
+      subtitle: 'A heartfelt note for the growing family',
+      icon: '🍼',
+      formTitle: 'Parents Message',
+    },
+    debut: {
+      title: 'Celebrant Message',
+      subtitle: 'A heartfelt message for this special celebration',
+      icon: '👑',
+      formTitle: 'Celebrant Message',
+    },
+    family: {
+      title: 'Family Message',
+      subtitle: 'A heartfelt message from the family story',
+      icon: '🏡',
+      formTitle: 'Family Message',
+    },
+    mothers_day: {
+      title: 'Message for Mom',
+      subtitle: 'A heartfelt tribute written with gratitude and love',
+      icon: '🌸',
+      formTitle: 'Message for Mom',
+    },
+    fathers_day: {
+      title: 'Message for Dad',
+      subtitle: 'A heartfelt tribute written with gratitude and love',
+      icon: '🧡',
+      formTitle: 'Message for Dad',
+    },
   },
 
   our_story: {
@@ -69,6 +105,30 @@ export const SECTION_COPY_CONFIG = {
       subtitle: 'Share the story behind your journey',
       icon: '📖',
       formTitle: 'Your Story',
+    },
+    family: {
+      title: 'Family Story',
+      subtitle: 'Share the story behind your family journey',
+      icon: '🏡',
+      formTitle: 'Family Story',
+    },
+    friendship: {
+      title: 'Friendship Story',
+      subtitle: 'Share the story behind this lasting friendship',
+      icon: '🤝',
+      formTitle: 'Friendship Story',
+    },
+    travel: {
+      title: 'Travel Notes',
+      subtitle: 'Tell the story behind the journey',
+      icon: '✈️',
+      formTitle: 'Travel Notes',
+    },
+    memorial: {
+      title: 'Life Story',
+      subtitle: 'A story to remember, honor, and hold close',
+      icon: '🕊️',
+      formTitle: 'Life Story',
     },
   },
 
@@ -156,6 +216,30 @@ export const SECTION_COPY_CONFIG = {
       icon: '📊',
       emptyState: 'This section is generated automatically from your relationship data.',
     },
+    anniversary: {
+      title: 'Anniversary Stats',
+      subtitle: 'A live snapshot of the time and memories shared',
+      icon: '🥂',
+      emptyState: 'This section is generated automatically from your anniversary date.',
+    },
+    friendship: {
+      title: 'Friendship Stats',
+      subtitle: 'A live snapshot of the time and memories shared',
+      icon: '🤝',
+      emptyState: 'This section is generated automatically from your friendship milestone.',
+    },
+    family: {
+      title: 'Family Stats',
+      subtitle: 'A live snapshot of the time and milestones shared',
+      icon: '🏡',
+      emptyState: 'This section is generated automatically from your family milestone date.',
+    },
+    travel: {
+      title: 'Journey Stats',
+      subtitle: 'A live snapshot of the trip and memories collected',
+      icon: '✈️',
+      emptyState: 'This section is generated automatically from your journey date.',
+    },
   },
 
   anniversary_countdown: {
@@ -173,6 +257,36 @@ export const SECTION_COPY_CONFIG = {
       subtitle: 'Your hopes, plans, and dreams together',
       icon: '💭',
       formTitle: 'Future Dreams',
+    },
+    graduation: {
+      title: 'Future Plans',
+      subtitle: 'Goals, hopes, and plans for the next chapter',
+      icon: '🚀',
+      formTitle: 'Future Plans',
+    },
+    family: {
+      title: 'Family Dreams',
+      subtitle: 'Hopes, plans, and dreams for the family ahead',
+      icon: '🏡',
+      formTitle: 'Family Dreams',
+    },
+    friendship: {
+      title: 'Future Adventures',
+      subtitle: 'Plans, goals, and adventures still ahead',
+      icon: '🗺️',
+      formTitle: 'Future Adventures',
+    },
+    travel: {
+      title: 'Next Destinations',
+      subtitle: 'Places, plans, and journeys still calling',
+      icon: '✈️',
+      formTitle: 'Next Destinations',
+    },
+    baby_shower: {
+      title: 'Dreams for the Little One',
+      subtitle: 'Hopes and wishes for the chapter ahead',
+      icon: '🧸',
+      formTitle: 'Dreams for the Little One',
     },
   },
 
@@ -201,6 +315,30 @@ export const SECTION_COPY_CONFIG = {
       icon: '💕',
       formTitle: 'Celebration Quotes',
     },
+    baby_shower: {
+      title: 'Baby Predictions',
+      subtitle: 'Sweet guesses, wishes, and notes for the little one',
+      icon: '🍼',
+      formTitle: 'Baby Predictions',
+    },
+    memorial: {
+      title: 'Tributes',
+      subtitle: 'Words of remembrance, love, and reflection',
+      icon: '🕊️',
+      formTitle: 'Tributes',
+    },
+    graduation: {
+      title: 'Inspiring Quotes',
+      subtitle: 'Words that reflect growth, pride, and possibility',
+      icon: '🎓',
+      formTitle: 'Inspiring Quotes',
+    },
+    travel: {
+      title: 'Travel Quotes',
+      subtitle: 'Words that capture wonder, adventure, and discovery',
+      icon: '✈️',
+      formTitle: 'Travel Quotes',
+    },
   },
 
   reasons_love_you: {
@@ -209,6 +347,24 @@ export const SECTION_COPY_CONFIG = {
       subtitle: 'The little and big reasons that make them special',
       icon: '💖',
       formTitle: 'Reasons Why I Love You',
+    },
+    valentines: {
+      title: 'Reasons You Mean Everything',
+      subtitle: 'The little and big reasons this love matters',
+      icon: '💌',
+      formTitle: 'Reasons You Mean Everything',
+    },
+    friendship: {
+      title: 'Reasons You Matter',
+      subtitle: 'The little and big reasons this friendship means so much',
+      icon: '🤝',
+      formTitle: 'Reasons You Matter',
+    },
+    family: {
+      title: 'Reasons Family Means Everything',
+      subtitle: 'The little and big reasons family matters most',
+      icon: '🏡',
+      formTitle: 'Reasons Family Means Everything',
     },
   },
 
@@ -286,6 +442,30 @@ export const SECTION_COPY_CONFIG = {
       icon: '📮',
       formTitle: 'Letter to the Future',
     },
+    graduation: {
+      title: 'Note to Future Self',
+      subtitle: 'A message for the version of you still becoming',
+      icon: '🚀',
+      formTitle: 'Note to Future Self',
+    },
+    family: {
+      title: 'Letter to Our Future Family',
+      subtitle: 'A message for the chapter still ahead',
+      icon: '🏡',
+      formTitle: 'Letter to Our Future Family',
+    },
+    friendship: {
+      title: 'Letter to the Future',
+      subtitle: 'A message for the memories and milestones still ahead',
+      icon: '🤝',
+      formTitle: 'Letter to the Future',
+    },
+    travel: {
+      title: 'Postcard to the Future',
+      subtitle: 'A note for the journeys and places still waiting',
+      icon: '✈️',
+      formTitle: 'Postcard to the Future',
+    },
   },
 
   gift_section: {
@@ -307,6 +487,42 @@ export const SECTION_COPY_CONFIG = {
     icon: '🎁',
     formTitle: 'Birthday Gifts',
   },
+  graduation: {
+    title: 'Celebration Gifts',
+    subtitle: 'Keepsakes and gifts to mark this milestone',
+    icon: '🎓',
+    formTitle: 'Celebration Gifts',
+  },
+  family: {
+    title: 'Family Keepsakes',
+    subtitle: 'Small gifts and keepsakes for the family story',
+    icon: '🏡',
+    formTitle: 'Family Keepsakes',
+  },
+  friendship: {
+    title: 'Shared Surprises',
+    subtitle: 'Small gifts and keepsakes from this friendship',
+    icon: '🤝',
+    formTitle: 'Shared Surprises',
+  },
+  travel: {
+    title: 'Travel Keepsakes',
+    subtitle: 'Souvenirs and surprises from the journey',
+    icon: '✈️',
+    formTitle: 'Travel Keepsakes',
+  },
+  mothers_day: {
+    title: 'Special Gifts for Mom',
+    subtitle: 'Small keepsakes chosen with love and gratitude',
+    icon: '🌸',
+    formTitle: 'Special Gifts for Mom',
+  },
+  fathers_day: {
+    title: 'Special Gifts for Dad',
+    subtitle: 'Small keepsakes chosen with gratitude and care',
+    icon: '🧡',
+    formTitle: 'Special Gifts for Dad',
+  },
 },
 
   surprise_message: {
@@ -315,6 +531,36 @@ export const SECTION_COPY_CONFIG = {
       subtitle: 'A hidden message waiting to be revealed',
       icon: '🎉',
       formTitle: 'Surprise Message',
+    },
+    birthday: {
+      title: 'Birthday Surprise',
+      subtitle: 'A hidden message waiting to brighten the celebration',
+      icon: '🎂',
+      formTitle: 'Birthday Surprise',
+    },
+    proposal: {
+      title: 'A Surprise Worth Revealing',
+      subtitle: 'A hidden message waiting at the heart of this story',
+      icon: '💍',
+      formTitle: 'Surprise Message',
+    },
+    valentines: {
+      title: 'Hidden Love Note',
+      subtitle: 'A private message waiting to be revealed',
+      icon: '💌',
+      formTitle: 'Hidden Love Note',
+    },
+    graduation: {
+      title: 'A Special Congratulations',
+      subtitle: 'A hidden message celebrating this milestone',
+      icon: '🎓',
+      formTitle: 'Special Congratulations',
+    },
+    family: {
+      title: 'Family Surprise',
+      subtitle: 'A hidden message waiting for the right moment',
+      icon: '🏡',
+      formTitle: 'Family Surprise',
     },
   },
 

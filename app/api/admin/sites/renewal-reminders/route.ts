@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminRequestAuthorized, unauthorizedAdminResponse } from '@/lib/api/admin-auth';
 import { supabase } from '@/lib/supabase';
 
 const getDaysRemaining = (expiresAt: string): number => {
@@ -9,6 +10,10 @@ const getDaysRemaining = (expiresAt: string): number => {
 };
 
 export async function GET(req: NextRequest) {
+  if (!isAdminRequestAuthorized(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   try {
     const url = new URL(req.url);
     const windowDays = Math.max(1, Math.min(90, Number(url.searchParams.get('windowDays') || '30')));

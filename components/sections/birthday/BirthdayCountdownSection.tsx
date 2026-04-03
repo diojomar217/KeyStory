@@ -2,9 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { ThemeKey } from '@/config/themeConfig';
-import { useTheme } from '../../builder/ThemeWrapper';
+import { useThemeUtils } from '../../builder/ThemeWrapper';
+import {
+  getCardStyleClasses,
+  getShadowClass,
+  getSectionSpacingClass,
+  getHeadingFontClass,
+} from '@/lib/theme-color-helpers';
 import SectionHeader from '../../page/SectionHeader';
 import { getSectionCopy } from '@/lib/section-copy';
+import ScrollReveal from '../../ui/ScrollReveal';
 
 interface Props {
   theme: ThemeKey;
@@ -19,7 +26,12 @@ interface Countdown {
 }
 
 export default function BirthdayCountdownSection({ theme, birthdayDate }: Props) {
-  const styles = useTheme(theme);
+  const themeUtils = useThemeUtils(theme);
+  const { colors, styles } = themeUtils;
+  const cardStyle = getCardStyleClasses(theme);
+  const shadowClass = getShadowClass(theme);
+  const spacingClass = getSectionSpacingClass(theme);
+  const headingFontClass = getHeadingFontClass(theme);
   const [countdown, setCountdown] = useState<Countdown>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
@@ -51,28 +63,38 @@ export default function BirthdayCountdownSection({ theme, birthdayDate }: Props)
   }, [birthdayDate]);
 
   return (
-    <section className={`py-16 md:py-24 ${styles.sectionBg}`} id="birthday-countdown">
+    <section className={`${spacingClass} ${styles.sectionBg}`} id="birthday-countdown">
       <div className="max-w-4xl mx-auto px-4 md:px-6">
-        {(() => {
-          const copy = getSectionCopy('birthday_countdown');
-          return (
-            <SectionHeader
-              icon={copy.icon}
-              title={copy.title}
-              subtitle={copy.subtitle}
-              theme={theme}
-            />
-          );
-        })()}
+        <ScrollReveal animation="fade-up">
+          {(() => {
+            const copy = getSectionCopy('birthday_countdown');
+            return (
+              <SectionHeader
+                icon={copy.icon}
+                title={copy.title}
+                subtitle={copy.subtitle}
+                theme={theme}
+              />
+            );
+          })()}
+        </ScrollReveal>
 
         <div className="mt-6 grid grid-cols-4 gap-3 text-center">
-          {['Days','Hours','Minutes','Seconds'].map((label, idx) => {
+          {['Days', 'Hours', 'Minutes', 'Seconds'].map((label, idx) => {
             const value = [countdown.days, countdown.hours, countdown.minutes, countdown.seconds][idx];
             return (
-              <div key={label} className={`${styles.card} p-4 rounded-xl border ${styles.border} shadow-md`}>
-                <div className={`text-3xl font-bold ${styles.accent}`}>{value}</div>
-                <div className="text-sm text-slate-600 dark:text-slate-300">{label}</div>
-              </div>
+              <ScrollReveal key={label} animation="scale" delay={100 + idx * 80}>
+                <div
+                  className={`${styles.card} ${cardStyle} ${shadowClass} p-4 border`}
+                  style={{
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                  }}
+                >
+                  <div className={`text-3xl font-bold ${headingFontClass}`} style={{ color: colors.primary }}>{value}</div>
+                  <div className="text-sm" style={{ color: colors.text }}>{label}</div>
+                </div>
+              </ScrollReveal>
             );
           })}
         </div>

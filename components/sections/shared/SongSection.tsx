@@ -3,41 +3,35 @@
 
 import { useState } from 'react';
 import type { ThemeKey } from '@/config/themeConfig';
-import { getThemeStyles } from '@/config/themeStyles';
-import { getThemeColors } from '@/config/themeUtils';
+import { useThemeUtils } from '../../builder/ThemeWrapper';
+import {
+  getCardStyleClasses,
+  getShadowClass,
+  getSectionSpacingClass,
+  getHeadingFontClass,
+} from '@/lib/theme-color-helpers';
 import { getMusicEmbedInfo } from '@/lib/musicEmbed';
 import SectionHeader from '../../page/SectionHeader';
 import { getSectionCopy } from '@/lib/section-copy';
 import ScrollReveal from '../../ui/ScrollReveal';
+import type { SiteAnalyticsEventType } from '@/lib/types';
 
 interface SongSectionProps {
   theme: ThemeKey;
   songLink?: string;
   autoplay?: boolean;
+  onTrackEvent?: (eventType: SiteAnalyticsEventType, source: string, dedupeKey?: string) => void;
 }
 
-const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
-
-
-  // Helper function to get theme accent colors
-  function getThemeAccents(theme: ThemeKey) {
-    switch (theme) {
-      case 'dark_elegant':
-        return { bg: 'bg-amber-500/20', text: 'text-amber-400', glow: 'shadow-amber-500/30' };
-      case 'cute_pastel':
-        return { bg: 'bg-purple-100', text: 'text-purple-600', glow: 'shadow-purple-500/20' };
-      case 'minimal_modern':
-        return { bg: 'bg-slate-100', text: 'text-slate-600', glow: 'shadow-slate-500/20' };
-      default:
-        return { bg: 'bg-rose-100', text: 'text-rose-600', glow: 'shadow-rose-500/20' };
-    }
-  }
-
-
-  const styles = getThemeStyles(theme);
-  const themeColors = getThemeColors(theme);
-  const accent = getThemeAccents(theme);
+const SongSection = ({ theme, songLink, autoplay, onTrackEvent }: SongSectionProps) => {
+  const themeUtils = useThemeUtils(theme);
+  const { colors, styles } = themeUtils;
+  const cardStyle = getCardStyleClasses(theme);
+  const shadowClass = getShadowClass(theme);
+  const spacingClass = getSectionSpacingClass(theme);
+  const headingFontClass = getHeadingFontClass(theme);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isEmbedLoaded, setIsEmbedLoaded] = useState(false);
 
   if (!songLink) return null;
 
@@ -47,7 +41,7 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
   // Don't render if invalid URL
   if (!isValid || !embedUrl) {
     return (
-      <section className={`${styles.sectionBgAlt} py-16 md:py-24 w-full`}>
+      <section className={`${styles.sectionBgAlt} ${spacingClass} w-full`}>
         <div className="max-w-xl mx-auto px-4 md:px-6">
           <ScrollReveal animation="fade-up">
             {(() => {
@@ -62,9 +56,18 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
               );
             })()}
           </ScrollReveal>
-          <div className={`${styles.card} ${styles.cardBorder} border rounded-2xl p-6 text-center shadow-xl`}>
-            <p className={`${styles.textMuted}`}>Invalid song link. Please provide a valid YouTube or Spotify link.</p>
-          </div>
+          <ScrollReveal animation="fade-up" delay={120}>
+            <div
+              className={`${styles.card} ${styles.cardBorder} ${cardStyle} ${shadowClass} border p-6 text-center`}
+              style={{
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                color: colors.text,
+              }}
+            >
+              <p style={{ color: colors.text }}>Invalid song link. Please provide a valid YouTube or Spotify link.</p>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
     );
@@ -72,14 +75,16 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
 
   // Handle play/pause - Note: Due to iframe limitations, we show the visual effect
   const togglePlayPause = () => {
-    setIsPlaying(!isPlaying);
+    const nextIsPlaying = !isPlaying;
+    setIsPlaying(nextIsPlaying);
+    if (nextIsPlaying) {
+      onTrackEvent?.('music_play', provider === 'spotify' ? 'song:spotify' : 'song:youtube', 'music_play');
+    }
     // Note: Actual iframe play/pause requires JS API and specific embed URLs
   };
 
-  const isDarkTheme = theme === 'dark_elegant';
-
   return (
-    <section className={`${styles.sectionBgAlt} py-16 md:py-24 w-full`} id="song">
+    <section className={`${styles.sectionBgAlt} ${spacingClass} w-full`} id="song">
       <div className="max-w-xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <ScrollReveal animation="fade-up">
@@ -100,9 +105,7 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
         <ScrollReveal animation="fade-up" delay={150}>
           <div className={`
             relative overflow-hidden rounded-2xl
-            ${styles.card} ${styles.cardBorder} border
-            shadow-xl
-            shadow-black/10
+            ${styles.card} ${styles.cardBorder} ${cardStyle} ${shadowClass} border
           `}>
             {/* Decorative top accent line */}
             <div className={`
@@ -126,7 +129,7 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
                   `}
                   style={{
                     height: '100%',
-                    backgroundColor: themeColors.accent,
+                    backgroundColor: colors.accent,
                     animationDelay: `${i * 0.1}s`,
                   }}
                 />
@@ -139,12 +142,16 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
               className={`
                 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
                 z-10 w-16 h-16 rounded-full
-                ${accent.bg} ${accent.text}
                 flex items-center justify-center
-                shadow-lg ${accent.glow}
                 hover:scale-110 transition-transform duration-300
                 opacity-0 hover:opacity-100 focus:opacity-100
               `}
+              style={{
+                backgroundColor: colors.card,
+                color: colors.primary,
+                border: `1px solid ${colors.border}`,
+                boxShadow: `0 10px 24px color-mix(in srgb, ${colors.primary} 30%, transparent)`,
+              }}
               aria-label={isPlaying ? 'Pause' : 'Play'}
             >
               {isPlaying ? (
@@ -160,6 +167,11 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
             
             {/* Responsive container - 16:9 for YouTube, auto height for Spotify */}
             <div className={provider === 'spotify' ? 'relative w-full h-[152px] md:h-[352px]' : 'relative w-full aspect-video'}>
+              {!isEmbedLoaded && (
+                <div className="absolute inset-0 premium-loading-shell premium-skeleton" aria-hidden="true">
+                  <div className="premium-skeleton-overlay" />
+                </div>
+              )}
               <iframe
                 src={embedUrl}
                 allow={provider === 'spotify' 
@@ -169,8 +181,9 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                className="absolute top-0 left-0 w-full h-full rounded-t-xl"
+                className={`absolute top-0 left-0 w-full h-full rounded-t-xl transition-opacity duration-300 ${isEmbedLoaded ? 'opacity-100' : 'opacity-0'}`}
                 title={`Our Song - ${provider === 'spotify' ? 'Spotify' : 'YouTube'} Player`}
+                onLoad={() => setIsEmbedLoaded(true)}
               />
             </div>
             
@@ -178,15 +191,15 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
             <div className={`
               px-4 py-4 flex items-center justify-between
               ${styles.sectionBgAlt}
-            `}>
-              <span className={`text-sm ${styles.textMuted} flex items-center gap-2`}>
+            `} style={{ borderTop: `1px solid ${colors.border}` }}>
+              <span className="text-sm flex items-center gap-2" style={{ color: colors.text }}>
                 <span className="opacity-60">🎧</span>
                 Put on your headphones and enjoy the melody
               </span>
               
               {/* Now Playing Indicator */}
-              <div className={`flex items-center gap-2 ${styles.textMuted}`}>
-                <span className={`text-xs ${isPlaying ? 'animate-pulse' : ''}`}>
+              <div className="flex items-center gap-2" style={{ color: colors.text }}>
+                <span className={`text-xs ${headingFontClass} ${isPlaying ? 'animate-pulse' : ''}`}>
                   {isPlaying ? '🎶 Playing...' : '⏸️ Paused'}
                 </span>
               </div>
@@ -195,11 +208,13 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
         </ScrollReveal>
 
         {/* Decorative elements - Hearts */}
-        <div className="flex justify-center gap-2 mt-8">
-          <span className={`${styles.accent} opacity-50 text-sm`}>💕</span>
-          <span className={`${styles.accent} opacity-35 text-xs`}>💕</span>
-          <span className={`${styles.accent} opacity-20 text-sm`}>💕</span>
-        </div>
+        <ScrollReveal animation="fade" delay={220}>
+          <div className="flex justify-center gap-2 mt-8">
+            <span className="opacity-50 text-sm" style={{ color: colors.accent }}>💕</span>
+            <span className="opacity-35 text-xs" style={{ color: colors.accent }}>💕</span>
+            <span className="opacity-20 text-sm" style={{ color: colors.accent }}>💕</span>
+          </div>
+        </ScrollReveal>
       </div>
     </section>
   );

@@ -470,10 +470,10 @@ export default function QRCardPage({ params }: PageProps) {
 
           <div className="flex items-center gap-3">
             <a
-              href={`/admin/websites/${id}/keychain-print`}
+              href={`/admin/websites/${id}/insert-print`}
               className="text-rose-600 hover:text-rose-700 font-medium"
             >
-              ← Keychain Print
+              ← Insert Print Studio
             </a>
             <a href="/admin/websites" className="text-slate-600 hover:text-slate-700 font-medium">
               Back to Websites

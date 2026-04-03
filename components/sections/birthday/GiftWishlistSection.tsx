@@ -1,8 +1,11 @@
 'use client';
 
 import type { ThemeKey } from '@/config/themeConfig';
-import { useTheme } from '../../builder/ThemeWrapper';
+import { useThemeUtils } from '../../builder/ThemeWrapper';
 import SectionHeader from '../../page/SectionHeader';
+import ScrollReveal from '../../ui/ScrollReveal';
+import { getSectionCopy } from '@/lib/section-copy';
+import { getCardStyleClasses, getShadowClass, getSectionSpacingClass } from '@/lib/theme-color-helpers';
 
 type Props = {
   theme: ThemeKey;
@@ -10,7 +13,10 @@ type Props = {
 };
 
 export default function GiftWishlistSection({ theme, items = [] }: Props) {
-  const styles = useTheme(theme);
+  const themeUtils = useThemeUtils(theme);
+  const cardStyle = getCardStyleClasses(theme);
+  const shadowClass = getShadowClass(theme);
+  const spacingClass = getSectionSpacingClass(theme);
 
   const wishlist = items.length > 0 ? items : [
     'Collective gift fund for dream vacation',
@@ -20,21 +26,38 @@ export default function GiftWishlistSection({ theme, items = [] }: Props) {
   ];
 
   return (
-    <section className={`py-16 md:py-24 ${styles.sectionBg}`} id="gift-wishlist">
+    <section className={`${spacingClass}`} id="gift-wishlist">
       <div className="max-w-5xl mx-auto px-4 md:px-6">
-        <SectionHeader
-          icon="🎁"
-          title="Gift Wishlist"
-          subtitle="Gift ideas that make their day unforgettable"
-          theme={theme}
-        />
+        <ScrollReveal animation="fade-up">
+          {(() => {
+            const copy = getSectionCopy('gift_wishlist');
+            return (
+              <SectionHeader
+                icon={copy.icon}
+                title={copy.title}
+                subtitle={copy.subtitle}
+                theme={theme}
+              />
+            );
+          })()}
+        </ScrollReveal>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           {wishlist.map((item, index) => (
-            <div key={index} className={`${styles.card} p-4 rounded-xl border ${styles.border}`}>
-              <span className="text-lg">🎁</span>
-              <p className="ml-3 inline text-base font-medium text-slate-700 dark:text-slate-200">{item}</p>
-            </div>
+            <ScrollReveal key={index} animation="fade-up" delay={70 * index}>
+              <div
+                className={`${cardStyle} ${shadowClass} p-4 border`}
+                style={{
+                  backgroundColor: themeUtils.colors.card,
+                  borderColor: themeUtils.colors.border,
+                }}
+              >
+                <span className="text-lg">🎁</span>
+                <p className="ml-3 inline text-base font-medium" style={{ color: themeUtils.colors.text }}>
+                  {item}
+                </p>
+              </div>
+            </ScrollReveal>
           ))}
         </div>
       </div>

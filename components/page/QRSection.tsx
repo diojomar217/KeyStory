@@ -4,20 +4,25 @@ import { useEffect, useRef, useState } from 'react';
 import QRCodeStyling from 'qr-code-styling';
 import Image from 'next/image';
 import type { ThemeKey } from '@/config/themeConfig';
+import type { OccasionType } from '@/lib/types';
 import { useTheme } from '../builder/ThemeWrapper';
+import { formatOccasionDisplayName, getOccasionPublicCopy } from '@/lib/public-site-copy';
 
 type Props = {
   theme: ThemeKey;
+  siteType?: OccasionType;
   qrCodeUrl?: string;
   qrDataUrl?: string;
   coupleNames?: string;
 };
 
-export default function QRSection({ theme, qrCodeUrl, qrDataUrl, coupleNames = 'Our Love Story' }: Props) {
+export default function QRSection({ theme, siteType = 'couple', qrCodeUrl, qrDataUrl, coupleNames = 'Our Love Story' }: Props) {
   const styles = useTheme(theme);
   const qrRef = useRef<HTMLDivElement>(null);
   const qrCodeInstanceRef = useRef<QRCodeStyling | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const publicCopy = getOccasionPublicCopy(siteType);
+  const displayName = formatOccasionDisplayName(siteType, coupleNames, '');
 
   useEffect(() => {
     setIsClient(true);
@@ -73,7 +78,7 @@ export default function QRSection({ theme, qrCodeUrl, qrDataUrl, coupleNames = '
   const handleDownload = () => {
     if (qrCodeInstanceRef.current) {
       qrCodeInstanceRef.current.download({
-        name: `love-story-qr-${coupleNames.replace(/\s+/g, '-').toLowerCase()}`,
+        name: `${publicCopy.qr.footerLabel.replace(/\s+/g, '-').toLowerCase()}-${displayName.replace(/\s+/g, '-').toLowerCase()}`,
         extension: 'png',
       });
     }
@@ -86,15 +91,15 @@ export default function QRSection({ theme, qrCodeUrl, qrDataUrl, coupleNames = '
       <div className="max-w-4xl mx-auto px-4 md:px-6 text-center">
         {/* Decorative element */}
         <div className="mb-6">
-          <span className="text-4xl">💕</span>
+          <span className="text-4xl">{publicCopy.qr.icon}</span>
         </div>
         
         <h3 className={`${styles.heading} text-xl font-semibold ${styles.text} mb-3`}>
-          Save Our Love Story
+          {publicCopy.qr.title}
         </h3>
         
         <p className={`${styles.textMuted} mb-6`}>
-          Scan the QR code below to revisit our special moments anytime
+          {publicCopy.qr.subtitle}
         </p>
         
         {/* QR Code Card with Romantic Styling */}
@@ -109,7 +114,7 @@ export default function QRSection({ theme, qrCodeUrl, qrDataUrl, coupleNames = '
             <div className="relative w-40 h-40 md:w-48 md:h-48 mx-auto">
               <Image
                 src={qrCodeUrl}
-                alt="QR Code to revisit our story"
+                alt={publicCopy.qr.altText}
                 fill
                 className="object-contain"
               />
@@ -127,13 +132,13 @@ export default function QRSection({ theme, qrCodeUrl, qrDataUrl, coupleNames = '
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
-              Download QR Code
+              {publicCopy.qr.downloadLabel}
             </button>
           </div>
         )}
         
         <p className={`mt-4 text-sm ${styles.textMuted}`}>
-          💕 {coupleNames}
+          {publicCopy.qr.footerLabel} • {displayName}
         </p>
       </div>
     </section>

@@ -54,6 +54,7 @@ export interface ListWebsitesOptions {
   search?: string;
   sortBy?: string;
   sortDirection?: 'asc' | 'desc';
+  guestMessageFilter?: 'all' | 'pending';
 }
 
 export async function listWebsites(options: ListWebsitesOptions = {}) {
@@ -61,10 +62,36 @@ export async function listWebsites(options: ListWebsitesOptions = {}) {
   const offset = Math.max(options.offset ?? 0, 0);
   const sortBy = SORTABLE_SITE_COLUMNS.has(options.sortBy || '') ? options.sortBy! : 'created_at';
   const ascending = options.sortDirection === 'asc';
+  const guestMessageFilter = options.guestMessageFilter || 'all';
+
+  let pendingSiteIds: string[] | null = null;
+  if (guestMessageFilter === 'pending') {
+    const { data: pendingMessages, error: pendingMessagesError } = await supabase
+      .from('guest_messages')
+      .select('site_id')
+      .eq('status', 'pending');
+
+    if (pendingMessagesError) throw pendingMessagesError;
+
+    pendingSiteIds = Array.from(
+      new Set(
+        (pendingMessages || [])
+          .map((row) => row.site_id)
+          .filter((siteId): siteId is string => typeof siteId === 'string' && siteId.length > 0)
+      )
+    );
+
+    if (pendingSiteIds.length === 0) {
+      return { data: [], total: 0 };
+    }
+  }
 
   let query = supabase.from('sites').select('*', { count: 'exact' });
   if (options.status && options.status !== 'all') {
     query = query.eq('status', options.status);
+  }
+  if (pendingSiteIds) {
+    query = query.in('id', pendingSiteIds);
   }
   if (options.search) {
     query = query.or(`website_name.ilike.%${options.search}%,slug.ilike.%${options.search}%`);

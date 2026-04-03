@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminRequestAuthorized, unauthorizedAdminResponse } from '@/lib/api/admin-auth';
 import { supabase } from '@/lib/supabase'; // No change needed, not site CRUD
 
 export async function GET(req: NextRequest) {
+  if (!isAdminRequestAuthorized(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   const url = new URL(req.url);
   const siteId = url.searchParams.get('site_id');
 
@@ -37,6 +42,7 @@ export async function GET(req: NextRequest) {
 
   const totalVisits = events.filter((e) => e.event_type === 'page_view').length;
   const totalQrScans = events.filter((e) => e.event_type === 'qr_scan').length;
+  const totalInteractions = events.filter((e) => !['page_view', 'qr_scan'].includes(e.event_type)).length;
   const lastVisited = events.find((e) => e.event_type === 'page_view')?.created_at || null;
   const scansThisWeek = events.filter((e) => e.event_type === 'qr_scan' && new Date(e.created_at) >= weekAgo).length;
   const scansThisMonth = events.filter((e) => e.event_type === 'qr_scan' && new Date(e.created_at) >= monthAgo).length;
@@ -83,9 +89,20 @@ export async function GET(req: NextRequest) {
 
   const dailyTrend = Array.from(dailyMap.values());
 
+  const interactionCounts = Array.from(
+    events.reduce((map, event) => {
+      if (event.event_type === 'page_view' || event.event_type === 'qr_scan') return map;
+      map.set(event.event_type, (map.get(event.event_type) || 0) + 1);
+      return map;
+    }, new Map<string, number>()).entries()
+  )
+    .map(([event_type, count]) => ({ event_type, count }))
+    .sort((a, b) => b.count - a.count);
+
   return NextResponse.json({
     totalVisits,
     totalQrScans,
+    totalInteractions,
     uniqueScans,
     lastVisited,
     visitsThisWeek,
@@ -94,6 +111,7 @@ export async function GET(req: NextRequest) {
     scansThisMonth,
     topSources,
     dailyTrend,
+    interactionCounts,
     recentActivity: events || [],
   });
 }

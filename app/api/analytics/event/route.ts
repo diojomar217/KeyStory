@@ -4,10 +4,17 @@ import { insertAnalyticsEvent } from '@/lib/db/analytics';
 import {createHash} from 'crypto';
 import { enforceRateLimit } from '@/lib/reliability/rate-limit';
 import { captureError } from '@/lib/reliability/monitoring';
+import type { SiteAnalyticsEventType } from '@/lib/types';
 
-const allowedEventTypes = ['page_view', 'qr_scan'] as const;
-
-type EventType = (typeof allowedEventTypes)[number];
+const allowedEventTypes: SiteAnalyticsEventType[] = [
+  'page_view',
+  'qr_scan',
+  'section_view',
+  'share_click',
+  'download_card',
+  'music_play',
+  'opening_reveal',
+];
 
 const sanitizeText = (value: unknown, max = 512): string | null => {
   if (!value || typeof value !== 'string') return null;
@@ -34,7 +41,7 @@ export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
     const slug = sanitizeText(data.slug, 100);
-    const event_type = sanitizeText(data.event_type, 20) as EventType | null;
+    const event_type = sanitizeText(data.event_type, 20) as SiteAnalyticsEventType | null;
     const source = sanitizeText(data.source, 100);
 
     if (!slug || !event_type || !allowedEventTypes.includes(event_type)) {

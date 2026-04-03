@@ -2,9 +2,16 @@
 
 import { useState } from "react";
 import type { ThemeKey } from '@/config/themeConfig';
+import type { OccasionType } from '@/lib/types';
 import SectionHeader from '../../page/SectionHeader';
 import { getSectionCopy } from '@/lib/section-copy';
-import { useTheme } from '../../builder/ThemeWrapper';
+import { useThemeUtils } from '../../builder/ThemeWrapper';
+import {
+  getCardStyleClasses,
+  getSectionSpacingClass,
+  getHeadingFontClass,
+} from '@/lib/theme-color-helpers';
+import ScrollReveal from '../../ui/ScrollReveal';
 
 interface Reason {
   id: string;
@@ -14,6 +21,7 @@ interface Reason {
 
 interface ReasonsILoveYouSectionProps {
   theme: ThemeKey;
+  siteType?: OccasionType;
   partnerName: string;
   reasons?: Reason[];
   variant?: 'default' | 'alt';
@@ -34,11 +42,20 @@ const defaultReasons: Reason[] = [
 
 export default function ReasonsILoveYouSection({ 
   theme, 
+  siteType = 'couple',
   partnerName,
   reasons,
   variant = 'default'
 }: ReasonsILoveYouSectionProps) {
-  const displayReasons = reasons && reasons.length > 0 ? reasons : defaultReasons;
+  const displayReasons = (reasons && reasons.length > 0 ? reasons : defaultReasons).map((reason, index) => ({
+    ...reason,
+    id: reason.id || `reason-${index + 1}`,
+    number: typeof reason.number === 'number' ? reason.number : index + 1,
+  }));
+  const themeUtils = useThemeUtils(theme);
+  const cardStyle = getCardStyleClasses(theme);
+  const spacingClass = getSectionSpacingClass(theme);
+  const headingFontClass = getHeadingFontClass(theme);
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
 
   const toggleFlip = (id: string) => {
@@ -54,38 +71,88 @@ export default function ReasonsILoveYouSection({
   };
 
   return (
-    <section id="reasons-love-you" className="relative py-24 lg:py-32">
+    <section id="reasons-love-you" className={`relative ${spacingClass}`}>
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        {(() => {
-          const copy = getSectionCopy('reasons_love_you', undefined, { partnerName });
-          return (
-            <SectionHeader
-              icon={copy.icon}
-              title={copy.title}
-              subtitle={copy.subtitle}
-              theme={theme}
-            />
-          );
-        })()}
+        <ScrollReveal animation="fade-up">
+          {(() => {
+            const copy = getSectionCopy('reasons_love_you', siteType, { partnerName });
+            return (
+              <SectionHeader
+                icon={copy.icon}
+                title={copy.title}
+                subtitle={copy.subtitle}
+                theme={theme}
+              />
+            );
+          })()}
+        </ScrollReveal>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 lg:gap-8">
           {displayReasons.map((reason) => (
-            <div key={reason.id} className="group relative h-[200px] lg:h-[220px] perspective-[1200px] cursor-pointer overflow-hidden" onClick={() => toggleFlip(reason.id)}>
-              <div className={'relative w-full h-full transition-all duration-[800ms] ease-[cubic-bezier(0.68,-0.55,0.265,1.55)] preserve-3d hover:scale-[1.02]' + (flippedCards.has(reason.id) ? ' rotate-y-180' : ' rotate-y-0')}>
-                <div className="absolute inset-0 preserve-3d backface-hidden bg-white/90 backdrop-blur-xl border border-white/50 rounded-3xl shadow-2xl flex items-center justify-center p-6 lg:p-8 ring-2 ring-rose-100/60 hover:ring-rose-200/80 hover:shadow-[0_20px_40px_rgba(244,114,182,0.2)] transition-all duration-500 group-hover:shadow-rose-200/50 before:content-[''] before:absolute before:inset-0 before:rounded-3xl before:bg-gradient-to-br before:from-rose-50/70 before:to-pink-50/50 before:blur-md before:opacity-0 group-hover:before:opacity-100">
+            <div key={reason.id} className="group relative h-[200px] lg:h-[220px] cursor-pointer overflow-hidden" onClick={() => toggleFlip(reason.id)}>
+              <div 
+                className="relative w-full h-full transition-all duration-[800ms] ease-[cubic-bezier(0.68,-0.55,0.265,1.55)] hover:scale-[1.02]"
+                style={{
+                  transformStyle: 'preserve-3d',
+                  transform: flippedCards.has(reason.id) ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                }}
+              >
+                {/* Front face - Tap to reveal */}
+                <div
+                  className={`absolute inset-0 ${cardStyle} border backdrop-blur-xl flex items-center justify-center p-6 lg:p-8 transition-all duration-500`}
+                  style={{
+                    backgroundColor: `${themeUtils.colors.card}E6`,
+                    borderColor: `${themeUtils.colors.border}CC`,
+                    boxShadow: `0 20px 40px -18px ${themeUtils.colors.primary}33`,
+                    backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden',
+                  }}
+                >
+                  <div
+                    className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                    style={{
+                      backgroundImage: `linear-gradient(135deg, ${themeUtils.colors.secondary}66, ${themeUtils.colors.accent}33)`,
+                    }}
+                  />
                   <div className="flex items-center gap-4 lg:gap-6 text-center">
-                    <div className="flex-shrink-0 w-20 h-20 lg:w-24 lg:h-24 rounded-3xl flex items-center justify-center text-3xl lg:text-4xl font-black bg-gradient-to-br from-rose-400 via-pink-500 to-rose-600 text-white shadow-2xl ring-4 ring-white/30 hover:scale-110 transition-all duration-300 animate-gentle-pulse">
+                    <div
+                      className={`flex-shrink-0 w-20 h-20 lg:w-24 lg:h-24 ${cardStyle} flex items-center justify-center text-3xl lg:text-4xl font-black text-white shadow-2xl hover:scale-110 transition-all duration-300 animate-gentle-pulse`}
+                      style={{
+                        backgroundImage: `linear-gradient(135deg, ${themeUtils.colors.primary}, ${themeUtils.colors.secondary})`,
+                        boxShadow: `0 8px 24px ${themeUtils.colors.primary}66`,
+                      }}
+                    >
                       {reason.number}
                     </div>
                     <div className="flex flex-col items-center">
                       <span className="text-2xl lg:text-3xl animate-bounce-slow mb-2">❤️</span>
-                      <p className="text-lg lg:text-xl font-semibold text-gray-600 tracking-wide leading-tight">
+                      <p
+                        className={`text-lg lg:text-xl font-semibold tracking-wide leading-tight ${headingFontClass}`}
+                        style={{ color: themeUtils.colors.text }}
+                      >
                         Tap to reveal
                       </p>
                     </div>
                   </div>
                 </div>
-                <div className="absolute inset-0 preserve-3d backface-hidden rotate-y-180 bg-gradient-to-br from-rose-400 via-pink-500 to-fuchsia-500 rounded-3xl shadow-2xl flex items-center justify-center p-8 lg:p-10 text-center ring-4 ring-white/40 shadow-[0_25px_50px_rgba(236,72,153,0.4)] text-white font-medium leading-relaxed text-lg lg:text-xl tracking-wide hover:shadow-[0_30px_60px_rgba(236,72,153,0.5)] before:content-[''] before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.2),transparent_50%)] before:bg-no-repeat before:opacity-90 before:blur-sm">
-                  <p className="max-w-md mx-auto drop-shadow-lg">{reason.text}</p>
+
+                {/* Back face - Revealed text */}
+                <div
+                  className={`absolute inset-0 ${cardStyle} flex items-center justify-center p-8 lg:p-10 text-center text-white font-medium leading-relaxed text-lg lg:text-xl tracking-wide`}
+                  style={{
+                    backgroundImage: `linear-gradient(135deg, ${themeUtils.colors.primary}, ${themeUtils.colors.secondary}, ${themeUtils.colors.accent})`,
+                    boxShadow: `0 25px 50px -12px ${themeUtils.colors.accent}66`,
+                    backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden',
+                    transform: 'rotateY(180deg)',
+                  }}
+                >
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: 'radial-gradient(circle at 30% 20%, rgba(255,255,255,0.2), transparent 50%)',
+                    }}
+                  />
+                  <p className={`max-w-md mx-auto drop-shadow-lg ${headingFontClass}`}>{reason.text}</p>
                 </div>
               </div>
             </div>

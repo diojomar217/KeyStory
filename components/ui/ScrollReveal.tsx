@@ -20,11 +20,30 @@ export default function ScrollReveal({
   once = true,
 }: ScrollRevealProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const elementRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const updateMotionPreference = () => setPrefersReducedMotion(mediaQuery.matches);
+
+    updateMotionPreference();
+    mediaQuery.addEventListener('change', updateMotionPreference);
+
+    return () => mediaQuery.removeEventListener('change', updateMotionPreference);
+  }, []);
 
   useEffect(() => {
     const element = elementRef.current;
     if (!element) return;
+
+    if (prefersReducedMotion) {
+      element.style.transitionDelay = '0ms';
+      setIsVisible(true);
+      return;
+    }
 
     // Set initial delay if any
     if (delay > 0) {
@@ -51,9 +70,9 @@ export default function ScrollReveal({
     observer.observe(element);
 
     return () => {
-      observer.unobserve(element);
+      observer.disconnect();
     };
-  }, [threshold, once, delay]);
+  }, [threshold, once, delay, prefersReducedMotion]);
 
   // Determine animation class based on type
   const getAnimationClass = () => {
@@ -73,7 +92,7 @@ export default function ScrollReveal({
   return (
     <div
       ref={elementRef}
-      className={`${getAnimationClass()} ${isVisible ? 'active' : ''} ${className}`}
+      className={`${prefersReducedMotion ? '' : getAnimationClass()} ${isVisible ? 'active' : ''} ${className}`}
     >
       {children}
     </div>

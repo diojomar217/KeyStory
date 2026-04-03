@@ -3,9 +3,11 @@
 import type { TimelineEvent } from '@/lib/types';
 import type { ThemeKey } from '@/config/themeConfig';
 import { getSectionCopy } from '@/lib/section-copy';
-import { useTheme } from '../../builder/ThemeWrapper';
+import { useThemeUtils } from '../../builder/ThemeWrapper';
 import SectionHeader from '../../page/SectionHeader';
 import TimelineSection from '../shared/TimelineSection';
+import ScrollReveal from '../../ui/ScrollReveal';
+import { getSectionSpacingClass } from '@/lib/theme-color-helpers';
 
 
 type Props = {
@@ -15,36 +17,25 @@ type Props = {
 };
 
 export default function BirthdayTimelineSection({ theme, template, events }: Props) {
-  const styles = useTheme(theme);
+  useThemeUtils(theme);
+  const spacingClass = getSectionSpacingClass(theme);
 
   return (
-    <section className={`${styles.sectionBg}`} id="birthday-timeline">
+    <section className={`${spacingClass}`} id="birthday-timeline">
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-16 md:py-24">
-        {(() => {
-          const copy = getSectionCopy('birthday_timeline');
-          return (
-            <SectionHeader
-              icon={copy.icon}
-              title={copy.title}
-              subtitle={copy.subtitle}
-              theme={theme}
-            />
-          );
-        })()}
-        <TimelineSection theme={theme} template={template as any} events={events} />
-      </div>
-    </section>
-  );
-
-  return (
-    <section className={`${styles.sectionBg}`} id="birthday-timeline">
-      <div className="max-w-6xl mx-auto px-4 md:px-6 py-16 md:py-24">
-        <SectionHeader
-          icon="🎂"
-          title="Birthday Milestones"
-          subtitle="Highlights from your life journey"
-          theme={theme}
-        />
+        <ScrollReveal animation="fade-up">
+          {(() => {
+            const copy = getSectionCopy('birthday_timeline');
+            return (
+              <SectionHeader
+                icon={copy.icon}
+                title={copy.title}
+                subtitle={copy.subtitle}
+                theme={theme}
+              />
+            );
+          })()}
+        </ScrollReveal>
         <TimelineSection theme={theme} template={template as any} events={events} />
       </div>
     </section>

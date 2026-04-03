@@ -8,6 +8,7 @@ interface WebsiteRowProps {
   onDelete: (id: string) => void;
   selected: boolean;
   onSelect: (checked: boolean) => void;
+  pendingGuestMessages?: number;
 }
 
 // Icons for placeholder
@@ -17,7 +18,7 @@ const HeartIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export default function WebsiteRow({ order, onDelete, selected, onSelect }: WebsiteRowProps) {
+export default function WebsiteRow({ order, onDelete, selected, onSelect, pendingGuestMessages = 0 }: WebsiteRowProps) {
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -93,9 +94,16 @@ export default function WebsiteRow({ order, onDelete, selected, onSelect }: Webs
           <span className="font-semibold text-slate-900 block truncate" title={websiteName}>
             {websiteName}
           </span>
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600 mt-1" title={`/${order.slug}`}>
-            /{order.slug}
-          </span>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600" title={`/${order.slug}`}>
+              /{order.slug}
+            </span>
+            {pendingGuestMessages > 0 && (
+              <span className="inline-flex items-center rounded-full bg-fuchsia-100 px-2 py-0.5 text-xs font-semibold text-fuchsia-700">
+                {pendingGuestMessages} pending message{pendingGuestMessages === 1 ? '' : 's'}
+              </span>
+            )}
+          </div>
         </div>
       </td>
 
@@ -141,6 +149,7 @@ export default function WebsiteRow({ order, onDelete, selected, onSelect }: Webs
           order={order}
           onDelete={onDelete}
           onRefresh={() => window.location.reload()}
+          pendingGuestMessages={pendingGuestMessages}
         />
       </td>
     </tr>

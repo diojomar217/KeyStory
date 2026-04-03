@@ -6,6 +6,8 @@ import { getThemeVibe } from '@/config/themeConfig';
 import { getThemeAccentClasses } from '@/config/themeStyles';
 import type { OccasionType } from '@/lib/types';
 import { useOccasionType } from './OccasionContext';
+import { useThemeUtils } from '../builder/ThemeWrapper';
+import { getHeadingFontClass } from '@/lib/theme-color-helpers';
 
 interface SectionHeaderProps {
   icon?: string;
@@ -29,6 +31,8 @@ export default function SectionHeader({
   const occasionHero = getOccasionHeroSpec(resolvedSiteType);
   const accents = getThemeAccentClasses(theme);
   const vibe = getThemeVibe(theme);
+  const themeUtils = useThemeUtils(theme);
+  const headingFontClass = getHeadingFontClass(theme);
 
   const shouldShimmer = vibe === 'romantic' || vibe === 'luxury';
   const shouldGlowIcon = vibe === 'cute' || vibe === 'playful';
@@ -37,15 +41,15 @@ export default function SectionHeader({
   if (resolvedSiteType === 'wedding') {
     return (
       <div className={`section-header text-center mb-12 ${className}`}>
-        <div className="inline-flex items-center gap-2 rounded-full border border-amber-200/60 bg-white/75 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-amber-700 shadow-sm backdrop-blur-md">
+        <div className="inline-flex items-center gap-2 rounded-full border border-amber-200/60 bg-white/75 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-amber-700 shadow-sm backdrop-blur-md ui-kicker">
           <span>{icon || occasionHero.badge}</span>
           Ceremony Chapter
         </div>
-        <h2 className="mt-5 font-serif text-3xl font-semibold tracking-tight text-amber-950 md:text-4xl">
+        <h2 className="mt-5 font-serif text-3xl font-semibold tracking-tight text-amber-950 md:text-4xl ui-title-balance">
           {title}
         </h2>
         {subtitle && (
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-amber-800/80 md:text-base">
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-amber-800/80 md:text-base ui-subtitle-measure">
             {subtitle}
           </p>
         )}
@@ -61,15 +65,15 @@ export default function SectionHeader({
   if (resolvedSiteType === 'memorial') {
     return (
       <div className={`section-header text-center mb-12 ${className}`}>
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-white/55 backdrop-blur-md">
+        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-white/55 backdrop-blur-md ui-kicker">
           <span>{icon || occasionHero.badge}</span>
           Tribute Chapter
         </div>
-        <h2 className="mt-5 font-serif text-3xl font-semibold tracking-tight text-white md:text-4xl">
+        <h2 className="mt-5 font-serif text-3xl font-semibold tracking-tight text-white md:text-4xl ui-title-balance">
           {title}
         </h2>
         {subtitle && (
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/68 md:text-base">
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/68 md:text-base ui-subtitle-measure">
             {subtitle}
           </p>
         )}
@@ -81,15 +85,15 @@ export default function SectionHeader({
   if (resolvedSiteType === 'travel') {
     return (
       <div className={`section-header text-center mb-12 ${className}`}>
-        <div className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white/85 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-600 shadow-sm">
+        <div className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white/85 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-600 shadow-sm ui-kicker">
           <span>{icon || occasionHero.badge}</span>
           Route Stop
         </div>
-        <h2 className="mt-5 text-3xl font-black tracking-tight text-slate-900 md:text-4xl">
+        <h2 className="mt-5 text-3xl font-black tracking-tight text-slate-900 md:text-4xl ui-title-balance">
           {title}
         </h2>
         {subtitle && (
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-slate-600 md:text-base">
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-slate-600 md:text-base ui-subtitle-measure">
             {subtitle}
           </p>
         )}
@@ -119,7 +123,7 @@ export default function SectionHeader({
       )}
 
       {/* Title */}
-      <h2 className={`section-title text-2xl md:text-3xl font-bold tracking-tight ${accents.title}`}>
+      <h2 className={`section-title text-2xl md:text-3xl font-bold tracking-tight ui-title-balance ${accents.title} ${headingFontClass}`}>
         {title}
       </h2>
 
@@ -128,6 +132,7 @@ export default function SectionHeader({
         <p
           className={[
             'section-subtitle mt-3 text-sm md:text-base lg:text-lg leading-relaxed tracking-wide max-w-md mx-auto',
+            'ui-subtitle-measure',
             shouldUseSoftSubtitle ? 'font-normal opacity-90' : 'font-medium',
             accents.subtitle,
           ].join(' ')}
@@ -136,13 +141,15 @@ export default function SectionHeader({
         </p>
       )}
 
-      {/* Divider */}
+      {/* Divider - use theme accent color */}
       <div
         className={[
-          'mx-auto mt-4 h-1 w-16 rounded-full bg-gradient-to-r opacity-80 transition-all duration-300',
-          accents.line,
+          'mx-auto mt-4 h-1 w-16 rounded-full opacity-80 transition-all duration-300',
           shouldShimmer ? 'shimmer-rose' : '',
         ].join(' ')}
+        style={{
+          backgroundImage: `linear-gradient(to right, ${themeUtils.colors.primary}, ${themeUtils.colors.accent}, ${themeUtils.colors.primary})`
+        }}
       />
     </div>
   );

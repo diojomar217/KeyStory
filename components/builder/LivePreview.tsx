@@ -45,7 +45,7 @@ function EmptyPreviewState({ theme }: { theme: ReturnType<typeof getThemeStyles>
   return (
     <div className="flex flex-col items-center justify-center h-full py-12 px-4">
       <h3 className={`text-lg font-semibold ${theme.text} mb-2`}>
-        Start Building Your Love Story
+        Start Building Your Story Page
       </h3>
       <p className={`text-sm text-center ${theme.textMuted}`}>
         Complete the wizard steps to see your website preview
@@ -57,7 +57,7 @@ function EmptyPreviewState({ theme }: { theme: ReturnType<typeof getThemeStyles>
         </div>
         <div className={`flex items-center gap-2 text-xs ${theme.textMuted}`}>
           <span className="w-5 h-5 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-[10px] font-bold">2</span>
-          <span>Write your love message</span>
+          <span>Write your main message</span>
         </div>
         <div className={`flex items-center gap-2 text-xs ${theme.textMuted}`}>
           <span className="w-5 h-5 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-[10px] font-bold">3</span>

@@ -91,7 +91,9 @@ export type LayoutPreset =
   | 'modern_romance'
   | 'soft_scrapbook'
   | 'minimal_keepsake'
-  | 'celebration_flow';
+  | 'celebration_flow'
+  | 'editorial_timeline'
+  | 'photo_showcase';
 
 // Preview Device Types
 export type PreviewDevice = 'desktop' | 'mobile';
@@ -215,6 +217,15 @@ export interface SiteConfig {
     label: string;
   };
 }
+
+export type SiteAnalyticsEventType =
+  | 'page_view'
+  | 'qr_scan'
+  | 'section_view'
+  | 'share_click'
+  | 'download_card'
+  | 'music_play'
+  | 'opening_reveal';
 
 // Builder State Types
 export interface BuilderStep {

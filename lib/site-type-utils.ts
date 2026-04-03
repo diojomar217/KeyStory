@@ -1,5 +1,6 @@
 import { OccasionType, getOccasionMetadata } from './occasion-registry';
 import { Participant } from './types';
+import { formatOccasionDisplayName } from './public-site-copy';
 
 export type DecoratorSet = {
   iconSet: string[];
@@ -24,9 +25,7 @@ export type HeroConfig = {
 
 export type FooterConfig = {
   tagline: string;
-  madeWith: string;
   decorations: string[];
-  decorationClasses?: string;
 };
 
 export const resolveDisplayName = (
@@ -38,15 +37,7 @@ export const resolveDisplayName = (
   const primary = participants[0]?.name || customerName || (siteType === 'birthday' ? 'Birthday Star' : 'Your Name');
   const secondary = participants[1]?.name || partnerName || '';
 
-  if (siteType === 'birthday') {
-    return primary;
-  }
-
-  if (secondary) {
-    return `${primary} & ${secondary}`;
-  }
-
-  return primary;
+  return formatOccasionDisplayName(siteType, primary, secondary);
 };
 
 export const resolveParticipantNames = (
@@ -58,18 +49,12 @@ export const resolveParticipantNames = (
   const primaryName = participants[0]?.name || customerName || (siteType === 'birthday' ? 'Birthday Star' : 'Your Name');
   const secondaryName = participants[1]?.name || partnerName || '';
 
-  if (siteType === 'birthday') {
-    return {
-      primaryName,
-      secondaryName: '',
-      displayName: primaryName,
-    };
-  }
+  const isSingleNameOccasion = ['birthday', 'graduation', 'debut', 'memorial', 'mothers_day', 'fathers_day'].includes(siteType);
 
   return {
     primaryName,
-    secondaryName,
-    displayName: secondaryName ? `${primaryName} & ${secondaryName}` : primaryName,
+    secondaryName: isSingleNameOccasion ? '' : secondaryName,
+    displayName: formatOccasionDisplayName(siteType, primaryName, secondaryName),
   };
 };
 
@@ -78,11 +63,45 @@ export const resolveHeroSubtitle = (
   specialDate?: string,
   customerName?: string,
 ) => {
-  if (siteType === 'birthday') {
-    return specialDate ? `Birthday: ${specialDate}` : `Happy Birthday ${customerName ?? ''}`;
+  const occasionMeta = getOccasionMetadata(siteType);
+
+  if (specialDate) {
+    return `${occasionMeta.specialDateLabel}: ${specialDate}`;
   }
 
-  return specialDate ? `Together since ${specialDate}` : 'A love journey to remember';
+  switch (siteType) {
+    case 'birthday':
+      return `Happy Birthday ${customerName ?? ''}`.trim();
+    case 'wedding':
+      return 'A celebration of love, vows, and forever';
+    case 'proposal':
+      return 'The story behind one unforgettable yes';
+    case 'anniversary':
+      return 'Another chapter in a love story still growing';
+    case 'graduation':
+      return 'A proud milestone worth remembering';
+    case 'baby_shower':
+      return 'A sweet celebration for a little one on the way';
+    case 'debut':
+      return 'An unforgettable celebration of a new chapter';
+    case 'memorial':
+      return 'A space to remember, honor, and hold close';
+    case 'family':
+      return 'A keepsake built from shared memories';
+    case 'friendship':
+      return 'A story shaped by laughter, trust, and time';
+    case 'travel':
+      return 'A journal of places, moments, and memories';
+    case 'valentines':
+      return 'A love note made to be revisited';
+    case 'mothers_day':
+      return 'A tribute to love that shaped everything';
+    case 'fathers_day':
+      return 'A tribute to steady care, strength, and love';
+    case 'couple':
+    default:
+      return 'A love journey to remember';
+  }
 };
 
 export const resolveHeroStats = (
@@ -107,9 +126,11 @@ export const resolveHeroStats = (
     ];
   }
 
+  const occasionMeta = getOccasionMetadata(siteType);
+
   return [
     {
-      label: 'Together since',
+      label: occasionMeta.specialDateLabel,
       value: specialDate || 'Set your date',
     },
   ];
@@ -144,6 +165,76 @@ export const resolveDefaultCTA = (siteType: OccasionType): CTAConfig => {
         secondary: 'Share your story',
         startIcon: '🥂',
         endIcon: '✨',
+      };
+    case 'graduation':
+      return {
+        primary: 'View Tribute',
+        secondary: 'See Milestones',
+        startIcon: '🎓',
+        endIcon: '⭐',
+      };
+    case 'baby_shower':
+      return {
+        primary: 'Open Celebration',
+        secondary: 'Read Messages',
+        startIcon: '🍼',
+        endIcon: '🧸',
+      };
+    case 'debut':
+      return {
+        primary: 'Enter the Celebration',
+        secondary: 'See Highlights',
+        startIcon: '👑',
+        endIcon: '✨',
+      };
+    case 'memorial':
+      return {
+        primary: 'View Tribute',
+        secondary: 'Read Messages',
+        startIcon: '🕊️',
+        endIcon: '🕯️',
+      };
+    case 'family':
+      return {
+        primary: 'Open Our Story',
+        secondary: 'Browse Memories',
+        startIcon: '🏡',
+        endIcon: '📷',
+      };
+    case 'friendship':
+      return {
+        primary: 'Start the Story',
+        secondary: 'See Shared Moments',
+        startIcon: '🤝',
+        endIcon: '📸',
+      };
+    case 'travel':
+      return {
+        primary: 'Open the Journey',
+        secondary: 'View the Map',
+        startIcon: '✈️',
+        endIcon: '🗺️',
+      };
+    case 'valentines':
+      return {
+        primary: 'Open the Love Note',
+        secondary: 'View Our Moments',
+        startIcon: '💌',
+        endIcon: '🌹',
+      };
+    case 'mothers_day':
+      return {
+        primary: 'Read the Tribute',
+        secondary: 'View Memories',
+        startIcon: '🌸',
+        endIcon: '🤍',
+      };
+    case 'fathers_day':
+      return {
+        primary: 'Read the Tribute',
+        secondary: 'View Memories',
+        startIcon: '🧡',
+        endIcon: '⭐',
       };
     case 'couple':
     default:
@@ -181,6 +272,66 @@ export const resolveDecorations = (siteType: OccasionType): DecoratorSet => {
         iconSet: ['💑', '🥂', '🎉', '✨', '💐'],
         badge: '🎉',
         themeTone: 'soft',
+      };
+    case 'graduation':
+      return {
+        iconSet: ['🎓', '⭐', '📘', '✨', '🎉'],
+        badge: '🎓',
+        themeTone: 'celebration',
+      };
+    case 'baby_shower':
+      return {
+        iconSet: ['🍼', '☁️', '🧸', '✨', '🌙'],
+        badge: '🍼',
+        themeTone: 'soft',
+      };
+    case 'debut':
+      return {
+        iconSet: ['👑', '✨', '🌸', '💫', '🥂'],
+        badge: '👑',
+        themeTone: 'elegant',
+      };
+    case 'memorial':
+      return {
+        iconSet: ['🕊️', '🤍', '✨', '🌿', '🕯️'],
+        badge: '🕊️',
+        themeTone: 'soft',
+      };
+    case 'family':
+      return {
+        iconSet: ['🏡', '🤎', '✨', '🌿', '📷'],
+        badge: '🏡',
+        themeTone: 'soft',
+      };
+    case 'friendship':
+      return {
+        iconSet: ['🤝', '✨', '💫', '🌈', '📸'],
+        badge: '🤝',
+        themeTone: 'celebration',
+      };
+    case 'travel':
+      return {
+        iconSet: ['✈️', '🗺️', '📍', '✨', '🌍'],
+        badge: '✈️',
+        themeTone: 'celebration',
+      };
+    case 'valentines':
+      return {
+        iconSet: ['💌', '💕', '✨', '🌹', '💖'],
+        badge: '💌',
+        themeTone: 'romantic',
+      };
+    case 'mothers_day':
+      return {
+        iconSet: ['🌸', '💗', '✨', '🌷', '🤍'],
+        badge: '🌸',
+        themeTone: 'soft',
+      };
+    case 'fathers_day':
+      return {
+        iconSet: ['🧡', '✨', '⭐', '🤎', '👔'],
+        badge: '🧡',
+        themeTone: 'elegant',
       };
     case 'couple':
     default:
@@ -235,19 +386,49 @@ export const resolveHeroConfig = (
   participants: Participant[] = [],
   specialDate?: string,
 ): HeroConfig => {
-  const title =
-    siteType === 'birthday'
-      ? `${participants[0]?.name || 'Celebrant'}`
-      : `${participants[0]?.name || 'You'} ${siteType === 'couple' ? '& ' + (participants[1]?.name || 'Partner') : ''}`;
+  const displayName = resolveDisplayName(siteType, participants, participants[0]?.name || '', participants[1]?.name || '');
+  const occasionMeta = getOccasionMetadata(siteType);
+  const title = displayName || occasionMeta.label;
 
   const subtitle = resolveHeroSubtitle(siteType, specialDate, participants[0]?.name);
   const cta = resolveDefaultCTA(siteType);
   const decorations = resolveDecorations(siteType);
 
-  const description =
-    siteType === 'birthday'
-      ? 'A special page to celebrate your day with friends and family.'
-      : 'A cherished place for your love story and memories.';
+  const description = (() => {
+    switch (siteType) {
+      case 'birthday':
+        return 'A special page to celebrate the day with friends and family.';
+      case 'wedding':
+        return 'A wedding page for details, memories, and celebration.';
+      case 'proposal':
+        return 'A keepsake for one unforgettable question and answer.';
+      case 'anniversary':
+        return 'A celebration of the story that keeps growing.';
+      case 'graduation':
+        return 'A tribute to a milestone worth honoring.';
+      case 'baby_shower':
+        return 'A sweet celebration for a growing family.';
+      case 'debut':
+        return 'A celebration page for a beautiful new chapter.';
+      case 'memorial':
+        return 'A remembrance page built with love and gratitude.';
+      case 'family':
+        return 'A keepsake for shared family memories.';
+      case 'friendship':
+        return 'A story built from years of shared moments.';
+      case 'travel':
+        return 'A journal of places, adventures, and memories.';
+      case 'valentines':
+        return 'A love note made to be revisited.';
+      case 'mothers_day':
+        return 'A tribute page filled with gratitude and love.';
+      case 'fathers_day':
+        return 'A tribute page honoring care, strength, and love.';
+      case 'couple':
+      default:
+        return 'A cherished place for your love story and memories.';
+    }
+  })();
 
   return { title, subtitle, description, cta, decorations };
 };
@@ -257,38 +438,78 @@ export const resolveFooterConfig = (siteType: OccasionType, displayName: string)
     case 'birthday':
       return {
         tagline: `Happy Birthday, ${displayName}! 🎉`,
-        madeWith: 'Made especially for this special day',
         decorations: ['🎉', '🎈', '🥳', '✨', '🎂'],
-        decorationClasses: 'text-yellow-300/80 text-lg',
       };
     case 'wedding':
       return {
         tagline: 'Together forever begins today 💒',
-        madeWith: 'Made with elegance and celebration',
         decorations: ['💍', '🌸', '💒', '✨', '💐'],
-        decorationClasses: 'text-amber-200',
       };
     case 'proposal':
       return {
         tagline: 'She said YES! 💍',
-        madeWith: 'Made to celebrate the next chapter',
         decorations: ['💎', '💫', '💍', '✨', '🥂'],
-        decorationClasses: 'text-blue-200',
       };
     case 'anniversary':
       return {
         tagline: 'Celebrating another beautiful year together ✨',
-        madeWith: 'Made with treasured memories and love',
         decorations: ['🌟', '🎉', '🥂', '✨', '💐'],
-        decorationClasses: 'text-sky-200',
+      };
+    case 'graduation':
+      return {
+        tagline: 'A proud milestone and a beautiful new beginning 🎓',
+        decorations: ['🎓', '⭐', '📘', '✨', '🎉'],
+      };
+    case 'baby_shower':
+      return {
+        tagline: 'A little one is already so deeply loved 🍼',
+        decorations: ['🍼', '☁️', '🧸', '✨', '🌙'],
+      };
+    case 'debut':
+      return {
+        tagline: 'A night to celebrate grace, joy, and a new chapter 👑',
+        decorations: ['👑', '✨', '🌸', '💫', '🥂'],
+      };
+    case 'memorial':
+      return {
+        tagline: 'Held in love, remembered with grace 🕊️',
+        decorations: ['🕊️', '🤍', '✨', '🌿', '🕯️'],
+      };
+    case 'family':
+      return {
+        tagline: 'The best stories are the ones we share together 🏡',
+        decorations: ['🏡', '🤎', '✨', '🌿', '📷'],
+      };
+    case 'friendship':
+      return {
+        tagline: 'Some bonds only grow better with time 🤝',
+        decorations: ['🤝', '✨', '💫', '🌈', '📸'],
+      };
+    case 'travel':
+      return {
+        tagline: 'Every destination becomes a memory worth keeping ✈️',
+        decorations: ['✈️', '🗺️', '📍', '✨', '🌍'],
+      };
+    case 'valentines':
+      return {
+        tagline: 'A little more love, today and always 💌',
+        decorations: ['💌', '💕', '✨', '🌹', '💖'],
+      };
+    case 'mothers_day':
+      return {
+        tagline: 'For the love that shaped everything 🌸',
+        decorations: ['🌸', '💗', '✨', '🌷', '🤍'],
+      };
+    case 'fathers_day':
+      return {
+        tagline: 'For the strength, care, and love that always stayed 🧡',
+        decorations: ['🧡', '✨', '⭐', '🤎', '👔'],
       };
     case 'couple':
     default:
       return {
         tagline: 'Forever & Always 💍',
-        madeWith: 'Made with love especially for you',
         decorations: ['💗', '💕', '💖', '💖', '💕'],
-        decorationClasses: 'text-rose-300',
       };
   }
 };
