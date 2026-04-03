@@ -155,9 +155,18 @@ export default async function LovePage({ params }: PageProps) {
   // Extract theme and templates with fallbacks
   const theme: ThemeKey = (config.theme as ThemeKey) || DEFAULT_THEME;
   const sections = Array.isArray(config.sections) ? config.sections : ['home'];
-  const homeTemplate: HomeTemplate = (config.home_template as HomeTemplate) || 'hero_centered';
-  const galleryTemplate: GalleryTemplate = (config.gallery_template as GalleryTemplate) || 'grid';
-  const timelineTemplate: TimelineTemplate = (config.timeline_template as TimelineTemplate) || 'vertical_timeline';
+  const homeTemplate: HomeTemplate =
+    (config.templates?.home as HomeTemplate) ||
+    (config.home_template as HomeTemplate) ||
+    'hero_centered';
+  const galleryTemplate: GalleryTemplate =
+    (config.templates?.gallery as GalleryTemplate) ||
+    (config.gallery_template as GalleryTemplate) ||
+    'grid';
+  const timelineTemplate: TimelineTemplate =
+    (config.templates?.timeline as TimelineTemplate) ||
+    (config.timeline_template as TimelineTemplate) ||
+    'vertical_timeline';
   
   // Get timeline events
   const timelineEvents: TimelineEvent[] = Array.isArray(config.timeline)

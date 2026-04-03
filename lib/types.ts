@@ -91,7 +91,9 @@ export type LayoutPreset =
   | 'modern_romance'
   | 'soft_scrapbook'
   | 'minimal_keepsake'
-  | 'celebration_flow';
+  | 'celebration_flow'
+  | 'editorial_timeline'
+  | 'photo_showcase';
 
 // Preview Device Types
 export type PreviewDevice = 'desktop' | 'mobile';

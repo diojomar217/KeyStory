@@ -22,6 +22,7 @@ import {
 import { getTemplateSections, getSectionMetadata, getSectionTemplates } from '@/lib/section-registry';
 import { getDefaultSelections } from '@/lib/config-helpers';
 import { getPresetsForOccasion, getPresetById } from '@/lib/preset-registry';
+import { applyLayoutPresetToConfig } from '@/lib/layout-preset';
 import { SITE_TYPES } from '@/config/siteTypeConfig';
 import type { SiteTypeKey } from '@/config/siteTypeConfig';
 import {
@@ -1249,6 +1250,7 @@ export default function CreateWebsitePage() {
 
             <ThemeSelector
               value={config.theme as ThemeKey}
+              occasion={config.occasion}
               onChange={(theme) => handleConfigChange({ theme })}
             />
 
@@ -1279,7 +1281,9 @@ export default function CreateWebsitePage() {
                   <div className="pt-6 border-t border-slate-200">
                     <LayoutPresetSelector
                       value={config.layout_preset}
-                      onChange={(layout_preset) => handleConfigChange({ layout_preset })}
+                      onChange={(layout_preset) => {
+                        handleConfigChange(applyLayoutPresetToConfig(config, layout_preset));
+                      }}
                     />
                   </div>
                 </div>

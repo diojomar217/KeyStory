@@ -23,6 +23,7 @@ import { getSite, updateSite } from '@/lib/api/sites';
 import { validateStep, WIZARD_STEPS } from '@/lib/builder-steps-config';
 import { getPresetsForOccasion, getPresetById } from '@/lib/preset-registry';
 import { getDefaultSelections, getTemplatesForSection } from '@/lib/config-helpers';
+import { applyLayoutPresetToConfig } from '@/lib/layout-preset';
 import { getSectionMetadata } from '@/lib/section-registry';
 import { SITE_TYPES } from '@/config/siteTypeConfig';
 import type { SiteTypeKey } from '@/config/siteTypeConfig';
@@ -1287,6 +1288,7 @@ export default function EditWebsitePage() {
 
             <ThemeSelector
               value={config.theme as ThemeKey}
+              occasion={config.occasion}
               onChange={(theme) => handleConfigChange({ theme })}
             />
 
@@ -1315,11 +1317,11 @@ export default function EditWebsitePage() {
 
                   {/* Site Layout */}
                   <div className="pt-6 border-t border-slate-200">
-                    {/* Debug log moved out of JSX */}
-                    {(() => { console.log('[DEBUG] Render LayoutPresetSelector', { selectedPresetId, layout_preset: config.layout_preset }); return null; })()}
                     <LayoutPresetSelector
                       value={config.layout_preset}
-                      onChange={(layout_preset) => handleConfigChange({ layout_preset })}
+                      onChange={(layout_preset) => {
+                        handleConfigChange(applyLayoutPresetToConfig(config, layout_preset));
+                      }}
                     />
                   </div>
                 </div>
