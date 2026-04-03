@@ -28,12 +28,26 @@ const normalizeUniqueTextArray = (input: unknown[]): string[] => {
   return result;
 };
 
+const isMaskedPasswordPlaceholder = (value?: string): boolean => {
+  const normalized = (value || '').trim();
+  return normalized.length > 0 && /^[*•]+$/.test(normalized);
+};
+
 const normalizePasswordConfig = async (siteConfig: any, passwordInput?: string): Promise<any> => {
   if (!siteConfig) siteConfig = {};
 
   if (siteConfig.password?.enabled === true) {
     if (passwordInput && passwordInput.trim()) {
       const password = passwordInput.trim();
+
+      // Edit forms may send masked placeholders (e.g. "••••") for unchanged passwords.
+      if (isMaskedPasswordPlaceholder(password)) {
+        if (siteConfig.password.hash) {
+          return { ...siteConfig, password: { enabled: true, hash: siteConfig.password.hash } };
+        }
+        throw new Error('Password is required when protection is enabled');
+      }
+
       if (password.length < 4 || password.length > 6) {
         throw new Error('Password must be 4 to 6 characters long');
       }
@@ -193,6 +207,37 @@ export async function PUT(req: NextRequest) {
       heroCoverPhotoUrl = uniqueProcessedPhotos[legacyCoverIndex];
     }
 
+    const resolvedTemplates = {
+      ...(updates.config?.templates || {}),
+      ...(updates.config?.home_template || updates.home_template
+        ? { home: updates.config?.home_template || updates.home_template }
+        : {}),
+      ...(updates.config?.gallery_template || updates.gallery_template
+        ? { gallery: updates.config?.gallery_template || updates.gallery_template }
+        : {}),
+      ...(updates.config?.timeline_template || updates.timeline_template
+        ? { timeline: updates.config?.timeline_template || updates.timeline_template }
+        : {}),
+      ...(updates.config?.song_template || updates.song_template
+        ? { song: updates.config?.song_template || updates.song_template }
+        : {}),
+    };
+
+    const resolvedTimeline = Array.isArray(updates.config?.section_content?.timeline)
+      ? updates.config.section_content.timeline
+      : Array.isArray(updates.config?.timeline)
+        ? updates.config.timeline
+        : Array.isArray(updates.config?.timeline_events)
+          ? updates.config.timeline_events
+          : Array.isArray(updates.timeline_events)
+            ? updates.timeline_events
+            : [];
+
+    const resolvedSectionContent = {
+      ...(updates.config?.section_content || {}),
+      ...(Array.isArray(updates.config?.section_content?.timeline) ? {} : { timeline: resolvedTimeline }),
+    };
+
     const updateObj: Partial<Site> = {
       website_name: updates.website_name,
       site_type: updates.site_type || updates.occasion,
@@ -211,18 +256,14 @@ export async function PUT(req: NextRequest) {
         occasion: updates.occasion || updates.site_type || updates.config?.occasion || undefined,
         theme: updates.config?.theme || updates.theme || DEFAULT_THEME,
         sections: updates.config?.sections || updates.sections || [],
-        templates: {
-          home: updates.config?.home_template || updates.home_template,
-          gallery: updates.config?.gallery_template || updates.gallery_template,
-          timeline: updates.config?.timeline_template || updates.timeline_template,
-        },
+        templates: resolvedTemplates,
         media: {
           photos: uniqueProcessedPhotos,
           song_link: updates.song_link || updates.config?.media?.song_link || '',
           song_autoplay: updates.song_autoplay ?? updates.config?.media?.song_autoplay ?? false,
         },
-        timeline: updates.config?.timeline || updates.config?.timeline_events || updates.timeline_events || [],
-        section_content: updates.config?.section_content || {},
+        timeline: resolvedTimeline,
+        section_content: resolvedSectionContent,
         message: updates.message || updates.config?.message || '',
         tagline: updates.tagline || updates.config?.tagline || '',
         hero: {

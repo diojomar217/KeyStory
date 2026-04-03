@@ -191,6 +191,41 @@ export default function KeychainPrintPage({ params }: PageProps) {
 
   const qrCodeUrl = order?.qr_code_url;
 
+  const downloadMemoryBookPdf = async () => {
+    const slug = order?.website_name || order?.slug;
+    if (!slug) {
+      alert('This website is missing a slug/website name, so PDF cannot be generated yet.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/site/${encodeURIComponent(slug)}/pdf`);
+      if (!response.ok) {
+        let apiMessage = 'PDF generation failed';
+        try {
+          const payload = await response.json();
+          if (payload?.error) apiMessage = payload.error;
+        } catch {
+          // keep default message when response is not JSON
+        }
+        throw new Error(apiMessage);
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${slug}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Memory Book PDF download failed. Please try again.';
+      alert(message);
+    }
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -373,16 +408,23 @@ export default function KeychainPrintPage({ params }: PageProps) {
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Product Print Maker</h1>
-            
+            <p className="mt-1 text-sm text-slate-600">Print Studio hub for product inserts, QR Card, and Memory Book PDF.</p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <a
               href={`/admin/websites/${id}/qr-card`}
-              className="text-rose-600 hover:text-rose-700 font-medium"
+              className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100"
             >
-              &larr; QR Card
+              ◧ QR Card
             </a>
+            <button
+              type="button"
+              onClick={downloadMemoryBookPdf}
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              📄 Memory Book PDF
+            </button>
             <a href="/admin/websites" className="text-slate-600 hover:text-slate-700 font-medium">
               Back to Websites
             </a>

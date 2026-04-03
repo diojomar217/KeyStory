@@ -158,9 +158,13 @@ export const validateContentStep = (
 ): ValidationResult => {
   const sections = config.sections || [];
   const sectionContent = (config.section_content || {}) as any;
+  const existingPhotos = Array.isArray((form as unknown as { existingPhotos?: unknown[] }).existingPhotos)
+    ? (form as unknown as { existingPhotos: unknown[] }).existingPhotos
+    : [];
+  const totalGalleryPhotos = (form.photos?.length || 0) + existingPhotos.length;
   
   // Gallery requires photos
-  if (sections.includes('gallery') && (!form.photos || form.photos.length === 0)) {
+  if (sections.includes('gallery') && totalGalleryPhotos === 0) {
     return { valid: false, error: 'Gallery section requires at least one photo' };
   }
   

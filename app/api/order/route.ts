@@ -144,8 +144,10 @@ export async function POST(req: NextRequest) {
 
     const occasion = (data.occasion || data.config?.occasion || 'couple').toString();
 
-    const customerName = data.customer_name || data.participants?.[0]?.name || '';
-    const partnerName = data.partner_name || data.participants?.[1]?.name || '';
+    const participantPrimary = (data.participants?.[0]?.name || '').trim();
+    const participantSecondary = (data.participants?.[1]?.name || '').trim();
+    const customerName = participantPrimary || (data.customer_name || '').trim();
+    const partnerName = participantSecondary || (data.partner_name || '').trim();
     const specialDate = data.specialDate || '';
     const message = data.message || '';
 
@@ -267,6 +269,19 @@ export async function POST(req: NextRequest) {
     };
     // Remove config.participants if present
     let { participants, ...configWithoutParticipants } = rawConfig;
+    const resolvedTimeline = Array.isArray(rawConfig.section_content?.timeline)
+      ? rawConfig.section_content.timeline
+      : Array.isArray(rawConfig.timeline)
+        ? rawConfig.timeline
+        : Array.isArray(rawConfig.timeline_events)
+          ? rawConfig.timeline_events
+          : [];
+
+    const resolvedSectionContent = {
+      ...(rawConfig.section_content || {}),
+      ...(Array.isArray(rawConfig.section_content?.timeline) ? {} : { timeline: resolvedTimeline }),
+    };
+
     let siteConfig: any = {
       ...configWithoutParticipants,
       home_template: undefined,
@@ -288,8 +303,8 @@ export async function POST(req: NextRequest) {
         song_link: rawConfig.media?.song_link || '',
         song_autoplay: rawConfig.media?.song_autoplay ?? false,
       },
-      timeline: rawConfig.timeline_events || [],
-      section_content: rawConfig.section_content || {},
+      timeline: resolvedTimeline,
+      section_content: resolvedSectionContent,
       message,
       tagline: data.tagline || rawConfig.tagline || '',
       hero: {

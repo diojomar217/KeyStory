@@ -63,9 +63,10 @@ const resolveRedirectTarget = (slug: string, config: unknown, req: NextRequest):
 export async function GET(req: NextRequest, {params}: {params: Promise<{slug: string}>}) {
   const resolved = await params;
   const slug = safestring(resolved.slug);
+  const homeUrl = new URL('/', req.nextUrl.origin);
 
   if (!slug) {
-    return NextResponse.redirect('/');
+    return NextResponse.redirect(homeUrl);
   }
 
   const {data: site, error: siteError} = await supabase
@@ -75,7 +76,7 @@ export async function GET(req: NextRequest, {params}: {params: Promise<{slug: st
     .maybeSingle();
 
   if (siteError || !site) {
-    return NextResponse.redirect('/');
+    return NextResponse.redirect(homeUrl);
   }
 
   const user_agent = safestring(req.headers.get('user-agent'));

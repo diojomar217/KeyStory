@@ -473,7 +473,7 @@ export default function QRCardPage({ params }: PageProps) {
               href={`/admin/websites/${id}/insert-print`}
               className="text-rose-600 hover:text-rose-700 font-medium"
             >
-              ← Insert Print Studio
+              ← Print Studio
             </a>
             <a href="/admin/websites" className="text-slate-600 hover:text-slate-700 font-medium">
               Back to Websites

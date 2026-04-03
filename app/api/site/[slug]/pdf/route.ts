@@ -3,24 +3,43 @@ import puppeteer from 'puppeteer';
 import { supabase } from '@/lib/supabase';
 import { generatePdfHtml } from '@/lib/pdf-html';
 
-export async function GET(request: NextRequest) {
-  const url = new URL(request.url);
-  const segments = url.pathname.split('/').filter(Boolean); // [api, site, {slug}, pdf]
-  const slug = segments[2] || '';
+type RouteContext = {
+  params: Promise<{ slug: string }>;
+};
+
+export async function GET(request: NextRequest, context: RouteContext) {
+  const resolved = await context.params;
+  const slug = decodeURIComponent((resolved.slug || '').trim());
 
   if (!slug) {
     return NextResponse.json({ error: 'Missing slug' }, { status: 400 });
   }
 
-  const { data: site, error } = await supabase
+  const { data: siteByWebsiteName, error: websiteNameError } = await supabase
     .from('sites')
     .select('*')
-    .or(`website_name.eq.${slug},slug.eq.${slug}`)
+    .eq('website_name', slug)
     .maybeSingle();
 
-  if (error) {
-    console.error('Supabase error (PDF):', error);
+  if (websiteNameError) {
+    console.error('Supabase website_name lookup error (PDF):', websiteNameError);
     return NextResponse.json({ error: 'Failed to fetch site' }, { status: 500 });
+  }
+
+  let site = siteByWebsiteName;
+  if (!site) {
+    const { data: siteBySlug, error: slugError } = await supabase
+      .from('sites')
+      .select('*')
+      .eq('slug', slug)
+      .maybeSingle();
+
+    if (slugError) {
+      console.error('Supabase slug lookup error (PDF):', slugError);
+      return NextResponse.json({ error: 'Failed to fetch site' }, { status: 500 });
+    }
+
+    site = siteBySlug;
   }
 
   if (!site) {
