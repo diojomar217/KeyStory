@@ -70,6 +70,11 @@ function buildParticipantsForOccasion(
   }));
 }
 
+const isMaskedPasswordPlaceholder = (value?: string): boolean => {
+  const normalized = (value || '').trim();
+  return normalized.length > 0 && /^[*•]+$/.test(normalized);
+};
+
 export default function EditWebsitePage() {
         const MAX_IMAGE_UPLOAD_BYTES = 12 * 1024 * 1024; // 12 MB
 
@@ -807,16 +812,43 @@ export default function EditWebsitePage() {
     }
 
     try {
-      const normalizedConfig = { ...config };
+      const normalizedConfig = {
+        ...config,
+      } as SiteConfig & {
+        people?: {
+          primary?: string;
+          secondary?: string;
+        };
+      };
+      const primaryParticipantName = (form.participants?.[0]?.name || '').trim();
+      const secondaryParticipantName = (form.participants?.[1]?.name || '').trim();
+      const resolvedCustomerName = primaryParticipantName || (form.customer_name || '').trim();
+      const resolvedPartnerName = secondaryParticipantName || (form.partner_name || '').trim();
+
+      normalizedConfig.people = {
+        ...(normalizedConfig.people || {}),
+        primary: resolvedCustomerName,
+        secondary: resolvedPartnerName,
+      };
+
       if (normalizedConfig?.hero?.coverPhotoUrl?.startsWith('blob:')) {
         delete normalizedConfig.hero.coverPhotoUrl;
       }
+
+      const rawPasswordInput = (form.password_input || '').trim();
+      const passwordUnchanged = isMaskedPasswordPlaceholder(rawPasswordInput);
+      const effectivePasswordInput = passwordUnchanged ? '' : rawPasswordInput;
+
       if (passwordEnabled) {
-        let hash = undefined;
-        if (form.password_input && form.password_input.trim().length >= 4 && form.password_input.trim().length <= 6) {
-          hash = bcrypt.hashSync(form.password_input.trim(), 8);
+        if (!passwordUnchanged) {
+          // User typed a new password — hash and overwrite
+          let hash = undefined;
+          if (effectivePasswordInput.length >= 4 && effectivePasswordInput.length <= 6) {
+            hash = bcrypt.hashSync(effectivePasswordInput, 8);
+          }
+          normalizedConfig.password = { enabled: true, ...(hash ? { hash } : {}) };
         }
-        normalizedConfig.password = { enabled: true, ...(hash ? { hash } : {}) };
+        // else: passwordUnchanged — normalizedConfig already has the existing hash from config state
       } else {
         delete normalizedConfig.password;
       }
@@ -844,8 +876,8 @@ export default function EditWebsitePage() {
         website_name: form.website_name,
         site_type: config.occasion,
         occasion: config.occasion,
-        customer_name: form.customer_name,
-        partner_name: form.partner_name,
+        customer_name: resolvedCustomerName,
+        partner_name: resolvedPartnerName,
         specialDate: form.specialDate,
         message: form.message,
         tagline: form.tagline,
@@ -853,7 +885,7 @@ export default function EditWebsitePage() {
         song_autoplay: form.song_autoplay,
         photos: allPhotos,
         config: normalizedConfig,
-        password_input: form.password_input,
+        password_input: effectivePasswordInput,
         expires_at: expiresAt,
         hero_photo: heroPhotoBase64,
       };
@@ -1242,6 +1274,11 @@ export default function EditWebsitePage() {
                               value={form.password_input || ''}
                               minLength={4}
                               maxLength={6}
+                              onFocus={() => {
+                                if (isMaskedPasswordPlaceholder(form.password_input)) {
+                                  setForm((prev) => ({ ...prev, password_input: '' }));
+                                }
+                              }}
                               onChange={handleChange}
                               className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
                               placeholder="Enter password"

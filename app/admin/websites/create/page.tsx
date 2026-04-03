@@ -916,11 +916,16 @@ export default function CreateWebsitePage() {
         throw new Error(err?.message || 'Invalid expiration date');
       }
 
+      const primaryParticipantName = (form.participants?.[0]?.name || '').trim();
+      const secondaryParticipantName = (form.participants?.[1]?.name || '').trim();
+      const resolvedCustomerName = primaryParticipantName || (form.customer_name || '').trim();
+      const resolvedPartnerName = secondaryParticipantName || (form.partner_name || '').trim();
+
       const payload: any = {
         website_name: form.website_name,
         occasion: form.occasion,
-        customer_name: form.customer_name,
-        partner_name: form.partner_name,
+        customer_name: resolvedCustomerName,
+        partner_name: resolvedPartnerName,
         specialDate: form.specialDate,
         message: form.message,
         tagline: form.tagline,
@@ -2027,8 +2032,8 @@ export default function CreateWebsitePage() {
               occasion={form.occasion}
               config={config}
               coupleNames={{
-                customer_name: form.customer_name ?? form.participants?.[0]?.name ?? '',
-                partner_name: form.partner_name ?? form.participants?.[1]?.name ?? '',
+                customer_name: form.participants?.[0]?.name ?? form.customer_name ?? '',
+                partner_name: form.participants?.[1]?.name ?? form.partner_name ?? '',
               }}
               tagline={form.tagline}
               message={form.message}
