@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminRequestAuthorized, unauthorizedAdminResponse } from '@/lib/api/admin-auth';
 import { claimDueJobs, completeJob, failJob } from '@/lib/reliability/job-queue';
 import { retrySiteMediaUpload } from '@/lib/reliability/upload-retry-jobs';
 import { captureError } from '@/lib/reliability/monitoring';
 import { recordAdminAudit } from '@/lib/reliability/audit';
 
 export async function POST(req: NextRequest) {
+  if (!isAdminRequestAuthorized(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   try {
     const jobs = await claimDueJobs(25);
     const results: Array<{ id: string; status: 'done' | 'failed'; message?: string }> = [];

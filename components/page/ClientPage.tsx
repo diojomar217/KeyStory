@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, SectionContentMap, GalleryLayout, Section, GuestMessage, GuestMessageRecord, OccasionType } from '@/lib/types';
+import type { SiteAnalyticsEventType } from '@/lib/types';
 import { ThemeKey } from '@/config/themeConfig';
 import BackgroundDecorations from './BackgroundDecorations';
 import ThemeWrapper, { useTheme } from '../builder/ThemeWrapper';
@@ -18,6 +19,7 @@ import LoveLetterSection from '../sections/couple/LoveLetterSection';
 import BackToTop from '../ui/BackToTop';
 import MemoryCardSection from '../sections/shared/MemoryCardSection';
 import RomanticOpening from './RomanticOpening';
+import SectionProgressNav from '../ui/SectionProgressNav';
 
 // Import new section components
 import QuotesSection from '../sections/couple/QuotesSection';
@@ -117,6 +119,8 @@ export default function ClientPage({
 
   // Visual progress + transition state
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [activeStorySection, setActiveStorySection] = useState<string>('');
+  const [visibleStorySections, setVisibleStorySections] = useState<string[]>([]);
 
   // Romantic opening state
   const [showOpening, setShowOpening] = useState(true);
@@ -127,11 +131,12 @@ export default function ClientPage({
   const styles = useTheme(theme);
 
   // Use registry-based allowed sections to make site type rules data-driven
-  const allowedSections = getAvailableSections(siteType);
+  const allowedSections = useMemo(() => getAvailableSections(siteType), [siteType]);
 
-  const effectiveSections = sections.filter((section) => allowedSections.includes(section));
-
-  const activeSections = effectiveSections;
+  const activeSections = useMemo(
+    () => sections.filter((section) => allowedSections.includes(section)),
+    [sections, allowedSections]
+  );
 
   // Determine if we need alternating backgrounds
   const hasGallery = activeSections.includes('gallery');
@@ -140,6 +145,42 @@ export default function ClientPage({
 
   const passwordEnabled = config?.password?.enabled === true;
   const passwordHash = config?.password?.hash;
+  const storySections = useMemo(() => activeSections.filter((section) => section !== 'home'), [activeSections]);
+
+  const formatSectionLabel = (section: string) => {
+    const normalized = section
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+
+    const aliases: Record<string, string> = {
+      'Qr Keepsake': 'QR Keepsake',
+      Rsvp: 'RSVP',
+    };
+
+    return aliases[normalized] || normalized;
+  };
+
+  const trackAnalyticsEvent = useCallback(
+    (eventType: SiteAnalyticsEventType, source: string, dedupeKey?: string) => {
+      if (!slug || typeof window === 'undefined') return;
+
+      if (dedupeKey) {
+        const sessionKey = `analytics_${slug}_${dedupeKey}`;
+        if (window.sessionStorage.getItem(sessionKey)) return;
+        window.sessionStorage.setItem(sessionKey, 'true');
+      }
+
+      fetch('/api/analytics/event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, event_type: eventType, source }),
+      }).catch((err) => {
+        console.warn(`Analytics ${eventType} tracking failed:`, err);
+      });
+    },
+    [slug],
+  );
+
   // Check localStorage on mount to determine if we should skip the opening
   useEffect(() => {
     if (slug) {
@@ -168,6 +209,52 @@ export default function ClientPage({
     onScroll();
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (passwordEnabled && !isUnlocked) return;
+
+    const sectionNodes = Array.from(
+      document.querySelectorAll<HTMLElement>('[data-story-section="true"]')
+    );
+
+    if (sectionNodes.length === 0) return;
+
+    const sectionKeys = sectionNodes
+      .map((node) => node.dataset.sectionKey)
+      .filter((key): key is string => Boolean(key));
+
+    if (sectionKeys.length > 0) {
+      const nextKey = sectionKeys.join('|');
+      setVisibleStorySections((current) => {
+        const currentKey = current.join('|');
+        return currentKey === nextKey ? current : sectionKeys;
+      });
+      setActiveStorySection((current) => current || sectionKeys[0]);
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const topVisible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+        const nextSection = topVisible?.target?.getAttribute('data-section-key');
+        if (nextSection) {
+          setActiveStorySection(nextSection);
+          trackAnalyticsEvent('section_view', `section:${nextSection}`, `section_view_${nextSection}`);
+        }
+      },
+      {
+        rootMargin: '-20% 0px -55% 0px',
+        threshold: [0.2, 0.45, 0.75],
+      }
+    );
+
+    sectionNodes.forEach((node) => observer.observe(node));
+
+    return () => observer.disconnect();
+  }, [storySections, passwordEnabled, isUnlocked, showOpening, trackAnalyticsEvent]);
 
   useEffect(() => {
     if (!passwordEnabled) {
@@ -199,22 +286,13 @@ export default function ClientPage({
 
     if (typeof window === 'undefined') return;
 
-    const sessionKey = `analytics_page_viewed_${slug}`;
-    if (window.sessionStorage.getItem(sessionKey)) return;
-
-    window.sessionStorage.setItem(sessionKey, 'true');
-    fetch('/api/analytics/event', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug, event_type: 'page_view', source: 'site' }),
-    }).catch((err) => {
-      console.warn('Analytics page_view tracking failed:', err);
-    });
-  }, [slug]);
+    trackAnalyticsEvent('page_view', 'site', 'page_view');
+  }, [slug, trackAnalyticsEvent]);
 
   // Handle reveal - called when user clicks the open button
   const handleReveal = useCallback(() => {
     setIsRevealing(true);
+    trackAnalyticsEvent('opening_reveal', 'opening_screen', 'opening_reveal');
 
     // Set localStorage to remember this visit
     if (slug) {
@@ -227,7 +305,7 @@ export default function ClientPage({
       setShowOpening(false);
       setIsRevealing(false);
     }, 800);
-  }, [slug]);
+  }, [slug, trackAnalyticsEvent]);
 
   // Compute backward-compatible data using useMemo
   const { effectiveGalleryLayout, mergedTimelineEvents } = useMemo(() => {
@@ -387,6 +465,7 @@ export default function ClientPage({
               theme={theme}
               songLink={songLink}
               autoplay={songAutoplay}
+              onTrackEvent={trackAnalyticsEvent}
             />
           );
 
@@ -594,7 +673,7 @@ export default function ClientPage({
                   <SectionHeader
                     icon="💌"
                     title="RSVP"
-                    subtitle="Let the couple know if you can attend"
+                    subtitle="Let everyone know if you can attend"
                     theme={theme}
                   />
                   <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -675,6 +754,7 @@ export default function ClientPage({
     };
 
     const remainingSections = activeSections.filter((section) => section !== 'home');
+    const navSections = visibleStorySections.length > 0 ? visibleStorySections : storySections;
 
     if (passwordEnabled && !isUnlocked) {
       return <PasswordGate slug={slug || ''} passwordHash={passwordHash} onUnlock={() => setIsUnlocked(true)} />;
@@ -713,6 +793,29 @@ export default function ClientPage({
               />
             )}
 
+            {navSections.length > 0 && (
+              <>
+                <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[70] md:hidden">
+                  <div
+                    className="px-4 py-2 rounded-full border text-xs font-semibold tracking-[0.16em] uppercase backdrop-blur-md"
+                    style={{
+                      backgroundColor: theme === 'dark_elegant' ? 'rgba(17,17,17,0.62)' : 'rgba(255,255,255,0.78)',
+                      borderColor: theme === 'dark_elegant' ? 'rgba(255,255,255,0.14)' : 'rgba(15,23,42,0.08)',
+                      color: theme === 'dark_elegant' ? '#FFFFFF' : '#111827',
+                    }}
+                  >
+                    {formatSectionLabel(activeStorySection || navSections[0])}
+                  </div>
+                </div>
+                <SectionProgressNav
+                  theme={theme}
+                  sections={navSections}
+                  activeSection={activeStorySection || navSections[0]}
+                  formatLabel={formatSectionLabel}
+                />
+              </>
+            )}
+
             {/* Render remaining sections in selected order (with separators only between rendered sections) */}
             {(() => {
               const renderedNodes: React.ReactNode[] = [];
@@ -729,11 +832,14 @@ export default function ClientPage({
                   renderedNodes.push(renderSectionSeparator(prevVariant, variant, `separator-${section}`));
                 }
 
-                const sectionWrapperClass = `${getSectionBgClass(theme, renderedSectionCount)} py-16 animate-fade-in-up section-snap`;
+                const sectionWrapperClass = `${getSectionBgClass(theme, renderedSectionCount)} py-16 animate-fade-in-up motion-reduce:animate-none section-snap [content-visibility:auto] [contain-intrinsic-size:1px_1200px]`;
                 const sectionAnimationDelay = Math.min(0.25 + renderedSectionCount * 0.08, 0.9);
                 renderedNodes.push(
                   <div
                     key={`section-wrapper-${section}`}
+                    id={`story-section-${section}`}
+                    data-story-section="true"
+                    data-section-key={section}
                     className={sectionWrapperClass}
                     style={{ animationDelay: `${sectionAnimationDelay}s` }}
                   >
@@ -762,9 +868,13 @@ export default function ClientPage({
                       theme={theme}
                       customerName={resolvedCustomerName}
                       partnerName={resolvedPartnerName}
+                      heroPhotoUrl={heroCoverPhotoUrl || photos[(typeof coverPhotoIndex === 'number' ? coverPhotoIndex : 0)] || photos[0]}
+                      specialDate={anniversaryDate}
                       qrCodeUrl={qrCodeUrl}
                       qrDataUrl={qrDataUrl}
                       slug={slug}
+                      siteType={siteType}
+                      onTrackEvent={trackAnalyticsEvent}
                     />
                   </div>
                 );
@@ -779,8 +889,6 @@ export default function ClientPage({
               config={config}
               customerName={resolvedCustomerName}
               partnerName={resolvedPartnerName}
-              qrCodeUrl={qrCodeUrl}
-              qrDataUrl={qrDataUrl}
             />
 
             {/* Back to Top Button */}

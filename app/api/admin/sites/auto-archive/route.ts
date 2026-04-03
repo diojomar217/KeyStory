@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminRequestAuthorized, unauthorizedAdminResponse } from '@/lib/api/admin-auth';
 import { supabase, Site } from '@/lib/supabase';
 import { needsAutoArchive } from '@/lib/site-status';
 import { createArchiveForSite } from '@/lib/archiver';
@@ -6,6 +7,10 @@ import { createArchiveForSite } from '@/lib/archiver';
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
+  if (!isAdminRequestAuthorized(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   try {
     const { graceDays = 7 } = await req.json().catch(() => ({}));
 

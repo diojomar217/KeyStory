@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminRequestAuthorized, unauthorizedAdminResponse } from '@/lib/api/admin-auth';
 import { getWebsiteByIdWithConfig, updateWebsite } from '@/lib/db/websites';
 
 const allowedStatuses = new Set([
@@ -17,6 +18,10 @@ const safeString = (value: unknown): string | null => {
 };
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!isAdminRequestAuthorized(_req)) {
+    return unauthorizedAdminResponse();
+  }
+
   try {
     const { id } = await params;
     if (!id) {
@@ -46,6 +51,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!isAdminRequestAuthorized(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   try {
     const { id } = await params;
     if (!id) {

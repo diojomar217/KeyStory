@@ -186,11 +186,20 @@ interface ReasonsILoveYouInputProps {
 export function ReasonsILoveYouInput({ value, onChange }: ReasonsILoveYouInputProps) {
   const reasons = value?.reasons || [];
 
+  const syncReasons = (items: any[]) =>
+    onChange({
+      reasons: items.map((item, index) => ({
+        ...item,
+        id: item.id || `reason-${index + 1}`,
+        number: index + 1,
+      })) as ReasonILoveYou[],
+    });
+
   return (
     <RepeaterInput
       label="Reasons Why I Love You"
       items={reasons}
-      onChange={(items) => onChange({ reasons: items as ReasonILoveYou[] })}
+      onChange={syncReasons}
       required
       addButtonText="Add Reason"
       emptyText="Add reasons why you love your partner"

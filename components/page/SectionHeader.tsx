@@ -41,15 +41,15 @@ export default function SectionHeader({
   if (resolvedSiteType === 'wedding') {
     return (
       <div className={`section-header text-center mb-12 ${className}`}>
-        <div className="inline-flex items-center gap-2 rounded-full border border-amber-200/60 bg-white/75 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-amber-700 shadow-sm backdrop-blur-md">
+        <div className="inline-flex items-center gap-2 rounded-full border border-amber-200/60 bg-white/75 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-amber-700 shadow-sm backdrop-blur-md ui-kicker">
           <span>{icon || occasionHero.badge}</span>
           Ceremony Chapter
         </div>
-        <h2 className="mt-5 font-serif text-3xl font-semibold tracking-tight text-amber-950 md:text-4xl">
+        <h2 className="mt-5 font-serif text-3xl font-semibold tracking-tight text-amber-950 md:text-4xl ui-title-balance">
           {title}
         </h2>
         {subtitle && (
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-amber-800/80 md:text-base">
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-amber-800/80 md:text-base ui-subtitle-measure">
             {subtitle}
           </p>
         )}
@@ -65,15 +65,15 @@ export default function SectionHeader({
   if (resolvedSiteType === 'memorial') {
     return (
       <div className={`section-header text-center mb-12 ${className}`}>
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-white/55 backdrop-blur-md">
+        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-white/55 backdrop-blur-md ui-kicker">
           <span>{icon || occasionHero.badge}</span>
           Tribute Chapter
         </div>
-        <h2 className="mt-5 font-serif text-3xl font-semibold tracking-tight text-white md:text-4xl">
+        <h2 className="mt-5 font-serif text-3xl font-semibold tracking-tight text-white md:text-4xl ui-title-balance">
           {title}
         </h2>
         {subtitle && (
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/68 md:text-base">
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/68 md:text-base ui-subtitle-measure">
             {subtitle}
           </p>
         )}
@@ -85,15 +85,15 @@ export default function SectionHeader({
   if (resolvedSiteType === 'travel') {
     return (
       <div className={`section-header text-center mb-12 ${className}`}>
-        <div className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white/85 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-600 shadow-sm">
+        <div className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white/85 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-600 shadow-sm ui-kicker">
           <span>{icon || occasionHero.badge}</span>
           Route Stop
         </div>
-        <h2 className="mt-5 text-3xl font-black tracking-tight text-slate-900 md:text-4xl">
+        <h2 className="mt-5 text-3xl font-black tracking-tight text-slate-900 md:text-4xl ui-title-balance">
           {title}
         </h2>
         {subtitle && (
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-slate-600 md:text-base">
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-slate-600 md:text-base ui-subtitle-measure">
             {subtitle}
           </p>
         )}
@@ -123,7 +123,7 @@ export default function SectionHeader({
       )}
 
       {/* Title */}
-      <h2 className={`section-title text-2xl md:text-3xl font-bold tracking-tight ${accents.title} ${headingFontClass}`}>
+      <h2 className={`section-title text-2xl md:text-3xl font-bold tracking-tight ui-title-balance ${accents.title} ${headingFontClass}`}>
         {title}
       </h2>
 
@@ -132,6 +132,7 @@ export default function SectionHeader({
         <p
           className={[
             'section-subtitle mt-3 text-sm md:text-base lg:text-lg leading-relaxed tracking-wide max-w-md mx-auto',
+            'ui-subtitle-measure',
             shouldUseSoftSubtitle ? 'font-normal opacity-90' : 'font-medium',
             accents.subtitle,
           ].join(' ')}

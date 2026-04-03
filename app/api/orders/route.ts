@@ -99,9 +99,10 @@ export async function GET(req: NextRequest) {
     const requestedSortBy = searchParams.get('sortBy') || 'created_at';
     const sortBy = ALLOWED_SORT_COLUMNS.has(requestedSortBy) ? requestedSortBy : 'created_at';
     const sortDirection = (searchParams.get('sortDirection') === 'asc' ? 'asc' : 'desc');
+    const guestMessageFilter = searchParams.get('guestMessageFilter') === 'pending' ? 'pending' : 'all';
 
     // Build cache key from query params (after all are defined)
-    const cacheKey = JSON.stringify({ limit, offset, status, search, sortBy, sortDirection });
+    const cacheKey = JSON.stringify({ limit, offset, status, search, sortBy, sortDirection, guestMessageFilter });
     const now = Date.now();
     if (ordersCache[cacheKey] && now - ordersCache[cacheKey].cachedAt < CACHE_TTL) {
       return NextResponse.json(ordersCache[cacheKey].data);
@@ -116,6 +117,7 @@ export async function GET(req: NextRequest) {
         search,
         sortBy,
         sortDirection,
+        guestMessageFilter,
       });
       // Flatten theme to top-level for each order (for admin table display)
       const ordersWithTheme = (orders || []).map((order: any) => {

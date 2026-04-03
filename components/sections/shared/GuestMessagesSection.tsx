@@ -12,6 +12,7 @@ import {
   getSectionSpacingClass,
   getHeadingFontClass,
 } from '@/lib/theme-color-helpers';
+import { getOccasionPublicCopy } from '@/lib/public-site-copy';
 
 interface GuestMessagesSectionProps {
   theme: ThemeKey;
@@ -24,6 +25,24 @@ interface GuestMessagesSectionProps {
 
 const maxNameLength = 50;
 const maxMessageLength = 500;
+
+function formatMessageDate(isoDate: string): string {
+  const date = new Date(isoDate);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const dayMs = 1000 * 60 * 60 * 24;
+  const dayDiff = Math.floor(diffMs / dayMs);
+
+  if (dayDiff <= 0) return 'Today';
+  if (dayDiff === 1) return 'Yesterday';
+  if (dayDiff < 7) return `${dayDiff} days ago`;
+
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
 
 export default function GuestMessagesSection({
   theme,
@@ -50,17 +69,18 @@ export default function GuestMessagesSection({
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [feedback, setFeedback] = useState('');
 
-  const sectionTitle = siteType === 'birthday' ? 'Birthday Wishes' : 'Guest Messages';
-  const sectionSubtitle = siteType === 'birthday'
-    ? 'Birthday wishes from friends and family'
-    : 'Messages from friends and family';
-  const sectionIcon = siteType === 'birthday' ? '🥳' : '💬';
+  const publicCopy = getOccasionPublicCopy(siteType);
+  const guestbookCopy = publicCopy.guestbook;
+  const sectionTitle = guestbookCopy.title;
+  const sectionSubtitle = guestbookCopy.subtitle;
+  const sectionIcon = guestbookCopy.icon;
   const themeUtils = useThemeUtils(theme);
   const { colors, styles } = themeUtils;
   const cardStyle = getCardStyleClasses(theme);
   const shadowClass = getShadowClass(theme);
   const spacingClass = getSectionSpacingClass(theme);
   const headingFontClass = getHeadingFontClass(theme);
+  const messageCount = guestMessages.length;
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -110,7 +130,7 @@ export default function GuestMessagesSection({
       setName('');
       setMessage('');
       setStatus('success');
-      setFeedback('Your message was sent and is awaiting approval.');
+      setFeedback(guestbookCopy.successFeedback);
 
       // Do not show pending message until approved
       // if you want to show guest messages instantly, append here (optional)
@@ -143,21 +163,27 @@ export default function GuestMessagesSection({
               borderColor: colors.border,
             }}
           >
-            <p style={{ color: colors.text }}>No guest messages yet. Be the first to leave one!</p>
+            <p style={{ color: colors.text }}>{guestbookCopy.emptyState}</p>
           </div>
         ) : (
           guestMessages.map((msg, index) => (
             <ScrollReveal key={msg.id} animation="fade-up" delay={index * 80}>
               <article
-                className={`${styles.card} ${cardStyle} ${shadowClass} border p-6`}
+                className={`${styles.card} ${cardStyle} ${shadowClass} border p-6 relative overflow-hidden`}
                 style={{
                   backgroundColor: colors.card,
                   borderColor: colors.border,
                 }}
               >
+                <div
+                  className="absolute top-0 left-0 h-1.5 w-full"
+                  style={{
+                    background: `linear-gradient(90deg, ${colors.primary}, ${colors.accent})`,
+                  }}
+                />
                 <div className="flex items-start gap-4">
                   <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center font-semibold"
+                    className="w-11 h-11 rounded-full flex items-center justify-center font-semibold shadow-md"
                     style={{
                       backgroundColor: colors.secondary,
                       color: colors.primary,
@@ -165,10 +191,25 @@ export default function GuestMessagesSection({
                   >
                     {msg.name.charAt(0).toUpperCase()}
                   </div>
-                  <div>
-                    <p className={`font-semibold ${headingFontClass}`} style={{ color: colors.text }}>{msg.name}</p>
-                    <p className="text-sm" style={{ color: colors.text }}>{new Date(msg.created_at).toLocaleDateString()}</p>
-                    <p className="mt-2 whitespace-pre-line" style={{ color: colors.text }}>{msg.message}</p>
+                  <div className="w-full">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className={`font-semibold ${headingFontClass}`} style={{ color: colors.text }}>{msg.name}</p>
+                      <span
+                        className="text-[11px] px-2 py-0.5 rounded-full"
+                        style={{
+                          backgroundColor: `${colors.secondary}66`,
+                          color: colors.primary,
+                        }}
+                      >
+                        {guestbookCopy.badgeLabel}
+                      </span>
+                    </div>
+                    <p className="text-sm mt-1" style={{ color: colors.text }}>{formatMessageDate(msg.created_at)}</p>
+                    <p className="mt-3 whitespace-pre-line leading-relaxed" style={{ color: colors.text }}>
+                      <span className="text-lg mr-1" style={{ color: colors.accent }}>&ldquo;</span>
+                      {msg.message}
+                      <span className="text-lg ml-1" style={{ color: colors.accent }}>&rdquo;</span>
+                    </p>
                   </div>
                 </div>
               </article>
@@ -185,17 +226,17 @@ export default function GuestMessagesSection({
             borderColor: colors.border,
           }}
         >
-          <h3 className={`font-semibold ${headingFontClass}`} style={{ color: colors.text }}>Leave a message</h3>
-          <p className="text-sm mb-4" style={{ color: colors.text }}>Your note will be reviewed by the site owner before going public.</p>
+          <h3 className={`font-semibold ${headingFontClass}`} style={{ color: colors.text }}>{guestbookCopy.formTitle}</h3>
+          <p className="text-sm mb-4" style={{ color: colors.text }}>{guestbookCopy.reviewNotice}</p>
 
           <form onSubmit={onSubmit} className="space-y-3">
             <div>
-              <label htmlFor="guest-name" className="block text-sm font-medium" style={{ color: colors.text }}>Name</label>
+              <label htmlFor="guest-name" className="block text-sm font-medium" style={{ color: colors.text }}>{guestbookCopy.nameLabel}</label>
               <input
                 id="guest-name"
                 type="text"
                 maxLength={maxNameLength}
-                placeholder="Your name"
+                placeholder={guestbookCopy.namePlaceholder}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="mt-1 w-full rounded-xl border px-3 py-2 text-sm focus:outline-none"
@@ -206,14 +247,17 @@ export default function GuestMessagesSection({
                 }}
                 required
               />
+              <div className="mt-1 text-right text-xs" style={{ color: colors.text }}>
+                {name.trim().length} / {maxNameLength}
+              </div>
             </div>
 
             <div>
-              <label htmlFor="guest-message" className="block text-sm font-medium" style={{ color: colors.text }}>Message</label>
+              <label htmlFor="guest-message" className="block text-sm font-medium" style={{ color: colors.text }}>{guestbookCopy.messageLabel}</label>
               <textarea
                 id="guest-message"
                 maxLength={maxMessageLength}
-                placeholder="Write your message here..."
+                placeholder={guestbookCopy.messagePlaceholder}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 className="mt-1 w-full rounded-xl border px-3 py-2 text-sm focus:outline-none min-h-[120px]"
@@ -225,6 +269,15 @@ export default function GuestMessagesSection({
                 required
               />
               <div className="text-right text-xs" style={{ color: colors.text }}><span>{message.trim().length}</span> / {maxMessageLength}</div>
+              <div className="mt-2 h-1 w-full rounded-full" style={{ backgroundColor: `${colors.border}80` }}>
+                <div
+                  className="h-1 rounded-full transition-all duration-300"
+                  style={{
+                    width: `${Math.min((message.trim().length / maxMessageLength) * 100, 100)}%`,
+                    background: `linear-gradient(90deg, ${colors.primary}, ${colors.accent})`,
+                  }}
+                />
+              </div>
             </div>
 
             <button
@@ -236,7 +289,7 @@ export default function GuestMessagesSection({
                 color: colors.background,
               }}
             >
-              {status === 'loading' ? 'Submitting...' : 'Submit Message'}
+              {status === 'loading' ? 'Submitting...' : guestbookCopy.submitLabel}
             </button>
 
             {feedback && (

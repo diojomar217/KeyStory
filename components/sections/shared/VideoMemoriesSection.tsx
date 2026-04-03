@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import type { ThemeKey } from '@/config/themeConfig';
 import type { OccasionType } from '@/lib/types';
 import SectionHeader from '../../page/SectionHeader';
@@ -26,6 +27,7 @@ export default function VideoMemoriesSection({ theme, siteType, videos = [] }: V
   const cardStyle = getCardStyleClasses(theme);
   const shadowClass = getShadowClass(theme);
   const spacingClass = getSectionSpacingClass(theme);
+  const [loadedVideos, setLoadedVideos] = useState<Record<string, boolean>>({});
 
   // Extract YouTube/Vimeo ID from URL
   const getEmbedUrl = (url: string) => {
@@ -99,12 +101,23 @@ export default function VideoMemoriesSection({ theme, siteType, videos = [] }: V
                 }}
               >
                 <div className="aspect-video">
+                  {!loadedVideos[video.id] && (
+                    <div className="absolute inset-0 premium-loading-shell premium-skeleton" aria-hidden="true">
+                      <div className="premium-skeleton-overlay" />
+                    </div>
+                  )}
                   <iframe
                     src={getEmbedUrl(video.url)}
                     title={video.title}
-                    className="w-full h-full"
+                    className={`w-full h-full transition-opacity duration-300 ${loadedVideos[video.id] ? 'opacity-100' : 'opacity-0'}`}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
+                    onLoad={() => {
+                      setLoadedVideos((prev) => ({
+                        ...prev,
+                        [video.id]: true,
+                      }));
+                    }}
                   />
                 </div>
                 {(video.title || video.description) && (

@@ -1,6 +1,7 @@
 'use client';
 
 import type { ThemeKey } from '@/config/themeConfig';
+import type { OccasionType } from '@/lib/types';
 import { useThemeUtils } from '../../builder/ThemeWrapper';
 import {
   getCardStyleClasses,
@@ -9,16 +10,18 @@ import {
   getHeadingFontClass,
 } from '@/lib/theme-color-helpers';
 import ScrollReveal from '../../ui/ScrollReveal';
+import { formatOccasionDisplayName, getOccasionPublicCopy } from '@/lib/public-site-copy';
 
 interface Props {
   theme: ThemeKey;
+  siteType?: OccasionType;
   slug?: string;
   coupleNames: string;
   qrCodeUrl?: string;
   qrDataUrl?: string;
 }
 
-export default function QRKeepsakeSection({ theme, slug, coupleNames, qrCodeUrl, qrDataUrl }: Props) {
+export default function QRKeepsakeSection({ theme, siteType = 'couple', slug, coupleNames, qrCodeUrl, qrDataUrl }: Props) {
   const themeUtils = useThemeUtils(theme);
   const { colors, styles } = themeUtils;
   const cardStyle = getCardStyleClasses(theme);
@@ -26,6 +29,8 @@ export default function QRKeepsakeSection({ theme, slug, coupleNames, qrCodeUrl,
   const spacingClass = getSectionSpacingClass(theme);
   const headingFontClass = getHeadingFontClass(theme);
   const destination = qrDataUrl || (slug ? `/r/${slug}` : '#');
+  const publicCopy = getOccasionPublicCopy(siteType);
+  const displayName = formatOccasionDisplayName(siteType, coupleNames, '');
 
   return (
     <section className={`${spacingClass} ${styles.sectionBgAlt}`} id="qr-keepsake">
@@ -38,10 +43,10 @@ export default function QRKeepsakeSection({ theme, slug, coupleNames, qrCodeUrl,
               borderColor: colors.border,
             }}
           >
-            <div className="text-5xl mb-4">🎴</div>
-            <h2 className={`text-2xl font-bold mb-2 ${headingFontClass}`} style={{ color: colors.text }}>A Keepsake You Can Carry</h2>
+            <div className="text-5xl mb-4">{publicCopy.keepsake.icon}</div>
+            <h2 className={`text-2xl font-bold mb-2 ${headingFontClass}`} style={{ color: colors.text }}>{publicCopy.keepsake.title}</h2>
             <p className="mb-6" style={{ color: colors.text }}>
-              Scan this QR code anytime to revisit {coupleNames || 'this story'}.
+              {publicCopy.keepsake.subtitle.replace('this story', displayName || 'this story')}
             </p>
 
             {qrCodeUrl ? (
@@ -76,7 +81,7 @@ export default function QRKeepsakeSection({ theme, slug, coupleNames, qrCodeUrl,
                   color: colors.background,
                 }}
               >
-                Open Link
+                {publicCopy.keepsake.actionLabel}
               </a>
             </div>
           </div>

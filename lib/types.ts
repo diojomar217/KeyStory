@@ -216,6 +216,15 @@ export interface SiteConfig {
   };
 }
 
+export type SiteAnalyticsEventType =
+  | 'page_view'
+  | 'qr_scan'
+  | 'section_view'
+  | 'share_click'
+  | 'download_card'
+  | 'music_play'
+  | 'opening_reveal';
+
 // Builder State Types
 export interface BuilderStep {
   id: number;

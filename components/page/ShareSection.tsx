@@ -2,26 +2,30 @@
 
 import { useState, useEffect } from 'react';
 import type { ThemeKey } from '@/config/themeConfig';
+import type { OccasionType } from '@/lib/types';
 import { useTheme } from '../builder/ThemeWrapper';
+import { formatOccasionDisplayName, getOccasionPublicCopy } from '@/lib/public-site-copy';
 
 type Props = {
   theme: ThemeKey;
+  siteType?: OccasionType;
   customerName: string;
   partnerName: string;
 };
 
-export default function ShareSection({ theme, customerName, partnerName }: Props) {
+export default function ShareSection({ theme, siteType = 'couple', customerName, partnerName }: Props) {
   const styles = useTheme(theme);
   const [currentUrl, setCurrentUrl] = useState('');
   const [copied, setCopied] = useState(false);
+  const publicCopy = getOccasionPublicCopy(siteType);
+  const displayName = formatOccasionDisplayName(siteType, customerName, partnerName);
 
   useEffect(() => {
     // Get current page URL dynamically
     setCurrentUrl(window.location.href);
   }, []);
 
-  const coupleNames = `${customerName} & ${partnerName}`;
-  const shareText = `Check out our love story! ${coupleNames} 💕`;
+  const shareText = publicCopy.share.buildShareText(displayName, currentUrl);
 
   // Copy link to clipboard
   const copyLink = async () => {
@@ -57,15 +61,15 @@ export default function ShareSection({ theme, customerName, partnerName }: Props
       <div className="max-w-4xl mx-auto px-4 md:px-6 text-center">
         {/* Decorative element */}
         <div className="mb-6">
-          <span className="text-4xl">💝</span>
+          <span className="text-4xl">{publicCopy.share.icon}</span>
         </div>
         
         <h3 className={`${styles.heading} text-xl font-semibold ${styles.text} mb-3`}>
-          Share Our Love Story
+          {publicCopy.share.title}
         </h3>
         
         <p className={`${styles.textMuted} mb-6`}>
-          Spread the love! Share our special moments with your friends and family
+          {publicCopy.share.subtitle}
         </p>
         
         {/* Share Buttons */}
@@ -135,7 +139,7 @@ export default function ShareSection({ theme, customerName, partnerName }: Props
 
         {/* Mobile-friendly hint */}
         <p className={`mt-6 text-xs ${styles.textMuted}`}>
-          Tap any button above to share • 💕 {coupleNames}
+          Tap any button above to share • {publicCopy.share.hint} • {displayName}
         </p>
       </div>
     </section>

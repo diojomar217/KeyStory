@@ -7,6 +7,7 @@ interface WebsiteActionsDropdownProps {
   order: Site;
   onDelete: (id: string) => void;
   onRefresh: () => void;
+  pendingGuestMessages?: number;
 }
 
 const ViewIcon = ({ className }: { className?: string }) => (
@@ -28,7 +29,7 @@ const MoreIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export default function WebsiteActionsDropdown({ order, onDelete, onRefresh }: WebsiteActionsDropdownProps) {
+export default function WebsiteActionsDropdown({ order, onDelete, onRefresh, pendingGuestMessages = 0 }: WebsiteActionsDropdownProps) {
   const [open, setOpen] = useState(false);
   const [isRenewing, setIsRenewing] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
@@ -107,10 +108,15 @@ export default function WebsiteActionsDropdown({ order, onDelete, onRefresh }: W
         {/* Dropdown toggle */}
         <button
           onClick={() => setOpen(!open)}
-          className="p-1.5 text-slate-600 hover:bg-slate-50 rounded-lg transition-all"
+          className="relative p-1.5 text-slate-600 hover:bg-slate-50 rounded-lg transition-all"
           title="More actions"
         >
           <MoreIcon className="w-4 h-4" />
+          {pendingGuestMessages > 0 && (
+            <span className="absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full bg-fuchsia-600 px-1 text-[10px] font-bold leading-4 text-white">
+              {pendingGuestMessages > 9 ? '9+' : pendingGuestMessages}
+            </span>
+          )}
         </button>
       </div>
 
@@ -136,6 +142,17 @@ export default function WebsiteActionsDropdown({ order, onDelete, onRefresh }: W
           <a href={`/admin/websites/${id}/analytics`} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors" title="Analytics">
             📊
             Analytics
+          </a>
+          <a href={`/admin/websites/${id}/guest-messages`} className="flex items-center justify-between gap-3 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors" title="Guest Messages">
+            <span className="flex items-center gap-2">
+              <span aria-hidden="true">💬</span>
+              <span>Guest Messages</span>
+            </span>
+            {pendingGuestMessages > 0 && (
+              <span className="inline-flex items-center rounded-full bg-fuchsia-100 px-2 py-0.5 text-xs font-semibold text-fuchsia-700">
+                {pendingGuestMessages} pending
+              </span>
+            )}
           </a>
 
           {/* Divider */}

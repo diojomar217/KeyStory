@@ -7,6 +7,7 @@ interface MobileWebsiteCardProps {
   onDelete: (id: string) => void;
   selected: boolean;
   onSelect: (checked: boolean) => void;
+  pendingGuestMessages?: number;
 }
 
 export default function MobileWebsiteCard({ 
@@ -14,6 +15,7 @@ export default function MobileWebsiteCard({
   onDelete,
   selected,
   onSelect,
+  pendingGuestMessages = 0,
 }: MobileWebsiteCardProps) {
   const siteType = order.site_type || 'couple';
   const customerName = order.config?.people?.primary || (order as any).customer_name || '';
@@ -106,6 +108,11 @@ export default function MobileWebsiteCard({
               <p className="text-xs text-slate-400 mt-1">
                 Expires: {order.expires_at ? formatDate(order.expires_at) : '—'}
               </p>
+              {pendingGuestMessages > 0 && (
+                <p className="mt-2 inline-flex rounded-full bg-fuchsia-100 px-2 py-1 text-xs font-semibold text-fuchsia-700">
+                  {pendingGuestMessages} pending guest message{pendingGuestMessages === 1 ? '' : 's'}
+                </p>
+              )}
             </div>
             <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${getThemeColor(themeValue)}`}>
               {getThemeLabel(themeValue)}
@@ -136,6 +143,15 @@ export default function MobileWebsiteCard({
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </a>
+              <a
+                href={`/admin/websites/${order.id}/guest-messages`}
+                className="p-2 text-fuchsia-600 hover:bg-fuchsia-50 rounded-lg transition-colors"
+                title="Guest Messages"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h8M8 14h5m-7 6 2.8-2.8a2 2 0 011.414-.586H19a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h1v4z" />
                 </svg>
               </a>
               <button

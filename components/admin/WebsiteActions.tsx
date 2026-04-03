@@ -44,6 +44,12 @@ const AnalyticsIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const MessageIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h8M8 14h5m-7 6 2.8-2.8a2 2 0 011.414-.586H19a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h1v4z" />
+  </svg>
+);
+
 const DeleteIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -197,6 +203,14 @@ export default function WebsiteActions({
         title="View analytics"
       >
         <AnalyticsIcon className="w-4 h-4" />
+      </a>
+
+      <a
+        href={`/admin/websites/${id}/guest-messages`}
+        className="p-2 text-fuchsia-600 hover:bg-fuchsia-50 rounded-lg transition-all duration-200 hover:scale-110"
+        title="Moderate guest messages"
+      >
+        <MessageIcon className="w-4 h-4" />
       </a>
 
       {/* Edit Button */}

@@ -106,7 +106,7 @@ export default function TimelineSection({ theme, template, events, variant = 'de
           {event.photo && (
             <div 
               className={`
-                relative rounded-2xl overflow-hidden cursor-pointer group
+                relative rounded-2xl overflow-hidden cursor-pointer group hero-media-frame
                 ${showSidePhoto ? 'md:w-1/3 md:flex-shrink-0 md:h-auto h-48 mb-4 md:mb-0' : 'h-48 mb-5'}
                 transition-all duration-300
               `}
@@ -116,12 +116,13 @@ export default function TimelineSection({ theme, template, events, variant = 'de
                 src={event.photo}
                 alt={event.title}
                 fill
-                className="object-cover gallery-zoom-hover group-hover:scale-105 transition-transform duration-500"
+                className="object-cover gallery-zoom-hover group-hover:scale-105 transition-transform duration-500 hero-media-premium"
                 sizes="(max-width: 768px) 100vw, 400px"
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                 <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity text-2xl">🔍</span>
               </div>
+              <div className="hero-media-focus" />
             </div>
           )}
           
@@ -168,6 +169,16 @@ export default function TimelineSection({ theme, template, events, variant = 'de
                   ✨ Special Moment
                 </span>
               )}
+
+              <span
+                className="text-xs font-semibold px-3 py-1 rounded-full"
+                style={{
+                  backgroundColor: `${accents.secondaryColor}55`,
+                  color: accents.primaryColor,
+                }}
+              >
+                Story Highlight
+              </span>
             </div>
             
             {/* Date */}
@@ -198,6 +209,12 @@ export default function TimelineSection({ theme, template, events, variant = 'de
             <p className={`text-base leading-relaxed ${styles.textMuted}`}>
               {event.description}
             </p>
+
+            <div className="mt-4 pt-4 border-t" style={{ borderColor: `${accents.borderColor}90` }}>
+              <p className="text-xs uppercase tracking-[0.2em]" style={{ color: accents.textColor }}>
+                Captured Memory
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -248,16 +265,17 @@ export default function TimelineSection({ theme, template, events, variant = 'de
           >
             {event.photo && (
               <div 
-                className="relative h-40 mb-5 rounded-xl overflow-hidden cursor-pointer group"
+                className="relative h-40 mb-5 rounded-xl overflow-hidden cursor-pointer group hero-media-frame"
                 onClick={() => openLightbox(event.photo!, idx)}
               >
                 <Image
                   src={event.photo}
                   alt={event.title}
                   fill
-                  className="object-cover gallery-zoom-hover group-hover:scale-110 transition-transform duration-500"
+                  className="object-cover gallery-zoom-hover group-hover:scale-110 transition-transform duration-500 hero-media-premium"
                   sizes="(max-width: 768px) 100vw, 300px"
                 />
+                <div className="hero-media-focus" />
               </div>
             )}
             
@@ -321,6 +339,15 @@ export default function TimelineSection({ theme, template, events, variant = 'de
             >
               {event.description}
             </p>
+
+            <div className="mt-4 pt-3 border-t" style={{ borderColor: `${accents.borderColor}90` }}>
+              <span
+                className="text-xs font-semibold uppercase tracking-[0.18em]"
+                style={{ color: accents.textColor }}
+              >
+                Milestone Entry
+              </span>
+            </div>
           </div>
         </ScrollReveal>
       ))}
@@ -375,16 +402,17 @@ export default function TimelineSection({ theme, template, events, variant = 'de
               {/* Optional Photo */}
               {event.photo && (
                 <div 
-                  className="relative h-56 mb-6 rounded-2xl overflow-hidden cursor-pointer group"
+                  className="relative h-56 mb-6 rounded-2xl overflow-hidden cursor-pointer group hero-media-frame"
                   onClick={() => openLightbox(event.photo!, idx)}
                 >
                   <Image
                     src={event.photo}
                     alt={event.title}
                     fill
-                    className="object-cover gallery-zoom-hover group-hover:scale-105 transition-transform duration-500"
+                    className="object-cover gallery-zoom-hover group-hover:scale-105 transition-transform duration-500 hero-media-premium"
                     sizes="(max-width: 768px) 100vw, 600px"
                   />
+                  <div className="hero-media-focus" />
                 </div>
               )}
               
@@ -449,6 +477,21 @@ export default function TimelineSection({ theme, template, events, variant = 'de
               >
                 {event.description}
               </p>
+
+              <div className="mt-5 flex items-center justify-between border-t pt-4" style={{ borderColor: `${accents.borderColor}90` }}>
+                <span className="text-xs uppercase tracking-[0.18em]" style={{ color: accents.textColor }}>
+                  Chapter Highlight
+                </span>
+                <span
+                  className="text-xs px-2.5 py-1 rounded-full"
+                  style={{
+                    backgroundColor: `${accents.secondaryColor}55`,
+                    color: accents.primaryColor,
+                  }}
+                >
+                  #{idx + 1}
+                </span>
+              </div>
             </div>
           </div>
         </ScrollReveal>

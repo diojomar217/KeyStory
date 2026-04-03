@@ -333,6 +333,11 @@ export default function HomeSection({
   };
 
   const accentColor = getAccentColor();
+  const cinematicStageClass = 'animate-fade-in-up motion-reduce:animate-none';
+  const cinematicStageStyle = (delayMs: number) => ({
+    animationDelay: `${delayMs}ms`,
+    animationDuration: '760ms',
+  });
 
   useEffect(() => {
     setIsLoaded(true);
@@ -430,10 +435,13 @@ export default function HomeSection({
         : 'border border-rose-200/80 bg-white/90 text-rose-700 hover:bg-white hover:border-rose-300 shadow-sm';
 
     const sharedActions = (
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
+      <div
+        className={`flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center ${cinematicStageClass}`}
+        style={cinematicStageStyle(380)}
+      >
         <a
           href={`#${occasionHero.primaryTarget}`}
-          className={`inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold tracking-wide shadow-xl transition-all duration-300 hover:scale-[1.02] no-underline ${primaryButtonClass}`}
+          className={`inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold tracking-wide shadow-xl transition-all duration-300 hover:scale-[1.02] no-underline premium-cta-shell premium-cta-primary ${primaryButtonClass}`}
         >
           <span>{heroConfig.cta.startIcon}</span>
           {occasionHero.primaryLabel}
@@ -441,7 +449,7 @@ export default function HomeSection({
         {occasionHero.showSecondaryCta && (
           <a
             href={`#${occasionHero.secondaryTarget}`}
-            className={`inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold tracking-wide backdrop-blur-md transition-all duration-300 hover:scale-[1.02] no-underline ${secondaryButtonClass}`}
+            className={`inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold tracking-wide backdrop-blur-md transition-all duration-300 hover:scale-[1.02] no-underline premium-cta-shell premium-cta-secondary ${secondaryButtonClass}`}
           >
             <span>{heroConfig.cta.endIcon}</span>
             {occasionHero.secondaryLabel}
@@ -451,11 +459,15 @@ export default function HomeSection({
     );
 
     const sharedHighlightCards = (
-      <div className="grid gap-3 sm:grid-cols-3">
-        {heroHighlights.map((item) => (
+      <div
+        className={`grid gap-3 sm:grid-cols-3 ${cinematicStageClass}`}
+        style={cinematicStageStyle(320)}
+      >
+        {heroHighlights.map((item, idx) => (
           <div
             key={`${item.label}-${item.value}`}
-            className={`rounded-[1.5rem] border ${styles.glassBorder} ${styles.glassCard} p-4 shadow-lg min-h-[120px] flex flex-col justify-between`}
+            className={`rounded-[1.5rem] border ${styles.glassBorder} ${styles.glassCard} p-4 shadow-lg min-h-[120px] flex flex-col justify-between premium-interactive-card ${cinematicStageClass}`}
+            style={cinematicStageStyle(360 + idx * 80)}
           >
             <div className="mb-2 text-lg">{item.icon}</div>
             <div className={`text-[11px] uppercase tracking-[0.24em] font-semibold ${styles.textMuted}`}>{item.label}</div>
@@ -471,10 +483,11 @@ export default function HomeSection({
 
     const sharedEyebrow = (
       <div
-        className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 shadow-sm ${isDarkEyebrow
+        className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 shadow-sm ${cinematicStageClass} ${isDarkEyebrow
             ? 'border border-white/30 bg-white/20 backdrop-blur-md'
             : 'border border-rose-200/90 bg-white/90'
           }`}
+        style={cinematicStageStyle(120)}
       >
         <span>{occasionHero.badge}</span>
         <span
@@ -550,20 +563,28 @@ export default function HomeSection({
     return (
       <div className={`${styles.heroBg} min-h-screen relative`}>
         <div className="grid lg:grid-cols-2 min-h-screen">
-          <div className="relative h-[40vh] lg:h-auto min-h-[50vh] lg:min-h-screen overflow-hidden order-1 lg:order-1">
+          <div className="relative h-[40vh] lg:h-auto min-h-[50vh] lg:min-h-screen overflow-hidden order-1 lg:order-1 hero-media-frame">
             <Image
               src={heroImage}
               alt={`${primaryName} and ${secondaryName || 'Partner'}`}
               fill
-              className="object-cover brightness-[0.85] lg:brightness-100"
+              className="object-cover brightness-[0.85] lg:brightness-100 hero-media-premium"
               priority
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              quality={88}
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/20 to-transparent lg:hidden" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20 hidden lg:block" />
             <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.3) 100%)' }} />
+            <div className="hero-media-focus" />
 
             <div className="absolute bottom-6 left-6 lg:bottom-10 lg:left-10">
-              <span className="text-3xl lg:text-4xl animate-pulse">{heroConfig.decorations.badge}</span>
+              <span
+                className={`text-3xl lg:text-4xl animate-pulse motion-reduce:animate-none ${cinematicStageClass}`}
+                style={cinematicStageStyle(140)}
+              >
+                {heroConfig.decorations.badge}
+              </span>
             </div>
 
             <HeroDecorations theme={theme} siteType={siteType} variant="full" />
@@ -577,9 +598,13 @@ export default function HomeSection({
               relative
               order-2 lg:order-2
             `}
+            style={{
+              paddingTop: 'max(1.5rem, env(safe-area-inset-top, 0px))',
+              paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))',
+            }}
           >
             <div className="max-w-lg mx-auto lg:mx-0 w-full">
-              <div className="mb-6 lg:mb-8">
+              <div className={`mb-6 lg:mb-8 ${cinematicStageClass}`} style={cinematicStageStyle(80)}>
                 <span
                   className={`text-4xl lg:text-5xl ${accentColor === 'amber'
                       ? 'text-amber-300'
@@ -594,11 +619,14 @@ export default function HomeSection({
                 </span>
               </div>
 
-              <p className={`uppercase tracking-[0.24em] text-xs ${styles.textMuted} mb-4 font-semibold`}>
+              <p
+                className={`uppercase tracking-[0.24em] text-xs ${styles.textMuted} mb-4 font-semibold ${cinematicStageClass}`}
+                style={cinematicStageStyle(150)}
+              >
                 {occasionHero.intro}
               </p>
 
-              <div className="space-y-2 mb-6">
+              <div className={`space-y-2 mb-6 ${cinematicStageClass}`} style={cinematicStageStyle(220)}>
                 <h1
                   className={`
                     ${styles.heading}
@@ -647,7 +675,8 @@ export default function HomeSection({
                   mb-6
                   font-light
                   tracking-wide
-                `}
+                ${cinematicStageClass}`}
+                style={cinematicStageStyle(300)}
               >
                 {isBirthday ? (
                   birthdayStats ? (
@@ -666,7 +695,7 @@ export default function HomeSection({
                 )}
               </p>
 
-              <div className="mb-8">
+              <div className={`mb-8 ${cinematicStageClass}`} style={cinematicStageStyle(360)}>
                 {isBirthday ? (
                   birthdayStats ? (
                     <div
@@ -701,7 +730,7 @@ export default function HomeSection({
               </div>
 
               {tagline && (
-                <div className="mb-8">
+                <div className={`mb-8 ${cinematicStageClass}`} style={cinematicStageStyle(420)}>
                   <p
                     className={`
                       text-base md:text-lg lg:text-xl
@@ -712,6 +741,7 @@ export default function HomeSection({
                       max-w-md
                       relative
                       pl-4
+                      line-clamp-4 sm:line-clamp-none
                     `}
                   >
                     <span
@@ -743,13 +773,16 @@ export default function HomeSection({
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-10">
+              <div
+                className={`flex flex-col sm:flex-row gap-3 sm:gap-4 mb-10 ${cinematicStageClass}`}
+                style={cinematicStageStyle(500)}
+              >
                 <a
                   href={`#${occasionHero.primaryTarget}`}
                   className="
                     group
                     flex items-center justify-center gap-2
-                    px-6 py-3
+                    px-6 py-3.5 min-h-12
                     bg-gradient-to-r from-rose-500 to-pink-500
                     hover:from-rose-400 hover:to-pink-400
                     text-white
@@ -759,6 +792,7 @@ export default function HomeSection({
                     hover:scale-105 hover:shadow-lg hover:shadow-rose-500/30
                     active:scale-95
                     no-underline
+                    premium-cta-shell premium-cta-primary
                   "
                 >
                   <span className="transition-transform group-hover:animate-pulse">{heroConfig.cta.startIcon}</span>
@@ -772,7 +806,7 @@ export default function HomeSection({
                     className="
                       group
                       flex items-center justify-center gap-2
-                      px-6 py-3
+                      px-6 py-3.5 min-h-12
                       bg-white/20 backdrop-blur-sm
                       border border-white/40
                       hover:bg-white/30 hover:border-white/60
@@ -783,6 +817,7 @@ export default function HomeSection({
                       hover:scale-105
                       active:scale-95
                       no-underline
+                      premium-cta-shell premium-cta-secondary
                     "
                     style={{
                       backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.6)',
@@ -800,7 +835,10 @@ export default function HomeSection({
           </div>
         </div>
 
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 lg:bottom-8">
+        <div
+          className={`absolute bottom-6 left-1/2 -translate-x-1/2 lg:bottom-8 ${cinematicStageClass}`}
+          style={cinematicStageStyle(600)}
+        >
           <a
             href={`#${occasionHero.primaryTarget}`}
             className="
@@ -822,13 +860,15 @@ export default function HomeSection({
     return (
       <div className={`relative min-h-screen flex items-center justify-center overflow-hidden ${styles.heroBg}`}>
         {/* Background */}
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 hero-media-frame">
           <Image
             src={heroImage}
             alt="Background"
             fill
-            className="object-cover scale-[1.02]"
+            className="object-cover scale-[1.02] hero-media-premium"
             priority
+            sizes="100vw"
+            quality={86}
           />
 
           {/* Stronger layered overlays */}
@@ -836,6 +876,7 @@ export default function HomeSection({
           <div className="absolute inset-0 bg-black/15" />
           <div className={`absolute inset-0 ${styles.overlay}`} />
           <div className="absolute inset-0" style={{ background: styles.heroVignette }} />
+          <div className="hero-media-focus" />
 
           {/* Soft center focus glow */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -849,14 +890,23 @@ export default function HomeSection({
         </div>
 
         {/* Main content */}
-        <div className="relative z-10 text-center text-white px-4 flex flex-col items-center justify-center max-w-3xl mx-auto">
-          <div className="mb-6">
-            <span className="text-5xl md:text-6xl animate-pulse inline-block">
+        <div
+          className="relative z-10 text-center text-white px-4 flex flex-col items-center justify-center max-w-3xl mx-auto"
+          style={{
+            paddingTop: 'max(1rem, env(safe-area-inset-top, 0px))',
+            paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px))',
+          }}
+        >
+          <div className={`mb-6 ${cinematicStageClass}`} style={cinematicStageStyle(80)}>
+            <span className="text-5xl md:text-6xl animate-pulse motion-reduce:animate-none inline-block">
               {occasionHero.badge}
             </span>
           </div>
 
-          <p className="uppercase tracking-[0.24em] text-xs md:text-sm text-white/70 mb-4 font-semibold">
+          <p
+            className={`uppercase tracking-[0.24em] text-xs md:text-sm text-white/70 mb-4 font-semibold ${cinematicStageClass}`}
+            style={cinematicStageStyle(150)}
+          >
             {occasionHero.intro}
           </p>
 
@@ -869,7 +919,8 @@ export default function HomeSection({
             leading-tight
             tracking-wide
             drop-shadow-[0_6px_30px_rgba(0,0,0,0.5)]
-          `}
+          ${cinematicStageClass}`}
+            style={cinematicStageStyle(220)}
           >
             {isBirthday ? (
               celebrantName
@@ -888,7 +939,10 @@ export default function HomeSection({
             )}
           </h1>
 
-          <p className="text-base md:text-lg mb-4 text-white/75 font-light tracking-wide drop-shadow-md">
+          <p
+            className={`text-base md:text-lg mb-4 text-white/75 font-light tracking-wide drop-shadow-md ${cinematicStageClass}`}
+            style={cinematicStageStyle(300)}
+          >
             {isBirthday ? (
               birthdayStats ? (
                 <>
@@ -908,12 +962,15 @@ export default function HomeSection({
 
 
           {tagline && (
-            <p className="text-base md:text-lg mb-6 text-white/90 font-light italic tracking-wide drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
+            <p
+              className={`text-base md:text-lg mb-6 text-white/90 font-light italic tracking-wide drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)] ${cinematicStageClass}`}
+              style={cinematicStageStyle(360)}
+            >
               &ldquo;{tagline}&rdquo;
             </p>
           )}
 
-          <div className="mb-7">
+          <div className={`mb-7 ${cinematicStageClass}`} style={cinematicStageStyle(430)}>
             {isBirthday ? (
               birthdayStats ? (
                 <div
@@ -967,7 +1024,13 @@ export default function HomeSection({
         </div>
 
         {/* CTA area */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10">
+        <div
+          className={`absolute bottom-10 left-1/2 -translate-x-1/2 z-10 ${cinematicStageClass}`}
+          style={{
+            ...cinematicStageStyle(520),
+            bottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))',
+          }}
+        >
           <div className="scale-[0.98]">
             <PremiumDualCTAs
               siteType={siteType}

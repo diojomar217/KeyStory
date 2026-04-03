@@ -17,6 +17,7 @@ export default function WebsitesPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired' | 'archived'>('all');
+  const [guestMessageFilter, setGuestMessageFilter] = useState<'all' | 'pending'>('all');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
   const [sortBy, setSortBy] = useState('created_at');
@@ -25,7 +26,11 @@ export default function WebsitesPage() {
 
   useEffect(() => {
     fetchOrders();
-  }, [statusFilter, page, limit, searchQuery, sortBy, sortDirection]);
+  }, [statusFilter, guestMessageFilter, page, limit, searchQuery, sortBy, sortDirection]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, guestMessageFilter, searchQuery, limit]);
 
   const fetchOrders = async () => {
     if (isFetching.current) return; // Prevent overlapping calls
@@ -34,6 +39,7 @@ export default function WebsitesPage() {
     try {
       let query = `?limit=${limit}&offset=${(page - 1) * limit}`;
       if (statusFilter && statusFilter !== 'all') query += `&status=${statusFilter}`;
+      if (guestMessageFilter !== 'all') query += `&guestMessageFilter=${guestMessageFilter}`;
       if (searchQuery) query += `&search=${encodeURIComponent(searchQuery.trim())}`;
       if (sortBy) query += `&sortBy=${encodeURIComponent(sortBy)}`;
       if (sortDirection) query += `&sortDirection=${sortDirection}`;
@@ -130,7 +136,7 @@ export default function WebsitesPage() {
       </div>
 
       {/* Main Content */}
-      {orders.length === 0 ? (
+      {orders.length === 0 && total === 0 && !searchQuery && statusFilter === 'all' && guestMessageFilter === 'all' ? (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
           <EmptyState
             title="No websites yet"
@@ -152,6 +158,8 @@ export default function WebsitesPage() {
           onSearchChange={setSearchQuery}
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}
+          guestMessageFilter={guestMessageFilter}
+          onGuestMessageFilterChange={setGuestMessageFilter}
           onRefresh={fetchOrders}
           sortBy={sortBy}
           sortDirection={sortDirection}

@@ -11,6 +11,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [totalVisits, setTotalVisits] = useState(0);
   const [totalQrScans, setTotalQrScans] = useState(0);
+  const [totalInteractions, setTotalInteractions] = useState(0);
+  const [interactionCounts, setInteractionCounts] = useState<Array<{ event_type: string; count: number }>>([]);
   const [recentActivity, setRecentActivity] = useState<Array<{event_type:string; source:string | null; created_at:string}>>([]);
 
   useEffect(() => {
@@ -33,6 +35,8 @@ export default function DashboardPage() {
         const data = await res.json();
         setTotalVisits(data.totalVisits || 0);
         setTotalQrScans(data.totalQrScans || 0);
+        setTotalInteractions(data.totalInteractions || 0);
+        setInteractionCounts(data.interactionCounts || []);
         setRecentActivity(data.recentActivity || []);
       } catch (error) {
         console.error('Failed to fetch analytics:', error);
@@ -51,12 +55,52 @@ export default function DashboardPage() {
     });
   };
 
+  const formatActivityTime = (isoString: string) => {
+    const date = new Date(isoString);
+    const now = new Date();
+    const diff = (now.getTime() - date.getTime()) / 1000; // seconds
+
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const formatEventLabel = (eventType: string) => {
+    switch (eventType) {
+      case 'page_view':
+        return 'Page View';
+      case 'qr_scan':
+        return 'QR Scan';
+      case 'section_view':
+        return 'Section View';
+      case 'share_click':
+        return 'Share Click';
+      case 'download_card':
+        return 'Keepsake Download';
+      case 'music_play':
+        return 'Music Play';
+      case 'opening_reveal':
+        return 'Opening Reveal';
+      default:
+        return eventType
+          .split('_')
+          .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+          .join(' ');
+    }
+  };
+
   const totalWebsites = dashboardStats?.totalWebsites || 0;
   const thisMonthCount = dashboardStats?.thisMonthCount || 0;
   const publishedWebsites = dashboardStats?.publishedWebsites || 0;
   const expiringSoon = dashboardStats?.expiringSoon || 0;
   const expiredSites = dashboardStats?.expiredSites || 0;
+  const pendingGuestMessages = dashboardStats?.pendingGuestMessages || 0;
+  const sitesWithPendingGuestMessages = dashboardStats?.sitesWithPendingGuestMessages || 0;
   const recentWebsites = dashboardStats?.recentWebsites || [];
+  const recentActivityLogs = dashboardStats?.recentActivity || [];
+  const topInteraction = interactionCounts[0] || null;
   const backendErrors = Array.isArray(dashboardStats?.errors)
     ? dashboardStats.errors.filter((err: any) => {
         if (!err) return false;
@@ -161,9 +205,28 @@ export default function DashboardPage() {
           <p className="text-sm text-slate-500">Expired Sites</p>
           <h3 className="text-3xl font-bold text-rose-900">{expiredSites}</h3>
         </div>
+        <DashboardStatCard
+          title="Pending Guest Messages"
+          value={pendingGuestMessages}
+          icon={
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h8M8 14h5m-7 6 2.8-2.8a2 2 0 011.414-.586H19a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h1v4z" />
+            </svg>
+          }
+          iconBgColor="bg-gradient-to-br from-fuchsia-100 to-pink-100"
+          iconColor="text-fuchsia-600"
+          action={{
+            label: sitesWithPendingGuestMessages > 0
+              ? `${sitesWithPendingGuestMessages} site${sitesWithPendingGuestMessages === 1 ? '' : 's'} need review`
+              : 'View websites',
+            href: sitesWithPendingGuestMessages > 0 
+              ? '/admin/websites?guestMessageFilter=pending' 
+              : '/admin/websites',
+          }}
+        />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-sm text-slate-500">Total Visits</p>
@@ -174,10 +237,18 @@ export default function DashboardPage() {
           <h3 className="text-3xl font-bold text-slate-900">{totalQrScans}</h3>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">Recent Analytics Events</p>
-          <p className="mt-3 text-sm text-slate-700">{recentActivity.slice(0, 4).map((event, idx) => (
-            <span key={idx} className="block">{new Date(event.created_at).toLocaleString()} - {event.event_type}</span>
-          ))}</p>
+          <p className="text-sm text-slate-500">Total Interactions</p>
+          <h3 className="text-3xl font-bold text-slate-900">{totalInteractions}</h3>
+          <p className="mt-2 text-xs text-slate-500">Excludes page views and QR scans</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-slate-500">Top Interaction</p>
+          <h3 className="text-2xl font-bold text-slate-900">
+            {topInteraction ? formatEventLabel(topInteraction.event_type) : 'No data yet'}
+          </h3>
+          <p className="mt-2 text-sm text-slate-600">
+            {topInteraction ? `${topInteraction.count} total events` : 'Public engagement will appear here'}
+          </p>
         </div>
       </div>
 
@@ -206,37 +277,77 @@ export default function DashboardPage() {
             <h3 className="text-lg font-semibold text-slate-900">Website Activity</h3>
             <p className="text-sm text-slate-500 mt-2">Recent actions from your site network.</p>
             <div className="mt-4 space-y-2">
-              {[
-                { label: 'Website created', timestamp: '2h ago' },
-                { label: 'QR generated', timestamp: '5h ago' },
-                { label: 'Guest message received', timestamp: '1d ago' },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center justify-between rounded-lg bg-slate-50 p-3">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">•</span>
-                    <span className="text-sm text-slate-700">{item.label}</span>
+              {recentActivityLogs.length === 0 ? (
+                <p className="text-sm text-slate-500 py-4">No recent activity yet.</p>
+              ) : (
+                recentActivityLogs.slice(0, 5).map((item: any) => (
+                  <div key={item.id} className="flex items-center justify-between rounded-lg bg-slate-50 p-3">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">•</span>
+                      <span className="text-sm text-slate-700">{item.label}</span>
+                    </div>
+                    <span className="text-xs text-slate-400">{formatActivityTime(item.timestamp)}</span>
                   </div>
-                  <span className="text-xs text-slate-400">{item.timestamp}</span>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900">Quick Website Stats</h3>
-          <div className="mt-4 grid grid-cols-1 gap-3">
-            <div className="rounded-lg bg-slate-50 p-3">
-              <p className="text-xs text-slate-500">Total Websites</p>
-              <p className="text-xl font-semibold text-slate-900">{totalWebsites}</p>
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-slate-900">Quick Website Stats</h3>
+            <div className="mt-4 grid grid-cols-1 gap-3">
+              <div className="rounded-lg bg-slate-50 p-3">
+                <p className="text-xs text-slate-500">Total Websites</p>
+                <p className="text-xl font-semibold text-slate-900">{totalWebsites}</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3">
+                <p className="text-xs text-slate-500">Created This Month</p>
+                <p className="text-xl font-semibold text-slate-900">{thisMonthCount}</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3">
+                <p className="text-xs text-slate-500">Published Websites</p>
+                <p className="text-xl font-semibold text-slate-900">{publishedWebsites}</p>
+              </div>
             </div>
-            <div className="rounded-lg bg-slate-50 p-3">
-              <p className="text-xs text-slate-500">Created This Month</p>
-              <p className="text-xl font-semibold text-slate-900">{thisMonthCount}</p>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-slate-900">Engagement Snapshot</h3>
+            <p className="mt-2 text-sm text-slate-500">Most common public interactions across all live site visits.</p>
+            <div className="mt-4 space-y-3">
+              {interactionCounts.length === 0 ? (
+                <p className="text-sm text-slate-500 py-2">No interaction data yet.</p>
+              ) : (
+                interactionCounts.slice(0, 4).map((item) => (
+                  <div key={item.event_type} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2.5">
+                    <span className="text-sm font-medium text-slate-700">{formatEventLabel(item.event_type)}</span>
+                    <span className="text-sm font-semibold text-slate-900">{item.count}</span>
+                  </div>
+                ))
+              )}
             </div>
-            <div className="rounded-lg bg-slate-50 p-3">
-              <p className="text-xs text-slate-500">Published Websites</p>
-              <p className="text-xl font-semibold text-slate-900">{publishedWebsites}</p>
+
+            <div className="mt-5 border-t border-slate-100 pt-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Recent Analytics</p>
+              <div className="mt-3 space-y-2">
+                {recentActivity.length === 0 ? (
+                  <p className="text-sm text-slate-500">No recent analytics events yet.</p>
+                ) : (
+                  recentActivity.slice(0, 4).map((event, idx) => (
+                    <div key={`${event.created_at}-${event.event_type}-${idx}`} className="flex items-start justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2.5">
+                      <div>
+                        <p className="text-sm font-medium text-slate-700">{formatEventLabel(event.event_type)}</p>
+                        <p className="text-xs text-slate-500">
+                          {event.source ? `Source: ${event.source}` : 'Tracked from public site'}
+                        </p>
+                      </div>
+                      <span className="whitespace-nowrap text-xs text-slate-400">{formatActivityTime(event.created_at)}</span>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { DEFAULT_THEME } from '@/config/defaults';
+import { isAdminRequestAuthorized, unauthorizedAdminResponse } from '@/lib/api/admin-auth';
 import { enforceRateLimit } from '@/lib/reliability/rate-limit';
 import { captureError } from '@/lib/reliability/monitoring';
 import { recordAdminAudit } from '@/lib/reliability/audit';
@@ -55,6 +56,10 @@ import bcrypt from 'bcryptjs';
 
 // GET - Fetch all orders or single order by id
 export async function GET(req: NextRequest) {
+  if (!isAdminRequestAuthorized(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
 
@@ -72,6 +77,10 @@ export async function GET(req: NextRequest) {
 
 // POST - Create new order (legacy, for backwards compatibility)
 export async function POST(req: NextRequest) {
+  if (!isAdminRequestAuthorized(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   try {
     const { id, status } = await req.json();
     await updateSite({ id, status });
@@ -84,6 +93,10 @@ export async function POST(req: NextRequest) {
 
 // PUT - Update existing order
 export async function PUT(req: NextRequest) {
+  if (!isAdminRequestAuthorized(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   const limited = enforceRateLimit(req, {
     keyPrefix: 'api:admin:put',
     limit: 40,
@@ -338,6 +351,10 @@ export async function PUT(req: NextRequest) {
 
 // DELETE - Delete an order
 export async function DELETE(req: NextRequest) {
+  if (!isAdminRequestAuthorized(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   const limited = enforceRateLimit(req, {
     keyPrefix: 'api:admin:delete',
     limit: 20,

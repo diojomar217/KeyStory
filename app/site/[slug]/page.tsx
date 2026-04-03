@@ -6,7 +6,14 @@ import type { ThemeKey } from '@/config/themeConfig';
 import ClientPage from '@/components/page/ClientPage';
 import { isExpired, isArchived } from '@/lib/site-status';
 import { getPublicSiteBySlug } from '@/lib/site-data';
-import { resolveHeroCoverPhoto } from '@/lib/site-type-utils';
+import { resolveDisplayName, resolveHeroCoverPhoto } from '@/lib/site-type-utils';
+import {
+  buildOccasionDescription,
+  buildOccasionTitle,
+  buildSocialImageUrl,
+  getBaseUrl,
+  humanizeSlug,
+} from '@/lib/public-site-metadata';
 
 export const revalidate = 60;
 
@@ -18,41 +25,66 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const data = await getPublicSiteBySlug(slug);
+  const humanizedSiteTitle = slug ? humanizeSlug(slug) : 'Story';
 
-  if (data) {
-    const siteType = (data.site_type as OccasionType) || 'couple';
-    const customerName =
-      data.config?.people?.primary || data.customer_name || data.config?.customer_name || '';
-    const partnerName =
-      data.config?.people?.secondary || data.partner_name || data.config?.partner_name || '';
-    const websiteSlug = slug;
-
-    const humanizedSiteTitle = websiteSlug
-      ? websiteSlug.replace(/[-_]/g, ' ').replace(/\b\w/g, (ch) => ch.toUpperCase())
-      : 'Love Story';
-
-    if (siteType === 'birthday') {
-      return {
-        title: `${customerName || humanizedSiteTitle} - Happy Birthday!`,
-        description: 'A special birthday website full of celebration and joy.',
-      };
-    }
-
-    const coupleTitle = customerName && partnerName
-      ? `${customerName} & ${partnerName} - Our Love Story`
-      : customerName
-        ? `${customerName} - Our Love Story`
-        : partnerName
-          ? `${partnerName} - Our Love Story`
-          : `${humanizedSiteTitle} - Love Story`;
-
+  if (!data) {
     return {
-      title: coupleTitle,
-      description: 'A special website celebrating our love story.',
+      title: slug ? `${humanizedSiteTitle} - Page Not Found` : 'Page Not Found',
+      description: 'This site does not exist or the link is invalid.',
+      robots: {
+        index: false,
+        follow: false,
+      },
     };
   }
+
+  const siteType = (data.site_type as OccasionType) || 'couple';
+  const config = data.config || {};
+  const customerName = config?.people?.primary || data.customer_name || config?.customer_name || '';
+  const partnerName = config?.people?.secondary || data.partner_name || config?.partner_name || '';
+  const displayName = resolveDisplayName(siteType, config?.participants || [], customerName, partnerName);
+  const specialDate = config?.dates?.special_date || data.specialDate || '';
+  const tagline = config?.tagline || data.tagline || '';
+  const title = buildOccasionTitle(siteType, displayName, humanizedSiteTitle);
+  const description = buildOccasionDescription(siteType, displayName || humanizedSiteTitle, tagline, specialDate);
+  const siteUrl = `${getBaseUrl()}/site/${slug}`;
+  const socialImageUrl = buildSocialImageUrl(slug);
+  const unavailable = isArchived(data) || isExpired(data);
+
   return {
-    title: slug ? `${slug.replace(/[-_]/g, ' ')} - Love Story` : 'Love Story',
+    title,
+    description,
+    alternates: {
+      canonical: siteUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: siteUrl,
+      type: 'website',
+      siteName: 'KeyStory',
+      locale: 'en_US',
+      images: socialImageUrl
+        ? [
+            {
+              url: socialImageUrl,
+              alt: `${displayName || humanizedSiteTitle} social preview`,
+            },
+          ]
+        : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: socialImageUrl ? [socialImageUrl] : undefined,
+    },
+    robots: unavailable
+      ? {
+          index: false,
+          follow: false,
+        }
+      : undefined,
   };
 }
 

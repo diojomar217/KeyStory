@@ -2,7 +2,8 @@
 
 import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../builder/ThemeWrapper';
-import { useState } from 'react';
+import { useThemeUtils } from '../builder/ThemeWrapper';
+import { useEffect, useState } from 'react';
 import { resolveDecorations, resolveDefaultCTA } from '@/lib/site-type-utils';
 import { OccasionType } from '@/lib/occasion-registry';
 
@@ -11,8 +12,47 @@ type Props = {
   variant?: 'full' | 'top-bottom' | 'vignette' | 'cinematic';
 };
 
+function hexToRgba(hex: string, alpha: number): string {
+  const normalized = hex.replace('#', '');
+  const fullHex = normalized.length === 3
+    ? normalized.split('').map((ch) => ch + ch).join('')
+    : normalized;
+
+  const r = Number.parseInt(fullHex.slice(0, 2), 16);
+  const g = Number.parseInt(fullHex.slice(2, 4), 16);
+  const b = Number.parseInt(fullHex.slice(4, 6), 16);
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function usePrefersReducedMotion(): boolean {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches);
+
+    updatePreference();
+    mediaQuery.addEventListener('change', updatePreference);
+
+    return () => mediaQuery.removeEventListener('change', updatePreference);
+  }, []);
+
+  return prefersReducedMotion;
+}
+
+function getScrollBehavior(): ScrollBehavior {
+  if (typeof window === 'undefined') return 'auto';
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+}
+
 export default function HeroOverlay({ theme, variant = 'full' }: Props) {
   const styles = useTheme(theme);
+  const { colors } = useThemeUtils(theme);
+  const baseTint = hexToRgba(colors.text, 0.18);
+  const accentTint = hexToRgba(colors.accent, 0.12);
+  const deepTint = hexToRgba(colors.text, 0.45);
 
   if (variant === 'vignette') {
     return (
@@ -26,11 +66,20 @@ export default function HeroOverlay({ theme, variant = 'full' }: Props) {
   if (variant === 'cinematic') {
     return (
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-x-0 top-0 h-32 md:h-48 bg-gradient-to-b from-black/10 to-transparent" />
-        <div className="absolute inset-x-0 top-[30%] h-32 md:h-48 bg-gradient-to-b from-transparent via-black/5 to-black/20" />
-        <div className="absolute inset-x-0 bottom-0 h-40 md:h-56 bg-gradient-to-t from-black/50 via-black/30 to-transparent" />
+        <div
+          className="absolute inset-x-0 top-0 h-32 md:h-48"
+          style={{ background: `linear-gradient(to bottom, ${baseTint}, transparent)` }}
+        />
+        <div
+          className="absolute inset-x-0 top-[30%] h-32 md:h-48"
+          style={{ background: `linear-gradient(to bottom, transparent, ${accentTint}, ${baseTint})` }}
+        />
+        <div
+          className="absolute inset-x-0 bottom-0 h-40 md:h-56"
+          style={{ background: `linear-gradient(to top, ${deepTint}, ${baseTint}, transparent)` }}
+        />
         <div className="absolute inset-0" style={{ 
-          background: 'radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.2) 100%)' 
+          background: `radial-gradient(ellipse at center, transparent 50%, ${hexToRgba(colors.text, 0.22)} 100%)`,
         }} />
       </div>
     );
@@ -41,11 +90,11 @@ export default function HeroOverlay({ theme, variant = 'full' }: Props) {
       <div className="absolute inset-0 pointer-events-none">
         <div 
           className="absolute inset-x-0 top-0 h-24 md:h-32"
-          style={{ background: `linear-gradient(to bottom, rgba(0,0,0,0.25), transparent)` }}
+          style={{ background: `linear-gradient(to bottom, ${hexToRgba(colors.text, 0.24)}, transparent)` }}
         />
         <div 
           className="absolute inset-x-0 bottom-0 h-24 md:h-32"
-          style={{ background: `linear-gradient(to top, rgba(0,0,0,0.35), transparent)` }}
+          style={{ background: `linear-gradient(to top, ${hexToRgba(colors.text, 0.34)}, transparent)` }}
         />
       </div>
     );
@@ -65,8 +114,15 @@ export function HeroDecorations({
   variant = 'centered',
 }: { theme: ThemeKey; siteType?: OccasionType; variant?: 'centered' | 'full' }) {
   const isBirthday = siteType === 'birthday';
+  const prefersReducedMotion = usePrefersReducedMotion();
   const decorations = resolveDecorations(siteType);
-  const iconColorClass = decorations.themeTone === 'romantic' ? 'text-rose-400' : decorations.themeTone === 'celebration' ? 'text-yellow-300' : 'text-sky-300';
+  const { colors } = useThemeUtils(theme);
+  const iconColor =
+    decorations.themeTone === 'romantic'
+      ? colors.accent
+      : decorations.themeTone === 'celebration'
+        ? colors.secondary
+        : colors.primary;
 
 
   // Different positioning based on variant
@@ -114,14 +170,16 @@ export function HeroDecorations({
       {items.map((item) => (
         <div
           key={item.id}
-          className={`absolute ${iconColorClass} ${isBirthday ? 'animate-birthday-confetti' : 'animate-float-heart'}`}
+          className={`absolute ${prefersReducedMotion ? '' : isBirthday ? 'animate-birthday-confetti' : 'animate-float-heart'}`}
           style={{
             left: `${item.x}%`,
             top: `${item.y}%`,
             animationDelay: `${item.delay}s`,
-            animationDuration: '7s',
+            animationDuration: prefersReducedMotion ? '0s' : '7s',
             fontSize: variant === 'centered' ? '1rem' : '1.25rem',
             opacity: variant === 'centered' ? 0.35 : 0.55,
+            color: iconColor,
+            textShadow: `0 6px 16px ${hexToRgba(colors.text, 0.2)}`,
           }}
         >
           <span>{item.emoji}</span>
@@ -131,8 +189,14 @@ export function HeroDecorations({
       {/* Add some additional star/bubble highlights for birthdays */}
       {isBirthday && (
         <>
-          <div className="absolute top-10 left-1/4 w-3 h-3 bg-white/70 rounded-full animate-pulse-slow" />
-          <div className="absolute top-32 right-24 w-4 h-4 bg-blue-200/70 rounded-full animate-pulse-slow" />
+          <div
+            className={`absolute top-10 left-1/4 w-3 h-3 rounded-full ${prefersReducedMotion ? '' : 'animate-pulse-slow'}`}
+            style={{ backgroundColor: hexToRgba(colors.secondary, 0.75) }}
+          />
+          <div
+            className={`absolute top-32 right-24 w-4 h-4 rounded-full ${prefersReducedMotion ? '' : 'animate-pulse-slow'}`}
+            style={{ backgroundColor: hexToRgba(colors.accent, 0.7) }}
+          />
         </>
       )}
     </div>
@@ -140,12 +204,14 @@ export function HeroDecorations({
 }
 
 export function ScrollIndicator({ targetId = 'our-story' }: { targetId?: string }) {
+  const prefersReducedMotion = usePrefersReducedMotion();
+
   const scrollToContent = () => {
     const element = document.getElementById(targetId);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      element.scrollIntoView({ behavior: getScrollBehavior() });
     } else {
-      window.scrollTo({ top: window.innerHeight * 0.8, behavior: 'smooth' });
+      window.scrollTo({ top: window.innerHeight * 0.8, behavior: getScrollBehavior() });
     }
   };
 
@@ -165,11 +231,12 @@ export function ScrollIndicator({ targetId = 'our-story' }: { targetId?: string 
           group-hover:bg-white/20 group-hover:scale-105
           transition-all duration-300
           shadow-lg
+          premium-cta-shell premium-cta-secondary
         ">
           <span className="flex items-center gap-2">
-            <span className="animate-heartbeat">💕</span>
+            <span className={prefersReducedMotion ? '' : 'animate-heartbeat'}>💕</span>
             Start Our Story
-            <span className="animate-bounce-subtle">↓</span>
+            <span className={prefersReducedMotion ? '' : 'animate-bounce-subtle'}>↓</span>
           </span>
         </div>
       </div>
@@ -189,17 +256,72 @@ export function PremiumDualCTAs({
 }) {
   const ctaConfig = resolveDefaultCTA(siteType);
   const isBirthday = siteType === 'birthday';
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const targetIds = [primaryTarget, secondaryTarget].filter(Boolean);
+    const elements = targetIds
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => Boolean(el));
+
+    if (elements.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+        if (visible?.target?.id) {
+          setActiveSection(visible.target.id);
+        }
+      },
+      {
+        rootMargin: '-20% 0px -45% 0px',
+        threshold: [0.25, 0.5, 0.8],
+      }
+    );
+
+    elements.forEach((element) => observer.observe(element));
+
+    return () => observer.disconnect();
+  }, [primaryTarget, secondaryTarget]);
+
+  const scrollToTarget = (targetId: string) => {
+    const element = document.getElementById(targetId);
+    if (element) {
+      element.scrollIntoView({ behavior: getScrollBehavior(), block: 'start' });
+      return;
+    }
+
+    window.location.hash = targetId;
+  };
+
+  const primaryDestination =
+    !isBirthday && activeSection === primaryTarget ? secondaryTarget : primaryTarget;
+  const primaryLabel =
+    !isBirthday && activeSection === primaryTarget ? ctaConfig.secondary : ctaConfig.primary;
+  const primaryIcon =
+    !isBirthday && activeSection === primaryTarget ? ctaConfig.endIcon : ctaConfig.startIcon;
+  const primaryArrow =
+    !isBirthday && activeSection === primaryTarget ? '→' : isBirthday ? '🎂' : '↓';
 
   return (
     <div 
-      className="fixed bottom-8 left-0 right-0 flex flex-col items-center gap-4"
-      style={{ zIndex: 99999 }}
+      className="fixed left-0 right-0 flex flex-col items-center gap-4 px-4"
+      style={{
+        bottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))',
+        zIndex: 99999,
+      }}
     >
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+      <div className="flex w-full max-w-2xl flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
         <a
-          href={`#${primaryTarget}`}
+          href={`#${primaryDestination}`}
           className="
-            min-w-[220px] h-14
+            w-full sm:min-w-[220px] sm:w-auto h-14
             px-6 
             bg-white/10 backdrop-blur-md 
             border border-white/30 
@@ -212,34 +334,53 @@ export function PremiumDualCTAs({
             whitespace-nowrap
             cursor-pointer
             no-underline
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70
+            premium-cta-shell premium-cta-secondary
           "
-          style={{ pointerEvents: 'auto' }}
+          style={{
+            pointerEvents: 'auto',
+            transitionDuration: prefersReducedMotion ? '0ms' : undefined,
+          }}
+          onClick={(event) => {
+            event.preventDefault();
+            scrollToTarget(primaryDestination);
+          }}
         >
-          <span>{ctaConfig.startIcon}</span>
-          {ctaConfig.primary}
-          <span>{isBirthday ? '🎂' : '↓'}</span>
+          <span>{primaryIcon}</span>
+          {primaryLabel}
+          <span>{primaryArrow}</span>
         </a>
 
         {!isBirthday && (
           <a
             href={`#${secondaryTarget}`}
             className="
-              min-w-[220px] h-14
+              w-full sm:min-w-[220px] sm:w-auto h-14
               px-6 
-              bg-gradient-to-r from-rose-500 to-pink-500
-              hover:from-rose-400 hover:to-pink-400
-              border border-rose-400/50
               rounded-full
               text-white text-sm font-medium
               hover:scale-105 active:scale-95
               transition-all duration-300
-              shadow-lg shadow-rose-500/30
+              shadow-lg
               inline-flex items-center justify-center gap-2
               whitespace-nowrap
               cursor-pointer
               no-underline
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70
+              premium-cta-shell premium-cta-primary
             "
-            style={{ pointerEvents: 'auto' }}
+            style={{
+              pointerEvents: 'auto',
+              transitionDuration: prefersReducedMotion ? '0ms' : undefined,
+              background: 'linear-gradient(90deg, var(--color-accent), var(--color-primary))',
+              borderColor: hexToRgba('#FFFFFF', 0.45),
+              boxShadow: '0 12px 30px rgba(0, 0, 0, 0.25)',
+              opacity: activeSection === secondaryTarget ? 0.88 : 1,
+            }}
+            onClick={(event) => {
+              event.preventDefault();
+              scrollToTarget(secondaryTarget);
+            }}
           >
             <span>{ctaConfig.endIcon}</span>
             {ctaConfig.secondary}
@@ -252,12 +393,14 @@ export function PremiumDualCTAs({
 }
 
 export function CompactCTA({ targetId = 'our-story' }: { targetId?: string }) {
+  const prefersReducedMotion = usePrefersReducedMotion();
+
   const scrollToContent = () => {
     const element = document.getElementById(targetId);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      element.scrollIntoView({ behavior: getScrollBehavior() });
     } else {
-      window.scrollTo({ top: window.innerHeight * 0.8, behavior: 'smooth' });
+      window.scrollTo({ top: window.innerHeight * 0.8, behavior: getScrollBehavior() });
     }
   };
 
@@ -274,9 +417,10 @@ export function CompactCTA({ targetId = 'our-story' }: { targetId?: string }) {
         transition-all duration-300
         shadow-md
         flex items-center gap-2
+        premium-cta-shell premium-cta-secondary
       "
     >
-      <span className="animate-heartbeat">💕</span>
+      <span className={prefersReducedMotion ? '' : 'animate-heartbeat'}>💕</span>
       Start Our Story
     </button>
   );

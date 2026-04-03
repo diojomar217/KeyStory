@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 type ActivityItem = { event_type: string; source: string | null; created_at: string };
+type InteractionCount = { event_type: string; count: number };
 
 export default function AnalyticsPage() {
   const params = useParams();
@@ -18,6 +19,8 @@ export default function AnalyticsPage() {
   const [lastVisited, setLastVisited] = useState<string | null>(null);
   const [visitsThisWeek, setVisitsThisWeek] = useState(0);
   const [visitsThisMonth, setVisitsThisMonth] = useState(0);
+  const [totalInteractions, setTotalInteractions] = useState(0);
+  const [interactionCounts, setInteractionCounts] = useState<InteractionCount[]>([]);
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
 
   const fetchAnalytics = async () => {
@@ -35,6 +38,8 @@ export default function AnalyticsPage() {
       setLastVisited(data.lastVisited || null);
       setVisitsThisWeek(data.visitsThisWeek || 0);
       setVisitsThisMonth(data.visitsThisMonth || 0);
+      setTotalInteractions(data.totalInteractions || 0);
+      setInteractionCounts(data.interactionCounts || []);
       setRecentActivity(data.recentActivity || []);
     } catch (err) {
       console.error(err);
@@ -62,7 +67,7 @@ export default function AnalyticsPage() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Website Analytics</h1>
-          <p className="text-sm text-slate-500">Track page visits and QR engagement for this site.</p>
+          <p className="text-sm text-slate-500">Track visits, QR engagement, and public interaction events for this site.</p>
         </div>
         <div className="flex gap-2">
           <Link
@@ -102,6 +107,33 @@ export default function AnalyticsPage() {
           <p className="text-xs text-slate-500 uppercase">Visits This Month</p>
           <p className="text-2xl font-bold text-slate-900">{visitsThisMonth}</p>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <p className="text-xs text-slate-500 uppercase">Tracked Interactions</p>
+          <p className="text-2xl font-bold text-slate-900">{totalInteractions}</p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <p className="text-xs text-slate-500 uppercase">Top Interaction</p>
+          <p className="text-lg font-semibold text-slate-800">{interactionCounts[0] ? `${interactionCounts[0].event_type} (${interactionCounts[0].count})` : 'No interactions yet'}</p>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-4">
+        <h2 className="text-lg font-semibold text-slate-900 mb-3">Interaction Breakdown</h2>
+        {interactionCounts.length === 0 ? (
+          <p className="text-sm text-slate-500">No tracked interactions yet.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {interactionCounts.map((item) => (
+              <div key={item.event_type} className="rounded-lg bg-slate-50 px-4 py-3">
+                <p className="text-xs uppercase text-slate-500">{item.event_type}</p>
+                <p className="mt-1 text-xl font-bold text-slate-900">{item.count}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white p-4">

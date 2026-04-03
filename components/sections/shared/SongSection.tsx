@@ -14,14 +14,16 @@ import { getMusicEmbedInfo } from '@/lib/musicEmbed';
 import SectionHeader from '../../page/SectionHeader';
 import { getSectionCopy } from '@/lib/section-copy';
 import ScrollReveal from '../../ui/ScrollReveal';
+import type { SiteAnalyticsEventType } from '@/lib/types';
 
 interface SongSectionProps {
   theme: ThemeKey;
   songLink?: string;
   autoplay?: boolean;
+  onTrackEvent?: (eventType: SiteAnalyticsEventType, source: string, dedupeKey?: string) => void;
 }
 
-const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
+const SongSection = ({ theme, songLink, autoplay, onTrackEvent }: SongSectionProps) => {
   const themeUtils = useThemeUtils(theme);
   const { colors, styles } = themeUtils;
   const cardStyle = getCardStyleClasses(theme);
@@ -29,6 +31,7 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
   const spacingClass = getSectionSpacingClass(theme);
   const headingFontClass = getHeadingFontClass(theme);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isEmbedLoaded, setIsEmbedLoaded] = useState(false);
 
   if (!songLink) return null;
 
@@ -72,7 +75,11 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
 
   // Handle play/pause - Note: Due to iframe limitations, we show the visual effect
   const togglePlayPause = () => {
-    setIsPlaying(!isPlaying);
+    const nextIsPlaying = !isPlaying;
+    setIsPlaying(nextIsPlaying);
+    if (nextIsPlaying) {
+      onTrackEvent?.('music_play', provider === 'spotify' ? 'song:spotify' : 'song:youtube', 'music_play');
+    }
     // Note: Actual iframe play/pause requires JS API and specific embed URLs
   };
 
@@ -160,6 +167,11 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
             
             {/* Responsive container - 16:9 for YouTube, auto height for Spotify */}
             <div className={provider === 'spotify' ? 'relative w-full h-[152px] md:h-[352px]' : 'relative w-full aspect-video'}>
+              {!isEmbedLoaded && (
+                <div className="absolute inset-0 premium-loading-shell premium-skeleton" aria-hidden="true">
+                  <div className="premium-skeleton-overlay" />
+                </div>
+              )}
               <iframe
                 src={embedUrl}
                 allow={provider === 'spotify' 
@@ -169,8 +181,9 @@ const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                className="absolute top-0 left-0 w-full h-full rounded-t-xl"
+                className={`absolute top-0 left-0 w-full h-full rounded-t-xl transition-opacity duration-300 ${isEmbedLoaded ? 'opacity-100' : 'opacity-0'}`}
                 title={`Our Song - ${provider === 'spotify' ? 'Spotify' : 'YouTube'} Player`}
+                onLoad={() => setIsEmbedLoaded(true)}
               />
             </div>
             

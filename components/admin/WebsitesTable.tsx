@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 
 // Reusable sortable header component
 function SortableHeader({
@@ -55,6 +55,8 @@ interface WebsitesTableProps {
   onSearchChange: (query: string) => void;
   statusFilter: 'all' | 'active' | 'expired' | 'archived';
   onStatusFilterChange: (status: 'all' | 'active' | 'expired' | 'archived') => void;
+  guestMessageFilter: 'all' | 'pending';
+  onGuestMessageFilterChange: (filter: 'all' | 'pending') => void;
   onRefresh?: () => void;
   sortBy: string;
   sortDirection: 'asc' | 'desc';
@@ -65,6 +67,7 @@ interface WebsitesTableProps {
 import type { ThemeKey } from '@/config/themeConfig';
 type ThemeFilter = 'all' | ThemeKey;
 type StatusFilter = 'all' | 'active' | 'expired' | 'archived';
+type GuestMessageFilter = 'all' | 'pending';
 
 const getStatusFromOrder = (order: Site) => {
   const status = (order.status || 'active').toLowerCase();
@@ -86,6 +89,8 @@ export default function WebsitesTable({
   onSearchChange,
   statusFilter,
   onStatusFilterChange,
+  guestMessageFilter,
+  onGuestMessageFilterChange,
   onRefresh,
   sortBy,
   sortDirection,
@@ -94,18 +99,62 @@ export default function WebsitesTable({
 }: WebsitesTableProps) {
   const [themeFilter, setThemeFilter] = useState<ThemeFilter>('all');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [pendingGuestMessageCounts, setPendingGuestMessageCounts] = useState<Record<string, number>>({});
 
   const refreshData = () => {
     if (onRefresh) onRefresh();
   };
 
-  const isAllSelected = orders.length > 0 && selectedIds.length === orders.length;
+  useEffect(() => {
+    const siteIds = orders.map((order) => order.id).filter((id): id is string => Boolean(id));
+
+    if (siteIds.length === 0) {
+      setPendingGuestMessageCounts({});
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadGuestMessageCounts = async () => {
+      try {
+        const response = await fetch(`/api/admin/guest-messages?site_ids=${encodeURIComponent(siteIds.join(','))}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to load guest message counts');
+        }
+
+        if (cancelled) return;
+
+        const nextCounts = Object.fromEntries(
+          siteIds.map((siteId) => [siteId, Number(data.summaries?.[siteId]?.pending || 0)])
+        );
+        setPendingGuestMessageCounts(nextCounts);
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Failed to load guest message counts', error);
+          setPendingGuestMessageCounts({});
+        }
+      }
+    };
+
+    loadGuestMessageCounts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [orders]);
+
+  const displayedOrders = orders;
+
+  const isAllSelected = displayedOrders.length > 0 && displayedOrders.every((order) => selectedIds.includes(order.id || ''));
 
   const toggleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedIds(orders.map((order) => order.id!));
+      setSelectedIds(displayedOrders.map((order) => order.id!).filter(Boolean));
     } else {
-      setSelectedIds([]);
+      const displayedIds = new Set(displayedOrders.map((order) => order.id).filter(Boolean));
+      setSelectedIds((prev) => prev.filter((id) => !displayedIds.has(id)));
     }
   };
 
@@ -203,6 +252,7 @@ export default function WebsitesTable({
             </div>
             <div className="h-10 w-36 bg-slate-200 rounded" />
             <div className="h-10 w-36 bg-slate-200 rounded" />
+            <div className="h-10 w-40 bg-slate-200 rounded" />
           </div>
         </div>
         <div className="px-4 py-3 bg-slate-50/50 border-b border-slate-100">
@@ -281,6 +331,15 @@ export default function WebsitesTable({
             <option value="expired">Expired</option>
             <option value="archived">Archived</option>
           </select>
+
+          <select
+            value={guestMessageFilter}
+            onChange={(e) => onGuestMessageFilterChange(e.target.value as GuestMessageFilter)}
+            className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-700 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all cursor-pointer hover:border-slate-300"
+          >
+            <option value="all">All Guest Messages</option>
+            <option value="pending">Pending Messages</option>
+          </select>
         </div>
       </div>
 
@@ -288,8 +347,8 @@ export default function WebsitesTable({
       <div className="px-4 py-3 bg-slate-50/50 border-b border-slate-100 space-y-3 text-sm text-slate-500">
         <div className="flex items-center justify-between gap-2">
           <div>
-            Showing {orders.length} of {total} website{total !== 1 ? 's' : ''} (page {page})
-            {searchQuery || themeFilter !== 'all' || statusFilter !== 'all' ? ' (filtered)' : ''}
+            Showing {displayedOrders.length} of {total} website{total !== 1 ? 's' : ''} (page {page})
+            {searchQuery || themeFilter !== 'all' || statusFilter !== 'all' || guestMessageFilter !== 'all' ? ' (filtered)' : ''}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <button type="button" onClick={() => bulkRenew('6_months')} disabled={selectedIds.length === 0} className="px-3 py-1 rounded-lg text-white bg-blue-600 disabled:bg-slate-300">Renew Selected 6m</button>
@@ -318,13 +377,14 @@ export default function WebsitesTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {orders.map((order: Site) => (
+            {displayedOrders.map((order: Site) => (
               <WebsiteRow
                 key={order.id}
                 order={order}
                 onDelete={onDelete}
                 selected={selectedIds.includes(order.id || '')}
                 onSelect={checked => { if (order.id) toggleSelectOne(order.id, checked); }}
+                pendingGuestMessages={order.id ? pendingGuestMessageCounts[order.id] || 0 : 0}
               />
             ))}
           </tbody>
@@ -333,16 +393,23 @@ export default function WebsitesTable({
 
       {/* Mobile Card View */}
       <div className="md:hidden divide-y divide-slate-100">
-        {orders.map((order: Site) => (
+        {displayedOrders.map((order: Site) => (
           <MobileWebsiteCard
             key={order.id}
             order={order}
             onDelete={onDelete}
             selected={selectedIds.includes(order.id || '')}
             onSelect={checked => { if (order.id) toggleSelectOne(order.id, checked); }}
+            pendingGuestMessages={order.id ? pendingGuestMessageCounts[order.id] || 0 : 0}
           />
         ))}
       </div>
+
+      {displayedOrders.length === 0 && (
+        <div className="border-t border-slate-100 px-4 py-10 text-center text-sm text-slate-500">
+          No websites match the current filters.
+        </div>
+      )}
     </div>
   );
 }

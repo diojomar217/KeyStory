@@ -15,6 +15,7 @@ export default function ArchivedSitesPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired' | 'archived'>('archived');
+  const [guestMessageFilter, setGuestMessageFilter] = useState<'all' | 'pending'>('all');
 
   useEffect(() => {
     fetchArchivedSites();
@@ -104,6 +105,8 @@ export default function ArchivedSitesPage() {
           onSearchChange={setSearchQuery}
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}
+          guestMessageFilter={guestMessageFilter}
+          onGuestMessageFilterChange={setGuestMessageFilter}
           onRefresh={fetchArchivedSites}
           sortBy={"created_at"}
           sortDirection={"desc"}

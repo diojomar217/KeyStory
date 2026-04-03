@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminRequestAuthorized, unauthorizedAdminResponse } from '@/lib/api/admin-auth';
 import { getWebsiteByIdWithConfig } from '@/lib/db/websites';
 import { restoreSiteFromArchive } from '@/lib/archiver';
 import { supabase } from '@/lib/supabase';
@@ -8,6 +9,10 @@ import { captureError } from '@/lib/reliability/monitoring';
 export const runtime = 'nodejs';
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!isAdminRequestAuthorized(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   try {
     const { id } = await params;
 

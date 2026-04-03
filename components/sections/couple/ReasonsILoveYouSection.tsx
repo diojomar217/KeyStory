@@ -44,7 +44,11 @@ export default function ReasonsILoveYouSection({
   reasons,
   variant = 'default'
 }: ReasonsILoveYouSectionProps) {
-  const displayReasons = reasons && reasons.length > 0 ? reasons : defaultReasons;
+  const displayReasons = (reasons && reasons.length > 0 ? reasons : defaultReasons).map((reason, index) => ({
+    ...reason,
+    id: reason.id || `reason-${index + 1}`,
+    number: typeof reason.number === 'number' ? reason.number : index + 1,
+  }));
   const themeUtils = useThemeUtils(theme);
   const cardStyle = getCardStyleClasses(theme);
   const spacingClass = getSectionSpacingClass(theme);
@@ -81,14 +85,23 @@ export default function ReasonsILoveYouSection({
         </ScrollReveal>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 lg:gap-8">
           {displayReasons.map((reason) => (
-            <div key={reason.id} className="group relative h-[200px] lg:h-[220px] perspective-[1200px] cursor-pointer overflow-hidden" onClick={() => toggleFlip(reason.id)}>
-              <div className={'relative w-full h-full transition-all duration-[800ms] ease-[cubic-bezier(0.68,-0.55,0.265,1.55)] preserve-3d hover:scale-[1.02]' + (flippedCards.has(reason.id) ? ' rotate-y-180' : ' rotate-y-0')}>
+            <div key={reason.id} className="group relative h-[200px] lg:h-[220px] cursor-pointer overflow-hidden" onClick={() => toggleFlip(reason.id)}>
+              <div 
+                className="relative w-full h-full transition-all duration-[800ms] ease-[cubic-bezier(0.68,-0.55,0.265,1.55)] hover:scale-[1.02]"
+                style={{
+                  transformStyle: 'preserve-3d',
+                  transform: flippedCards.has(reason.id) ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                }}
+              >
+                {/* Front face - Tap to reveal */}
                 <div
-                  className={`absolute inset-0 preserve-3d backface-hidden ${cardStyle} border backdrop-blur-xl flex items-center justify-center p-6 lg:p-8 transition-all duration-500`}
+                  className={`absolute inset-0 ${cardStyle} border backdrop-blur-xl flex items-center justify-center p-6 lg:p-8 transition-all duration-500`}
                   style={{
                     backgroundColor: `${themeUtils.colors.card}E6`,
                     borderColor: `${themeUtils.colors.border}CC`,
                     boxShadow: `0 20px 40px -18px ${themeUtils.colors.primary}33`,
+                    backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden',
                   }}
                 >
                   <div
@@ -118,11 +131,16 @@ export default function ReasonsILoveYouSection({
                     </div>
                   </div>
                 </div>
+
+                {/* Back face - Revealed text */}
                 <div
-                  className={`absolute inset-0 preserve-3d backface-hidden rotate-y-180 ${cardStyle} flex items-center justify-center p-8 lg:p-10 text-center text-white font-medium leading-relaxed text-lg lg:text-xl tracking-wide`}
+                  className={`absolute inset-0 ${cardStyle} flex items-center justify-center p-8 lg:p-10 text-center text-white font-medium leading-relaxed text-lg lg:text-xl tracking-wide`}
                   style={{
                     backgroundImage: `linear-gradient(135deg, ${themeUtils.colors.primary}, ${themeUtils.colors.secondary}, ${themeUtils.colors.accent})`,
                     boxShadow: `0 25px 50px -12px ${themeUtils.colors.accent}66`,
+                    backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden',
+                    transform: 'rotateY(180deg)',
                   }}
                 >
                   <div
