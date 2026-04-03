@@ -142,9 +142,10 @@ export default function KeychainTypeSelector({
         <ul className="text-xs text-slate-600 list-disc list-inside space-y-1">
           <li>Small Portrait: 30mm × 45mm</li>
           <li>Medium Portrait: 35mm × 50mm (recommended for clear acrylic)</li>
+          <li>QR Keychain: 31mm × 48mm</li>
           <li>Large Portrait: 40mm × 60mm</li>
           <li>Square: 35mm × 35mm</li>
-          <li>NFC Tap Keychain: 35mm × 50mm</li>
+          <li>NFC Tap Keychain: 30mm × 50mm</li>
         </ul>
       </div>
 

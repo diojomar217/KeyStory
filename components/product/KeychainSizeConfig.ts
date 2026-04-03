@@ -29,6 +29,13 @@ export const KEYCHAIN_SIZES: KeychainSize[] = [
     description: 'Standard portrait print - 35mm × 50mm',
   },
   {
+    label: 'QR Keychain',
+    width_mm: 31,
+    height_mm: 48,
+    shape: 'rectangle',
+    description: 'QR keychain size - 31mm × 48mm',
+  },
+  {
     label: 'Square',
     width_mm: 35,
     height_mm: 35,
@@ -52,10 +59,10 @@ export const KEYCHAIN_SIZES: KeychainSize[] = [
   },
   {
     label: 'NFC Tap Keychain',
-    width_mm: 35,
+    width_mm: 30,
     height_mm: 50,
     shape: 'rectangle',
-    description: 'NFC-ready portrait tag - 35mm × 50mm',
+    description: 'NFC-ready portrait tag - 30mm × 50mm',
   },
   {
     label: 'Metal Engraved Tag',
