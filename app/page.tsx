@@ -45,9 +45,8 @@ const STARTUP_PROMISES = [
 ];
 
 const VARIANT_OPTIONS = [
-  { id: 'acrylic', label: 'Classic Acrylic', basePrice: 199 },
-  { id: 'metal', label: 'Metal Luxe', basePrice: 399 },
-  { id: 'bundle', label: 'Gift-Ready Bundle', basePrice: 599 },
+  { id: 'qr_only', label: 'QR Code Only', basePrice: 199 },
+  { id: 'qr_nfc', label: 'QR Code + NFC', basePrice: 299 },
 ] as const;
 
 const FINISH_OPTIONS = [
@@ -68,8 +67,8 @@ const PROMO_CODES = {
 
 const INCLUDED_ITEMS = [
   'Physical premium keychain (double-sided print)',
-  'Mobile-friendly personal website connected to QR',
-  'QR generation and publishing setup',
+  'Mobile-friendly personal website linked to your keychain',
+  'Access setup based on package: QR only or QR + NFC tap',
   'Basic updates and support after delivery',
 ];
 
@@ -94,19 +93,14 @@ const FAQS = [
 
 const PRODUCT_HIGHLIGHTS = [
   {
-    title: 'Classic Acrylic Keychain',
-    subtitle: 'Premium print and waterproof finish',
+    title: 'QR Code Only',
+    subtitle: 'Scan-ready keychain linked to your personal website',
     price: 'From PHP 199',
   },
   {
-    title: 'Metal Luxe Keychain',
-    subtitle: 'Brushed steel frame and elevated look',
-    price: 'From PHP 399',
-  },
-  {
-    title: 'Gift-Ready Bundle',
-    subtitle: 'Keychain plus ready-to-gift packaging',
-    price: 'From PHP 599',
+    title: 'QR Code + NFC',
+    subtitle: 'Scan or tap access with NFC-enabled experience',
+    price: 'From PHP 299',
   },
 ];
 
@@ -119,8 +113,9 @@ const PRODUCT_EXPANSION_COLLECTIONS = PRODUCT_EXPANSION_PRESETS.map((preset) => 
 }));
 
 const BENEFITS = [
-  'Custom website connected to your QR keychain',
+  'Choose between QR-only or QR + NFC keychain access',
   'Fast production with quality control checks',
+  'Tap-to-open NFC option for compatible phones',
   'Easy re-order and renewal support',
   'Perfect for couples, birthdays, and milestones',
 ];
@@ -136,7 +131,7 @@ export default function Home() {
   });
   const [orderResult, setOrderResult] = useState<OrderResult | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [selectedVariant, setSelectedVariant] = useState<(typeof VARIANT_OPTIONS)[number]['id']>('acrylic');
+  const [selectedVariant, setSelectedVariant] = useState<(typeof VARIANT_OPTIONS)[number]['id']>('qr_only');
   const [selectedFinish, setSelectedFinish] = useState<(typeof FINISH_OPTIONS)[number]['id']>('standard');
   const [selectedZone, setSelectedZone] = useState<(typeof SHIPPING_ZONES)[number]['id']>('metro');
   const [giftWrap, setGiftWrap] = useState(false);
@@ -288,13 +283,13 @@ export default function Home() {
         <section className="grid items-center gap-10 py-14 md:grid-cols-2 md:py-20">
           <div className="reveal-up">
             <p className="inline-flex rounded-full border border-[#0f172a]/15 bg-white/80 px-3 py-1 text-xs font-semibold tracking-wide text-[#0f172a]">
-              Premium QR Keepsake Store
+              QR Only or QR + NFC Products
             </p>
             <h1 className="display-title mt-5 text-4xl font-black leading-tight text-[#111827] md:text-6xl">
-              Premium Keychains That Open Your Story Online
+              Premium Keychains That Open Your Story by Scan or Tap
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-[#475569]">
-              We build beautiful personal websites linked to custom QR keychains. Perfect for gifts, couple memories, birthdays, and milestone moments.
+              We build beautiful personal websites linked to custom QR + NFC keychains. Perfect for gifts, couple memories, birthdays, and milestone moments.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a
@@ -328,11 +323,11 @@ export default function Home() {
                 View Sample Websites
               </a>
             </div>
-            <div className="mt-10 grid grid-cols-2 gap-4 text-sm text-[#334155] sm:grid-cols-4">
+              <div className="mt-10 grid grid-cols-2 gap-4 text-sm text-[#334155] sm:grid-cols-4">
               <div className="rounded-2xl border border-white/70 bg-white/70 p-3 text-center shadow-sm">Fast Turnaround</div>
               <div className="rounded-2xl border border-white/70 bg-white/70 p-3 text-center shadow-sm">Waterproof Print</div>
               <div className="rounded-2xl border border-white/70 bg-white/70 p-3 text-center shadow-sm">Gift Ready</div>
-              <div className="rounded-2xl border border-white/70 bg-white/70 p-3 text-center shadow-sm">Mobile Friendly Site</div>
+              <div className="rounded-2xl border border-white/70 bg-white/70 p-3 text-center shadow-sm">QR or NFC Access</div>
             </div>
 
             <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -346,9 +341,9 @@ export default function Home() {
 
           <div className="relative float-card">
             <div className="showcase-shell rounded-3xl border border-[#0f172a]/10 bg-gradient-to-b from-[#0b1733] via-[#162748] to-[#23365a] p-6 shadow-[0_34px_90px_-24px_rgba(15,23,42,0.85)]">
-              <div className="mb-5 flex items-center justify-between">
+              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="text-xl font-bold text-white">Signature Couple Keychain</h2>
-                <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white">Premium Finish</span>
+                <span className="self-start rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white sm:self-auto">Premium Finish</span>
               </div>
 
               <div className="showcase-frame keychain-stage relative overflow-hidden rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur">
@@ -362,13 +357,13 @@ export default function Home() {
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-300">50mm x 30mm</p>
                   </div>
 
-                  <div className="keychain-metal relative rounded-2xl border border-white/25 bg-[#f8fafc] p-4 shadow-inner">
+                  <div className="keychain-metal relative rounded-2xl border border-white/25 bg-[#f8fafc] p-3 shadow-inner sm:p-4">
                     <div className="rounded-xl border border-slate-200 bg-gradient-to-b from-white to-slate-100 p-3">
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div className="keychain-panel rounded-lg border border-slate-200 bg-slate-50 p-2">
                           <p className="mb-2 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">QR Side</p>
                           <div className="flex aspect-square items-center justify-center rounded-md border border-slate-200 bg-white">
-                            <img src={heroQrUrl} alt="Sample QR" className="h-20 w-20 object-contain" />
+                            <img src={heroQrUrl} alt="Sample QR" className="h-24 w-24 object-contain sm:h-20 sm:w-20" />
                           </div>
                         </div>
 
@@ -393,16 +388,17 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="mt-5 flex items-end justify-between">
+              <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-widest text-slate-300">Starting Price</p>
                   <p className="text-2xl font-black text-white">PHP {selectedVariantConfig.basePrice}</p>
                   <p className="mt-1 text-xs text-slate-300">Buy 3+ items and save 8%</p>
+                  <p className="mt-1 text-xs font-semibold text-sky-200">Available in QR-only and QR + NFC options</p>
                 </div>
                 <a
                   href="#build"
                   onClick={() => trackEvent('hero_customize_click')}
-                  className="rounded-full bg-[#f97316] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#ea580c]"
+                  className="w-full rounded-full bg-[#f97316] px-5 py-2.5 text-center text-sm font-bold text-white transition hover:bg-[#ea580c] sm:w-auto"
                 >
                   Customize
                 </a>
@@ -438,7 +434,7 @@ export default function Home() {
               View full catalog
             </a>
           </div>
-          <div className="grid gap-5 md:grid-cols-3">
+          <div className="grid gap-5 md:grid-cols-2">
             {PRODUCT_HIGHLIGHTS.map((item) => (
               <article key={item.title} className="product-tile group rounded-3xl border border-[#0f172a]/10 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
                 <div className="product-media h-44 rounded-2xl bg-gradient-to-br from-[#dbeafe] via-[#ffedd5] to-[#fef9c3]" />
@@ -546,7 +542,7 @@ export default function Home() {
                 { id: '01', title: 'Choose product', desc: 'Pick your keychain style and finish.' },
                 { id: '02', title: 'Customize content', desc: 'Add names, photos, and your message.' },
                 { id: '03', title: 'We generate and print', desc: 'Your QR and page are prepared instantly.' },
-                { id: '04', title: 'Deliver and scan', desc: 'Open your page anytime through the keychain QR.' },
+                { id: '04', title: 'Deliver, scan, or tap', desc: 'Open your page anytime through QR or NFC tap.' },
               ].map((step) => (
                 <div key={step.id} className="flex gap-3 rounded-2xl border border-[#0f172a]/10 bg-white p-4">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0f172a] text-sm font-bold text-white">{step.id}</div>
