@@ -332,13 +332,13 @@ export default function Home() {
           <nav className="hidden items-center gap-6 text-sm font-medium text-[#334155] md:flex">
             <a href="#products" className="nav-link transition-colors hover:text-[#0f172a]">Products</a>
             <a href="#samples" className="nav-link transition-colors hover:text-[#0f172a]">Samples</a>
-            <a href="#build" className="nav-link transition-colors hover:text-[#0f172a]">Templates</a>
+            <a href="/create" className="nav-link transition-colors hover:text-[#0f172a]">Order</a>
             <a href="#how-it-works" className="nav-link transition-colors hover:text-[#0f172a]">How It Works</a>
             <a href="#social-shop" className="nav-link transition-colors hover:text-[#0f172a]">Shop Links</a>
-            <a href="#build" className="nav-link transition-colors hover:text-[#0f172a]">Customize</a>
+            <a href="/create" className="nav-link transition-colors hover:text-[#0f172a]">Customize</a>
           </nav>
           <a
-            href="#build"
+            href="/create"
             className="cta-pill inline-flex items-center rounded-full bg-[#0f172a] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1e293b]"
           >
             Start Building
@@ -362,7 +362,7 @@ export default function Home() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a
-                href="#build"
+                href="/create"
                 className="cta-solid rounded-full bg-[#111827] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#1f2937]"
               >
                 Build Your Keychain
@@ -465,7 +465,7 @@ export default function Home() {
                   <p className="mt-1 text-xs font-semibold text-sky-200">Available in QR-only and QR + NFC options</p>
                 </div>
                 <a
-                  href="#build"
+                  href="/create"
                   onClick={() => trackEvent('hero_customize_click')}
                   className="w-full rounded-full bg-[#f97316] px-5 py-2.5 text-center text-sm font-bold text-white transition hover:bg-[#ea580c] sm:w-auto"
                 >
@@ -514,7 +514,7 @@ export default function Home() {
                   <a href={publicLinks.shopeeStoreUrl} target="_blank" rel="noopener noreferrer" className="rounded-full bg-[#0f172a] px-4 py-2 text-xs font-bold text-white">
                     Buy on Shopee
                   </a>
-                  <a href="#build" className="rounded-full border border-[#0f172a] px-4 py-2 text-xs font-bold text-[#0f172a]">
+                  <a href="/create" className="rounded-full border border-[#0f172a] px-4 py-2 text-xs font-bold text-[#0f172a]">
                     Customize
                   </a>
                 </div>
@@ -547,7 +547,7 @@ export default function Home() {
                   <h3 className="mt-4 text-xl font-bold text-[#0f172a]">{item.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-[#475569]">{item.subtitle}</p>
                   <div className="mt-4 flex gap-2">
-                    <a href="#build" className="rounded-full bg-[#0f172a] px-4 py-2 text-xs font-bold text-white">
+                    <a href="/create" className="rounded-full bg-[#0f172a] px-4 py-2 text-xs font-bold text-white">
                       Request This Format
                     </a>
                     <a href="#inquiry" className="rounded-full border border-[#0f172a]/20 px-4 py-2 text-xs font-bold text-[#0f172a]">
@@ -751,177 +751,18 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="build" ref={builderSectionRef} className={`scroll-mt-24 py-12 md:py-16 ${builderHighlight ? 'builder-highlight' : ''}`}>
-          <div className="mb-8 text-center">
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#475569]">Price Estimator + Live Customizer</p>
-            <h2 className="mt-2 text-3xl font-black text-[#0f172a] md:text-4xl">Design Your Product and Website</h2>
+        <section id="build" className="scroll-mt-24 py-12 md:py-16">
+          <div className="rounded-3xl border border-[#0f172a]/10 bg-white/90 p-8 md:p-10 text-center">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#64748b]">Order Flow</p>
+            <h2 className="mt-2 text-3xl font-black text-[#0f172a] md:text-4xl">Price Estimator + Live Customizer Moved</h2>
             <p className="mx-auto mt-3 max-w-2xl text-[#475569]">
-              Follow a cleaner guided flow: select product, select occasion, select template, then fill up your full website content on the next page.
+              We moved the full ordering experience to a dedicated page so customers can complete product selection, personalization, review, and submit in one clean flow.
             </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <a href="/create" className="rounded-full bg-[#0f172a] px-6 py-3 text-sm font-bold text-white">Start Order Form</a>
+              <a href={publicLinks.shopeeStoreUrl} target="_blank" rel="noopener noreferrer" className="rounded-full border border-[#0f172a]/20 bg-white px-6 py-3 text-sm font-bold text-[#0f172a]">Shop on Shopee</a>
+            </div>
           </div>
-
-          <div className="mb-6 rounded-2xl border border-[#0f172a]/10 bg-white/85 p-4">
-            <div className="mb-3 grid grid-cols-2 gap-2 text-xs font-semibold sm:grid-cols-4">
-              {[
-                { id: 1, label: 'Product' },
-                { id: 2, label: 'Occasion' },
-                { id: 3, label: 'Template' },
-                { id: 4, label: 'Fill Form' },
-              ].map((item) => (
-                <div
-                  key={item.id}
-                  className={`rounded-lg px-3 py-2 text-center ${flowStep === item.id ? 'bg-[#0f172a] text-white' : 'bg-[#f1f5f9] text-[#475569]'}`}
-                >
-                  {item.id}. {item.label}
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-[#64748b]">Current summary: {estimatorSummary} • Occasion: {OCCASION_FLOW_OPTIONS.find((item) => item.id === selectedOccasion)?.label || 'Couple'} • Template: {templatesForOccasion.find((item) => item.id === selectedTemplateId)?.name}</p>
-          </div>
-
-          {flowStep === 1 && (
-            <div className="grid gap-6 rounded-3xl border border-[#0f172a]/10 bg-white p-6 md:grid-cols-2 md:p-8">
-              <div className="space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#64748b]">Step 1</p>
-                <h3 className="text-2xl font-black text-[#0f172a]">Select Your Product Setup</h3>
-
-                <div>
-                  <p className="mb-2 text-sm font-semibold text-[#0f172a]">Product Variant</p>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {VARIANT_OPTIONS.map((option) => (
-                      <button
-                        key={option.id}
-                        type="button"
-                        onClick={() => setSelectedVariant(option.id)}
-                        className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${selectedVariant === option.id ? 'border-[#0f172a] bg-[#0f172a] text-white' : 'border-[#0f172a]/20 bg-white text-[#0f172a]'}`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="mb-2 text-sm font-semibold text-[#0f172a]">Print Finish</p>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {FINISH_OPTIONS.map((option) => (
-                      <button
-                        key={option.id}
-                        type="button"
-                        onClick={() => setSelectedFinish(option.id)}
-                        className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${selectedFinish === option.id ? 'border-[#0f172a] bg-[#0f172a] text-white' : 'border-[#0f172a]/20 bg-white text-[#0f172a]'}`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[#0f172a]">Quantity</span>
-                  <button type="button" onClick={() => setQuantity((prev) => Math.max(1, prev - 1))} className="rounded-lg border border-[#0f172a]/20 bg-white px-3 py-1.5 text-sm font-bold text-[#0f172a]">-</button>
-                  <span className="rounded-lg border border-[#0f172a]/20 bg-white px-3 py-1.5 text-sm font-bold text-[#0f172a]">{quantity}</span>
-                  <button type="button" onClick={() => setQuantity((prev) => Math.min(20, prev + 1))} className="rounded-lg border border-[#0f172a]/20 bg-white px-3 py-1.5 text-sm font-bold text-[#0f172a]">+</button>
-                </div>
-
-                <div className="pt-2">
-                  <button type="button" onClick={() => setFlowStep(2)} className="rounded-full bg-[#0f172a] px-6 py-2.5 text-sm font-bold text-white">Next: Occasion Type</button>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-[#0f172a]/10 bg-[#0f172a] p-6 text-white">
-                <p className="text-xs uppercase tracking-widest text-slate-300">Estimated Summary</p>
-                <div className="mt-4 space-y-2 text-sm">
-                  <div className="flex items-center justify-between"><span>Variant</span><span>PHP {selectedVariantConfig.basePrice}</span></div>
-                  <div className="flex items-center justify-between"><span>Finish</span><span>PHP {selectedFinishConfig.price}</span></div>
-                  <div className="flex items-center justify-between"><span>Add-ons / item</span><span>PHP {addOnsPerItem}</span></div>
-                  <div className="flex items-center justify-between"><span>Quantity</span><span>x{quantity}</span></div>
-                  <div className="flex items-center justify-between"><span>Subtotal</span><span>PHP {subtotal}</span></div>
-                  <div className="flex items-center justify-between"><span>Discounts</span><span>- PHP {totalDiscount}</span></div>
-                  <div className="flex items-center justify-between"><span>Shipping</span><span>PHP {selectedZoneConfig.shippingFee}</span></div>
-                </div>
-                <div className="my-4 h-px bg-white/20" />
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold">Estimated Total</p>
-                  <p className="text-2xl font-black">PHP {estimatedTotal}</p>
-                </div>
-                <p className="mt-3 text-xs text-slate-300">Estimated delivery: {selectedZoneConfig.eta}</p>
-              </div>
-            </div>
-          )}
-
-          {flowStep === 2 && (
-            <div className="rounded-3xl border border-[#0f172a]/10 bg-white p-6 md:p-8" id="occasion-step">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#64748b]">Step 2</p>
-              <h3 className="mt-2 text-2xl font-black text-[#0f172a]">Select Occasion Type</h3>
-              <p className="mt-2 text-sm text-[#475569]">Pick the occasion so we can tailor the website content flow.</p>
-
-              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {OCCASION_FLOW_OPTIONS.map((occasion) => (
-                  <button
-                    key={occasion.id}
-                    type="button"
-                    onClick={() => setSelectedOccasion(occasion.id)}
-                    className={`rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${selectedOccasion === occasion.id ? 'border-[#0f172a] bg-[#0f172a] text-white' : 'border-[#0f172a]/15 bg-white text-[#0f172a] hover:bg-[#f8fafc]'}`}
-                  >
-                    {occasion.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="mt-6 flex gap-3">
-                <button type="button" onClick={() => setFlowStep(1)} className="rounded-full border border-[#0f172a]/20 px-5 py-2.5 text-sm font-semibold text-[#0f172a]">Back</button>
-                <button type="button" onClick={() => setFlowStep(3)} className="rounded-full bg-[#0f172a] px-6 py-2.5 text-sm font-bold text-white">Next: Select Template</button>
-              </div>
-            </div>
-          )}
-
-          {flowStep === 3 && (
-            <div id="templates" className="space-y-4">
-              <TemplateSelector
-                templates={templatesForOccasion}
-                selectedTemplateId={selectedTemplateId}
-                onSelectTemplate={setSelectedTemplateId}
-                onContinue={() => setFlowStep(4)}
-                stepLabel="Step 3 of 4"
-                description="Select the visual style for your website before moving to the full content form."
-                continueLabel="Next: Fill Up Form"
-              />
-              <button type="button" onClick={() => setFlowStep(2)} className="rounded-full border border-[#0f172a]/20 px-5 py-2.5 text-sm font-semibold text-[#0f172a]">Back to Occasion</button>
-            </div>
-          )}
-
-          {flowStep === 4 && (
-            <div className="rounded-3xl border border-[#0f172a]/10 bg-white p-6 md:p-8">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#64748b]">Step 4</p>
-              <h3 className="mt-2 text-2xl font-black text-[#0f172a]">Fill Up the Website Content Form</h3>
-              <p className="mt-2 text-sm text-[#475569]">You are ready. Continue to the dedicated page so the long form stays clean and easy to complete on mobile.</p>
-
-              <div className="mt-5 grid gap-3 rounded-2xl border border-[#0f172a]/10 bg-[#f8fafc] p-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div>
-                  <p className="text-xs uppercase tracking-wider text-[#64748b]">Product</p>
-                  <p className="mt-1 text-sm font-bold text-[#0f172a]">{selectedVariantConfig.label}</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-wider text-[#64748b]">Occasion</p>
-                  <p className="mt-1 text-sm font-bold text-[#0f172a]">{OCCASION_FLOW_OPTIONS.find((item) => item.id === selectedOccasion)?.label}</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-wider text-[#64748b]">Template</p>
-                  <p className="mt-1 text-sm font-bold text-[#0f172a]">{templatesForOccasion.find((item) => item.id === selectedTemplateId)?.name}</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-wider text-[#64748b]">Estimated</p>
-                  <p className="mt-1 text-sm font-bold text-[#0f172a]">PHP {estimatedTotal}</p>
-                </div>
-              </div>
-
-              <div className="mt-6 flex gap-3">
-                <button type="button" onClick={() => setFlowStep(3)} className="rounded-full border border-[#0f172a]/20 px-5 py-2.5 text-sm font-semibold text-[#0f172a]">Back to Template</button>
-                <button type="button" onClick={continueToCreate} className="rounded-full bg-[#0f172a] px-6 py-2.5 text-sm font-bold text-white">Continue to Form</button>
-              </div>
-            </div>
-          )}
         </section>
 
         <section className="py-12 md:py-16">
@@ -932,7 +773,7 @@ export default function Home() {
               Start from the builder above or jump directly to our storefront channels for ready-made bundles.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <a href="#build" className="rounded-full bg-white px-5 py-3 text-sm font-bold text-[#0f172a]">Customize Now</a>
+              <a href="/create" className="rounded-full bg-white px-5 py-3 text-sm font-bold text-[#0f172a]">Customize Now</a>
               <a href={publicLinks.shopeeStoreUrl} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/40 px-5 py-3 text-sm font-bold text-white">Shopee</a>
               <a href={publicLinks.tiktokShopUrl} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/40 px-5 py-3 text-sm font-bold text-white">TikTok</a>
               <a href={publicLinks.lazadaStoreUrl} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/40 px-5 py-3 text-sm font-bold text-white">Lazada</a>
@@ -1004,14 +845,14 @@ export default function Home() {
               <a href={publicLinks.instagramUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">Instagram</a>
             )}
             <a href="#samples" className="underline underline-offset-4">Sample Websites</a>
-            <a href="#build" className="underline underline-offset-4">Customize</a>
+            <a href="/create" className="underline underline-offset-4">Customize</a>
           </div>
           <p className="mt-4">© 2026 Keystory</p>
         </footer>
       </main>
 
       <div className="fixed right-4 top-1/2 z-30 hidden w-44 -translate-y-1/2 space-y-2 rounded-2xl border border-[#0f172a]/10 bg-white/95 p-3 shadow-xl backdrop-blur lg:block">
-        <a href="#build" className="block rounded-lg bg-[#0f172a] px-3 py-2 text-center text-xs font-bold text-white">Customize</a>
+        <a href="/create" className="block rounded-lg bg-[#0f172a] px-3 py-2 text-center text-xs font-bold text-white">Customize</a>
         <a href={publicLinks.shopeeStoreUrl} target="_blank" rel="noopener noreferrer" className="block rounded-lg bg-[#f97316] px-3 py-2 text-center text-xs font-bold text-white">Shop Shopee</a>
         <a href={publicLinks.tiktokShopUrl} target="_blank" rel="noopener noreferrer" className="block rounded-lg border border-[#0f172a]/20 px-3 py-2 text-center text-xs font-bold text-[#0f172a]">TikTok</a>
         <a href={publicLinks.lazadaStoreUrl} target="_blank" rel="noopener noreferrer" className="block rounded-lg border border-[#0f172a]/20 px-3 py-2 text-center text-xs font-bold text-[#0f172a]">Lazada</a>
@@ -1020,7 +861,7 @@ export default function Home() {
 
       <div className="fixed bottom-4 left-1/2 z-40 w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 rounded-2xl border border-[#0f172a]/15 bg-white/95 p-2 shadow-2xl backdrop-blur md:hidden">
         <div className="grid grid-cols-3 gap-2">
-          <a href="#build" className="rounded-xl bg-[#0f172a] px-3 py-3 text-center text-xs font-bold text-white">
+          <a href="/create" className="rounded-xl bg-[#0f172a] px-3 py-3 text-center text-xs font-bold text-white">
             Customize Now
           </a>
           <a href={publicLinks.shopeeStoreUrl} target="_blank" rel="noopener noreferrer" className="rounded-xl bg-[#f97316] px-3 py-3 text-center text-xs font-bold text-white">

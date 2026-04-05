@@ -1,5 +1,5 @@
 import { OccasionType } from '@/lib/types';
-import { OCCASION_REGISTRY } from '@/lib/occasion-registry';
+import { PRESET_REGISTRY } from '@/lib/preset-registry';
 
 export interface StarterTemplate {
   id: string;
@@ -20,13 +20,13 @@ const OCCASION_TEMPLATE_ACCENTS = [
   'from-amber-100 via-yellow-50 to-orange-100',
 ];
 
-export const STARTER_TEMPLATES: StarterTemplate[] = Object.values(OCCASION_REGISTRY).map((meta, index) => ({
-  id: `${meta.key}-signature`,
-  occasion: meta.key,
-  name: `${meta.label} Signature`,
-  description: `Template crafted for ${meta.label.toLowerCase()} stories. ${meta.description}`,
-  previewLabel: `${meta.label} Layout`,
-  previewUrl: `https://example.com/template-preview/${meta.key}`,
+export const STARTER_TEMPLATES: StarterTemplate[] = PRESET_REGISTRY.map((preset, index) => ({
+  id: preset.id,
+  occasion: preset.siteType,
+  name: preset.label,
+  description: preset.description,
+  previewLabel: `${preset.badge} Template`,
+  previewUrl: `https://example.com/template-preview/${preset.id}`,
   accentClass: OCCASION_TEMPLATE_ACCENTS[index % OCCASION_TEMPLATE_ACCENTS.length]!,
 }));
 

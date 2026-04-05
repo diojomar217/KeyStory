@@ -22,8 +22,22 @@ export async function getWebsiteByIdWithConfig(id: string) {
 export type CreateWebsiteInput = Omit<Site, 'id'>;
 export type UpdateWebsiteInput = Partial<Site> & { id: string };
 
+const stripUnsupportedLegacyColumns = <T extends Record<string, any>>(input: T): T => {
+  const sanitized = { ...input };
+  delete sanitized.customer_name;
+  delete sanitized.partner_name;
+  delete sanitized.specialDate;
+  delete sanitized.tagline;
+  delete sanitized.message;
+  delete sanitized.anniversary_date;
+  delete sanitized.song_link;
+  delete sanitized.photos;
+  return sanitized;
+};
+
 export async function createWebsite(data: CreateWebsiteInput) {
-  const { data: site, error } = await supabase.from('sites').insert(data).select().single();
+  const sanitized = stripUnsupportedLegacyColumns(data as Record<string, any>);
+  const { data: site, error } = await supabase.from('sites').insert(sanitized).select().single();
   if (error) throw error;
   return site;
 }
@@ -36,7 +50,8 @@ export async function getWebsiteById(id: string) {
 
 export async function updateWebsite(input: UpdateWebsiteInput) {
   const { id, ...updates } = input;
-  const { data, error } = await supabase.from('sites').update(updates).eq('id', id).select().single();
+  const sanitized = stripUnsupportedLegacyColumns(updates as Record<string, any>);
+  const { data, error } = await supabase.from('sites').update(sanitized).eq('id', id).select().single();
   if (error) throw error;
   return data;
 }

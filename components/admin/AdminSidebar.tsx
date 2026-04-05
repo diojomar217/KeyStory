@@ -90,6 +90,11 @@ const sidebarItems: SidebarItem[] = [
     ],
   },
   {
+    name: 'Orders',
+    href: '/admin/orders',
+    icon: <span className="w-5 h-5 inline-flex items-center justify-center">🧾</span>,
+  },
+  {
     name: 'Settings',
     href: '/admin/settings',
     icon: <SettingsIcon className="w-5 h-5" />,

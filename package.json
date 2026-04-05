@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "job:auto-archive": "tsx scripts/auto-archive.ts",
+    "job:cleanup-stale-orders": "tsx scripts/cleanup-stale-orders.ts",
     "job:renewal-reminders": "tsx scripts/renewal-reminders.ts",
     "job:process-queue": "tsx scripts/process-job-queue.ts"
   },
