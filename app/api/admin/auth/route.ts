@@ -2,7 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { enforceRateLimit } from '@/lib/reliability/rate-limit';
 import { captureError } from '@/lib/reliability/monitoring';
 import { recordAdminAudit } from '@/lib/reliability/audit';
-import { createAdminSessionToken } from '@/lib/api/admin-auth';
+import { createAdminSessionToken, getAllowedAdminEmails, isPasswordFallbackEnabled } from '@/lib/api/admin-auth';
+
+export async function GET() {
+  const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID?.trim() && process.env.GOOGLE_CLIENT_SECRET?.trim());
+  const passwordConfigured = Boolean(process.env.ADMIN_EMAIL?.trim() && process.env.ADMIN_PASSWORD?.trim());
+  const passwordEnabled = isPasswordFallbackEnabled() && passwordConfigured;
+
+  return NextResponse.json({
+    success: true,
+    providers: {
+      google: googleEnabled,
+      password: passwordEnabled,
+    },
+    allowedAdminsCount: getAllowedAdminEmails().length,
+  });
+}
 
 // Simple token-based auth (in production, use proper JWT/sessions)
 export async function POST(req: NextRequest) {
@@ -12,6 +27,13 @@ export async function POST(req: NextRequest) {
     windowMs: 5 * 60 * 1000,
   });
   if (limited) return limited;
+
+  if (!isPasswordFallbackEnabled()) {
+    return NextResponse.json(
+      { success: false, message: 'Password login is disabled. Use Google sign-in.' },
+      { status: 403 }
+    );
+  }
 
   try {
     const { email, password } = await req.json();
@@ -28,7 +50,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (email === adminEmail && password === adminPassword) {
+    if ((email || '').trim().toLowerCase() === adminEmail.trim().toLowerCase() && password === adminPassword) {
       const token = createAdminSessionToken();
 
       await recordAdminAudit(req, {

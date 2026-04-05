@@ -2,8 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createHash, timingSafeEqual } from 'crypto';
 
 const SESSION_COOKIE_NAME = 'admin_session';
+const TRUTHY_VALUES = new Set(['1', 'true', 'yes', 'on']);
 
 function buildAdminSessionToken(): string | null {
+  const sessionSecret = process.env.ADMIN_SESSION_SECRET?.trim();
+  if (sessionSecret) {
+    return createHash('sha256')
+      .update(`${sessionSecret}:keystory-admin-session`)
+      .digest('hex');
+  }
+
   const adminEmail = process.env.ADMIN_EMAIL?.trim();
   const adminPassword = process.env.ADMIN_PASSWORD?.trim();
 
@@ -14,6 +22,20 @@ function buildAdminSessionToken(): string | null {
   return createHash('sha256')
     .update(`${adminEmail}:${adminPassword}:keystory-admin-session`)
     .digest('hex');
+}
+
+export function getAllowedAdminEmails(): string[] {
+  const rawList = process.env.ADMIN_ALLOWED_EMAILS?.trim();
+  const emails = (rawList ? rawList.split(',') : [process.env.ADMIN_EMAIL || ''])
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean);
+
+  return Array.from(new Set(emails));
+}
+
+export function isPasswordFallbackEnabled(): boolean {
+  const value = (process.env.ADMIN_ALLOW_PASSWORD_FALLBACK || '').trim().toLowerCase();
+  return TRUTHY_VALUES.has(value);
 }
 
 export function createAdminSessionToken(): string {
