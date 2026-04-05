@@ -86,7 +86,20 @@ export async function listWebsites(options: ListWebsitesOptions = {}) {
     }
   }
 
-  let query = supabase.from('sites').select('*', { count: 'exact' });
+  const listSelectColumns = [
+    'id',
+    'slug',
+    'website_name',
+    'site_type',
+    'status',
+    'expires_at',
+    'created_at',
+    'updated_at',
+    'config',
+  ].join(',');
+
+  // Select only columns needed by list screens to reduce query payload and egress.
+  let query = supabase.from('sites').select(listSelectColumns, { count: 'exact' });
   if (options.status && options.status !== 'all') {
     query = query.eq('status', options.status);
   }

@@ -5,6 +5,7 @@ import { getOccasionMetadata } from '@/lib/occasion-registry';
 import { getPublicSiteBySlug } from '@/lib/site-data';
 import type { OccasionType } from '@/lib/types';
 import { resolveDisplayName } from '@/lib/site-type-utils';
+import { isDarkTheme as checkIsDarkTheme } from '@/lib/theme-color-helpers';
 import {
   buildOccasionDescription,
   buildOccasionTitle,
@@ -67,9 +68,9 @@ export default async function OpenGraphImage({ params }: Props) {
   const theme = ((config?.theme as ThemeKey) || DEFAULT_THEME) as ThemeKey;
   const themeDef = THEME_CONFIG[theme] || THEME_CONFIG[DEFAULT_THEME as ThemeKey];
   const colors = themeDef.colors;
-  const textColor = theme === 'dark_elegant' ? '#FAFAFA' : colors.text;
-  const mutedText = theme === 'dark_elegant' ? 'rgba(250,250,250,0.82)' : `${colors.text}CC`;
-  const faintText = theme === 'dark_elegant' ? 'rgba(250,250,250,0.58)' : `${colors.text}99`;
+  const textColor = checkIsDarkTheme(theme) ? '#FAFAFA' : colors.text;
+  const mutedText = checkIsDarkTheme(theme) ? 'rgba(250,250,250,0.82)' : `${colors.text}CC`;
+  const faintText = checkIsDarkTheme(theme) ? 'rgba(250,250,250,0.58)' : `${colors.text}99`;
   const gradient = `linear-gradient(135deg, ${colors.primary} 0%, ${colors.accent} 45%, ${colors.secondary} 100%)`;
 
   return new ImageResponse(
@@ -91,7 +92,7 @@ export default async function OpenGraphImage({ params }: Props) {
             position: 'absolute',
             inset: 0,
             background: gradient,
-            opacity: theme === 'dark_elegant' ? 0.28 : 0.18,
+            opacity: checkIsDarkTheme(theme) ? 0.28 : 0.18,
           }}
         />
         <div
@@ -139,7 +140,7 @@ export default async function OpenGraphImage({ params }: Props) {
                 gap: 16,
                 padding: '14px 22px',
                 borderRadius: 9999,
-                background: theme === 'dark_elegant' ? 'rgba(24,24,27,0.5)' : 'rgba(255,255,255,0.62)',
+                background: checkIsDarkTheme(theme) ? 'rgba(24,24,27,0.5)' : 'rgba(255,255,255,0.62)',
                 border: `1px solid ${colors.border}`,
                 fontSize: 24,
               }}
@@ -156,7 +157,7 @@ export default async function OpenGraphImage({ params }: Props) {
                 display: 'flex',
                 padding: '12px 18px',
                 borderRadius: 9999,
-                background: theme === 'dark_elegant' ? 'rgba(0,0,0,0.28)' : 'rgba(255,255,255,0.56)',
+                background: checkIsDarkTheme(theme) ? 'rgba(0,0,0,0.28)' : 'rgba(255,255,255,0.56)',
                 border: `1px solid ${colors.border}`,
                 fontSize: 18,
                 color: mutedText,
@@ -185,7 +186,7 @@ export default async function OpenGraphImage({ params }: Props) {
                 flexDirection: 'column',
                 padding: '22px 24px',
                 borderRadius: 28,
-                background: theme === 'dark_elegant' ? 'rgba(24,24,27,0.62)' : 'rgba(255,255,255,0.72)',
+                background: checkIsDarkTheme(theme) ? 'rgba(24,24,27,0.62)' : 'rgba(255,255,255,0.72)',
                 border: `1px solid ${colors.border}`,
                 minWidth: 340,
               }}

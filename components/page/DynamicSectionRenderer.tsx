@@ -353,6 +353,8 @@ const buildProps = (section: Section, props: DynamicSectionRendererProps): Recor
     case 'playlist':
       return {
         theme: mergedConfig.theme,
+        siteType: mergedConfig.siteType,
+        autoplay: mergedConfig.songAutoplay || mergedConfig.song_autoplay || false,
         songLink: mergedConfig.songLink || mergedConfig.song_link,
       };
 

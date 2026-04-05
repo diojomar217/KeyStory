@@ -12,19 +12,37 @@ export async function retrySiteMediaUpload(siteId: string): Promise<{ updatedPho
   const photos = Array.isArray(config?.media?.photos) ? config.media.photos : [];
   const nextPhotos: string[] = [];
   let updatedPhotos = 0;
+  const seenPhotoInputs = new Set<string>();
+  const seenPhotoOutputs = new Set<string>();
 
   for (const photo of photos) {
+    if (typeof photo === 'string') {
+      const normalizedPhotoInput = photo.trim();
+      if (!normalizedPhotoInput) continue;
+      if (seenPhotoInputs.has(normalizedPhotoInput)) continue;
+      seenPhotoInputs.add(normalizedPhotoInput);
+    }
+
     if (!isDataUrl(photo)) {
-      nextPhotos.push(photo);
+      if (!seenPhotoOutputs.has(photo)) {
+        nextPhotos.push(photo);
+        seenPhotoOutputs.add(photo);
+      }
       continue;
     }
 
     try {
       const uploaded = await uploadToCloudinary(photo, { isHero: false });
-      nextPhotos.push(uploaded);
+      if (!seenPhotoOutputs.has(uploaded)) {
+        nextPhotos.push(uploaded);
+        seenPhotoOutputs.add(uploaded);
+      }
       updatedPhotos += 1;
     } catch {
-      nextPhotos.push(photo);
+      if (!seenPhotoOutputs.has(photo)) {
+        nextPhotos.push(photo);
+        seenPhotoOutputs.add(photo);
+      }
     }
   }
 

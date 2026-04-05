@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import type { ThemeKey } from '@/config/themeConfig';
 import type { OccasionType } from '@/lib/types';
 import { useTheme } from '../builder/ThemeWrapper';
+import { isDarkTheme as checkIsDarkTheme } from '@/lib/theme-color-helpers';
 import { formatOccasionDisplayName, getOccasionPublicCopy } from '@/lib/public-site-copy';
 
 type Props = {
@@ -57,7 +58,7 @@ export default function ShareSection({ theme, siteType = 'couple', customerName,
   };
 
   return (
-    <section className={`py-12 w-full ${theme === 'dark_elegant' ? 'bg-zinc-800/50' : 'bg-white/50'}`}>
+    <section className={`py-12 w-full ${checkIsDarkTheme(theme) ? 'bg-zinc-800/50' : 'bg-white/50'}`}>
       <div className="max-w-4xl mx-auto px-4 md:px-6 text-center">
         {/* Decorative element */}
         <div className="mb-6">

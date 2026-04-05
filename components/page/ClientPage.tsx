@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, SectionContentMap, GalleryLayout, Section, GuestMessage, GuestMessageRecord, OccasionType } from '@/lib/types';
 import type { SiteAnalyticsEventType } from '@/lib/types';
 import { ThemeKey } from '@/config/themeConfig';
+import { isDarkTheme as checkIsDarkTheme } from '@/lib/theme-color-helpers';
 import BackgroundDecorations from './BackgroundDecorations';
 import ThemeWrapper, { useTheme } from '../builder/ThemeWrapper';
 import { getSectionBgClass, getSectionVariant } from '@/lib/section-utils';
@@ -478,6 +479,8 @@ export default function ClientPage({
             <PlaylistSection
               key={section}
               theme={theme}
+              siteType={siteType}
+              autoplay={songAutoplay}
               songLink={contentForSection?.playlistUrl || sectionContent?.playlist?.playlistUrl || songLink}
             />
           );
@@ -810,9 +813,9 @@ export default function ClientPage({
                   <div
                     className="px-4 py-2 rounded-full border text-xs font-semibold tracking-[0.16em] uppercase backdrop-blur-md"
                     style={{
-                      backgroundColor: theme === 'dark_elegant' ? 'rgba(17,17,17,0.62)' : 'rgba(255,255,255,0.78)',
-                      borderColor: theme === 'dark_elegant' ? 'rgba(255,255,255,0.14)' : 'rgba(15,23,42,0.08)',
-                      color: theme === 'dark_elegant' ? '#FFFFFF' : '#111827',
+                      backgroundColor: checkIsDarkTheme(theme) ? 'rgba(17,17,17,0.62)' : 'rgba(255,255,255,0.78)',
+                      borderColor: checkIsDarkTheme(theme) ? 'rgba(255,255,255,0.14)' : 'rgba(15,23,42,0.08)',
+                      color: checkIsDarkTheme(theme) ? '#FFFFFF' : '#111827',
                     }}
                   >
                     {formatSectionLabel(activeStorySection || navSections[0])}

@@ -1,5 +1,7 @@
 'use client';
 
+import { isDarkTheme as checkIsDarkTheme } from '@/lib/theme-color-helpers';
+
 import { useEffect, useRef, useState } from 'react';
 import QRCodeStyling from 'qr-code-styling';
 import { toPng } from 'html-to-image';
@@ -53,7 +55,7 @@ export default function MemoryCardSection({
   const cardStyle = getCardStyleClasses(theme);
   const shadowClass = getShadowClass(theme);
   const themeVibe = getThemeVibe(theme);
-  const isDarkTheme = theme === 'dark_elegant';
+  const isDarkTheme = checkIsDarkTheme(theme);
   const displayName = formatOccasionDisplayName(siteType, customerName, partnerName);
   const publicCopy = getOccasionPublicCopy(siteType);
   const isBirthday = siteType === 'birthday';

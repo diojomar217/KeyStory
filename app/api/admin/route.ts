@@ -6,12 +6,33 @@ import { recordAdminAudit } from '@/lib/reliability/audit';
 import { enqueueJob } from '@/lib/reliability/job-queue';
 import { featureFlags } from '@/lib/reliability/feature-flags';
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { createWebsite as insertSite, updateWebsite as updateSite, deleteWebsite as deleteSite, listWebsites as getSites, getWebsiteById as getSiteById } from '@/lib/db/websites';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import { supabase, Site } from '@/lib/supabase';
 import { createHash } from 'crypto';
 import { getIdempotencyReplay, saveIdempotencyResult } from '@/lib/db/idempotency';
 import { validateAndNormalizeSiteConfig } from '@/lib/site-config-validation';
+import { getApprovedGuestMessagesBySiteIdTag, getPublicSiteBySlugTag } from '@/lib/site-data';
+
+const adminListCache: Record<string, { data: any; cachedAt: number }> = {};
+const ADMIN_LIST_CACHE_TTL = 30 * 1000;
+
+const clearAdminListCache = () => {
+  Object.keys(adminListCache).forEach((key) => {
+    delete adminListCache[key];
+  });
+};
+
+const invalidatePublicSiteCaches = (siteId?: string | null, slug?: string | null) => {
+  if (siteId) {
+    revalidateTag(getApprovedGuestMessagesBySiteIdTag(siteId), 'max');
+  }
+
+  if (slug) {
+    revalidateTag(getPublicSiteBySlugTag(slug), 'max');
+  }
+};
 
 const normalizeUniqueTextArray = (input: unknown[]): string[] => {
   const seen = new Set<string>();
@@ -26,6 +47,57 @@ const normalizeUniqueTextArray = (input: unknown[]): string[] => {
   }
 
   return result;
+};
+
+const extractMediaUrlsFromConfig = (config: any): string[] => {
+  const results: string[] = [];
+
+  const recurse = (obj: any): void => {
+    if (!obj || typeof obj !== 'object') return;
+    if (Array.isArray(obj)) {
+      obj.forEach(recurse);
+      return;
+    }
+
+    Object.values(obj).forEach((value) => {
+      if (typeof value === 'string' && value.includes('cloudinary.com')) {
+        results.push(value);
+      } else if (value && typeof value === 'object') {
+        recurse(value);
+      }
+    });
+  };
+
+  recurse(config);
+  return Array.from(new Set(results));
+};
+
+const getCloudinaryPublicIdFromUrl = (url: string): string | null => {
+  try {
+    const parsed = new URL(url);
+    const parts = parsed.pathname.split('/').filter(Boolean);
+    const idx = parts.findIndex((part) => /^v\d+$/.test(part));
+    const idParts = idx >= 0 ? parts.slice(idx + 1) : parts;
+    return idParts.join('/').replace(/\.[^.]+$/, '');
+  } catch {
+    return null;
+  }
+};
+
+const deleteCloudinaryMediaUrls = async (urls: string[]): Promise<void> => {
+  if (urls.length === 0) return;
+
+  const cloudinary = (await import('@/lib/cloudinary')).default;
+
+  for (const mediaUrl of urls) {
+    const publicId = getCloudinaryPublicIdFromUrl(mediaUrl);
+    if (!publicId) continue;
+    try {
+      await cloudinary.uploader.destroy(publicId, { invalidate: true });
+    } catch (err) {
+      console.warn('Failed to remove Cloudinary media', publicId, err);
+    }
+  }
 };
 
 const isMaskedPasswordPlaceholder = (value?: string): boolean => {
@@ -82,8 +154,45 @@ export async function GET(req: NextRequest) {
       const site = await getSiteById(id);
       return NextResponse.json({ site });
     }
-    const orders = await getSites();
-    return NextResponse.json({ orders });
+
+    const status = searchParams.get('status')?.toLowerCase() || undefined;
+    const parsedLimit = parseInt(searchParams.get('limit') || '20', 10);
+    const parsedOffset = parseInt(searchParams.get('offset') || '0', 10);
+    const limit = Number.isNaN(parsedLimit) ? 20 : Math.min(Math.max(parsedLimit, 1), 100);
+    const offset = Number.isNaN(parsedOffset) ? 0 : Math.max(parsedOffset, 0);
+    const search = searchParams.get('search')?.trim() || undefined;
+    const sortBy = searchParams.get('sortBy') || undefined;
+    const sortDirection = searchParams.get('sortDirection') === 'asc' ? 'asc' : 'desc';
+    const guestMessageFilter = searchParams.get('guestMessageFilter') === 'pending' ? 'pending' : 'all';
+
+    const cacheKey = JSON.stringify({
+      limit,
+      offset,
+      status,
+      search,
+      sortBy,
+      sortDirection,
+      guestMessageFilter,
+    });
+    const now = Date.now();
+    if (adminListCache[cacheKey] && now - adminListCache[cacheKey].cachedAt < ADMIN_LIST_CACHE_TTL) {
+      return NextResponse.json(adminListCache[cacheKey].data);
+    }
+
+    const { data: orders, total } = await getSites({
+      limit,
+      offset,
+      status,
+      search,
+      sortBy,
+      sortDirection,
+      guestMessageFilter,
+    });
+
+    const responseData = { orders, total };
+    adminListCache[cacheKey] = { data: responseData, cachedAt: now };
+
+    return NextResponse.json(responseData);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -97,7 +206,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const { id, status } = await req.json();
-    await updateSite({ id, status });
+    const updated = await updateSite({ id, status });
+    invalidatePublicSiteCaches(updated?.id || id, updated?.website_name || updated?.slug || null);
+    clearAdminListCache();
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error('POST error:', err);
@@ -162,8 +273,17 @@ export async function PUT(req: NextRequest) {
 
     const processedPhotos: string[] = [];
     const photoUploadWarnings: string[] = [];
+    const seenPhotoInputs = new Set<string>();
+    let pendingPhotoUploads = 0;
 
     for (const photo of inputPhotos) {
+      if (typeof photo === 'string') {
+        const normalizedPhotoInput = photo.trim();
+        if (!normalizedPhotoInput) continue;
+        if (seenPhotoInputs.has(normalizedPhotoInput)) continue;
+        seenPhotoInputs.add(normalizedPhotoInput);
+      }
+
       if (typeof photo === 'string' && photo.startsWith('data:')) {
         try {
           const uploaded = await uploadToCloudinary(photo, { isHero: false });
@@ -171,8 +291,7 @@ export async function PUT(req: NextRequest) {
         } catch (err: any) {
           console.error('admin photo upload error', err);
           photoUploadWarnings.push(err?.message || 'Photo upload failed');
-          // fallback: keep data URL so the photos are preserved in place while investigation happens
-          processedPhotos.push(photo);
+          pendingPhotoUploads += 1;
         }
       } else if (typeof photo === 'string' && photo.trim()) {
         processedPhotos.push(photo);
@@ -183,6 +302,7 @@ export async function PUT(req: NextRequest) {
 
     let heroCoverPhotoUrl: string | undefined = updates.config?.hero?.coverPhotoUrl;
     let heroUploadWarning: string | null = null;
+    let heroUploadPending = false;
 
     if (updates.hero_photo) {
       try {
@@ -190,10 +310,7 @@ export async function PUT(req: NextRequest) {
       } catch (err: any) {
         console.error('admin hero photo upload error', err);
         heroUploadWarning = err?.message || 'Hero photo upload failed';
-        // fallback: keep original hero_photo data URL to avoid erasing user selection until fix
-        if (typeof updates.hero_photo === 'string' && updates.hero_photo.startsWith('data:')) {
-          heroCoverPhotoUrl = updates.hero_photo;
-        }
+        heroUploadPending = true;
       }
     }
 
@@ -206,6 +323,10 @@ export async function PUT(req: NextRequest) {
     if (!heroCoverPhotoUrl && typeof legacyCoverIndex === 'number' && uniqueProcessedPhotos[legacyCoverIndex]) {
       heroCoverPhotoUrl = uniqueProcessedPhotos[legacyCoverIndex];
     }
+
+    const hasRetriableDataUrlFallback =
+      uniqueProcessedPhotos.some((url) => typeof url === 'string' && url.startsWith('data:')) ||
+      (typeof heroCoverPhotoUrl === 'string' && heroCoverPhotoUrl.startsWith('data:'));
 
     const resolvedTemplates = {
       ...(updates.config?.templates || {}),
@@ -290,6 +411,13 @@ export async function PUT(req: NextRequest) {
         ...(updateObj.config?.meta || {}),
         revision: nextRevision,
         updatedAt: new Date().toISOString(),
+        uploadStatus:
+          pendingPhotoUploads > 0 || heroUploadPending
+            ? {
+                pendingPhotoUploads,
+                ...(heroUploadPending ? { heroUploadPending: true } : {}),
+              }
+            : undefined,
       },
     };
 
@@ -310,6 +438,13 @@ export async function PUT(req: NextRequest) {
     if (error) {
       return NextResponse.json({ message: error.message }, { status: 500 });
     }
+
+    // Remove Cloudinary assets that were replaced during this update.
+    const previousMediaUrls = extractMediaUrlsFromConfig(existing?.config || {});
+    const nextMediaUrls = extractMediaUrlsFromConfig(data?.config || {});
+    const nextMediaSet = new Set(nextMediaUrls);
+    const removedMediaUrls = previousMediaUrls.filter((url) => !nextMediaSet.has(url));
+    await deleteCloudinaryMediaUrls(removedMediaUrls);
 
     try {
       const { revalidatePath } = await import('next/cache');
@@ -337,7 +472,7 @@ export async function PUT(req: NextRequest) {
       featureFlags.retryFailedUploads() &&
       featureFlags.backgroundJobQueue() &&
       id &&
-      responsePayload.warnings.length > 0
+      hasRetriableDataUrlFallback
     ) {
       try {
         await enqueueJob('retry_site_media_upload', { siteId: id });
@@ -359,6 +494,11 @@ export async function PUT(req: NextRequest) {
         warnings: responsePayload.warnings,
       },
     });
+
+    invalidatePublicSiteCaches(existing?.id || id, existing?.website_name || existing?.slug || null);
+    invalidatePublicSiteCaches(data?.id || id, data?.website_name || data?.slug || null);
+
+    clearAdminListCache();
 
     return NextResponse.json(responsePayload);
   } catch (err: any) {
@@ -411,51 +551,15 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Fetch the site config before deleting
-    const { data: site, error: fetchError } = await supabase.from('sites').select('config').eq('id', id).single();
+    const { data: site, error: fetchError } = await supabase.from('sites').select('id,website_name,slug,config').eq('id', id).single();
     if (fetchError) {
       return NextResponse.json({ message: fetchError.message }, { status: 500 });
     }
 
     // Extract and delete Cloudinary images
     if (site && site.config) {
-      // Inline extractMediaUrls and getCloudinaryPublicId from archiver.ts
-      function extractMediaUrls(config: any): string[] {
-        const results: string[] = [];
-        function recurse(obj: any): void {
-          if (!obj || typeof obj !== 'object') return;
-          if (Array.isArray(obj)) { obj.forEach(recurse); return; }
-          Object.values(obj).forEach((value) => {
-            if (typeof value === 'string' && value.includes('cloudinary.com')) {
-              results.push(value);
-            } else if (typeof value === 'object') {
-              recurse(value);
-            }
-          });
-        }
-        recurse(config);
-        return Array.from(new Set(results));
-      }
-      function getCloudinaryPublicId(url: string): string | null {
-        try {
-          const parsed = new URL(url);
-          const parts = parsed.pathname.split('/').filter(Boolean);
-          const idx = parts.findIndex((part) => /^v\d+$/.test(part));
-          const idParts = idx >= 0 ? parts.slice(idx + 1) : parts;
-          const publicId = idParts.join('/').replace(/\.[^.]+$/, '');
-          return publicId;
-        } catch { return null; }
-      }
-      const mediaUrls = extractMediaUrls(site.config);
-      const cloudinary = (await import('@/lib/cloudinary')).default;
-      for (const mediaUrl of mediaUrls) {
-        const publicId = getCloudinaryPublicId(mediaUrl);
-        if (!publicId) continue;
-        try {
-          await cloudinary.uploader.destroy(publicId, { invalidate: true });
-        } catch (err) {
-          console.warn('Failed to remove Cloudinary media', publicId, err);
-        }
-      }
+      const mediaUrls = extractMediaUrlsFromConfig(site.config);
+      await deleteCloudinaryMediaUrls(mediaUrls);
     }
 
     // Now delete the site record
@@ -463,6 +567,10 @@ export async function DELETE(req: NextRequest) {
     if (error) {
       return NextResponse.json({ message: error.message }, { status: 500 });
     }
+
+    invalidatePublicSiteCaches(site?.id || id, site?.website_name || site?.slug || null);
+
+    clearAdminListCache();
 
     await recordAdminAudit(req, {
       action: 'admin.site.delete',

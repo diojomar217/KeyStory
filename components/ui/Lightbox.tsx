@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useRef, useState } from 'react';
 import Image from 'next/image';
+import { optimizeCloudinaryDeliveryUrl } from '@/lib/cloudinary-url';
 
 type LightboxProps = {
   photos: string[];
@@ -12,6 +13,8 @@ type LightboxProps = {
 
 export default function Lightbox({ photos, initialIndex, isOpen, onClose }: LightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const touchStartXRef = useRef<number | null>(null);
+  const touchEndXRef = useRef<number | null>(null);
 
   // Reset index when lightbox opens with new initial index
   useEffect(() => {
@@ -50,6 +53,13 @@ export default function Lightbox({ photos, initialIndex, isOpen, onClose }: Ligh
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  const activePhoto = photos[currentIndex] || '';
+  const optimizedActivePhoto = optimizeCloudinaryDeliveryUrl(activePhoto, {
+    quality: 'auto:good',
+    width: 1920,
+    crop: 'limit',
+  });
+
   if (!isOpen) return null;
 
   const goToNext = () => {
@@ -66,10 +76,32 @@ export default function Lightbox({ photos, initialIndex, isOpen, onClose }: Ligh
     }
   };
 
+  const onTouchStart = (event: React.TouchEvent) => {
+    touchStartXRef.current = event.changedTouches[0]?.clientX ?? null;
+    touchEndXRef.current = null;
+  };
+
+  const onTouchEnd = (event: React.TouchEvent) => {
+    touchEndXRef.current = event.changedTouches[0]?.clientX ?? null;
+
+    if (touchStartXRef.current === null || touchEndXRef.current === null) return;
+
+    const delta = touchStartXRef.current - touchEndXRef.current;
+    const swipeThreshold = 48;
+
+    if (delta > swipeThreshold) {
+      goToNext();
+    } else if (delta < -swipeThreshold) {
+      goToPrev();
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={handleBackdropClick}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
       role="dialog"
       aria-modal="true"
       aria-label="Image lightbox"
@@ -88,6 +120,11 @@ export default function Lightbox({ photos, initialIndex, isOpen, onClose }: Ligh
       {/* Image counter */}
       <div className="absolute top-4 left-4 z-10 px-4 py-2 rounded-full bg-black/50 text-white text-sm font-medium">
         {currentIndex + 1} / {photos.length}
+      </div>
+
+      {/* Top help */}
+      <div className="absolute top-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/45 px-4 py-1.5 text-xs font-semibold tracking-wide text-white/90">
+        Swipe or use arrows to navigate
       </div>
 
       {/* Main image container */}
@@ -109,7 +146,7 @@ export default function Lightbox({ photos, initialIndex, isOpen, onClose }: Ligh
         <div className="relative w-full h-full flex items-center justify-center animate-in zoom-in-95 duration-200">
           <div className="relative w-full h-full max-h-[85vh]">
             <Image
-              src={photos[currentIndex]}
+              src={optimizedActivePhoto}
               alt={`Photo ${currentIndex + 1}`}
               fill
               className="object-contain"
@@ -136,7 +173,15 @@ export default function Lightbox({ photos, initialIndex, isOpen, onClose }: Ligh
       {/* Thumbnail strip */}
       {photos.length > 1 && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 px-4 py-2 rounded-full bg-black/50 backdrop-blur-sm max-w-[90vw] overflow-x-auto">
-          {photos.map((photo, idx) => (
+          {photos.map((photo, idx) => {
+            const optimizedThumb = optimizeCloudinaryDeliveryUrl(photo, {
+              quality: 'auto:eco',
+              width: 96,
+              height: 96,
+              crop: 'fill',
+            });
+
+            return (
             <button
               key={idx}
               onClick={() => setCurrentIndex(idx)}
@@ -148,20 +193,21 @@ export default function Lightbox({ photos, initialIndex, isOpen, onClose }: Ligh
               aria-label={`View image ${idx + 1}`}
             >
               <Image
-                src={photo}
+                src={optimizedThumb}
                 alt={`Thumbnail ${idx + 1}`}
                 fill
                 className="object-cover"
                 sizes="48px"
               />
             </button>
-          ))}
+            );
+          })}
         </div>
       )}
 
       {/* Mobile: Swipe hint */}
-      <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-white/50 text-xs md:hidden">
-        Tap edges to navigate
+      <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-white/70 text-xs md:hidden">
+        Swipe left or right to navigate
       </div>
     </div>
   );

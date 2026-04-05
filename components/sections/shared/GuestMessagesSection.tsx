@@ -155,6 +155,23 @@ export default function GuestMessagesSection({
       gap="gap-6"
       >
       <div className="space-y-4">
+        <div
+          className={`${styles.card} ${cardStyle} ${shadowClass} border p-4`}
+          style={{
+            backgroundColor: `${colors.secondary}22`,
+            borderColor: colors.border,
+          }}
+        >
+          <p className="text-xs uppercase tracking-[0.18em] font-semibold" style={{ color: colors.primary }}>
+            Guestbook Highlights
+          </p>
+          <p className="mt-1 text-sm" style={{ color: colors.text }}>
+            {messageCount > 0
+              ? `${messageCount} ${messageCount === 1 ? 'message has' : 'messages have'} been approved and shared.`
+              : 'No approved messages yet. Be the first to leave a note.'}
+          </p>
+        </div>
+
         {guestMessages.length === 0 ? (
           <div
             className={`${styles.card} ${cardStyle} ${shadowClass} border p-6`}
@@ -293,7 +310,16 @@ export default function GuestMessagesSection({
             </button>
 
             {feedback && (
-              <p className="text-sm" style={{ color: status === 'success' ? colors.secondary : colors.accent }}>{feedback}</p>
+              <div
+                className="rounded-xl border px-3 py-2 text-sm"
+                style={{
+                  borderColor: status === 'success' ? `${colors.secondary}99` : `${colors.accent}99`,
+                  backgroundColor: status === 'success' ? `${colors.secondary}1f` : `${colors.accent}1a`,
+                  color: status === 'success' ? colors.secondary : colors.accent,
+                }}
+              >
+                {feedback}
+              </div>
             )}
           </form>
         </div>

@@ -5,6 +5,7 @@ import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme, useThemeUtils } from '../builder/ThemeWrapper';
 import { OccasionType } from '@/lib/occasion-registry';
 import { resolveFooterConfig, resolveDisplayName } from '@/lib/site-type-utils';
+import { getFooterTextColors } from '@/lib/theme-color-helpers';
 
 type SiteType = OccasionType;
 
@@ -37,9 +38,7 @@ export default function FooterSection({
   const activeFooter = resolveFooterConfig(resolvedSiteType, displayName);
 
   const footerColors = {
-    title: theme === 'dark_elegant' ? themeUtils.colors.text : '#FFFFFF',
-    body: theme === 'dark_elegant' ? `${themeUtils.colors.text}D9` : 'rgba(255, 255, 255, 0.84)',
-    faint: theme === 'dark_elegant' ? `${themeUtils.colors.text}99` : 'rgba(255, 255, 255, 0.62)',
+    ...getFooterTextColors(theme),
     divider: themeUtils.colors.accent,
     decoration: themeUtils.colors.accent,
   };

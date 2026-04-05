@@ -24,29 +24,33 @@ export default function MusicPlayer({ songLink, theme = DEFAULT_THEME }: Props) 
   // Determine container style based on provider
   // Spotify uses responsive height, YouTube uses fixed height
   const containerStyle = provider === 'spotify' 
-    ? 'h-[152px] md:h-[352px]' // Responsive: track on mobile, album/playlist on desktop
-    : '';
+    ? 'relative w-full min-h-[152px] md:min-h-[352px]'
+    : 'relative w-full aspect-video';
 
   return (
-    <div className={`${styles.card} rounded-xl ${styles.cardBorder} border p-4 shadow-lg animate-fade-in`}>
+    <div className={`${styles.card} rounded-[1.75rem] ${styles.cardBorder} border p-4 shadow-lg animate-fade-in`}>
       <div className="flex items-center gap-3 mb-3">
         <span className="text-2xl">🎵</span>
         <span className={`${styles.text} font-medium`}>Our Song</span>
       </div>
-      <iframe
-        src={embedUrl}
-        width="100%"
-        height={provider === 'spotify' ? '152' : '100%'}
-        allow={provider === 'spotify' 
-          ? "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-          : "autoplay; encrypted-media"
-        }
-        allowFullScreen
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-        className={`rounded-lg shadow-md w-full ${containerStyle}`}
-        title={`Love Song - ${provider === 'spotify' ? 'Spotify' : 'YouTube'}`}
-      />
+      <div className="overflow-hidden rounded-[1.25rem] border border-black/5">
+        <div className={containerStyle}>
+          <iframe
+            src={embedUrl}
+            width="100%"
+            height={provider === 'spotify' ? '152' : '100%'}
+            allow={provider === 'spotify' 
+              ? "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+              : "autoplay; encrypted-media"
+            }
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            className="absolute inset-0 h-full w-full"
+            title={`Love Song - ${provider === 'spotify' ? 'Spotify' : 'YouTube'}`}
+          />
+        </div>
+      </div>
     </div>
   );
 }

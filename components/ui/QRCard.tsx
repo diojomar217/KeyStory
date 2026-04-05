@@ -6,6 +6,12 @@ import Image from 'next/image';
 import { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../builder/ThemeWrapper';
 import { getThemeTaglines } from '@/config/themeTaglines';
+import {
+  getCardStyleClasses,
+  getShadowClass,
+  getThemeColors,
+  mapHexToTailwindClass,
+} from '@/lib/theme-color-helpers';
 
 export type QRLayout = 'classic' | 'minimal' | 'elegant';
 
@@ -44,88 +50,35 @@ export default function QRCard({
   className = '',
 }: QRCardProps) {
   const styles = useTheme(theme);
+  const themeColors = getThemeColors(theme);
   const coupleNames = `${customerName} & ${partnerName}`;
   
   const qrRef = useRef<HTMLDivElement>(null);
   const qrCodeInstanceRef = useRef<QRCodeStyling | null>(null);
   const [isClient, setIsClient] = useState(false);
 
-  // Get theme-specific colors
-  const getThemeColors = () => {
-    switch (theme) {
-      case 'dark_elegant':
-        return {
-          primary: '#fbbf24', // amber-400
-          secondary: '#f59e0b', // amber-500
-          accent: '#d97706', // amber-600
-          bg: 'from-zinc-800 to-zinc-900',
-          border: 'border-zinc-600',
-          text: 'text-zinc-100',
-          textMuted: 'text-zinc-400',
-        };
-      case 'cute_pastel':
-        return {
-          primary: '#c084fc', // purple-400
-          secondary: '#a855f7', // purple-500
-          accent: '#9333ea', // purple-600
-          bg: 'from-purple-50 to-pink-50',
-          border: 'border-purple-200',
-          text: 'text-purple-900',
-          textMuted: 'text-purple-700',
-        };
-      case 'minimal_modern':
-        return {
-          primary: '#94a3b8', // slate-400
-          secondary: '#64748b', // slate-500
-          accent: '#475569', // slate-600
-          bg: 'from-slate-50 to-gray-100',
-          border: 'border-slate-200',
-          text: 'text-slate-900',
-          textMuted: 'text-slate-600',
-        };
-      default: // romantic_classic
-        return {
-          primary: '#fb7185', // rose-400
-          secondary: '#f43f5e', // rose-500
-          accent: '#e11d48', // rose-600
-          bg: 'from-rose-50 to-pink-50',
-          border: 'border-rose-200',
-          text: 'text-rose-900',
-          textMuted: 'text-rose-700',
-        };
-    }
-  };
-
-  const colors = getThemeColors();
-  const taglines = getThemeTaglines(theme);
-  const tagline = taglines[Math.floor(Math.random() * taglines.length)];
-  const instruction = scanInstructions[Math.floor(Math.random() * scanInstructions.length)];
-
-  // Size configurations
+  // Size configurations - maps to actual card sizes
   const sizeConfig = {
-    compact: { card: 'max-w-[180px]', qr: 120, padding: 'p-2' },
-    small: { card: 'max-w-[280px]', qr: 180, padding: 'p-4' },
-    medium: { card: 'max-w-[340px]', qr: 220, padding: 'p-6' },
-    large: { card: 'max-w-[400px]', qr: 260, padding: 'p-8' },
+    small: { card: 'max-w-xs', qr: 160, padding: 'p-4', textSize: 'text-sm', gap: 'gap-3' },
+    medium: { card: 'max-w-sm', qr: 220, padding: 'p-6', textSize: 'text-base', gap: 'gap-4' },
+    large: { card: 'max-w-lg', qr: 280, padding: 'p-8', textSize: 'text-lg', gap: 'gap-5' },
   };
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  const taglines = getThemeTaglines(theme);
+  const tagline = taglines[Math.floor(Math.random() * taglines.length)];
+  const instruction = scanInstructions[Math.floor(Math.random() * scanInstructions.length)];
+  
+  // Get theme-aware styling
+  const cardStyleClass = getCardStyleClasses(theme);
+  const shadowClass = getShadowClass(theme);
+
   // Generate styled QR code
   useEffect(() => {
     if (!qrRef.current || !qrDataUrl || !isClient) return;
-
-    // Get accent color based on theme
-    const getAccentColor = () => {
-      switch (theme) {
-        case 'dark_elegant': return '#fbbf24';
-        case 'cute_pastel': return '#c084fc';
-        case 'minimal_modern': return '#64748b';
-        default: return '#e11d48';
-      }
-    };
 
     const qrCode = new QRCodeStyling({
       width: sizeConfig[size].qr,
@@ -137,18 +90,18 @@ export default function QRCard({
         margin: 6,
       },
       dotsOptions: {
-        color: getAccentColor(),
+        color: themeColors.primary,
         type: 'rounded',
       },
       backgroundOptions: {
-        color: '#ffffff',
+        color: themeColors.background,
       },
       cornersSquareOptions: {
-        color: getAccentColor(),
+        color: themeColors.primary,
         type: 'extra-rounded',
       },
       cornersDotOptions: {
-        color: getAccentColor(),
+        color: themeColors.primary,
         type: 'dot',
       },
       image: '/heart-icon.svg',
@@ -161,177 +114,188 @@ export default function QRCard({
     qrRef.current.innerHTML = '';
     qrCode.append(qrRef.current);
 
-  }, [qrDataUrl, theme, size, isClient]);
+  }, [qrDataUrl, theme, size, isClient, themeColors]);
 
   // Render different layouts
   const renderClassicLayout = () => (
     <div className={`
       relative
-      bg-gradient-to-br ${colors.bg}
-      rounded-3xl
-      shadow-xl
-      ${colors.border} border
-      ${sizeConfig[size].padding}
       ${sizeConfig[size].card}
+      ${sizeConfig[size].padding}
+      ${shadowClass}
+      ${cardStyleClass}
+      border
       ${className}
-    `}>
-      {/* Decorative corner elements */}
-      <div className={`absolute top-0 left-0 w-12 h-12 opacity-20`}>
-        <svg viewBox="0 0 100 100" className={`w-full h-full text-${colors.primary}`}>
-          <path d="M10,50 Q30,20 50,50 T90,50" fill="none" stroke="currentColor" strokeWidth="3"/>
-        </svg>
+      flex flex-col items-center gap-${sizeConfig[size].gap}
+    `}
+    style={{
+      backgroundColor: themeColors.card,
+      borderColor: themeColors.border,
+    }}>
+      {/* Decorative top accent */}
+      <div 
+        className={`absolute top-0 left-0 right-0 h-1 ${cardStyleClass}`}
+        style={{
+          background: `linear-gradient(90deg, ${themeColors.primary}, ${themeColors.secondary})`,
+        }}
+      />
+
+      {/* Header Icon */}
+      <div className="pt-2">
+        <span className="text-3xl">💕</span>
       </div>
-      <div className={`absolute bottom-0 right-0 w-12 h-12 opacity-20 rotate-180`}>
-        <svg viewBox="0 0 100 100" className={`w-full h-full text-${colors.primary}`}>
-          <path d="M10,50 Q30,20 50,50 T90,50" fill="none" stroke="currentColor" strokeWidth="3"/>
-        </svg>
-      </div>
 
-      {/* Card Content */}
-      <div className="flex flex-col items-center text-center">
-        {/* Heart Decoration */}
-        <div className="text-2xl mb-3">💕</div>
+      {/* Couple Names */}
+      <h3 className={`${sizeConfig[size].textSize} font-bold text-center`} style={{ color: themeColors.text }}>
+        {coupleNames}
+      </h3>
 
-        {/* Couple Names */}
-        <h3 className={`${styles.heading} text-lg md:text-xl font-bold ${colors.text} mb-4`}>
-          {coupleNames}
-        </h3>
-
-        {/* QR Code Container */}
-        <div className={`
+      {/* QR Code Container - Properly styled with theme card style */}
+      <div 
+        className={`
           relative
-          bg-white
-          rounded-2xl
-          shadow-lg
+          ${cardStyleClass}
+          ${shadowClass}
           p-3
-          mb-4
           border-2
-          ${colors.border}
-        `}>
-          {/* Gradient frame effect */}
-          <div className={`
-            absolute -inset-1.5
-            rounded-2.5xl
-            opacity-30
-            bg-gradient-to-br from-${colors.primary} to-${colors.secondary}
-            -z-10
-          `} />
-          
-          {qrDataUrl && isClient ? (
-            <div 
-              ref={qrRef} 
-              className="mx-auto"
-              style={{ width: sizeConfig[size].qr, height: sizeConfig[size].qr }}
+          flex items-center justify-center
+          overflow-hidden
+        `}
+        style={{
+          backgroundColor: themeColors.background,
+          borderColor: themeColors.primary,
+          width: sizeConfig[size].qr,
+          height: sizeConfig[size].qr,
+        }}
+      >
+        {qrDataUrl && isClient ? (
+          <div 
+            ref={qrRef}
+            className="flex items-center justify-center w-full h-full"
+            style={{ width: '100%', height: '100%' }}
+          />
+        ) : qrCodeUrl ? (
+          <div className="relative w-full h-full flex items-center justify-center">
+            <Image
+              src={qrCodeUrl}
+              alt="QR Code"
+              width={sizeConfig[size].qr - 12}
+              height={sizeConfig[size].qr - 12}
+              className="object-contain"
             />
-          ) : qrCodeUrl ? (
-            <div className="relative" style={{ width: sizeConfig[size].qr, height: sizeConfig[size].qr }}>
-              <Image
-                src={qrCodeUrl}
-                alt="QR Code"
-                fill
-                className="object-contain"
-              />
-            </div>
-          ) : (
-            <div 
-              className="flex items-center justify-center bg-gray-100 rounded-lg"
-              style={{ width: sizeConfig[size].qr, height: sizeConfig[size].qr }}
-            >
-              <span className={colors.textMuted}>No QR Code</span>
-            </div>
+          </div>
+        ) : (
+          <div 
+            className="flex flex-col items-center justify-center w-full h-full"
+            style={{ color: themeColors.text }}
+          >
+            <span className="text-2xl mb-2">📱</span>
+            <span className="text-xs">No QR</span>
+          </div>
+        )}
+      </div>
+
+      {/* Scan Instruction */}
+      <p className={`${sizeConfig[size].textSize} font-medium text-center`} style={{ color: themeColors.text }}>
+        {instruction}
+      </p>
+
+      {/* Divider */}
+      <div className="w-12 h-px" style={{ backgroundColor: themeColors.border }} />
+
+      {/* Tagline */}
+      <p className="text-xs italic text-center" style={{ color: themeColors.text, opacity: 0.75 }}>
+        "{tagline}"
+      </p>
+
+      {/* Footer Content */}
+      {(anniversaryDate || websiteUrl) && (
+        <div className="text-center">
+          {anniversaryDate && (
+            <p className="text-xs font-medium" style={{ color: themeColors.text }}>
+              💍 Since {new Date(anniversaryDate).toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </p>
           )}
           
-          {/* Heart icon below QR */}
-          <div className="text-center mt-2">
-            <span className="text-xl">💕</span>
-          </div>
+          {websiteUrl && !anniversaryDate && (
+            <p className="text-xs" style={{ color: themeColors.text, opacity: 0.7 }}>
+              {websiteUrl}
+            </p>
+          )}
         </div>
-
-        {/* Scan Instruction */}
-        <p className={`${colors.textMuted} text-sm mb-3 font-medium`}>
-          {instruction}
-        </p>
-
-        {/* Divider */}
-        <div className={`w-16 h-px bg-gradient-to-r from-transparent via-${colors.border} to-transparent my-3`} />
-
-        {/* Tagline */}
-        <p className={`${colors.textMuted} text-xs italic mb-3`}>
-          "{tagline}"
-        </p>
-
-        {/* Footer: Anniversary Date or Website URL */}
-        {anniversaryDate && (
-          <p className={`${colors.text} text-xs font-medium`}>
-            💍 Since {new Date(anniversaryDate).toLocaleDateString('en-US', { 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </p>
-        )}
-        
-        {websiteUrl && !anniversaryDate && (
-          <p className={`${colors.textMuted} text-xs`}>
-            {websiteUrl}
-          </p>
-        )}
-      </div>
+      )}
     </div>
   );
 
   const renderMinimalLayout = () => (
     <div className={`
       relative
-      bg-white
-      rounded-2xl
-      shadow-lg
-      border border-slate-200
-      ${sizeConfig[size].padding}
       ${sizeConfig[size].card}
+      ${sizeConfig[size].padding}
+      ${shadowClass}
+      ${cardStyleClass}
+      border
       ${className}
-    `}>
+    `}
+    style={{
+      backgroundColor: themeColors.card,
+      borderColor: themeColors.border,
+    }}>
       {/* Minimal horizontal layout */}
       <div className="flex flex-row items-center gap-4">
         {/* QR Code */}
         <div className="flex-shrink-0">
-          <div className="relative bg-white rounded-lg p-2 border border-slate-200">
+          <div 
+            className={`
+              relative
+              ${cardStyleClass}
+              p-2
+              border
+              flex items-center justify-center
+              overflow-hidden
+            `}
+            style={{
+              backgroundColor: themeColors.background,
+              borderColor: themeColors.primary,
+              width: sizeConfig[size].qr * 0.75,
+              height: sizeConfig[size].qr * 0.75,
+            }}
+          >
             {qrDataUrl && isClient ? (
               <div 
-                ref={qrRef} 
-                className="mx-auto"
-                style={{ width: sizeConfig[size].qr * 0.8, height: sizeConfig[size].qr * 0.8 }}
+                ref={qrRef}
+                className="flex items-center justify-center w-full h-full"
               />
             ) : qrCodeUrl ? (
-              <div className="relative" style={{ width: sizeConfig[size].qr * 0.8, height: sizeConfig[size].qr * 0.8 }}>
+              <div className="w-full h-full flex items-center justify-center">
                 <Image
                   src={qrCodeUrl}
                   alt="QR Code"
-                  fill
+                  width={Math.floor(sizeConfig[size].qr * 0.75 - 8)}
+                  height={Math.floor(sizeConfig[size].qr * 0.75 - 8)}
                   className="object-contain"
                 />
               </div>
             ) : (
-              <div 
-                className="flex items-center justify-center bg-gray-100 rounded"
-                style={{ width: sizeConfig[size].qr * 0.8, height: sizeConfig[size].qr * 0.8 }}
-              >
-                <span className="text-slate-400 text-xs">No QR</span>
-              </div>
+              <span style={{ color: themeColors.text, fontSize: '10px' }}>No QR</span>
             )}
           </div>
         </div>
 
         {/* Text Content */}
         <div className="flex-1 text-left">
-          <h3 className="font-bold text-slate-900 text-lg mb-1">
+          <h3 className={`${sizeConfig[size].textSize} font-bold mb-1`} style={{ color: themeColors.text }}>
             {coupleNames}
           </h3>
-          <p className="text-slate-600 text-sm mb-2">
+          <p className="text-xs mb-2" style={{ color: themeColors.text, opacity: 0.75 }}>
             {instruction}
           </p>
         {anniversaryDate && (
-          <p className="text-slate-500 text-xs">
+          <p className="text-xs" style={{ color: themeColors.text, opacity: 0.6 }}>
             💍 {new Date(anniversaryDate).toLocaleDateString('en-US', { 
               year: 'numeric', 
               month: 'short', 
@@ -347,79 +311,98 @@ export default function QRCard({
   const renderElegantLayout = () => (
     <div className={`
       relative
-      bg-white
-      rounded-xl
-      shadow-2xl
-      border border-slate-100
-      ${sizeConfig[size].padding}
       ${sizeConfig[size].card}
+      ${sizeConfig[size].padding}
+      ${shadowClass}
+      ${cardStyleClass}
+      border
       ${className}
       overflow-hidden
-    `}>
+    `}
+    style={{
+      backgroundColor: themeColors.card,
+      borderColor: themeColors.border,
+    }}>
       {/* Top accent bar */}
-      <div className={`
-        absolute top-0 left-0 right-0 h-1
-        bg-gradient-to-r from-${colors.primary} via-${colors.secondary} to-${colors.primary}
-      `} />
+      <div className={`absolute top-0 left-0 right-0 h-1 ${cardStyleClass}`} style={{
+        background: `linear-gradient(90deg, ${themeColors.primary}, ${themeColors.secondary}, ${themeColors.primary})`
+      }} />
 
       {/* Card Content */}
-      <div className="flex flex-col items-center text-center pt-2">
+      <div className="flex flex-col items-center text-center pt-4">
         {/* Elegant divider with heart */}
         <div className="flex items-center gap-3 mb-4 w-full">
-          <div className="flex-1 h-px bg-slate-200" />
-          <span className="text-2xl">💕</span>
-          <div className="flex-1 h-px bg-slate-200" />
+          <div className="flex-1 h-px" style={{ backgroundColor: themeColors.border }} />
+          <span className="text-3xl">💕</span>
+          <div className="flex-1 h-px" style={{ backgroundColor: themeColors.border }} />
         </div>
 
         {/* Couple Names */}
-        <h3 className="font-serif text-xl md:text-2xl font-bold text-slate-900 mb-2">
+        <h3 className={`${sizeConfig[size].textSize} font-bold font-serif mb-2`} style={{ color: themeColors.text }}>
           {coupleNames}
         </h3>
 
         {/* Elegant tagline */}
-        <p className="text-slate-500 text-sm italic mb-6">
+        <p className="text-xs italic mb-4" style={{ color: themeColors.text, opacity: 0.75 }}>
           {tagline}
         </p>
 
         {/* QR Code */}
-        <div className="relative bg-white rounded-xl shadow-md p-4 mb-4 border border-slate-100">
+        <div 
+          className={`
+            relative
+            ${cardStyleClass}
+            p-3
+            mb-4
+            border
+            ${shadowClass}
+            flex items-center justify-center
+            overflow-hidden
+          `}
+          style={{
+            backgroundColor: themeColors.background,
+            borderColor: themeColors.primary,
+            width: sizeConfig[size].qr,
+            height: sizeConfig[size].qr,
+          }}
+        >
           {qrDataUrl && isClient ? (
             <div 
-              ref={qrRef} 
-              className="mx-auto"
-              style={{ width: sizeConfig[size].qr, height: sizeConfig[size].qr }}
+              ref={qrRef}
+              className="flex items-center justify-center w-full h-full"
             />
           ) : qrCodeUrl ? (
-            <div className="relative" style={{ width: sizeConfig[size].qr, height: sizeConfig[size].qr }}>
+            <div className="w-full h-full flex items-center justify-center">
               <Image
                 src={qrCodeUrl}
                 alt="QR Code"
-                fill
+                width={sizeConfig[size].qr - 12}
+                height={sizeConfig[size].qr - 12}
                 className="object-contain"
               />
             </div>
           ) : (
-            <div 
-              className="flex items-center justify-center bg-gray-50 rounded-lg"
-              style={{ width: sizeConfig[size].qr, height: sizeConfig[size].qr }}
-            >
-              <span className="text-slate-400">No QR Code</span>
+            <div className="flex flex-col items-center justify-center w-full h-full" style={{ color: themeColors.text }}>
+              <span className="text-2xl mb-1">📱</span>
+              <span className="text-xs">No QR Code</span>
             </div>
           )}
         </div>
 
         {/* Instruction */}
-        <p className="text-slate-600 text-sm font-medium mb-4">
+        <p className={`${sizeConfig[size].textSize} font-medium mb-3`} style={{ color: themeColors.text }}>
           📱 {instruction}
         </p>
 
         {/* Bottom divider */}
-        <div className="w-24 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent mb-4" />
+        <div className="w-12 h-px mb-3" style={{
+          background: `linear-gradient(90deg, transparent, ${themeColors.border}, transparent)`
+        }} />
 
         {/* Footer */}
         <div className="text-center">
           {anniversaryDate && (
-            <p className="text-slate-700 text-sm font-medium mb-1">
+            <p className="text-xs font-medium mb-1" style={{ color: themeColors.text }}>
               Our journey since {new Date(anniversaryDate).toLocaleDateString('en-US', { 
                 year: 'numeric', 
                 month: 'long' 
@@ -427,7 +410,7 @@ export default function QRCard({
             </p>
           )}
           {websiteUrl && (
-            <p className="text-slate-400 text-xs">
+            <p className="text-xs" style={{ color: themeColors.text, opacity: 0.6 }}>
               {websiteUrl.replace(/^https?:\/\//, '')}
             </p>
           )}

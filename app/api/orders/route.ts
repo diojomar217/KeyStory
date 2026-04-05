@@ -1,6 +1,6 @@
 // Simple in-memory cache (per server instance)
 const ordersCache: Record<string, { data: any; cachedAt: number }> = {};
-const CACHE_TTL = 10 * 1000; // 10 seconds
+const CACHE_TTL = 30 * 1000; // 30 seconds
 import { NextRequest, NextResponse } from 'next/server';
 import { listWebsites as getSites, getWebsiteById as getSiteById, createWebsite as insertSite, updateWebsite as updateSite, deleteWebsite as deleteSite } from '@/lib/db/websites';
 

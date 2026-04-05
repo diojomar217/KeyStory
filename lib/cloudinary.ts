@@ -23,6 +23,7 @@ export type CloudinaryUploadOptions = {
   maxWidth?: number;
   quality?: string;
   fetchFormat?: string;
+  outputFormat?: 'webp' | 'jpg' | 'png' | 'avif';
   crop?: 'limit' | 'fill' | 'scale';
   stripMetadata?: boolean;
 };
@@ -35,21 +36,29 @@ export async function uploadToCloudinary(dataUrl: string, options: CloudinaryUpl
 
   const isHero = options.isHero ?? false;
   const maxWidth = options.maxWidth ?? (isHero ? 1920 : 1600);
-  const quality = options.quality ?? (isHero ? 'auto:good' : 'auto:eco');
+  // Use visually-lossless defaults while reducing bytes significantly for storage.
+  const quality = options.quality ?? 'auto:good';
   const fetchFormat = options.fetchFormat ?? 'auto';
+  const outputFormat = options.outputFormat ?? 'webp';
   const crop = options.crop ?? 'limit';
   const stripMetadata = options.stripMetadata ?? true;
 
+  const progressiveFlags = stripMetadata
+    ? 'progressive,strip_profile'
+    : 'progressive';
 
   const transformation: any[] = [{ width: maxWidth, crop }];
-  // Hero uses slightly higher quality and larger width, gallery uses lighter optimization
-  transformation.push({ quality, fetch_format: fetchFormat, flags: 'progressive' });
-  // 'strip' is not a valid Cloudinary flag and causes errors. Do not add it.
+  transformation.push({
+    quality,
+    fetch_format: fetchFormat,
+    flags: progressiveFlags,
+  });
 
   const res = await withRetry(
     () => cloudinary.uploader.upload(dataUrl, {
       folder: 'loveqr',
       transformation,
+      format: outputFormat,
       use_filename: true,
       unique_filename: false,
     }),

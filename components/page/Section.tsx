@@ -6,6 +6,7 @@ import { useTheme } from '../builder/ThemeWrapper';
 import SectionHeader from './SectionHeader';
 import ScrollReveal from '../ui/ScrollReveal';
 import { useOccasionType } from './OccasionContext';
+import { isDarkTheme as checkIsDarkTheme } from '@/lib/theme-color-helpers';
 
 interface SectionProps {
   /** Section title */
@@ -160,7 +161,7 @@ export function SectionCompact({
   return (
     <section
       id={id}
-      className={`py-12 md:py-16 ${theme === 'dark_elegant' ? 'bg-zinc-900' : 'bg-white'} ${className}`}
+      className={`py-12 md:py-16 ${checkIsDarkTheme(theme) ? 'bg-zinc-900' : 'bg-white'} ${className}`}
     >
       <div className="max-w-4xl mx-auto px-4 md:px-6">
         {(title || subtitle) && (
@@ -185,7 +186,7 @@ export function SectionCompact({
 export function SectionSeparator({ theme }: { theme?: ThemeKey }) {
   const siteType = useOccasionType();
   const occasionHero = getOccasionHeroSpec(siteType);
-  const borderColor = theme === 'dark_elegant' ? '#3f3f46' : '#fce7f3';
+  const borderColor = checkIsDarkTheme(theme) ? '#3f3f46' : '#fce7f3';
   const iconColor =
     siteType === 'wedding'
       ? 'text-amber-400'
@@ -193,7 +194,7 @@ export function SectionSeparator({ theme }: { theme?: ThemeKey }) {
         ? 'text-white/70'
         : siteType === 'travel'
           ? 'text-sky-500'
-          : theme === 'dark_elegant'
+          : checkIsDarkTheme(theme)
             ? 'text-amber-300'
             : 'text-rose-500';
   const dividerIcon =

@@ -221,3 +221,65 @@ export function getColorStyle(hex: string, type: 'text' | 'bg' | 'border' = 'tex
       return {};
   }
 }
+
+/**
+ * Detect if a theme has a dark background (based on actual luminance, not vibe)
+ * Works for dark_elegant, luxury_gold, and any future dark-themed variants
+ */
+export function isDarkTheme(theme: ThemeKey): boolean {
+  const config = getThemeConfig(theme);
+  const bgColor = config.colors.background;
+  
+  // Calculate luminance of the background color
+  // Light colors (luminance > 0.5) = light themes, dark colors = dark themes
+  return isColorDark(bgColor);
+}
+
+/**
+ * Helper: Check if a hex color is dark using WCAG relative luminance formula
+ */
+function isColorDark(hex: string): boolean {
+  const color = hex.replace('#', '');
+  const r = parseInt(color.substr(0, 2), 16);
+  const g = parseInt(color.substr(2, 2), 16);
+  const b = parseInt(color.substr(4, 2), 16);
+  
+  // Use relative luminance formula from WCAG
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance < 0.5; // Dark if luminance is less than 50%
+}
+
+/**
+ * Detect if a theme uses light text on dark background
+ * Useful for footer, header, and overlay text color logic
+ */
+export function isBrightTextTheme(theme: ThemeKey): boolean {
+  const { text } = getThemeColors(theme);
+  // If text color starts with F or is very light (#FFF, #F5F5F5, etc.)
+  return text.toUpperCase().startsWith('#F') || text.toUpperCase().startsWith('#E');
+}
+
+/**
+ * Get footer text color based on theme's natural contrast
+ * Returns theme-aware colors for dark themes, white for light themes
+ * Replaces scattered `theme === 'dark_elegant'` checks
+ */
+export function getFooterTextColors(theme: ThemeKey) {
+  const colors = getThemeColors(theme);
+  
+  if (isDarkTheme(theme)) {
+    // For dark themes (dark_elegant, luxury_gold, etc.), use theme's text color with opacity
+    return {
+      title: colors.text,
+      body: `${colors.text}D9`, // 85% opacity
+      faint: `${colors.text}99`, // 60% opacity
+    };
+  }
+  
+  // For light themes, use white text (assuming dark footer background)
+  return {
+    title: '#FFFFFF',
+    body: 'rgba(255, 255, 255, 0.84)', // 84% opacity
+    faint: 'rgba(255, 255, 255, 0.62)', // 62% opacity
+  };
+}

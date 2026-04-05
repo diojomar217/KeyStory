@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import type { SiteConfig } from '@/lib/types';
 import type { ThemeKey } from '@/config/themeConfig';
 import { resolveHeroCoverPhoto } from '@/lib/site-type-utils';
+import { optimizeCloudinaryDeliveryUrl } from '@/lib/cloudinary-url';
 
 
 interface FormData {
@@ -84,7 +85,13 @@ export default function LivePreviewPanel({
   const theme = getThemeStyles(config.theme as ThemeKey);
 
   const coverPhotoUrl = useMemo(() => {
-    return resolveHeroCoverPhoto({ hero: config.hero, cover_photo_index: config.cover_photo_index }, photoPreviews);
+    const resolved = resolveHeroCoverPhoto({ hero: config.hero, cover_photo_index: config.cover_photo_index }, photoPreviews);
+    if (!resolved) return null;
+    return optimizeCloudinaryDeliveryUrl(resolved, {
+      quality: 'auto:good',
+      width: 960,
+      crop: 'limit',
+    });
   }, [photoPreviews, config.cover_photo_index, config.hero]);
 
   // Use helper functions for proper empty state handling

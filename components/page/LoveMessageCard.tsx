@@ -2,6 +2,7 @@
 
 import type { ThemeKey } from '@/config/themeConfig';
 import { useTheme } from '../builder/ThemeWrapper';
+import { isDarkTheme as checkIsDarkTheme } from '@/lib/theme-color-helpers';
 
 type Props = {
   message: string;
@@ -38,7 +39,7 @@ export default function LoveMessageCard({ message, theme }: Props) {
             absolute -top-2 -left-1 
             text-4xl md:text-5xl 
             opacity-20
-            ${theme === 'dark_elegant' ? 'text-amber-400' : 'text-rose-400'}
+            ${checkIsDarkTheme(theme) ? 'text-amber-400' : 'text-rose-400'}
           `}
         >
           &ldquo;
@@ -64,7 +65,7 @@ export default function LoveMessageCard({ message, theme }: Props) {
             absolute -bottom-4 -right-1 
             text-4xl md:text-5xl 
             opacity-20
-            ${theme === 'dark_elegant' ? 'text-amber-400' : 'text-rose-400'}
+            ${checkIsDarkTheme(theme) ? 'text-amber-400' : 'text-rose-400'}
           `}
         >
           &rdquo;
@@ -78,7 +79,7 @@ export default function LoveMessageCard({ message, theme }: Props) {
         w-24 
         mx-auto
         bg-gradient-to-r from-transparent via-rose-300/50 to-transparent
-        ${theme === 'dark_elegant' ? 'via-amber-400/30' : ''}
+        ${checkIsDarkTheme(theme) ? 'via-amber-400/30' : ''}
       `} />
     </div>
   );

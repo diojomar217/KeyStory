@@ -29,6 +29,7 @@ export default function TimelineSection({ theme, template, events, variant = 'de
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [selectedPhoto, setSelectedPhoto] = useState('');
+  const [activeYear, setActiveYear] = useState<number | null>(null);
 
   if (!events || events.length === 0) {
     return null;
@@ -37,6 +38,29 @@ export default function TimelineSection({ theme, template, events, variant = 'de
   const sortedEvents = [...events].sort((a, b) => 
     new Date(a.date).getTime() - new Date(b.date).getTime()
   );
+  const timelineYears = Array.from(
+    new Set(
+      sortedEvents
+        .map((event) => new Date(event.date).getFullYear())
+        .filter((year) => Number.isFinite(year))
+    )
+  );
+  const firstEventIndexByYear = sortedEvents.reduce<Record<number, number>>((acc, event, index) => {
+    const year = new Date(event.date).getFullYear();
+    if (Number.isFinite(year) && acc[year] === undefined) {
+      acc[year] = index;
+    }
+    return acc;
+  }, {});
+
+  const jumpToYear = (year: number) => {
+    const eventIndex = firstEventIndexByYear[year];
+    const target = typeof eventIndex === 'number' ? document.getElementById(`timeline-event-${eventIndex}`) : null;
+    if (!target) return;
+
+    setActiveYear(year);
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
 
   // Get accent colors based on theme utilities
   const getAccentColors = () => {
@@ -236,7 +260,9 @@ export default function TimelineSection({ theme, template, events, variant = 'de
       <div className="space-y-12">
         {sortedEvents.map((event, idx) => (
           <ScrollReveal key={idx} animation="fade-up" delay={idx * 100}>
-            {renderTimelineCard(event, idx, event.isSpecial || false)}
+            <div id={`timeline-event-${idx}`}>
+              {renderTimelineCard(event, idx, event.isSpecial || false)}
+            </div>
           </ScrollReveal>
         ))}
       </div>
@@ -248,6 +274,7 @@ export default function TimelineSection({ theme, template, events, variant = 'de
       {sortedEvents.map((event, idx) => (
         <ScrollReveal key={idx} animation="fade-up" delay={idx * 100}>
           <div
+            id={`timeline-event-${idx}`}
             className={`
               rounded-3xl border 
               p-6 
@@ -359,7 +386,8 @@ export default function TimelineSection({ theme, template, events, variant = 'de
       <div className="space-y-12">
         {sortedEvents.map((event, idx) => (
           <ScrollReveal key={idx} animation="fade-up" delay={idx * 100}>
-            <div 
+            <div
+              id={`timeline-event-${idx}`}
               className="relative pl-10 pb-12 last:pb-0 border-l-2"
               style={{ borderColor: accents.borderColor }}
             >
@@ -517,7 +545,35 @@ export default function TimelineSection({ theme, template, events, variant = 'de
             );
           })()}
         </ScrollReveal>
-        
+
+        {timelineYears.length > 1 && (
+          <ScrollReveal animation="fade-up" delay={80}>
+            <div className="mb-8 flex flex-wrap items-center gap-2">
+              <span className="text-xs uppercase tracking-[0.16em]" style={{ color: accents.textColor }}>
+                Jump to year
+              </span>
+              {timelineYears.map((year) => {
+                const isActive = activeYear === year;
+                return (
+                  <button
+                    key={year}
+                    type="button"
+                    onClick={() => jumpToYear(year)}
+                    className="rounded-full border px-3 py-1.5 text-xs font-semibold transition-all"
+                    style={{
+                      borderColor: accents.borderColor,
+                      backgroundColor: isActive ? `${accents.secondaryColor}70` : accents.cardColor,
+                      color: isActive ? accents.primaryColor : accents.textColor,
+                    }}
+                  >
+                    {year}
+                  </button>
+                );
+              })}
+            </div>
+          </ScrollReveal>
+        )}
+
         {/* Timeline Content */}
         {template === 'vertical_timeline' && renderVerticalTimeline()}
         {template === 'milestone_cards' && renderMilestoneCards()}

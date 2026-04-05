@@ -1,11 +1,14 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Playfair_Display, Sora } from 'next/font/google';
-import BuilderForm from '@/components/builder/BuilderForm';
 import KeychainInsertPreview from '@/components/product/KeychainInsertPreview';
-import { OccasionType, Participant, CreateOrderPayload } from '@/lib/types';
+import TemplateSelector from '@/components/templates/TemplateSelector';
+import { STARTER_TEMPLATES, getTemplatesByOccasion } from '@/components/templates/templateData';
+import { OccasionType, Participant } from '@/lib/types';
+import { OCCASION_REGISTRY } from '@/lib/occasion-registry';
 import { PRODUCT_EXPANSION_PRESETS } from '@/config/productExpansion';
 
 const sora = Sora({ subsets: ['latin'], variable: '--font-sora' });
@@ -26,8 +29,20 @@ interface OrderResult {
   qrCodeUrl: string;
 }
 
-const SHOPEE_URL = 'https://shopee.ph/';
-const TIKTOK_URL = 'https://www.tiktok.com/';
+type PublicBusinessLinks = {
+  whatsappNumber: string | null;
+  messengerUsername: string | null;
+  messengerUrl: string | null;
+  shopeeStoreUrl: string;
+  tiktokShopUrl: string;
+  lazadaStoreUrl: string;
+  facebookPageUrl: string | null;
+  instagramUrl: string | null;
+};
+
+const DEFAULT_SHOPEE_URL = 'https://shopee.ph/';
+const DEFAULT_TIKTOK_URL = 'https://www.tiktok.com/';
+const DEFAULT_LAZADA_URL = 'https://www.lazada.com.ph/';
 const SAMPLE_WEBSITES = [
   { occasion: 'Couple', url: '#', status: 'Live Soon' },
   { occasion: 'Wedding', url: '#', status: 'Live Soon' },
@@ -120,7 +135,13 @@ const BENEFITS = [
   'Perfect for couples, birthdays, and milestones',
 ];
 
+const OCCASION_FLOW_OPTIONS: Array<{ id: OccasionType; label: string }> = Object.values(OCCASION_REGISTRY).map((meta) => ({
+  id: meta.key,
+  label: meta.label,
+}));
+
 export default function Home() {
+  const router = useRouter();
   const builderSectionRef = useRef<HTMLDivElement | null>(null);
   const [previewState, setPreviewState] = useState<FormPreviewState>({
     website_name: '',
@@ -136,25 +157,72 @@ export default function Home() {
   const [selectedZone, setSelectedZone] = useState<(typeof SHIPPING_ZONES)[number]['id']>('metro');
   const [giftWrap, setGiftWrap] = useState(false);
   const [rushProduction, setRushProduction] = useState(false);
-  const [builderSeed, setBuilderSeed] = useState(0);
   const [builderHighlight, setBuilderHighlight] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [promoInput, setPromoInput] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<keyof typeof PROMO_CODES | ''>('');
   const [promoError, setPromoError] = useState('');
-  const [inquiryName, setInquiryName] = useState('');
-  const [inquiryContact, setInquiryContact] = useState('');
-  const [inquiryOccasion, setInquiryOccasion] = useState('couple');
-  const [inquirySubmitted, setInquirySubmitted] = useState(false);
+  const [flowStep, setFlowStep] = useState<1 | 2 | 3 | 4>(1);
+  const [selectedOccasion, setSelectedOccasion] = useState<OccasionType>('couple');
+  const [selectedTemplateId, setSelectedTemplateId] = useState(STARTER_TEMPLATES[0]!.id);
+    const templatesForOccasion = useMemo(() => getTemplatesByOccasion(selectedOccasion), [selectedOccasion]);
 
-  const handleFormChange = (state: FormPreviewState) => {
-    setPreviewState(state);
-  };
+    useEffect(() => {
+      if (!templatesForOccasion.length) return;
+      setSelectedTemplateId((prev) => {
+        const existsInOccasion = templatesForOccasion.some((template) => template.id === prev);
+        return existsInOccasion ? prev : templatesForOccasion[0]!.id;
+      });
+    }, [templatesForOccasion]);
 
-  const handleOrderCreated = (result: OrderResult) => {
-    setOrderResult(result);
-    setShowSuccess(true);
-  };
+  const [publicLinks, setPublicLinks] = useState<PublicBusinessLinks>({
+    whatsappNumber: null,
+    messengerUsername: null,
+    messengerUrl: null,
+    shopeeStoreUrl: DEFAULT_SHOPEE_URL,
+    tiktokShopUrl: DEFAULT_TIKTOK_URL,
+    lazadaStoreUrl: DEFAULT_LAZADA_URL,
+    facebookPageUrl: null,
+    instagramUrl: null,
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchPublicLinks = async () => {
+      try {
+        const res = await fetch('/api/public/business-settings', { method: 'GET' });
+        if (!res.ok) {
+          return;
+        }
+
+        const data = await res.json();
+        if (!isMounted) {
+          return;
+        }
+
+        setPublicLinks((prev) => ({
+          ...prev,
+          whatsappNumber: typeof data.whatsappNumber === 'string' && data.whatsappNumber.trim() ? data.whatsappNumber : null,
+          messengerUsername: typeof data.messengerUsername === 'string' && data.messengerUsername.trim() ? data.messengerUsername : null,
+          messengerUrl: typeof data.messengerUrl === 'string' && data.messengerUrl.trim() ? data.messengerUrl : null,
+          shopeeStoreUrl: typeof data.shopeeStoreUrl === 'string' && data.shopeeStoreUrl.trim() ? data.shopeeStoreUrl : prev.shopeeStoreUrl,
+          tiktokShopUrl: typeof data.tiktokShopUrl === 'string' && data.tiktokShopUrl.trim() ? data.tiktokShopUrl : prev.tiktokShopUrl,
+          lazadaStoreUrl: typeof data.lazadaStoreUrl === 'string' && data.lazadaStoreUrl.trim() ? data.lazadaStoreUrl : prev.lazadaStoreUrl,
+          facebookPageUrl: typeof data.facebookPageUrl === 'string' && data.facebookPageUrl.trim() ? data.facebookPageUrl : null,
+          instagramUrl: typeof data.instagramUrl === 'string' && data.instagramUrl.trim() ? data.instagramUrl : null,
+        }));
+      } catch {
+        // Keep safe defaults if public settings are unavailable.
+      }
+    };
+
+    fetchPublicLinks();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const closeSuccess = () => {
     setShowSuccess(false);
@@ -198,16 +266,9 @@ export default function Home() {
   const estimatorSummary = `${selectedVariantConfig.label} • ${selectedFinishConfig.label} • ${selectedZoneConfig.label} • ETA ${selectedZoneConfig.eta}`;
   const estimatorAddOns = [giftWrap ? 'Gift wrap' : null, rushProduction ? 'Rush production' : null].filter(Boolean).join(', ');
 
-  const builderInitialForm: Partial<CreateOrderPayload> = {
-    occasion: 'couple',
-    message: `Order preference: ${estimatorSummary} • Qty ${quantity}${estimatorAddOns ? ` • Add-ons: ${estimatorAddOns}` : ''}${appliedPromo ? ` • Promo: ${appliedPromo}` : ''}`,
-    tagline: `Estimated total: PHP ${estimatedTotal}`,
-  };
-
-  const applyEstimatorToForm = () => {
-    setBuilderSeed((prev) => prev + 1);
+  const jumpToFlow = () => {
     setBuilderHighlight(true);
-    trackEvent('apply_estimator_to_form', {
+    trackEvent('jump_to_customize_flow', {
       variant: selectedVariantConfig.label,
       finish: selectedFinishConfig.label,
       zone: selectedZoneConfig.label,
@@ -223,18 +284,9 @@ export default function Home() {
     }, 1500);
   };
 
-  const handleInquirySubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inquiryName.trim() || !inquiryContact.trim()) return;
-
-    trackEvent('lead_form_submit', {
-      occasion: inquiryOccasion,
-    });
-
-    setInquirySubmitted(true);
-    setInquiryName('');
-    setInquiryContact('');
-  };
+  const whatsappDigits = (publicLinks.whatsappNumber || '').replace(/\D/g, '');
+  const whatsappUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}` : null;
+  const messengerUrl = publicLinks.messengerUrl || (publicLinks.messengerUsername ? `https://m.me/${publicLinks.messengerUsername}` : null);
 
   const applyPromoCode = () => {
     const normalizedCode = promoInput.trim().toUpperCase() as keyof typeof PROMO_CODES;
@@ -246,6 +298,22 @@ export default function Home() {
     setAppliedPromo(normalizedCode);
     setPromoError('');
     trackEvent('promo_code_applied', { code: normalizedCode });
+  };
+
+  const continueToCreate = () => {
+    const productLabel = `${selectedVariantConfig.label} / ${selectedFinishConfig.label}`;
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem('selected_template_id', selectedTemplateId);
+    }
+    trackEvent('template_continue_click', {
+      template: selectedTemplateId,
+      occasion: selectedOccasion,
+      product: productLabel,
+      quantity,
+    });
+    router.push(
+      `/create?template=${encodeURIComponent(selectedTemplateId)}&occasion=${encodeURIComponent(selectedOccasion)}&product=${encodeURIComponent(productLabel)}`
+    );
   };
 
   return (
@@ -264,6 +332,7 @@ export default function Home() {
           <nav className="hidden items-center gap-6 text-sm font-medium text-[#334155] md:flex">
             <a href="#products" className="nav-link transition-colors hover:text-[#0f172a]">Products</a>
             <a href="#samples" className="nav-link transition-colors hover:text-[#0f172a]">Samples</a>
+            <a href="#build" className="nav-link transition-colors hover:text-[#0f172a]">Templates</a>
             <a href="#how-it-works" className="nav-link transition-colors hover:text-[#0f172a]">How It Works</a>
             <a href="#social-shop" className="nav-link transition-colors hover:text-[#0f172a]">Shop Links</a>
             <a href="#build" className="nav-link transition-colors hover:text-[#0f172a]">Customize</a>
@@ -299,7 +368,7 @@ export default function Home() {
                 Build Your Keychain
               </a>
               <a
-                href={SHOPEE_URL}
+                href={publicLinks.shopeeStoreUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => trackEvent('hero_shopee_click')}
@@ -308,7 +377,7 @@ export default function Home() {
                 Shop on Shopee
               </a>
               <a
-                href={TIKTOK_URL}
+                href={publicLinks.tiktokShopUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => trackEvent('hero_tiktok_click')}
@@ -430,7 +499,7 @@ export default function Home() {
               <p className="text-xs font-semibold uppercase tracking-widest text-[#475569]">Featured Products</p>
               <h2 className="mt-2 text-3xl font-black text-[#0f172a] md:text-4xl">Shop Our Keychain Collections</h2>
             </div>
-            <a href={SHOPEE_URL} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-[#0f172a] underline underline-offset-4">
+            <a href={publicLinks.shopeeStoreUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-[#0f172a] underline underline-offset-4">
               View full catalog
             </a>
           </div>
@@ -442,7 +511,7 @@ export default function Home() {
                 <p className="mt-2 text-sm text-[#475569]">{item.subtitle}</p>
                 <p className="mt-4 text-lg font-extrabold text-[#0f172a]">{item.price}</p>
                 <div className="mt-4 flex gap-2">
-                  <a href={SHOPEE_URL} target="_blank" rel="noopener noreferrer" className="rounded-full bg-[#0f172a] px-4 py-2 text-xs font-bold text-white">
+                  <a href={publicLinks.shopeeStoreUrl} target="_blank" rel="noopener noreferrer" className="rounded-full bg-[#0f172a] px-4 py-2 text-xs font-bold text-white">
                     Buy on Shopee
                   </a>
                   <a href="#build" className="rounded-full border border-[#0f172a] px-4 py-2 text-xs font-bold text-[#0f172a]">
@@ -557,13 +626,13 @@ export default function Home() {
         </section>
 
         <section id="social-shop" className="scroll-mt-24 py-12 md:py-16">
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             <article className="rounded-3xl border border-[#f97316]/30 bg-[#fff7ed] p-8">
               <p className="text-xs font-semibold uppercase tracking-widest text-[#9a3412]">Shopee Store</p>
               <h3 className="mt-2 text-3xl font-black text-[#7c2d12]">Order Fast via Shopee</h3>
               <p className="mt-3 text-[#9a3412]">Browse ready-made bundles, check promo pricing, and place orders through our Shopee shop.</p>
               <a
-                href={SHOPEE_URL}
+                href={publicLinks.shopeeStoreUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-6 inline-flex rounded-full bg-[#ea580c] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#c2410c]"
@@ -576,12 +645,25 @@ export default function Home() {
               <h3 className="mt-2 text-3xl font-black text-[#075985]">Shop and Watch on TikTok</h3>
               <p className="mt-3 text-[#0c4a6e]">See product videos, unboxings, and shop links directly through our TikTok presence.</p>
               <a
-                href={TIKTOK_URL}
+                href={publicLinks.tiktokShopUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-6 inline-flex rounded-full bg-[#0284c7] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#0369a1]"
               >
                 Open TikTok
+              </a>
+            </article>
+            <article className="rounded-3xl border border-[#22c55e]/30 bg-[#f0fdf4] p-8">
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#166534]">Lazada Store</p>
+              <h3 className="mt-2 text-3xl font-black text-[#14532d]">Find Deals on Lazada</h3>
+              <p className="mt-3 text-[#166534]">Check listings, current bundles, and storefront updates through our Lazada page.</p>
+              <a
+                href={publicLinks.lazadaStoreUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 inline-flex rounded-full bg-[#16a34a] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#15803d]"
+              >
+                Open Lazada
               </a>
             </article>
           </div>
@@ -590,54 +672,65 @@ export default function Home() {
         <section id="inquiry" className="scroll-mt-24 py-12 md:py-16">
           <div className="grid gap-6 rounded-3xl border border-[#0f172a]/10 bg-white/85 p-8 md:grid-cols-2 md:p-10">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-[#475569]">Quick Inquiry</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#475569]">Quick Contact</p>
               <h2 className="mt-2 text-3xl font-black text-[#0f172a]">Need Help Choosing the Right Package?</h2>
               <p className="mt-3 text-[#475569]">
-                Send your contact and occasion. We will suggest the best option and help you set up quickly.
+                Chat with us directly on social channels so we can recommend the best package for your occasion.
               </p>
-              <p className="mt-3 text-sm text-[#64748b]">No complicated process. Just quick recommendations from our team.</p>
+              <p className="mt-3 text-sm text-[#64748b]">No forms needed. Choose your preferred channel below.</p>
             </div>
 
-            <form onSubmit={handleInquirySubmit} className="space-y-3 rounded-2xl border border-[#0f172a]/10 bg-white p-4">
-              <input
-                type="text"
-                value={inquiryName}
-                onChange={(e) => setInquiryName(e.target.value)}
-                placeholder="Your name"
-                className="w-full rounded-xl border border-[#0f172a]/20 px-3 py-2 text-sm"
-                required
-              />
-              <input
-                type="text"
-                value={inquiryContact}
-                onChange={(e) => setInquiryContact(e.target.value)}
-                placeholder="Phone, email, or social handle"
-                className="w-full rounded-xl border border-[#0f172a]/20 px-3 py-2 text-sm"
-                required
-              />
-              <select
-                value={inquiryOccasion}
-                onChange={(e) => setInquiryOccasion(e.target.value)}
-                className="w-full rounded-xl border border-[#0f172a]/20 px-3 py-2 text-sm"
-              >
-                <option value="couple">Couple</option>
-                <option value="wedding">Wedding</option>
-                <option value="birthday">Birthday</option>
-                <option value="anniversary">Anniversary</option>
-                <option value="graduation">Graduation</option>
-                <option value="baby_shower">Baby Shower</option>
-              </select>
-
-              <button type="submit" className="w-full rounded-xl bg-[#0f172a] px-4 py-2.5 text-sm font-bold text-white">
-                Send Inquiry
-              </button>
-
-              {inquirySubmitted && (
-                <p className="rounded-xl bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
-                  Inquiry saved. Please add your preferred contact channel link/workflow next.
+            <div className="space-y-3 rounded-2xl border border-[#0f172a]/10 bg-white p-4">
+              {whatsappUrl && (
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackEvent('quick_contact_whatsapp_click')}
+                  className="block w-full rounded-xl bg-[#16a34a] px-4 py-3 text-center text-sm font-bold text-white transition hover:bg-[#15803d]"
+                >
+                  Chat on WhatsApp
+                </a>
+              )}
+              {messengerUrl && (
+                <a
+                  href={messengerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackEvent('quick_contact_messenger_click')}
+                  className="block w-full rounded-xl bg-[#0284c7] px-4 py-3 text-center text-sm font-bold text-white transition hover:bg-[#0369a1]"
+                >
+                  Message on Messenger
+                </a>
+              )}
+              {publicLinks.facebookPageUrl && (
+                <a
+                  href={publicLinks.facebookPageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackEvent('quick_contact_facebook_click')}
+                  className="block w-full rounded-xl bg-[#1d4ed8] px-4 py-3 text-center text-sm font-bold text-white transition hover:bg-[#1e40af]"
+                >
+                  Visit our Facebook Page
+                </a>
+              )}
+              {publicLinks.instagramUrl && (
+                <a
+                  href={publicLinks.instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackEvent('quick_contact_instagram_click')}
+                  className="block w-full rounded-xl border border-[#0f172a]/15 bg-[#f8fafc] px-4 py-3 text-center text-sm font-bold text-[#0f172a] transition hover:bg-[#eef2ff]"
+                >
+                  Open Instagram
+                </a>
+              )}
+              {!whatsappUrl && !messengerUrl && !publicLinks.facebookPageUrl && !publicLinks.instagramUrl && (
+                <p className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                  Contact links are not configured yet. Please update Admin Settings.
                 </p>
               )}
-            </form>
+            </div>
           </div>
         </section>
 
@@ -658,21 +751,43 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="estimate" className="scroll-mt-24 py-12 md:py-16">
-          <div className="rounded-3xl border border-[#0f172a]/10 bg-white/85 p-8 md:p-10">
-            <div className="mb-6">
-              <p className="text-xs font-semibold uppercase tracking-widest text-[#475569]">Price Estimator</p>
-              <h2 className="mt-2 text-3xl font-black text-[#0f172a] md:text-4xl">Estimate Your Order Before Checkout</h2>
-              <p className="mt-3 max-w-3xl text-[#475569]">
-                Pick your preferred options to see a quick estimated total and delivery window. Final fees may vary slightly based on exact location.
-              </p>
-            </div>
+        <section id="build" ref={builderSectionRef} className={`scroll-mt-24 py-12 md:py-16 ${builderHighlight ? 'builder-highlight' : ''}`}>
+          <div className="mb-8 text-center">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#475569]">Price Estimator + Live Customizer</p>
+            <h2 className="mt-2 text-3xl font-black text-[#0f172a] md:text-4xl">Design Your Product and Website</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-[#475569]">
+              Follow a cleaner guided flow: select product, select occasion, select template, then fill up your full website content on the next page.
+            </p>
+          </div>
 
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div className="space-y-5">
+          <div className="mb-6 rounded-2xl border border-[#0f172a]/10 bg-white/85 p-4">
+            <div className="mb-3 grid grid-cols-2 gap-2 text-xs font-semibold sm:grid-cols-4">
+              {[
+                { id: 1, label: 'Product' },
+                { id: 2, label: 'Occasion' },
+                { id: 3, label: 'Template' },
+                { id: 4, label: 'Fill Form' },
+              ].map((item) => (
+                <div
+                  key={item.id}
+                  className={`rounded-lg px-3 py-2 text-center ${flowStep === item.id ? 'bg-[#0f172a] text-white' : 'bg-[#f1f5f9] text-[#475569]'}`}
+                >
+                  {item.id}. {item.label}
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-[#64748b]">Current summary: {estimatorSummary} • Occasion: {OCCASION_FLOW_OPTIONS.find((item) => item.id === selectedOccasion)?.label || 'Couple'} • Template: {templatesForOccasion.find((item) => item.id === selectedTemplateId)?.name}</p>
+          </div>
+
+          {flowStep === 1 && (
+            <div className="grid gap-6 rounded-3xl border border-[#0f172a]/10 bg-white p-6 md:grid-cols-2 md:p-8">
+              <div className="space-y-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#64748b]">Step 1</p>
+                <h3 className="text-2xl font-black text-[#0f172a]">Select Your Product Setup</h3>
+
                 <div>
                   <p className="mb-2 text-sm font-semibold text-[#0f172a]">Product Variant</p>
-                  <div className="grid gap-2 sm:grid-cols-3">
+                  <div className="grid gap-2 sm:grid-cols-2">
                     {VARIANT_OPTIONS.map((option) => (
                       <button
                         key={option.id}
@@ -683,34 +798,6 @@ export default function Home() {
                         {option.label}
                       </button>
                     ))}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="mb-2 text-sm font-semibold text-[#0f172a]">Quantity</p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
-                      className="rounded-lg border border-[#0f172a]/20 bg-white px-3 py-1.5 text-sm font-bold text-[#0f172a]"
-                    >
-                      -
-                    </button>
-                    <div className="min-w-10 rounded-lg border border-[#0f172a]/20 bg-white px-3 py-1.5 text-center text-sm font-bold text-[#0f172a]">
-                      {quantity}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setQuantity((prev) => Math.min(20, prev + 1))}
-                      className="rounded-lg border border-[#0f172a]/20 bg-white px-3 py-1.5 text-sm font-bold text-[#0f172a]"
-                    >
-                      +
-                    </button>
-                    {quantity >= 3 && (
-                      <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
-                        Bundle discount active
-                      </span>
-                    )}
                   </div>
                 </div>
 
@@ -730,52 +817,15 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div>
-                  <p className="mb-2 text-sm font-semibold text-[#0f172a]">Delivery Area</p>
-                  <select
-                    value={selectedZone}
-                    onChange={(e) => setSelectedZone(e.target.value as (typeof SHIPPING_ZONES)[number]['id'])}
-                    className="w-full rounded-xl border border-[#0f172a]/20 bg-white px-3 py-2 text-sm font-medium text-[#0f172a]"
-                  >
-                    {SHIPPING_ZONES.map((zone) => (
-                      <option key={zone.id} value={zone.id}>{zone.label}</option>
-                    ))}
-                  </select>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-[#0f172a]">Quantity</span>
+                  <button type="button" onClick={() => setQuantity((prev) => Math.max(1, prev - 1))} className="rounded-lg border border-[#0f172a]/20 bg-white px-3 py-1.5 text-sm font-bold text-[#0f172a]">-</button>
+                  <span className="rounded-lg border border-[#0f172a]/20 bg-white px-3 py-1.5 text-sm font-bold text-[#0f172a]">{quantity}</span>
+                  <button type="button" onClick={() => setQuantity((prev) => Math.min(20, prev + 1))} className="rounded-lg border border-[#0f172a]/20 bg-white px-3 py-1.5 text-sm font-bold text-[#0f172a]">+</button>
                 </div>
 
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-[#0f172a]/15 bg-white px-3 py-2 text-sm font-medium text-[#0f172a]">
-                    <input type="checkbox" checked={giftWrap} onChange={(e) => setGiftWrap(e.target.checked)} />
-                    Gift wrap (+PHP 40)
-                  </label>
-                  <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-[#0f172a]/15 bg-white px-3 py-2 text-sm font-medium text-[#0f172a]">
-                    <input type="checkbox" checked={rushProduction} onChange={(e) => setRushProduction(e.target.checked)} />
-                    Rush production (+PHP 120)
-                  </label>
-                </div>
-
-                <div>
-                  <p className="mb-2 text-sm font-semibold text-[#0f172a]">Promo Code</p>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={promoInput}
-                      onChange={(e) => setPromoInput(e.target.value)}
-                      placeholder="Enter promo code"
-                      className="w-full rounded-xl border border-[#0f172a]/20 bg-white px-3 py-2 text-sm font-medium text-[#0f172a]"
-                    />
-                    <button
-                      type="button"
-                      onClick={applyPromoCode}
-                      className="rounded-xl bg-[#0f172a] px-3 py-2 text-xs font-bold text-white"
-                    >
-                      Apply
-                    </button>
-                  </div>
-                  {appliedPromo && (
-                    <p className="mt-2 text-xs font-semibold text-emerald-700">Applied: {appliedPromo} - {PROMO_CODES[appliedPromo].label}</p>
-                  )}
-                  {!!promoError && <p className="mt-2 text-xs font-semibold text-rose-700">{promoError}</p>}
+                <div className="pt-2">
+                  <button type="button" onClick={() => setFlowStep(2)} className="rounded-full bg-[#0f172a] px-6 py-2.5 text-sm font-bold text-white">Next: Occasion Type</button>
                 </div>
               </div>
 
@@ -796,68 +846,82 @@ export default function Home() {
                   <p className="text-2xl font-black">PHP {estimatedTotal}</p>
                 </div>
                 <p className="mt-3 text-xs text-slate-300">Estimated delivery: {selectedZoneConfig.eta}</p>
-                {totalDiscount > 0 && <p className="mt-2 text-xs font-semibold text-emerald-300">You save PHP {totalDiscount} on this setup.</p>}
-                <div className="mt-5 flex gap-2">
-                  <a href="#build" onClick={() => trackEvent('estimate_customize_click')} className="rounded-full bg-[#f97316] px-4 py-2 text-xs font-bold text-white">Continue to Customize</a>
-                  <a href={SHOPEE_URL} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent('estimate_shopee_click')} className="rounded-full border border-white/40 px-4 py-2 text-xs font-bold text-white">Checkout on Shopee</a>
+              </div>
+            </div>
+          )}
+
+          {flowStep === 2 && (
+            <div className="rounded-3xl border border-[#0f172a]/10 bg-white p-6 md:p-8" id="occasion-step">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#64748b]">Step 2</p>
+              <h3 className="mt-2 text-2xl font-black text-[#0f172a]">Select Occasion Type</h3>
+              <p className="mt-2 text-sm text-[#475569]">Pick the occasion so we can tailor the website content flow.</p>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {OCCASION_FLOW_OPTIONS.map((occasion) => (
+                  <button
+                    key={occasion.id}
+                    type="button"
+                    onClick={() => setSelectedOccasion(occasion.id)}
+                    className={`rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${selectedOccasion === occasion.id ? 'border-[#0f172a] bg-[#0f172a] text-white' : 'border-[#0f172a]/15 bg-white text-[#0f172a] hover:bg-[#f8fafc]'}`}
+                  >
+                    {occasion.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-6 flex gap-3">
+                <button type="button" onClick={() => setFlowStep(1)} className="rounded-full border border-[#0f172a]/20 px-5 py-2.5 text-sm font-semibold text-[#0f172a]">Back</button>
+                <button type="button" onClick={() => setFlowStep(3)} className="rounded-full bg-[#0f172a] px-6 py-2.5 text-sm font-bold text-white">Next: Select Template</button>
+              </div>
+            </div>
+          )}
+
+          {flowStep === 3 && (
+            <div id="templates" className="space-y-4">
+              <TemplateSelector
+                templates={templatesForOccasion}
+                selectedTemplateId={selectedTemplateId}
+                onSelectTemplate={setSelectedTemplateId}
+                onContinue={() => setFlowStep(4)}
+                stepLabel="Step 3 of 4"
+                description="Select the visual style for your website before moving to the full content form."
+                continueLabel="Next: Fill Up Form"
+              />
+              <button type="button" onClick={() => setFlowStep(2)} className="rounded-full border border-[#0f172a]/20 px-5 py-2.5 text-sm font-semibold text-[#0f172a]">Back to Occasion</button>
+            </div>
+          )}
+
+          {flowStep === 4 && (
+            <div className="rounded-3xl border border-[#0f172a]/10 bg-white p-6 md:p-8">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#64748b]">Step 4</p>
+              <h3 className="mt-2 text-2xl font-black text-[#0f172a]">Fill Up the Website Content Form</h3>
+              <p className="mt-2 text-sm text-[#475569]">You are ready. Continue to the dedicated page so the long form stays clean and easy to complete on mobile.</p>
+
+              <div className="mt-5 grid gap-3 rounded-2xl border border-[#0f172a]/10 bg-[#f8fafc] p-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-[#64748b]">Product</p>
+                  <p className="mt-1 text-sm font-bold text-[#0f172a]">{selectedVariantConfig.label}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-[#64748b]">Occasion</p>
+                  <p className="mt-1 text-sm font-bold text-[#0f172a]">{OCCASION_FLOW_OPTIONS.find((item) => item.id === selectedOccasion)?.label}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-[#64748b]">Template</p>
+                  <p className="mt-1 text-sm font-bold text-[#0f172a]">{templatesForOccasion.find((item) => item.id === selectedTemplateId)?.name}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-[#64748b]">Estimated</p>
+                  <p className="mt-1 text-sm font-bold text-[#0f172a]">PHP {estimatedTotal}</p>
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
 
-        <section id="build" ref={builderSectionRef} className={`scroll-mt-24 py-12 md:py-16 ${builderHighlight ? 'builder-highlight' : ''}`}>
-          <div className="mb-8 text-center">
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#475569]">Live Customizer</p>
-            <h2 className="mt-2 text-3xl font-black text-[#0f172a] md:text-4xl">Design Your Product and Website</h2>
-            <p className="mx-auto mt-3 max-w-2xl text-[#475569]">
-              Fill up your details, upload photos, and watch your keychain preview update instantly before placing your order.
-            </p>
-          </div>
-
-          <div className="mb-6 rounded-2xl border border-[#0f172a]/10 bg-white/85 p-4">
-            <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-[#64748b]">Estimator Synced Selection</p>
-                <p className="mt-1 text-sm font-semibold text-[#0f172a]">{estimatorSummary}</p>
-                <p className="text-xs text-[#64748b]">{estimatorAddOns ? `Add-ons: ${estimatorAddOns} • ` : ''}Estimated Total: PHP {estimatedTotal}</p>
+              <div className="mt-6 flex gap-3">
+                <button type="button" onClick={() => setFlowStep(3)} className="rounded-full border border-[#0f172a]/20 px-5 py-2.5 text-sm font-semibold text-[#0f172a]">Back to Template</button>
+                <button type="button" onClick={continueToCreate} className="rounded-full bg-[#0f172a] px-6 py-2.5 text-sm font-bold text-white">Continue to Form</button>
               </div>
-              <button
-                type="button"
-                onClick={applyEstimatorToForm}
-                className="rounded-full bg-[#0f172a] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#1e293b]"
-              >
-                Apply to Form
-              </button>
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            <div className="rounded-3xl border border-[#0f172a]/10 bg-white p-6 shadow-[0_20px_60px_-40px_rgba(2,6,23,0.6)] md:p-8">
-              <h3 className="mb-5 text-xl font-bold text-[#0f172a]">Customization Form</h3>
-              <BuilderForm
-                key={`builder-${builderSeed}`}
-                initialForm={builderInitialForm}
-                onFormChange={handleFormChange}
-                onCreated={handleOrderCreated}
-              />
-            </div>
-
-            <div className="rounded-3xl border border-[#0f172a]/10 bg-gradient-to-br from-white to-[#eef2ff] p-6 shadow-[0_20px_60px_-40px_rgba(2,6,23,0.6)] md:p-8 lg:sticky lg:top-24 lg:self-start">
-              <h3 className="mb-5 text-xl font-bold text-[#0f172a]">Live Product Preview</h3>
-              <KeychainInsertPreview
-                widthMm={50}
-                heightMm={30}
-                qrCodeUrl={mockQrUrl}
-                coverPhotoUrl={previewState.coverPhotoPreviewUrl}
-                coupleNames={previewState.coupleNames || 'Your Names'}
-                caption={`Scan ${previewState.website_name || 'your'} story`}
-              />
-              <p className="mt-4 text-sm text-[#475569]">
-                {previewState.coupleNames ? `Preview for ${previewState.coupleNames}` : 'Add your details to update this preview.'}
-              </p>
-            </div>
-          </div>
+          )}
         </section>
 
         <section className="py-12 md:py-16">
@@ -869,8 +933,9 @@ export default function Home() {
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <a href="#build" className="rounded-full bg-white px-5 py-3 text-sm font-bold text-[#0f172a]">Customize Now</a>
-              <a href={SHOPEE_URL} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/40 px-5 py-3 text-sm font-bold text-white">Shopee</a>
-              <a href={TIKTOK_URL} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/40 px-5 py-3 text-sm font-bold text-white">TikTok</a>
+              <a href={publicLinks.shopeeStoreUrl} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/40 px-5 py-3 text-sm font-bold text-white">Shopee</a>
+              <a href={publicLinks.tiktokShopUrl} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/40 px-5 py-3 text-sm font-bold text-white">TikTok</a>
+              <a href={publicLinks.lazadaStoreUrl} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/40 px-5 py-3 text-sm font-bold text-white">Lazada</a>
             </div>
           </div>
         </section>
@@ -929,8 +994,15 @@ export default function Home() {
           <p className="font-semibold text-[#0f172a]">Keystory</p>
           <p className="mt-1">Premium QR keychains and memory websites.</p>
           <div className="mt-4 flex justify-center gap-4">
-            <a href={SHOPEE_URL} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">Shopee</a>
-            <a href={TIKTOK_URL} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">TikTok</a>
+            <a href={publicLinks.shopeeStoreUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">Shopee</a>
+            <a href={publicLinks.tiktokShopUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">TikTok</a>
+            <a href={publicLinks.lazadaStoreUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">Lazada</a>
+            {publicLinks.facebookPageUrl && (
+              <a href={publicLinks.facebookPageUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">Facebook</a>
+            )}
+            {publicLinks.instagramUrl && (
+              <a href={publicLinks.instagramUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">Instagram</a>
+            )}
             <a href="#samples" className="underline underline-offset-4">Sample Websites</a>
             <a href="#build" className="underline underline-offset-4">Customize</a>
           </div>
@@ -940,17 +1012,22 @@ export default function Home() {
 
       <div className="fixed right-4 top-1/2 z-30 hidden w-44 -translate-y-1/2 space-y-2 rounded-2xl border border-[#0f172a]/10 bg-white/95 p-3 shadow-xl backdrop-blur lg:block">
         <a href="#build" className="block rounded-lg bg-[#0f172a] px-3 py-2 text-center text-xs font-bold text-white">Customize</a>
-        <a href={SHOPEE_URL} target="_blank" rel="noopener noreferrer" className="block rounded-lg bg-[#f97316] px-3 py-2 text-center text-xs font-bold text-white">Shop Shopee</a>
-        <a href={TIKTOK_URL} target="_blank" rel="noopener noreferrer" className="block rounded-lg border border-[#0f172a]/20 px-3 py-2 text-center text-xs font-bold text-[#0f172a]">TikTok</a>
+        <a href={publicLinks.shopeeStoreUrl} target="_blank" rel="noopener noreferrer" className="block rounded-lg bg-[#f97316] px-3 py-2 text-center text-xs font-bold text-white">Shop Shopee</a>
+        <a href={publicLinks.tiktokShopUrl} target="_blank" rel="noopener noreferrer" className="block rounded-lg border border-[#0f172a]/20 px-3 py-2 text-center text-xs font-bold text-[#0f172a]">TikTok</a>
+        <a href={publicLinks.lazadaStoreUrl} target="_blank" rel="noopener noreferrer" className="block rounded-lg border border-[#0f172a]/20 px-3 py-2 text-center text-xs font-bold text-[#0f172a]">Lazada</a>
+        <a href={publicLinks.facebookPageUrl || 'https://facebook.com/'} target="_blank" rel="noopener noreferrer" className="block rounded-lg bg-[#1d4ed8] px-3 py-2 text-center text-xs font-bold text-white">Facebook</a>
       </div>
 
       <div className="fixed bottom-4 left-1/2 z-40 w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 rounded-2xl border border-[#0f172a]/15 bg-white/95 p-2 shadow-2xl backdrop-blur md:hidden">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <a href="#build" className="rounded-xl bg-[#0f172a] px-3 py-3 text-center text-xs font-bold text-white">
             Customize Now
           </a>
-          <a href={SHOPEE_URL} target="_blank" rel="noopener noreferrer" className="rounded-xl bg-[#f97316] px-3 py-3 text-center text-xs font-bold text-white">
+          <a href={publicLinks.shopeeStoreUrl} target="_blank" rel="noopener noreferrer" className="rounded-xl bg-[#f97316] px-3 py-3 text-center text-xs font-bold text-white">
             Shop Shopee
+          </a>
+          <a href={publicLinks.tiktokShopUrl} target="_blank" rel="noopener noreferrer" className="rounded-xl border border-[#0f172a]/20 px-3 py-3 text-center text-xs font-bold text-[#0f172a]">
+            TikTok
           </a>
         </div>
       </div>

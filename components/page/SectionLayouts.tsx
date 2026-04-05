@@ -6,6 +6,7 @@ import { useTheme } from '../builder/ThemeWrapper';
 import SectionHeader from './SectionHeader';
 import { useOccasionType } from './OccasionContext';
 import ScrollReveal from '../ui/ScrollReveal';
+import { isDarkTheme as checkIsDarkTheme } from '@/lib/theme-color-helpers';
 
 import { ThemeKey } from '@/config/themeConfig';
 import { cardSections, timelineSections, gridSections, gridConfigs } from '@/config/sectionLayoutConfig';
@@ -56,18 +57,29 @@ function getSeparatorPresentation(siteType: string, theme?: ThemeKey) {
     };
   }
 
+  const isDark = checkIsDarkTheme(theme);
   return {
     icon: hero.badge,
-    accentClass: theme === 'dark_elegant' ? 'text-amber-300' : 'text-rose-500',
-    lineStyle: theme === 'dark_elegant' ? 'rgba(252,211,77,0.45)' : 'rgba(255,255,255,0.55)',
+    accentClass: isDark ? 'text-amber-300' : 'text-rose-500',
+    lineStyle: isDark ? 'rgba(252,211,77,0.45)' : 'rgba(255,255,255,0.55)',
     dividerBackground:
-      theme === 'dark_elegant'
+      isDark
         ? 'radial-gradient(circle at center, rgba(255,236,179,0.5) 0%, rgba(245,158,11,0.15) 40%, rgba(245,158,11,0) 65%)'
         : 'radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(251,207,232,0.35) 40%, rgba(236,72,153,0.08) 65%)',
-    shellBorder: theme === 'dark_elegant' ? 'rgba(252,211,77,0.45)' : 'rgba(255,255,255,0.55)',
+    shellBorder: isDark ? 'rgba(252,211,77,0.45)' : 'rgba(255,255,255,0.55)',
     dotsLeft: '✨',
     dotsRight: '✨',
   };
+}
+
+function withAlpha(color: string, alphaHex: string) {
+  if (!color || !color.startsWith('#')) return color;
+
+  const normalized = color.length === 4
+    ? `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`
+    : color;
+
+  return `${normalized}${alphaHex}`;
 }
 
 export interface BaseSectionLayoutProps {
@@ -166,7 +178,7 @@ export function GridSectionLayout({
   const styles = useTheme(theme);
 
   // Determine if dark theme (for soft-glow) or vintage theme (for paper grain)
-  const isDarkTheme = theme === 'dark_elegant';
+  const isDarkTheme = checkIsDarkTheme(theme);
   const isVintageTheme = theme === 'vintage_love_letter';
 
   return (
@@ -229,7 +241,7 @@ export function NarrowSectionLayout({
   const styles = useTheme(theme);
 
   // Determine if dark theme (for soft-glow) or vintage theme (for paper grain)
-  const isDarkTheme = theme === 'dark_elegant';
+  const isDarkTheme = checkIsDarkTheme(theme);
   const isVintageTheme = theme === 'vintage_love_letter';
 
   return (
@@ -286,30 +298,54 @@ export function SectionSeparator({
     startColor === endColor
       ? `linear-gradient(to bottom, ${startColor} 0%, ${startColor} 100%)`
       : `linear-gradient(to bottom, ${startColor} 0%, ${startColor} 44%, ${endColor} 56%, ${endColor} 100%)`;
+  const glowColor = checkIsDarkTheme(theme) ? 'rgba(252, 211, 77, 0.08)' : 'rgba(244, 114, 182, 0.08)';
+  const accentTint = withAlpha(startColor, '22');
+  const bridgeColor =
+    startColor === endColor
+      ? `linear-gradient(to right, transparent, ${withAlpha(startColor, '66')}, transparent)`
+      : `linear-gradient(to right, transparent, ${withAlpha(startColor, '52')}, ${withAlpha(endColor, '52')}, transparent)`;
 
   return (
-    <div className="relative z-20 section-separator flex justify-center items-center -mt-10 -mb-10 md:-mt-12 md:-mb-12 animate-fade-in-up motion-reduce:animate-none" role="img" aria-label="section separator">
+    <div className="relative z-20 section-separator flex justify-center items-center -mt-2 -mb-2 px-6 md:-mt-3 md:-mb-3 animate-fade-in-up motion-reduce:animate-none" role="img" aria-label="section separator">
       <div
-        className="w-full max-w-3xl relative z-10 h-20 md:h-24 rounded-xl overflow-hidden"
-        style={{ background: separatorGradient }}
+        className="w-full max-w-2xl relative z-10 h-5 md:h-6 overflow-hidden"
       >
         <div
-          className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px"
-          style={{ background: `linear-gradient(to right, transparent, ${separatorUi.lineStyle}, transparent)` }}
+          className="absolute inset-x-[26%] top-1/2 h-4 -translate-y-1/2 rounded-full blur-xl"
+          style={{
+            backgroundColor: glowColor,
+          }}
         />
-        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-2 bg-white/15 backdrop-blur-sm" />
-        <div className="absolute z-30 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full shadow-lg px-4 py-1.5">
-          <div
-            className="h-full w-full rounded-full border"
-            style={{
-              borderColor: separatorUi.shellBorder,
-              background: separatorUi.dividerBackground,
-            }}
-            aria-hidden="true"
-          >
-            <span className={`relative z-40 block text-xl ${separatorUi.accentClass} animate-gentle-pulse motion-reduce:animate-none text-center leading-none`} aria-hidden="true">
+        <div
+          className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2"
+          style={{
+            background: `linear-gradient(to right, transparent, ${separatorUi.lineStyle}, transparent)`,
+          }}
+        />
+        <div
+          className="absolute inset-x-[18%] top-1/2 h-2 -translate-y-1/2 rounded-full blur-md"
+          style={{
+            background: bridgeColor,
+            opacity: 0.22,
+          }}
+        />
+        <div className="absolute left-3 right-3 top-1/2 flex -translate-y-1/2 items-center justify-between md:left-6 md:right-6">
+          <div className="flex items-center gap-2 md:gap-2.5">
+            <span className="h-px w-6 md:w-8" style={{ background: `linear-gradient(to right, transparent, ${separatorUi.lineStyle})` }} aria-hidden="true" />
+            <span className="h-1 w-1 rounded-full" style={{ backgroundColor: accentTint }} aria-hidden="true" />
+          </div>
+          <div className="flex items-center gap-2 md:gap-2.5">
+            <span className="h-1 w-1 rounded-full" style={{ backgroundColor: accentTint }} aria-hidden="true" />
+            <span className="h-px w-6 md:w-8" style={{ background: `linear-gradient(to left, transparent, ${separatorUi.lineStyle})` }} aria-hidden="true" />
+          </div>
+        </div>
+        <div className="absolute z-40 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" aria-hidden="true">
+          <div className="flex items-center gap-1.5 md:gap-2">
+            <span className={`text-[9px] opacity-45 ${separatorUi.accentClass}`}>{separatorUi.dotsLeft}</span>
+            <span className={`section-separator-icon relative z-40 block text-xs md:text-sm ${separatorUi.accentClass} animate-gentle-pulse motion-reduce:animate-none text-center leading-none`}>
               {separatorUi.icon}
             </span>
+            <span className={`text-[9px] opacity-45 ${separatorUi.accentClass}`}>{separatorUi.dotsRight}</span>
           </div>
         </div>
       </div>
@@ -327,23 +363,23 @@ export function GradientSeparator({ theme = 'romantic_classic' }: { theme?: Them
         ? 'linear-gradient(to right, transparent, rgba(255,255,255,0.28), transparent)'
         : siteType === 'travel'
           ? 'linear-gradient(to right, transparent, rgba(56,189,248,0.75), transparent)'
-          : theme === 'dark_elegant'
+          : checkIsDarkTheme(theme)
             ? '#3f3f46'
             : '#fce7f3';
   return (
     <div className={`relative ${SEPARATOR_VERTICAL_PADDING} flex justify-center animate-fade-in-up motion-reduce:animate-none`}>
-      <div className="flex items-center gap-3">
-        <span className={`text-lg ${separatorUi.accentClass} animate-fade-in motion-reduce:animate-none`}>{separatorUi.dotsLeft}</span>
+      <div className="relative flex items-center gap-2 md:gap-2.5">
+          <span className={`text-[10px] opacity-50 ${separatorUi.accentClass} animate-fade-in motion-reduce:animate-none`}>{separatorUi.dotsLeft}</span>
         <div
-          className="h-2 w-40 rounded-full shadow-xl blur-sm opacity-90"
+          className="h-px w-10 md:w-14"
           style={{ background: lineColor }}
         />
-        <span className={`text-lg ${separatorUi.accentClass} animate-gentle-pulse motion-reduce:animate-none`}>{separatorUi.icon}</span>
+        <span className={`text-xs ${separatorUi.accentClass} animate-gentle-pulse motion-reduce:animate-none`}>{separatorUi.icon}</span>
         <div
-          className="h-2 w-40 rounded-full shadow-xl blur-sm opacity-90"
+          className="h-px w-10 md:w-14"
           style={{ background: lineColor }}
         />
-        <span className={`text-lg ${separatorUi.accentClass} animate-fade-in motion-reduce:animate-none`}>{separatorUi.dotsRight}</span>
+        <span className={`text-[10px] opacity-50 ${separatorUi.accentClass} animate-fade-in motion-reduce:animate-none`}>{separatorUi.dotsRight}</span>
       </div>
     </div>
   );
@@ -354,12 +390,12 @@ export function DotsSeparator({ theme = 'romantic_classic' }: { theme?: ThemeKey
   const separatorUi = getSeparatorPresentation(siteType, theme);
   return (
     <div className={`relative ${SEPARATOR_VERTICAL_PADDING} flex items-center justify-center animate-fade-in-up motion-reduce:animate-none`}>
-      <div className="flex items-center gap-4">
-        <span className={`text-2xl animate-pulse-slow motion-reduce:animate-none ${separatorUi.accentClass}`}>{separatorUi.dotsLeft}</span>
-        <span className={`text-xl ${separatorUi.accentClass}`}>•</span>
-        <span className={`text-3xl animate-gentle-pulse motion-reduce:animate-none ${separatorUi.accentClass}`}>{separatorUi.icon}</span>
-        <span className={`text-xl ${separatorUi.accentClass}`}>•</span>
-        <span className={`text-2xl animate-pulse-slow motion-reduce:animate-none ${separatorUi.accentClass}`}>{separatorUi.dotsRight}</span>
+      <div className="flex items-center gap-1.5 md:gap-2">
+        <span className={`text-[10px] opacity-60 animate-pulse-slow motion-reduce:animate-none ${separatorUi.accentClass}`}>{separatorUi.dotsLeft}</span>
+        <span className="h-1 w-1 rounded-full" style={{ backgroundColor: separatorUi.lineStyle }} aria-hidden="true" />
+        <span className={`text-xs animate-gentle-pulse motion-reduce:animate-none ${separatorUi.accentClass}`}>{separatorUi.icon}</span>
+        <span className="h-1 w-1 rounded-full" style={{ backgroundColor: separatorUi.lineStyle }} aria-hidden="true" />
+        <span className={`text-[10px] opacity-60 animate-pulse-slow motion-reduce:animate-none ${separatorUi.accentClass}`}>{separatorUi.dotsRight}</span>
       </div>
     </div>
   );

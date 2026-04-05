@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { DEFAULT_THEME } from '@/config/defaults';
 import { Site } from '@/lib/supabase';
+import { optimizeCloudinaryDeliveryUrl } from '@/lib/cloudinary-url';
 
 interface MobileWebsiteCardProps {
   order: Site;
@@ -28,6 +29,14 @@ export default function MobileWebsiteCard({
       : customerName || 'Your Name';
   const themeValue = (order.config?.theme as string) || (order as any).theme || DEFAULT_THEME;
   const coverPhoto = order.config?.media?.photos?.[0] || order.config?.cover_photo || order.photos?.[0] || '';
+  const optimizedCoverPhoto = typeof coverPhoto === 'string'
+    ? optimizeCloudinaryDeliveryUrl(coverPhoto, {
+        quality: 'auto:eco',
+        width: 128,
+        height: 128,
+        crop: 'fill',
+      })
+    : '';
   const websiteName = order.website_name || order.slug;
 
   const formatDate = (dateString?: string) => {
@@ -77,7 +86,7 @@ export default function MobileWebsiteCard({
         <div className="w-12 h-12 rounded-md overflow-hidden bg-slate-100 flex-shrink-0">
           {coverPhoto ? (
             <img
-              src={typeof coverPhoto === 'string' ? coverPhoto : ''}
+              src={optimizedCoverPhoto}
               alt={websiteName}
               className="w-full h-full object-cover"
             />

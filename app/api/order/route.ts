@@ -199,11 +199,19 @@ export async function POST(req: NextRequest) {
     // upload pictures (cost-controlled)
     const photoUrls: string[] = [];
     const photoUploadWarnings: string[] = [];
+    const seenPhotoInputs = new Set<string>();
+    let pendingPhotoUploads = 0;
 
     if (Array.isArray(data.photos) && data.photos.length > 0) {
       const photosToProcess = data.photos.slice(0, MAX_SITE_IMAGES);
       for (const photo of photosToProcess) {
         if (typeof photo === 'string' && !photo.trim()) continue;
+
+        if (typeof photo === 'string') {
+          const normalizedPhotoInput = photo.trim();
+          if (seenPhotoInputs.has(normalizedPhotoInput)) continue;
+          seenPhotoInputs.add(normalizedPhotoInput);
+        }
 
         if (typeof photo === 'string' && photo.startsWith('data:')) {
           try {
@@ -212,8 +220,7 @@ export async function POST(req: NextRequest) {
           } catch (err: any) {
             console.error('cloudinary upload error', err);
             photoUploadWarnings.push(err?.message || 'Photo upload failed');
-            // fallback to data URL to avoid dropping images
-            photoUrls.push(photo);
+            pendingPhotoUploads += 1;
           }
         } else if (typeof photo === 'string') {
           photoUrls.push(photo);
@@ -234,6 +241,7 @@ export async function POST(req: NextRequest) {
     // Build normalized site config for storage
     let heroCoverPhotoUrl: string | undefined = data.config?.hero?.coverPhotoUrl;
     let heroUploadWarning: string | null = null;
+    let heroUploadPending = false;
 
     if (data.hero_photo) {
       try {
@@ -241,9 +249,7 @@ export async function POST(req: NextRequest) {
       } catch (err: any) {
         console.error('hero photo upload error', err);
         heroUploadWarning = err?.message || 'Hero photo upload failed';
-        if (typeof data.hero_photo === 'string' && data.hero_photo.startsWith('data:')) {
-          heroCoverPhotoUrl = data.hero_photo;
-        }
+        heroUploadPending = true;
       }
     }
 
@@ -257,6 +263,10 @@ export async function POST(req: NextRequest) {
     if (typeof data.config?.cover_photo_index === 'number' && !heroCoverPhotoUrl && uniquePhotoUrls[data.config.cover_photo_index]) {
       heroCoverPhotoUrl = uniquePhotoUrls[data.config.cover_photo_index];
     }
+
+    const hasRetriableDataUrlFallback =
+      uniquePhotoUrls.some((url) => typeof url === 'string' && url.startsWith('data:')) ||
+      (typeof heroCoverPhotoUrl === 'string' && heroCoverPhotoUrl.startsWith('data:'));
 
     const rawConfig = (data.config || {}) as any;
 
@@ -327,6 +337,13 @@ export async function POST(req: NextRequest) {
       revision: 1,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      uploadStatus:
+        pendingPhotoUploads > 0 || heroUploadPending
+          ? {
+              pendingPhotoUploads,
+              ...(heroUploadPending ? { heroUploadPending: true } : {}),
+            }
+          : undefined,
     };
     let expiresAt = addMonths(new Date(), DEFAULT_HOSTING_MONTHS);
     if (data.expires_at) {
@@ -374,7 +391,7 @@ export async function POST(req: NextRequest) {
       featureFlags.retryFailedUploads() &&
       featureFlags.backgroundJobQueue() &&
       site?.id &&
-      (photoUploadWarnings.length > 0 || heroUploadWarning)
+      hasRetriableDataUrlFallback
     ) {
       try {
         await enqueueJob('retry_site_media_upload', { siteId: site.id });
