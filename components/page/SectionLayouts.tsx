@@ -20,6 +20,7 @@ const SEPARATOR_VERTICAL_PADDING = 'py-8 md:py-12 lg:py-16';
 
 function getSeparatorPresentation(siteType: string, theme?: ThemeKey) {
   const hero = getOccasionHeroSpec(siteType as any);
+  const safeTheme: ThemeKey = theme || 'romantic_classic';
 
   if (siteType === 'wedding') {
     return {
@@ -57,7 +58,7 @@ function getSeparatorPresentation(siteType: string, theme?: ThemeKey) {
     };
   }
 
-  const isDark = checkIsDarkTheme(theme);
+  const isDark = checkIsDarkTheme(safeTheme);
   return {
     icon: hero.badge,
     accentClass: isDark ? 'text-amber-300' : 'text-rose-500',

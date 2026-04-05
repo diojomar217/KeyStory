@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, Suspense, useEffect, useMemo, useState } from 'react';
 
 type TrackedOrder = {
   id: string;
@@ -22,7 +22,7 @@ const getStatusTone = (status: string) => {
   return 'bg-slate-50 text-slate-700 border-slate-200';
 };
 
-export default function TrackOrderPage() {
+function TrackOrderContent() {
   const params = useSearchParams();
   const initialTx = params.get('transactionId') || '';
 
@@ -127,5 +127,13 @@ export default function TrackOrderPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function TrackOrderPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-[#faf7f2]" />}>
+      <TrackOrderContent />
+    </Suspense>
   );
 }

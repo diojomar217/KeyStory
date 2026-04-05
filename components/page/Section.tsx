@@ -186,7 +186,8 @@ export function SectionCompact({
 export function SectionSeparator({ theme }: { theme?: ThemeKey }) {
   const siteType = useOccasionType();
   const occasionHero = getOccasionHeroSpec(siteType);
-  const borderColor = checkIsDarkTheme(theme) ? '#3f3f46' : '#fce7f3';
+  const safeTheme = theme || 'romantic_classic';
+  const borderColor = checkIsDarkTheme(safeTheme) ? '#3f3f46' : '#fce7f3';
   const iconColor =
     siteType === 'wedding'
       ? 'text-amber-400'
@@ -194,7 +195,7 @@ export function SectionSeparator({ theme }: { theme?: ThemeKey }) {
         ? 'text-white/70'
         : siteType === 'travel'
           ? 'text-sky-500'
-          : checkIsDarkTheme(theme)
+          : checkIsDarkTheme(safeTheme)
             ? 'text-amber-300'
             : 'text-rose-500';
   const dividerIcon =

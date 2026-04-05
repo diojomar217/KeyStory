@@ -140,6 +140,12 @@ const OCCASION_FLOW_OPTIONS: Array<{ id: OccasionType; label: string }> = Object
   label: meta.label,
 }));
 
+const HERO_METRICS = [
+  { label: 'Base starts at', value: 'PHP 199' },
+  { label: 'Average prep', value: '24-48 hrs' },
+  { label: 'Access modes', value: 'QR or NFC' },
+];
+
 export default function Home() {
   const router = useRouter();
   const builderSectionRef = useRef<HTMLDivElement | null>(null);
@@ -165,15 +171,7 @@ export default function Home() {
   const [flowStep, setFlowStep] = useState<1 | 2 | 3 | 4>(1);
   const [selectedOccasion, setSelectedOccasion] = useState<OccasionType>('couple');
   const [selectedTemplateId, setSelectedTemplateId] = useState(STARTER_TEMPLATES[0]!.id);
-    const templatesForOccasion = useMemo(() => getTemplatesByOccasion(selectedOccasion), [selectedOccasion]);
-
-    useEffect(() => {
-      if (!templatesForOccasion.length) return;
-      setSelectedTemplateId((prev) => {
-        const existsInOccasion = templatesForOccasion.some((template) => template.id === prev);
-        return existsInOccasion ? prev : templatesForOccasion[0]!.id;
-      });
-    }, [templatesForOccasion]);
+  const templatesForOccasion = useMemo(() => getTemplatesByOccasion(selectedOccasion), [selectedOccasion]);
 
   const [publicLinks, setPublicLinks] = useState<PublicBusinessLinks>({
     whatsappNumber: null,
@@ -265,6 +263,7 @@ export default function Home() {
   const hoursToCutoff = Math.max(0, 19 - now.getHours());
   const estimatorSummary = `${selectedVariantConfig.label} • ${selectedFinishConfig.label} • ${selectedZoneConfig.label} • ETA ${selectedZoneConfig.eta}`;
   const estimatorAddOns = [giftWrap ? 'Gift wrap' : null, rushProduction ? 'Rush production' : null].filter(Boolean).join(', ');
+  const selectedTemplate = templatesForOccasion.find((template) => template.id === selectedTemplateId) || templatesForOccasion[0];
 
   const jumpToFlow = () => {
     setBuilderHighlight(true);
@@ -330,12 +329,12 @@ export default function Home() {
             KEYSTORY
           </Link>
           <nav className="hidden items-center gap-6 text-sm font-medium text-[#334155] md:flex">
+            <a href="#starter-studio" className="nav-link transition-colors hover:text-[#0f172a]">Starter Studio</a>
             <a href="#products" className="nav-link transition-colors hover:text-[#0f172a]">Products</a>
             <a href="#samples" className="nav-link transition-colors hover:text-[#0f172a]">Samples</a>
-            <a href="/create" className="nav-link transition-colors hover:text-[#0f172a]">Order</a>
             <a href="#how-it-works" className="nav-link transition-colors hover:text-[#0f172a]">How It Works</a>
             <a href="#social-shop" className="nav-link transition-colors hover:text-[#0f172a]">Shop Links</a>
-            <a href="/create" className="nav-link transition-colors hover:text-[#0f172a]">Customize</a>
+            <a href="/create" className="nav-link transition-colors hover:text-[#0f172a]">Order Form</a>
           </nav>
           <a
             href="/create"
@@ -360,12 +359,28 @@ export default function Home() {
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-[#475569]">
               We build beautiful personal websites linked to custom QR + NFC keychains. Perfect for gifts, couple memories, birthdays, and milestone moments.
             </p>
+            <p className="mt-3 max-w-xl text-sm font-medium text-[#334155]">
+              Start with a template in under a minute, then finish checkout in one guided flow.
+            </p>
+            <p className="mt-2 inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+              Order before 7PM for same-day production queueing. Approx {hoursToCutoff}h left today.
+            </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a
-                href="/create"
+                href="#starter-studio"
+                onClick={(event) => {
+                  event.preventDefault();
+                  jumpToFlow();
+                }}
                 className="cta-solid rounded-full bg-[#111827] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#1f2937]"
               >
-                Build Your Keychain
+                Start in Starter Studio
+              </a>
+              <a
+                href="/create"
+                className="cta-outline rounded-full border border-[#111827] bg-white px-6 py-3 text-sm font-bold text-[#111827] transition hover:bg-[#f1f5f9]"
+              >
+                Go to Full Order Form
               </a>
               <a
                 href={publicLinks.shopeeStoreUrl}
@@ -377,20 +392,19 @@ export default function Home() {
                 Shop on Shopee
               </a>
               <a
-                href={publicLinks.tiktokShopUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => trackEvent('hero_tiktok_click')}
-                className="cta-outline rounded-full border border-[#111827] bg-white px-6 py-3 text-sm font-bold text-[#111827] transition hover:bg-[#f1f5f9]"
-              >
-                Visit TikTok Shop
-              </a>
-              <a
                 href="#samples"
                 className="cta-outline rounded-full border border-[#111827] bg-white px-6 py-3 text-sm font-bold text-[#111827] transition hover:bg-[#f1f5f9]"
               >
                 View Sample Websites
               </a>
+            </div>
+            <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {HERO_METRICS.map((metric) => (
+                <div key={metric.label} className="rounded-2xl border border-[#0f172a]/10 bg-white/85 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#64748b]">{metric.label}</p>
+                  <p className="mt-1 text-lg font-black text-[#0f172a]">{metric.value}</p>
+                </div>
+              ))}
             </div>
               <div className="mt-10 grid grid-cols-2 gap-4 text-sm text-[#334155] sm:grid-cols-4">
               <div className="rounded-2xl border border-white/70 bg-white/70 p-3 text-center shadow-sm">Fast Turnaround</div>
@@ -473,6 +487,224 @@ export default function Home() {
                 </a>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section
+          id="starter-studio"
+          ref={builderSectionRef}
+          className={`scroll-mt-24 py-12 md:py-16 ${builderHighlight ? 'builder-highlight' : ''}`}
+        >
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_1.5fr]">
+            <aside className="rounded-3xl border border-[#0f172a]/10 bg-white/90 p-6 md:p-7">
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#64748b]">Starter Studio</p>
+              <h2 className="mt-2 text-3xl font-black text-[#0f172a]">Build Your Order in 3 Steps</h2>
+              <p className="mt-3 text-sm text-[#475569]">
+                Choose the occasion, preview a matching template style, then continue to the full form with your preset ready.
+              </p>
+              <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#0f172a]/10 bg-[#f8fafc] px-3 py-1.5 text-xs font-semibold text-[#334155]">
+                <span className={`h-2.5 w-2.5 rounded-full ${flowStep >= 1 ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                <span>Occasion</span>
+                <span className={`h-2.5 w-2.5 rounded-full ${flowStep >= 2 ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                <span>Template</span>
+                <span className={`h-2.5 w-2.5 rounded-full ${flowStep >= 3 ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                <span>Estimate</span>
+              </div>
+
+              <div className="mt-6">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[#64748b]">1. Pick Occasion</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {OCCASION_FLOW_OPTIONS.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedOccasion(option.id);
+                        const occasionTemplates = getTemplatesByOccasion(option.id);
+                        if (occasionTemplates.length) {
+                          setSelectedTemplateId(occasionTemplates[0]!.id);
+                        }
+                        setFlowStep(1);
+                        trackEvent('starter_occasion_selected', { occasion: option.id });
+                      }}
+                      className={`rounded-full border px-3 py-2 text-xs font-semibold transition ${
+                        selectedOccasion === option.id
+                          ? 'border-[#0f172a] bg-[#0f172a] text-white'
+                          : 'border-[#0f172a]/20 bg-white text-[#334155] hover:border-[#0f172a]/40'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[#64748b]">2. Quick Estimate</p>
+                <div className="mt-3 rounded-2xl border border-[#0f172a]/10 bg-[#f8fafc] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-[#0f172a]">{selectedVariantConfig.label}</p>
+                    <p className="text-sm font-black text-[#0f172a]">PHP {estimatedTotal}</p>
+                  </div>
+                  <p className="mt-2 text-xs text-[#64748b]">{estimatorSummary}</p>
+                  <p className="mt-1 text-xs text-[#64748b]">Selected template: {selectedTemplate?.name || 'Default starter template'}</p>
+                  <p className="mt-1 text-xs text-[#64748b]">Preview QR: {mockQrUrl ? 'Ready' : 'Will generate after naming your site'}</p>
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedVariant('qr_only')}
+                      className={`rounded-xl border px-2 py-2 font-semibold ${
+                        selectedVariant === 'qr_only' ? 'border-[#0f172a] bg-[#0f172a] text-white' : 'border-[#0f172a]/20 bg-white text-[#334155]'
+                      }`}
+                    >
+                      QR Only
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedVariant('qr_nfc')}
+                      className={`rounded-xl border px-2 py-2 font-semibold ${
+                        selectedVariant === 'qr_nfc' ? 'border-[#0f172a] bg-[#0f172a] text-white' : 'border-[#0f172a]/20 bg-white text-[#334155]'
+                      }`}
+                    >
+                      QR + NFC
+                    </button>
+                  </div>
+                  <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <label className="text-xs font-semibold text-[#334155]">
+                      Finish
+                      <select
+                        value={selectedFinish}
+                        onChange={(event) => setSelectedFinish(event.target.value as (typeof FINISH_OPTIONS)[number]['id'])}
+                        className="mt-1 w-full rounded-lg border border-[#0f172a]/20 bg-white px-2 py-2 text-xs font-semibold text-[#0f172a]"
+                      >
+                        {FINISH_OPTIONS.map((finish) => (
+                          <option key={finish.id} value={finish.id}>{finish.label}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="text-xs font-semibold text-[#334155]">
+                      Shipping Zone
+                      <select
+                        value={selectedZone}
+                        onChange={(event) => setSelectedZone(event.target.value as (typeof SHIPPING_ZONES)[number]['id'])}
+                        className="mt-1 w-full rounded-lg border border-[#0f172a]/20 bg-white px-2 py-2 text-xs font-semibold text-[#0f172a]"
+                      >
+                        {SHIPPING_ZONES.map((zone) => (
+                          <option key={zone.id} value={zone.id}>{zone.label}</option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setGiftWrap((prev) => !prev)}
+                      className={`rounded-xl border px-2 py-2 font-semibold ${
+                        giftWrap ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-[#0f172a]/20 bg-white text-[#334155]'
+                      }`}
+                    >
+                      Gift Wrap
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRushProduction((prev) => !prev)}
+                      className={`rounded-xl border px-2 py-2 font-semibold ${
+                        rushProduction ? 'border-rose-600 bg-rose-50 text-rose-700' : 'border-[#0f172a]/20 bg-white text-[#334155]'
+                      }`}
+                    >
+                      Rush Production
+                    </button>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-[#0f172a]/10 bg-white px-3 py-2">
+                    <p className="text-xs font-semibold text-[#334155]">Quantity</p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                        className="h-7 w-7 rounded-full border border-[#0f172a]/20 text-sm font-bold text-[#0f172a]"
+                        aria-label="Decrease quantity"
+                      >
+                        -
+                      </button>
+                      <span className="min-w-[2ch] text-center text-sm font-bold text-[#0f172a]">{quantity}</span>
+                      <button
+                        type="button"
+                        onClick={() => setQuantity((prev) => Math.min(20, prev + 1))}
+                        className="h-7 w-7 rounded-full border border-[#0f172a]/20 text-sm font-bold text-[#0f172a]"
+                        aria-label="Increase quantity"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-3 rounded-xl border border-[#0f172a]/10 bg-white p-2">
+                    <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#64748b]">Promo Code</p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <input
+                        value={promoInput}
+                        onChange={(event) => setPromoInput(event.target.value)}
+                        placeholder="START10"
+                        className="w-full rounded-lg border border-[#0f172a]/20 px-3 py-2 text-xs font-semibold text-[#0f172a] outline-none focus:border-[#0f172a]"
+                      />
+                      <button
+                        type="button"
+                        onClick={applyPromoCode}
+                        className="rounded-lg bg-[#0f172a] px-3 py-2 text-xs font-bold text-white"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                    {promoError && <p className="mt-1 px-1 text-xs font-semibold text-rose-600">{promoError}</p>}
+                  </div>
+                  {estimatorAddOns ? (
+                    <p className="mt-2 text-xs text-[#64748b]">Add-ons: {estimatorAddOns}</p>
+                  ) : (
+                    <p className="mt-2 text-xs text-[#64748b]">Add-ons: none selected yet</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[#64748b]">Name Preview</p>
+                <input
+                  value={previewState.coupleNames}
+                  onChange={(event) => setPreviewState((prev) => ({ ...prev, coupleNames: event.target.value }))}
+                  placeholder="Ari and Kai"
+                  className="mt-2 w-full rounded-xl border border-[#0f172a]/20 bg-white px-3 py-2.5 text-sm font-semibold text-[#0f172a] outline-none transition focus:border-[#0f172a]"
+                />
+                <p className="mt-2 text-xs text-[#64748b]">This updates the keychain label preview in the hero card instantly.</p>
+              </div>
+
+              <div className="mt-6">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[#64748b]">3. Continue</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFlowStep(4);
+                    continueToCreate();
+                  }}
+                  className="mt-3 inline-flex w-full items-center justify-center rounded-2xl bg-[#0f172a] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#1e293b]"
+                >
+                  Continue with this preset
+                </button>
+                <p className="mt-2 text-xs text-[#64748b]">No payment on this step. You can still change everything on the full order page.</p>
+              </div>
+            </aside>
+
+            <TemplateSelector
+              templates={templatesForOccasion}
+              selectedTemplateId={selectedTemplateId}
+              onSelectTemplate={(templateId) => {
+                setSelectedTemplateId(templateId);
+                setFlowStep(2);
+                trackEvent('starter_template_selected', { template: templateId, occasion: selectedOccasion });
+              }}
+              onContinue={continueToCreate}
+              stepLabel="Template Match"
+              title="Preview Starter Templates"
+              description="Choose a visual direction now. Your selected template and occasion are carried into the full form automatically."
+              continueLabel="Use This Template"
+            />
           </div>
         </section>
 

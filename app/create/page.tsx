@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import TemplateSelector from '@/components/templates/TemplateSelector';
 import ThemeSelector from '@/components/builder/ThemeSelector';
@@ -106,7 +106,7 @@ const allOccasions = Object.values(OCCASION_REGISTRY).map((meta) => ({
   label: meta.label,
 }));
 
-export default function CreatePage() {
+function CreatePageContent() {
   const searchParams = useSearchParams();
   const templateFromQuery = searchParams.get('template');
   const occasionFromQuery = searchParams.get('occasion') as OccasionType | null;
@@ -1502,5 +1502,13 @@ export default function CreatePage() {
         `}</style>
       </div>
     </main>
+  );
+}
+
+export default function CreatePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#faf7f2]" />}>
+      <CreatePageContent />
+    </Suspense>
   );
 }
