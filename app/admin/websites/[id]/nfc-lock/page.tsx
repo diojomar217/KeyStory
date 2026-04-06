@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { use, useEffect, useMemo, useState } from 'react';
+import { use, useEffect, useMemo, useRef, useState } from 'react';
 import { getSite } from '@/lib/api/sites';
 import { Site } from '@/lib/supabase';
 
@@ -26,6 +26,12 @@ export default function NfcLockPage({ params }: PageProps) {
   const [isWriting, setIsWriting] = useState(false);
   const [isLocking, setIsLocking] = useState(false);
   const [isWriteAndLocking, setIsWriteAndLocking] = useState(false);
+  // More granular stages for better UX during NFC operations
+  const [writeStage, setWriteStage] = useState<'idle' | 'detecting' | 'detected' | 'writing' | 'success' | 'error'>('idle');
+  const [lockStage, setLockStage] = useState<'idle' | 'detecting' | 'detected' | 'locking' | 'success' | 'error'>('idle');
+  const detectTimeoutRef = useRef<number | null>(null);
+  const activeNdefRef = useRef<WebNfcReader | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const [confirmPermanentLock, setConfirmPermanentLock] = useState(false);
   const [capabilities, setCapabilities] = useState({
     secureContext: false,
@@ -123,16 +129,99 @@ export default function NfcLockPage({ params }: PageProps) {
 
     const ReaderCtor = getReaderCtor();
     if (!ReaderCtor) return;
-
+    setWriteStage('detecting');
     setIsWriting(true);
+    const ndef = new ReaderCtor();
+    activeNdefRef.current = ndef;
+    let wrote = false;
     try {
-      const ndef = new ReaderCtor();
-      await ndef.write({ records: [{ recordType: 'url', data: nfcUrl }] });
-      pushNotice('success', 'NFC tag written successfully. It is still rewritable.');
+      if ('scan' in (ndef as any)) {
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+        try {
+          await (ndef as any).scan({ signal: controller.signal });
+        } catch (scanErr: any) {
+          // If scan was aborted by user, don't fallback to write
+          if (scanErr && (scanErr.name === 'AbortError' || scanErr.message === 'Aborted')) {
+            setWriteStage('idle');
+            setIsWriting(false);
+            activeNdefRef.current = null;
+            abortControllerRef.current = null;
+            pushNotice('info', 'Write canceled.');
+            return;
+          }
+          // Other scan errors: fallback to direct write
+          setWriteStage('writing');
+          await ndef.write({ records: [{ recordType: 'url', data: nfcUrl }] });
+          setWriteStage('success');
+          pushNotice('success', 'NFC tag written successfully. It is still rewritable.');
+          return;
+        }
+
+        const onReading = async () => {
+          if (wrote) return;
+          wrote = true;
+          if (detectTimeoutRef.current) {
+            clearTimeout(detectTimeoutRef.current);
+            detectTimeoutRef.current = null;
+          }
+          try {
+            setWriteStage('detected');
+            setWriteStage('writing');
+            await ndef.write({ records: [{ recordType: 'url', data: nfcUrl }] });
+            setWriteStage('success');
+            pushNotice('success', 'NFC tag written successfully. It is still rewritable.');
+          } catch (err) {
+            setWriteStage('error');
+            pushNotice('error', getNfcErrorHint('write', err));
+          } finally {
+            setIsWriting(false);
+            activeNdefRef.current = null;
+            abortControllerRef.current = null;
+            window.setTimeout(() => setWriteStage('idle'), 3000);
+          }
+        };
+
+        (ndef as any).onreading = onReading;
+        (ndef as any).onreadingerror = () => {
+          setWriteStage('error');
+          setIsWriting(false);
+          activeNdefRef.current = null;
+          abortControllerRef.current = null;
+          pushNotice('error', 'NFC read error — try again.');
+        };
+        // Cancel if no tag is detected within 20s
+        detectTimeoutRef.current = window.setTimeout(() => {
+          try {
+            if (abortControllerRef.current) abortControllerRef.current.abort();
+            (ndef as any).onreading = null;
+          } catch {}
+          setWriteStage('error');
+          setIsWriting(false);
+          activeNdefRef.current = null;
+          abortControllerRef.current = null;
+          pushNotice('error', 'Tag detection timed out. Try again.');
+        }, 20000);
+      } else {
+        // Fallback: write() blocks until a tag is present
+        setWriteStage('writing');
+        await ndef.write({ records: [{ recordType: 'url', data: nfcUrl }] });
+        setWriteStage('success');
+        pushNotice('success', 'NFC tag written successfully. It is still rewritable.');
+      }
     } catch (nfcError) {
+      setWriteStage('error');
       pushNotice('error', getNfcErrorHint('write', nfcError));
     } finally {
       setIsWriting(false);
+      if (detectTimeoutRef.current) {
+        clearTimeout(detectTimeoutRef.current);
+        detectTimeoutRef.current = null;
+      }
+      activeNdefRef.current = null;
+      abortControllerRef.current = null;
+      // ensure stage resets after a short delay
+      window.setTimeout(() => setWriteStage('idle'), 3000);
     }
   };
 
@@ -168,15 +257,95 @@ export default function NfcLockPage({ params }: PageProps) {
       return;
     }
 
+    setLockStage('detecting');
     setIsLocking(true);
+    const ndef = new ReaderCtor();
+    activeNdefRef.current = ndef;
+    let locked = false;
     try {
-      const ndef = new ReaderCtor();
-      await ndef.makeReadOnly();
-      pushNotice('success', 'The NFC tag is now permanently read-only and can no longer be overwritten.');
+      if ('scan' in (ndef as any)) {
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+        try {
+          await (ndef as any).scan({ signal: controller.signal });
+        } catch (scanErr: any) {
+          if (scanErr && (scanErr.name === 'AbortError' || scanErr.message === 'Aborted')) {
+            setLockStage('idle');
+            setIsLocking(false);
+            activeNdefRef.current = null;
+            abortControllerRef.current = null;
+            pushNotice('info', 'Lock canceled.');
+            return;
+          }
+          // Fallback to direct makeReadOnly()
+          setLockStage('locking');
+          await ndef.makeReadOnly();
+          setLockStage('success');
+          pushNotice('success', 'The NFC tag is now permanently read-only and can no longer be overwritten.');
+          return;
+        }
+
+        const onReading = async () => {
+          if (locked) return;
+          locked = true;
+          if (detectTimeoutRef.current) {
+            clearTimeout(detectTimeoutRef.current);
+            detectTimeoutRef.current = null;
+          }
+          try {
+            setLockStage('detected');
+            setLockStage('locking');
+            await ndef.makeReadOnly();
+            setLockStage('success');
+            pushNotice('success', 'The NFC tag is now permanently read-only and can no longer be overwritten.');
+          } catch (err) {
+            setLockStage('error');
+            pushNotice('error', getNfcErrorHint('lock', err));
+          } finally {
+            setIsLocking(false);
+            activeNdefRef.current = null;
+            abortControllerRef.current = null;
+            window.setTimeout(() => setLockStage('idle'), 3000);
+          }
+        };
+
+        (ndef as any).onreading = onReading;
+        (ndef as any).onreadingerror = () => {
+          setLockStage('error');
+          setIsLocking(false);
+          activeNdefRef.current = null;
+          abortControllerRef.current = null;
+          pushNotice('error', 'NFC read error — try again.');
+        };
+        detectTimeoutRef.current = window.setTimeout(() => {
+          try {
+            if (abortControllerRef.current) abortControllerRef.current.abort();
+            (ndef as any).onreading = null;
+          } catch {}
+          setLockStage('error');
+          setIsLocking(false);
+          activeNdefRef.current = null;
+          abortControllerRef.current = null;
+          pushNotice('error', 'Tag detection timed out. Try again.');
+        }, 20000);
+      } else {
+        setLockStage('locking');
+        await ndef.makeReadOnly();
+        setLockStage('success');
+        pushNotice('success', 'The NFC tag is now permanently read-only and can no longer be overwritten.');
+      }
     } catch (nfcError) {
+      setLockStage('error');
       pushNotice('error', getNfcErrorHint('lock', nfcError));
     } finally {
       setIsLocking(false);
+      if (detectTimeoutRef.current) {
+        clearTimeout(detectTimeoutRef.current);
+        detectTimeoutRef.current = null;
+      }
+      activeNdefRef.current = null;
+      abortControllerRef.current = null;
+      window.setTimeout(() => setLockStage('idle'), 3000);
     }
   };
 
@@ -204,17 +373,181 @@ export default function NfcLockPage({ params }: PageProps) {
       return;
     }
 
+    setWriteStage('detecting');
+    setLockStage('detecting');
     setIsWriteAndLocking(true);
+    const ndef = new ReaderCtor();
+    activeNdefRef.current = ndef;
+    let done = false;
     try {
-      const ndef = new ReaderCtor();
-      await ndef.write({ records: [{ recordType: 'url', data: nfcUrl }] });
-      await ndef.makeReadOnly();
-      pushNotice('success', 'The NFC tag was written with this site URL and permanently locked.');
+      if ('scan' in (ndef as any)) {
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+        try {
+          await (ndef as any).scan({ signal: controller.signal });
+        } catch (scanErr: any) {
+          if (scanErr && (scanErr.name === 'AbortError' || scanErr.message === 'Aborted')) {
+            setWriteStage('idle');
+            setLockStage('idle');
+            setIsWriteAndLocking(false);
+            activeNdefRef.current = null;
+            abortControllerRef.current = null;
+            pushNotice('info', 'Write & lock canceled.');
+            return;
+          }
+          // Fallback to direct write+lock
+          setWriteStage('writing');
+          await ndef.write({ records: [{ recordType: 'url', data: nfcUrl }] });
+          setWriteStage('success');
+          setLockStage('locking');
+          await ndef.makeReadOnly();
+          setLockStage('success');
+          pushNotice('success', 'The NFC tag was written with this site URL and permanently locked.');
+          return;
+        }
+
+        const onReading = async () => {
+          if (done) return;
+          done = true;
+          if (detectTimeoutRef.current) {
+            clearTimeout(detectTimeoutRef.current);
+            detectTimeoutRef.current = null;
+          }
+          try {
+            setWriteStage('detected');
+            setWriteStage('writing');
+            await ndef.write({ records: [{ recordType: 'url', data: nfcUrl }] });
+            setWriteStage('success');
+            setLockStage('locking');
+            await ndef.makeReadOnly();
+            setLockStage('success');
+            pushNotice('success', 'The NFC tag was written with this site URL and permanently locked.');
+          } catch (err) {
+            setWriteStage('error');
+            setLockStage('error');
+            pushNotice('error', getNfcErrorHint('lock', err));
+          } finally {
+            setIsWriteAndLocking(false);
+            activeNdefRef.current = null;
+            abortControllerRef.current = null;
+            window.setTimeout(() => {
+              setWriteStage('idle');
+              setLockStage('idle');
+            }, 3000);
+          }
+        };
+
+        (ndef as any).onreading = onReading;
+        (ndef as any).onreadingerror = () => {
+          setWriteStage('error');
+          setLockStage('error');
+          setIsWriteAndLocking(false);
+          activeNdefRef.current = null;
+          abortControllerRef.current = null;
+          pushNotice('error', 'NFC read error — try again.');
+        };
+        detectTimeoutRef.current = window.setTimeout(() => {
+          try {
+            if (abortControllerRef.current) abortControllerRef.current.abort();
+            (ndef as any).onreading = null;
+          } catch {}
+          setWriteStage('error');
+          setLockStage('error');
+          setIsWriteAndLocking(false);
+          activeNdefRef.current = null;
+          abortControllerRef.current = null;
+          pushNotice('error', 'Tag detection timed out. Try again.');
+        }, 20000);
+      } else {
+        setWriteStage('writing');
+        await ndef.write({ records: [{ recordType: 'url', data: nfcUrl }] });
+        setWriteStage('success');
+        setLockStage('locking');
+        await ndef.makeReadOnly();
+        setLockStage('success');
+        pushNotice('success', 'The NFC tag was written with this site URL and permanently locked.');
+      }
     } catch (nfcError) {
+      setWriteStage('error');
+      setLockStage('error');
       pushNotice('error', getNfcErrorHint('lock', nfcError));
     } finally {
       setIsWriteAndLocking(false);
+      if (detectTimeoutRef.current) {
+        clearTimeout(detectTimeoutRef.current);
+        detectTimeoutRef.current = null;
+      }
+      activeNdefRef.current = null;
+      abortControllerRef.current = null;
+      window.setTimeout(() => {
+        setWriteStage('idle');
+        setLockStage('idle');
+      }, 3000);
     }
+  };
+
+  const cancelWrite = () => {
+    if (detectTimeoutRef.current) {
+      clearTimeout(detectTimeoutRef.current);
+      detectTimeoutRef.current = null;
+    }
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    if (activeNdefRef.current) {
+      try {
+        (activeNdefRef.current as any).onreading = null;
+        (activeNdefRef.current as any).onreadingerror = null;
+      } catch {}
+      activeNdefRef.current = null;
+    }
+    setIsWriting(false);
+    setWriteStage('idle');
+    pushNotice('info', 'Write canceled.');
+  };
+
+  const cancelLock = () => {
+    if (detectTimeoutRef.current) {
+      clearTimeout(detectTimeoutRef.current);
+      detectTimeoutRef.current = null;
+    }
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    if (activeNdefRef.current) {
+      try {
+        (activeNdefRef.current as any).onreading = null;
+        (activeNdefRef.current as any).onreadingerror = null;
+      } catch {}
+      activeNdefRef.current = null;
+    }
+    setIsLocking(false);
+    setLockStage('idle');
+    pushNotice('info', 'Lock canceled.');
+  };
+
+  const cancelWriteAndLock = () => {
+    if (detectTimeoutRef.current) {
+      clearTimeout(detectTimeoutRef.current);
+      detectTimeoutRef.current = null;
+    }
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    if (activeNdefRef.current) {
+      try {
+        (activeNdefRef.current as any).onreading = null;
+        (activeNdefRef.current as any).onreadingerror = null;
+      } catch {}
+      activeNdefRef.current = null;
+    }
+    setIsWriteAndLocking(false);
+    setWriteStage('idle');
+    setLockStage('idle');
+    pushNotice('info', 'Write & lock canceled.');
   };
 
   const copyUrl = async () => {
@@ -363,6 +696,50 @@ export default function NfcLockPage({ params }: PageProps) {
               </div>
             </div>
 
+            {/* Live operation status for detecting / writing / locking */}
+            {(writeStage !== 'idle' || lockStage !== 'idle') && (
+              <div role="status" aria-live="polite" className="mt-4 rounded-lg border px-4 py-3 text-sm font-medium bg-white">
+                {writeStage !== 'idle' && (
+                  <div className={`flex items-start gap-3 ${
+                    writeStage === 'error' ? 'text-rose-800' : writeStage === 'success' ? 'text-emerald-800' : 'text-sky-800'
+                  }`}>
+                    <div className="flex-1">
+                      <p className="font-semibold">Write status</p>
+                      <p className="mt-1 text-sm flex items-center gap-2">
+                        {(writeStage === 'detecting' || writeStage === 'writing') && (
+                          <span className="inline-block h-3 w-3 animate-spin rounded-full border-b-2 border-sky-400" aria-hidden="true" />
+                        )}
+                        {writeStage === 'detecting' && 'Detecting NFC tag — hold your phone near the tag.'}
+                        {writeStage === 'detected' && 'Tag detected — starting write...'}
+                        {writeStage === 'writing' && 'Writing to tag — keep the phone steady.'}
+                        {writeStage === 'success' && 'Write successful — tag is rewritable.'}
+                        {writeStage === 'error' && 'Write failed — check device permissions or try again.'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {lockStage !== 'idle' && (
+                  <div className={`mt-3 flex items-start gap-3 ${
+                    lockStage === 'error' ? 'text-rose-800' : lockStage === 'success' ? 'text-emerald-800' : 'text-sky-800'
+                  }`}>
+                    <div className="flex-1">
+                      <p className="font-semibold">Lock status</p>
+                      <p className="mt-1 text-sm flex items-center gap-2">
+                        {(lockStage === 'detecting' || lockStage === 'locking') && (
+                          <span className="inline-block h-3 w-3 animate-spin rounded-full border-b-2 border-sky-400" aria-hidden="true" />
+                        )}
+                        {lockStage === 'detecting' && 'Detecting NFC tag for locking — hold your phone near the tag.'}
+                        {lockStage === 'detected' && 'Tag detected — preparing to lock.'}
+                        {lockStage === 'locking' && 'Locking tag — do not move the phone.'}
+                        {lockStage === 'success' && 'Tag locked successfully — now read-only.'}
+                        {lockStage === 'error' && 'Lock failed — try again or check browser support.'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
                 <div className="flex items-center justify-between gap-3">
@@ -376,14 +753,24 @@ export default function NfcLockPage({ params }: PageProps) {
                   <li>• Safest option for setup and testing</li>
                   <li>• Lets you rewrite the tag later if needed</li>
                 </ul>
-                <button
-                  type="button"
-                  onClick={writeRewritableTag}
-                  disabled={!canWriteNfc || isWriting || isLocking || isWriteAndLocking}
-                  className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {isWriting ? 'Writing NFC tag...' : 'Write rewritable tag'}
-                </button>
+                <div className="mt-4 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={writeRewritableTag}
+                    disabled={!canWriteNfc || isWriting || isLocking || isWriteAndLocking}
+                    className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {writeStage === 'detecting' ? 'Detecting NFC tag…' : writeStage === 'writing' ? 'Writing NFC tag…' : writeStage === 'success' ? 'Write successful' : 'Write rewritable tag'}
+                    {(writeStage === 'detecting' || writeStage === 'writing') && (
+                      <span className="ml-2 inline-block h-4 w-4 animate-spin rounded-full border-b-2 border-white/70" aria-hidden="true" />
+                    )}
+                  </button>
+                  {writeStage === 'detecting' && (
+                    <button type="button" onClick={cancelWrite} className="mt-4 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100">
+                      Cancel
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
@@ -398,14 +785,24 @@ export default function NfcLockPage({ params }: PageProps) {
                   <li>• Best only after you have tested the URL</li>
                   <li>• Neither you nor anyone else can rewrite the tag later</li>
                 </ul>
-                <button
-                  type="button"
-                  onClick={writeAndLockTag}
-                  disabled={!canWriteNfc || !confirmPermanentLock || !canPermanentlyLock || isWriting || isLocking || isWriteAndLocking}
-                  className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-amber-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-amber-200 disabled:text-amber-900 disabled:hover:bg-amber-200"
-                >
-                  {isWriteAndLocking ? 'Writing and locking...' : 'Write URL and lock forever'}
-                </button>
+                <div className="mt-4 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={writeAndLockTag}
+                    disabled={!canWriteNfc || !confirmPermanentLock || !canPermanentlyLock || isWriting || isLocking || isWriteAndLocking}
+                    className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-amber-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-amber-200 disabled:text-amber-900 disabled:hover:bg-amber-200"
+                  >
+                    {(writeStage === 'detecting' || lockStage === 'detecting') ? 'Detecting NFC tag…' : (writeStage === 'writing' || lockStage === 'locking') ? 'Working…' : (isWriteAndLocking ? 'Writing and locking…' : 'Write URL and lock forever')}
+                    {(writeStage === 'detecting' || lockStage === 'detecting' || writeStage === 'writing' || lockStage === 'locking') && (
+                      <span className="ml-2 inline-block h-4 w-4 animate-spin rounded-full border-b-2 border-white/70" aria-hidden="true" />
+                    )}
+                  </button>
+                  {(writeStage === 'detecting' || lockStage === 'detecting') && (
+                    <button type="button" onClick={cancelWriteAndLock} className="mt-4 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100">
+                      Cancel
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -417,14 +814,24 @@ export default function NfcLockPage({ params }: PageProps) {
               <p className="mt-3 text-sm leading-7 text-rose-900">
                 Use this only if the tag already points to the correct URL and you want to make it read-only without writing again.
               </p>
-              <button
-                type="button"
-                onClick={lockExistingTag}
-                disabled={!canWriteNfc || !confirmPermanentLock || !canPermanentlyLock || isWriting || isLocking || isWriteAndLocking}
-                className="mt-4 inline-flex items-center justify-center rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {isLocking ? 'Locking tag...' : 'Lock existing tag forever'}
-              </button>
+              <div className="mt-4 flex gap-2">
+                <button
+                  type="button"
+                  onClick={lockExistingTag}
+                  disabled={!canWriteNfc || !confirmPermanentLock || !canPermanentlyLock || isWriting || isLocking || isWriteAndLocking}
+                  className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {lockStage === 'detecting' ? 'Detecting NFC tag…' : lockStage === 'locking' ? 'Locking tag…' : lockStage === 'success' ? 'Locked' : 'Lock existing tag forever'}
+                  {(lockStage === 'detecting' || lockStage === 'locking') && (
+                    <span className="ml-2 inline-block h-4 w-4 animate-spin rounded-full border-b-2 border-white/70" aria-hidden="true" />
+                  )}
+                </button>
+                {lockStage === 'detecting' && (
+                  <button type="button" onClick={cancelLock} className="mt-4 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100">
+                    Cancel
+                  </button>
+                )}
+              </div>
             </div>
 
             {notice && (
