@@ -1,29 +1,6 @@
 'use client';
 import { getEffectiveSiteStatus, getDaysUntilExpiration } from '@/lib/site-status';
-  // --- Hosting Status Banner Logic ---
-  // Only show for public site view (not expired/archived)
-  const effectiveStatus = useMemo(() => {
-    const status = config?.status;
-    const expiresAt = config?.expires_at || config?.expiry_date || config?.expiration;
-    return getEffectiveSiteStatus({ status, expires_at: expiresAt, config });
-  }, [config]);
-  // Try to get expiration from config or props
-  const expiresAt = config?.expires_at || config?.expiry_date || config?.expiration;
-  const daysRemaining = useMemo(() => getDaysUntilExpiration(expiresAt), [expiresAt]);
-  const showBanner = effectiveStatus === 'active' && typeof daysRemaining === 'number' && daysRemaining <= 14;
 
-  let bannerText = '';
-  let bannerColor = 'bg-amber-100 text-amber-800 border-amber-200';
-  if (showBanner) {
-    if (daysRemaining! > 1) {
-      bannerText = `This page will expire in ${daysRemaining} days. Save or screenshot your memories soon!`;
-    } else if (daysRemaining === 1) {
-      bannerText = 'This page will expire in 1 day. Save your memories now!';
-    } else if (daysRemaining === 0) {
-      bannerText = 'This page expires today. Save your memories immediately!';
-      bannerColor = 'bg-rose-100 text-rose-800 border-rose-300';
-    }
-  }
 import dynamic from 'next/dynamic';
 const PayMongoButton = dynamic(() => import('../ui/PayMongoButton'), { ssr: false });
 
