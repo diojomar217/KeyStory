@@ -1,4 +1,31 @@
 'use client';
+import { getEffectiveSiteStatus, getDaysUntilExpiration } from '@/lib/site-status';
+  // --- Hosting Status Banner Logic ---
+  // Only show for public site view (not expired/archived)
+  const effectiveStatus = useMemo(() => {
+    const status = config?.status;
+    const expiresAt = config?.expires_at || config?.expiry_date || config?.expiration;
+    return getEffectiveSiteStatus({ status, expires_at: expiresAt, config });
+  }, [config]);
+  // Try to get expiration from config or props
+  const expiresAt = config?.expires_at || config?.expiry_date || config?.expiration;
+  const daysRemaining = useMemo(() => getDaysUntilExpiration(expiresAt), [expiresAt]);
+  const showBanner = effectiveStatus === 'active' && typeof daysRemaining === 'number' && daysRemaining <= 14;
+
+  let bannerText = '';
+  let bannerColor = 'bg-amber-100 text-amber-800 border-amber-200';
+  if (showBanner) {
+    if (daysRemaining! > 1) {
+      bannerText = `This page will expire in ${daysRemaining} days. Save or screenshot your memories soon!`;
+    } else if (daysRemaining === 1) {
+      bannerText = 'This page will expire in 1 day. Save your memories now!';
+    } else if (daysRemaining === 0) {
+      bannerText = 'This page expires today. Save your memories immediately!';
+      bannerColor = 'bg-rose-100 text-rose-800 border-rose-300';
+    }
+  }
+import dynamic from 'next/dynamic';
+const PayMongoButton = dynamic(() => import('../ui/PayMongoButton'), { ssr: false });
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, SectionContentMap, GalleryLayout, Section, GuestMessage, GuestMessageRecord, OccasionType } from '@/lib/types';
@@ -113,6 +140,32 @@ export default function ClientPage({
   songAutoplay = false,
   slug,
 }: Props) {
+
+
+  // --- Hosting Status Banner Logic ---
+  // Only show for public site view (not expired/archived)
+  const effectiveStatus = useMemo(() => {
+    const status = config?.status;
+    const expiresAt = config?.expires_at || config?.expiry_date || config?.expiration;
+    return getEffectiveSiteStatus({ status, expires_at: expiresAt, config });
+  }, [config]);
+  // Try to get expiration from config or props
+  const expiresAt = config?.expires_at || config?.expiry_date || config?.expiration;
+  const daysRemaining = useMemo(() => getDaysUntilExpiration(expiresAt), [expiresAt]);
+  const showBanner = effectiveStatus === 'active' && typeof daysRemaining === 'number' && daysRemaining <= 14;
+
+  let bannerText = '';
+  let bannerColor = 'bg-amber-100 text-amber-800 border-amber-200';
+  if (showBanner) {
+    if (daysRemaining! > 1) {
+      bannerText = `This page will expire in ${daysRemaining} days. Save or screenshot your memories soon!`;
+    } else if (daysRemaining === 1) {
+      bannerText = 'This page will expire in 1 day. Save your memories now!';
+    } else if (daysRemaining === 0) {
+      bannerText = 'This page expires today. Save your memories immediately!';
+      bannerColor = 'bg-rose-100 text-rose-800 border-rose-300';
+    }
+  }
   const isBirthday = siteType === 'birthday';
   const resolvedNames = resolveParticipantNames(siteType, config?.participants || [], customerName, partnerName);
   const resolvedCustomerName = resolvedNames.primaryName;
@@ -928,6 +981,15 @@ export default function ClientPage({
           onReveal={handleReveal}
         />
 
+        {/* Hosting Status Banner (hidden during opening, but visible if opening is skipped) */}
+        {showBanner && !isRevealing && (
+          <div className={`w-full flex justify-center animate-fade-in-up motion-reduce:animate-none`}>
+            <div className={`mt-4 mb-2 px-5 py-2 rounded-xl border text-sm font-semibold shadow-sm ${bannerColor} max-w-xl text-center`}>
+              {bannerText}
+            </div>
+          </div>
+        )}
+
         {/* Main content (hidden during opening) */}
         <div
           className={`main-content-wrapper ${isRevealing ? 'hidden' : ''}`}
@@ -943,6 +1005,25 @@ export default function ClientPage({
   }
 
   // Normal rendering (opening was skipped or completed)
-  return renderMainContent();
+  return (
+    <>
+      {/* Hosting Status Banner */}
+      {showBanner && (
+        <div className={`w-full flex flex-col items-center animate-fade-in-up motion-reduce:animate-none`}>
+          <div className={`mt-4 mb-2 px-5 py-2 rounded-xl border text-sm font-semibold shadow-sm ${bannerColor} max-w-xl text-center`}>
+            {bannerText}
+          </div>
+          <PayMongoButton
+            amount={49}
+            websiteName={slug || 'KeyStory'}
+            customerName={resolvedCustomerName}
+            customerEmail={''}
+            className="mt-2"
+          />
+        </div>
+      )}
+      {renderMainContent()}
+    </>
+  );
 }
 

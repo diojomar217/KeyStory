@@ -2,6 +2,7 @@
 import { DEFAULT_THEME } from '@/config/defaults';
 import { Site } from '@/lib/supabase';
 import WebsiteActionsDropdown from './WebsiteActionsDropdown';
+import { getDaysUntilExpiration, getEffectiveSiteStatus } from '@/lib/site-status';
 
 interface WebsiteRowProps {
   order: Site;
@@ -64,19 +65,27 @@ export default function WebsiteRow({ order, onDelete, selected, onSelect, pendin
   const websiteName = order.website_name || order.slug;
 
   const themeValue = (order.config?.theme as string) || (order.theme as string) || DEFAULT_THEME;
-  const status = (order.status || 'active').toLowerCase();
+  const status = getEffectiveSiteStatus(order);
   const expiresAt = order.expires_at ? new Date(order.expires_at) : null;
-  const isExpired = expiresAt ? expiresAt.getTime() < Date.now() : false;
 
-  const statusLabel = status === 'archived' ? 'Archived' : status === 'expired' || isExpired ? 'Expired' : 'Active';
+  const statusLabel =
+    status === 'archived'
+      ? 'Archived'
+      : status === 'expired'
+        ? 'Expired'
+        : status === 'pending'
+          ? 'Pending'
+          : 'Active';
   const statusClass =
     statusLabel === 'Active' ? 'bg-emerald-100 text-emerald-700' :
     statusLabel === 'Expired' ? 'bg-amber-100 text-amber-800' :
+    statusLabel === 'Pending' ? 'bg-blue-100 text-blue-700' :
     'bg-slate-100 text-slate-700';
 
-  const daysRemaining = expiresAt ? Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : undefined;
-  const isExpiringSoon = daysRemaining !== undefined && daysRemaining >= 0 && daysRemaining <= 7;
-  const expiresLabel = expiresAt ? `${formatDate(expiresAt.toISOString())}${daysRemaining !== undefined ? ` (${daysRemaining >= 0 ? `${daysRemaining}d` : `${Math.abs(daysRemaining)}d overdue`})` : ''}` : '-' ;
+  const daysRemaining = getDaysUntilExpiration(order.expires_at || null);
+  const hasDaysRemaining = typeof daysRemaining === 'number';
+  const isExpiringSoon = hasDaysRemaining && daysRemaining >= 0 && daysRemaining <= 7;
+  const expiresLabel = expiresAt ? `${formatDate(expiresAt.toISOString())}${hasDaysRemaining ? ` (${daysRemaining >= 0 ? `${daysRemaining}d` : `${Math.abs(daysRemaining)}d overdue`})` : ''}` : '-' ;
 
   return (
     <tr className="hover:bg-slate-50 transition-colors duration-150">

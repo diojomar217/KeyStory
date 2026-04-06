@@ -13,6 +13,8 @@ export const getApprovedGuestMessagesBySiteIdTag = (siteId: string) => `approved
 
 async function fetchPublicSiteBySlugUncached(slug: string): Promise<PublicSiteData | null> {
   if (!slug) return null;
+  const normalizedSlug = slug.trim();
+  if (!normalizedSlug) return null;
 
 
   // Slug lookup only needs public-facing fields; avoid select('*') to reduce payload/egress.
@@ -28,13 +30,25 @@ async function fetchPublicSiteBySlugUncached(slug: string): Promise<PublicSiteDa
     'config',
   ].join(',');
 
-  const { data: rawSite, error } = await supabase
+  const lookupByWebsiteName = await supabase
     .from('sites')
     .select(publicSiteSelect)
-    .eq('website_name', slug)
+    .eq('website_name', normalizedSlug)
     .maybeSingle();
 
-  const site = (rawSite as Site | null);
+  const lookupBySlug =
+    lookupByWebsiteName.error || !lookupByWebsiteName.data
+      ? await supabase
+          .from('sites')
+          .select(publicSiteSelect)
+          .eq('slug', normalizedSlug)
+          .maybeSingle()
+      : null;
+
+  const rawSite = (lookupByWebsiteName.data || lookupBySlug?.data) as Site | null;
+  const error = lookupByWebsiteName.error || lookupBySlug?.error || null;
+
+  const site = rawSite;
   if (error) {
     console.error('[getPublicSiteBySlug] Supabase error:', error);
     throw error;

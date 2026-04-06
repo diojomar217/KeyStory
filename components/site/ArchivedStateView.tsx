@@ -1,4 +1,7 @@
 'use client';
+import dynamic from 'next/dynamic';
+const PayMongoButton = dynamic(() => import('../ui/PayMongoButton'), { ssr: false });
+
 
 import Link from 'next/link';
 import { useMemo } from 'react';
@@ -96,6 +99,18 @@ export default function ArchivedStateView({ slug, siteName, expiresAt, siteType,
             ? 'This page has been archived to save storage, but you can restore it anytime.'
             : 'This page has expired, but we can help bring it back quickly.'}
         </p>
+
+        {/* PayMongo Payment Button */}
+        <div className="mt-6 flex flex-col items-center">
+          <PayMongoButton
+            amount={49}
+            websiteName={siteName || slug}
+            customerName={''}
+            customerEmail={''}
+            className="mb-2"
+          />
+          <span className="text-xs text-slate-500">Restore instantly via GCash, Card, or GrabPay</span>
+        </div>
 
         <div className="mt-5 space-y-1 text-slate-500 dark:text-slate-400 text-sm">
           <p><span className="font-semibold text-slate-700 dark:text-slate-200">Memory:</span> {baseLabel}</p>
