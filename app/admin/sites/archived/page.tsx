@@ -23,10 +23,12 @@ export default function ArchivedSitesPage() {
 
   const fetchArchivedSites = async () => {
     try {
-      const res = await fetch('/api/orders');
+      const res = await fetch('/api/orders?status=archived&limit=100&offset=0');
       if (!res.ok) throw new Error('Failed to load sites');
       const data = await res.json();
-      const archived = (data.orders || []).filter((site: Site) => (site.status || '').toLowerCase() === 'archived' || site.config?.archive?.archived === true);
+      const archived = (data.orders || []).filter(
+        (site: Site) => (site.status || '').toLowerCase() === 'archived' || site.config?.archive?.archived === true,
+      );
       setSites(archived);
     } catch (error) {
       console.error('Failed to fetch archived sites:', error);

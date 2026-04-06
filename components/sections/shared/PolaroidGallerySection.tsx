@@ -4,6 +4,7 @@ import type { ThemeKey } from '@/config/themeConfig';
 import { useThemeUtils } from '../../builder/ThemeWrapper';
 import { getHeadingFontClass, getSectionSpacingClass } from '@/lib/theme-color-helpers';
 import ScrollReveal from '../../ui/ScrollReveal';
+import { optimizeCloudinaryDeliveryUrl } from '@/lib/cloudinary-url';
 
 interface PolaroidGallerySectionProps {
   theme: ThemeKey;
@@ -36,6 +37,12 @@ export default function PolaroidGallerySection({ theme, photos }: PolaroidGaller
         <div className="flex flex-wrap justify-center gap-8">
           {photos.map((photo, index) => {
             const isCover = index === 0;
+            const optimizedPhoto = optimizeCloudinaryDeliveryUrl(photo, {
+              quality: isCover ? 'auto:good' : 'auto:eco',
+              width: 560,
+              height: 560,
+              crop: 'fill',
+            });
             return (
               <ScrollReveal key={index} delay={index * 80} animation="tilt">
                 <div
@@ -52,7 +59,7 @@ export default function PolaroidGallerySection({ theme, photos }: PolaroidGaller
                 >
                   <div className="w-48 h-48 sm:w-56 sm:h-56 overflow-hidden">
                     <img
-                      src={photo}
+                      src={optimizedPhoto}
                       alt={isCover ? 'Cover' : `Memory ${index + 1}`}
                       className="w-full h-full object-cover"
                     />

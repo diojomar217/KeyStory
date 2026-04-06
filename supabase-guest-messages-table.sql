@@ -11,3 +11,11 @@ create table if not exists public.guest_messages (
 create index if not exists guest_messages_site_id_idx on public.guest_messages(site_id);
 create index if not exists guest_messages_status_idx on public.guest_messages(status);
 create index if not exists guest_messages_created_at_idx on public.guest_messages(created_at);
+
+-- Optimizes public site query: site_id + approved status + created_at ascending
+create index if not exists guest_messages_site_status_created_at_idx
+  on public.guest_messages(site_id, status, created_at);
+
+-- Optimizes admin pending-review lookups grouped by site
+create index if not exists guest_messages_status_site_id_idx
+  on public.guest_messages(status, site_id);

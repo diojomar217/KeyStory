@@ -5,6 +5,7 @@ import { motion, useAnimation, useInView } from 'framer-motion';
 import type { OccasionType, HomeTemplate } from '@/lib/types';
 import { getOccasionHeroSpec } from '../../config/occasionHeroConfig';
 import type { ThemeKey } from '@/config/themeConfig';
+import { isDarkTheme as checkIsDarkTheme } from '@/lib/theme-color-helpers';
 
 interface ParallaxImmersiveProps {
   heroImage: string;
@@ -542,7 +543,7 @@ export default function HomeSection({
 
 
   const renderSplitLayout = () => {
-    const isDark = theme === 'dark_elegant';
+    const isDark = checkIsDarkTheme(theme);
     const isPastel = theme === 'cute_pastel';
     const isMinimal = theme === 'minimal_modern';
 

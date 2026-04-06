@@ -1,5 +1,7 @@
 import { Site } from '@/lib/supabase';
 
+export type EffectiveSiteStatus = 'pending' | 'active' | 'expired' | 'archived';
+
 export function isExpired(site: Site): boolean {
   const status = (site.status || '').toString().toLowerCase();
 
@@ -19,6 +21,24 @@ export function isArchived(site: Site): boolean {
   if (status === 'archived') return true;
   if (site.config?.archive?.archived === true) return true;
   return false;
+}
+
+export function getEffectiveSiteStatus(site: Pick<Site, 'status' | 'expires_at' | 'config'>): EffectiveSiteStatus {
+  if (isArchived(site as Site)) return 'archived';
+  if (isExpired(site as Site)) return 'expired';
+
+  const normalized = (site.status || '').toString().toLowerCase();
+  if (normalized === 'pending') return 'pending';
+  return 'active';
+}
+
+export function getDaysUntilExpiration(expiresAt?: string | null): number | null {
+  if (!expiresAt) return null;
+  const expires = new Date(expiresAt);
+  if (Number.isNaN(expires.getTime())) return null;
+
+  const diffMs = expires.getTime() - Date.now();
+  return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 }
 
 export function expiredDaysAgo(site: Site): number | null {

@@ -10,6 +10,7 @@ const addMonths = (date: Date, months: number): string => {
 };
 
 const durationMap: Record<string, number> = {
+  '3_months': 3,
   '6_months': 6,
   '1_year': 12,
 };
@@ -61,6 +62,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         expires_at: nextExpires,
         status: 'active',
         archived_at: null,
+        config: {
+          ...(site.config || {}),
+          hosting: {
+            ...((site.config || {})?.hosting || {}),
+            lastRenewedAt: now.toISOString(),
+            lastRenewDuration: durationKey,
+            previousExpiresAt: site.expires_at || null,
+          },
+          archive: {
+            ...((site.config || {})?.archive || {}),
+            archived: false,
+            restoredAt: now.toISOString(),
+          },
+        },
       })
       .eq('id', id);
 
@@ -79,7 +94,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       console.warn('Revalidate path failed on renew:', err);
     }
 
-    return NextResponse.json({ success: true, expires_at: nextExpires });
+    return NextResponse.json({
+      success: true,
+      duration: durationKey,
+      previous_expires_at: site.expires_at || null,
+      expires_at: nextExpires,
+    });
   } catch (err) {
     console.error('Renew site error:', err);
     return NextResponse.json({ success: false, message: 'Invalid request' }, { status: 400 });

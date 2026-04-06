@@ -1,12 +1,12 @@
 import { DEFAULT_THEME } from '@/config/defaults';
 import { Metadata } from 'next';
-import { supabase } from '@/lib/supabase';
 import type { HomeTemplate, GalleryTemplate, TimelineTemplate, TimelineEvent, GuestMessageRecord, OccasionType } from '@/lib/types';
 import type { ThemeKey } from '@/config/themeConfig';
 import ClientPage from '@/components/page/ClientPage';
 import { isExpired, isArchived } from '@/lib/site-status';
-import { getPublicSiteBySlug } from '@/lib/site-data';
+import { getApprovedGuestMessagesBySiteId, getPublicSiteBySlug } from '@/lib/site-data';
 import { resolveDisplayName, resolveHeroCoverPhoto } from '@/lib/site-type-utils';
+import { optimizeCloudinaryDeliveryUrl } from '@/lib/cloudinary-url';
 import {
   buildOccasionDescription,
   buildOccasionTitle,
@@ -138,23 +138,19 @@ export default async function LovePage({ params }: PageProps) {
   // Get config from data
   const config = data.config || {};
 
-  // Fetch approved guest messages from DB for this site
-  const { data: approvedMessagesData, error: approvedMessagesError } = await supabase
-    .from('guest_messages')
-    .select('id, site_id, name, message, status, created_at')
-    .eq('site_id', data.id)
-    .eq('status', 'approved')
-    .order('created_at', { ascending: true });
+  const sections = Array.isArray(config.sections) ? config.sections : ['home'];
+  const shouldLoadApprovedGuestMessages = sections.includes('guest_messages');
+  const siteId = typeof data.id === 'string' ? data.id : '';
 
-  if (approvedMessagesError) {
-    console.warn('Failed fetching approved guest messages:', approvedMessagesError.message);
+  let approvedMessagesData: GuestMessageRecord[] = [];
+  if (shouldLoadApprovedGuestMessages && siteId) {
+    approvedMessagesData = await getApprovedGuestMessagesBySiteId(siteId);
   }
 
-  const approvedGuestMessages = (approvedMessagesData ?? []) as GuestMessageRecord[];
+  const approvedGuestMessages = approvedMessagesData;
   
   // Extract theme and templates with fallbacks
   const theme: ThemeKey = (config.theme as ThemeKey) || DEFAULT_THEME;
-  const sections = Array.isArray(config.sections) ? config.sections : ['home'];
   const homeTemplate: HomeTemplate =
     (config.templates?.home as HomeTemplate) ||
     (config.home_template as HomeTemplate) ||
@@ -179,13 +175,27 @@ export default async function LovePage({ params }: PageProps) {
   const sectionContent = (config.section_content as Record<string, unknown>) || undefined;
 
   // Get photos - from config.media or fallback older fields
-  const photos = Array.isArray(config?.media?.photos)
+  const rawPhotosCandidate = Array.isArray(config?.media?.photos)
     ? config.media.photos
     : Array.isArray(data.photos)
       ? data.photos
       : Array.isArray(config.photos)
         ? config.photos
         : [];
+
+  const photosRaw: string[] = Array.isArray(rawPhotosCandidate)
+    ? rawPhotosCandidate.filter(
+        (photo): photo is string => typeof photo === 'string' && photo.trim().length > 0,
+      )
+    : [];
+
+  const photos: string[] = photosRaw.map((photo: string, index: number) => {
+    return optimizeCloudinaryDeliveryUrl(photo, {
+      quality: index === 0 ? 'auto:good' : 'auto:eco',
+      width: index === 0 ? 1600 : 1280,
+      crop: 'limit',
+    });
+  });
 
   // Get tagline from config
   const tagline = config.tagline || data.tagline;
@@ -198,7 +208,7 @@ export default async function LovePage({ params }: PageProps) {
   const legacyCoverIndex = typeof coverPhotoIndex === 'number' ? coverPhotoIndex : null;
   const resolvedFromFallbackChain = resolveHeroCoverPhoto(
     { hero: config?.hero, cover_photo_index: coverPhotoIndex },
-    photos,
+    photosRaw,
   );
   const effectiveHeroUrl = heroCoverPhotoUrl || resolvedFromFallbackChain || null;
 
@@ -207,9 +217,9 @@ export default async function LovePage({ params }: PageProps) {
       ? 'config.hero.coverPhotoUrl'
       : heroIndex !== null && Boolean(photos[heroIndex])
         ? `config.hero.coverPhotoIndex(${heroIndex})`
-        : legacyCoverIndex !== null && Boolean(photos[legacyCoverIndex])
+        : legacyCoverIndex !== null && Boolean(photosRaw[legacyCoverIndex])
           ? `config.cover_photo_index(${legacyCoverIndex})`
-          : photos.length > 0
+          : photosRaw.length > 0
             ? 'photos[0]'
             : 'none';
 
@@ -218,19 +228,21 @@ export default async function LovePage({ params }: PageProps) {
     return url.length > 140 ? `${url.slice(0, 140)}...` : url;
   };
 
-  console.info('[site-photo-source]', {
-    slug,
-    siteId: data.id,
-    heroPhotoSource,
-    dbFields: {
-      heroCoverPhotoUrl: shortUrl(config?.hero?.coverPhotoUrl || null),
-      heroCoverPhotoIndex: heroIndex,
-      coverPhotoIndex: legacyCoverIndex,
-      photosCount: photos.length,
-      firstPhoto: shortUrl(photos[0] || null),
-    },
-    resolvedHeroUrl: shortUrl(effectiveHeroUrl),
-  });
+  if (process.env.NODE_ENV !== 'production') {
+    console.info('[site-photo-source]', {
+      slug,
+      siteId: data.id,
+      heroPhotoSource,
+      dbFields: {
+        heroCoverPhotoUrl: shortUrl(config?.hero?.coverPhotoUrl || null),
+        heroCoverPhotoIndex: heroIndex,
+        coverPhotoIndex: legacyCoverIndex,
+        photosCount: photosRaw.length,
+        firstPhoto: shortUrl(photosRaw[0] || null),
+      },
+      resolvedHeroUrl: shortUrl(effectiveHeroUrl),
+    });
+  }
 
   // Get QR data URL target (link to encode in styled QR)
   const qrDataUrl = config.qr_data_url || undefined;

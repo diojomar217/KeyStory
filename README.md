@@ -54,6 +54,7 @@ A full-stack web application for generating personalized couple websites with QR
 6. Optional cron jobs:
    ```bash
    npm run job:auto-archive
+   npm run job:cleanup-stale-orders
    npm run job:renewal-reminders
    npm run job:process-queue
    ```
@@ -66,6 +67,13 @@ A full-stack web application for generating personalized couple websites with QR
    - `CLOUDINARY_API_KEY`
    - `CLOUDINARY_API_SECRET`
    - `NEXT_PUBLIC_BASE_URL`
+   - `PAYMONGO_SECRET_KEY`
+
+- PayMongo flow notes:
+   - Orders are created first with database `status: pending` and workflow `config.fulfillment.status: pending_payment`.
+   - After PayMongo redirect success, backend verifies checkout session before marking order `ship`.
+   - `/api/paymongo/webhook` can also sync successful payments even if the customer never returns to the site.
+   - Transaction ID is saved from checkout session and shown in admin orders + customer tracking page.
 - Optional reliability env vars:
    - `FEATURE_STRICT_RATE_LIMITING`
    - `FEATURE_AUDIT_LOGS`
@@ -74,6 +82,10 @@ A full-stack web application for generating personalized couple websites with QR
    - `NEXT_PUBLIC_FEATURE_WEB_VITALS`
    - `FEATURE_MONITORING_ALERTS`
    - `ALERT_WEBHOOK_URL`
+   - `PAYMONGO_WEBHOOK_TOKEN` for protecting the PayMongo webhook endpoint
+   - `PENDING_ORDER_ABANDON_MINUTES` to control when stale pending orders are auto-marked abandoned
+   - `ORDER_CLEANUP_SECRET` or `CRON_SECRET` for unattended stale-order cleanup calls
+   - `ORDER_CLEANUP_URL` to point the cleanup script at your deployed cleanup endpoint
 - Archive storage on Vercel production:
    - Do not use `ARCHIVE_PROVIDER=local`.
    - Use `ARCHIVE_PROVIDER=s3` for durable archive/restore workflows.

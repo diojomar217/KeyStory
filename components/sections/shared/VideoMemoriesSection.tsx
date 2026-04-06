@@ -24,6 +24,7 @@ interface VideoMemoriesSectionProps {
 
 export default function VideoMemoriesSection({ theme, siteType, videos = [] }: VideoMemoriesSectionProps) {
   const themeUtils = useThemeUtils(theme);
+  const { colors } = themeUtils;
   const cardStyle = getCardStyleClasses(theme);
   const shadowClass = getShadowClass(theme);
   const spacingClass = getSectionSpacingClass(theme);
@@ -94,31 +95,41 @@ export default function VideoMemoriesSection({ theme, siteType, videos = [] }: V
           {videos.map((video: VideoMemory, index: number) => (
             <ScrollReveal key={video.id} delay={index * 100}>
               <div
-                className={`overflow-hidden border ${cardStyle} ${shadowClass}`}
+                className={`overflow-hidden rounded-[2rem] border ${shadowClass}`}
                 style={{
-                  backgroundColor: themeUtils.colors.card,
-                  borderColor: themeUtils.colors.border,
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
                 }}
               >
-                <div className="aspect-video">
-                  {!loadedVideos[video.id] && (
-                    <div className="absolute inset-0 premium-loading-shell premium-skeleton" aria-hidden="true">
-                      <div className="premium-skeleton-overlay" />
-                    </div>
-                  )}
-                  <iframe
-                    src={getEmbedUrl(video.url)}
-                    title={video.title}
-                    className={`w-full h-full transition-opacity duration-300 ${loadedVideos[video.id] ? 'opacity-100' : 'opacity-0'}`}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    onLoad={() => {
-                      setLoadedVideos((prev) => ({
-                        ...prev,
-                        [video.id]: true,
-                      }));
+                <div className="px-5 pt-5 pb-3">
+                  <div
+                    className="relative overflow-hidden rounded-[1.5rem] border"
+                    style={{
+                      borderColor: colors.border,
+                      backgroundColor: colors.background,
                     }}
-                  />
+                  >
+                    <div className="relative aspect-video">
+                      {!loadedVideos[video.id] && (
+                        <div className="absolute inset-0 premium-loading-shell premium-skeleton" aria-hidden="true">
+                          <div className="premium-skeleton-overlay" />
+                        </div>
+                      )}
+                      <iframe
+                        src={getEmbedUrl(video.url)}
+                        title={video.title}
+                        className={`absolute inset-0 h-full w-full transition-opacity duration-300 ${loadedVideos[video.id] ? 'opacity-100' : 'opacity-0'}`}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        onLoad={() => {
+                          setLoadedVideos((prev) => ({
+                            ...prev,
+                            [video.id]: true,
+                          }));
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
                 {(video.title || video.description) && (
                   <div className="p-6">
@@ -126,7 +137,7 @@ export default function VideoMemoriesSection({ theme, siteType, videos = [] }: V
                       <h3
                         className="text-xl font-bold mb-2"
                         style={{
-                          color: themeUtils.colors.primary,
+                          color: colors.primary,
                           fontFamily: themeUtils.typography.headingFont,
                         }}
                       >
@@ -134,7 +145,7 @@ export default function VideoMemoriesSection({ theme, siteType, videos = [] }: V
                       </h3>
                     )}
                     {video.description && (
-                      <p style={{ color: themeUtils.colors.text }}>{video.description}</p>
+                      <p style={{ color: colors.text }}>{video.description}</p>
                     )}
                   </div>
                 )}

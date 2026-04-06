@@ -165,6 +165,11 @@ export async function restoreSiteFromArchive(site: Site): Promise<Site> {
       const fileDataUri = `data:image/${ext};base64,${fileBuffer.toString('base64')}`;
       const uploadRes = await cloudinary.uploader.upload(fileDataUri, {
         folder: 'loveqr-archive-restored',
+        format: 'webp',
+        transformation: [
+          { width: 1920, crop: 'limit' },
+          { quality: 'auto:good', fetch_format: 'auto', flags: 'progressive,strip_profile' },
+        ],
       });
       restoredUrls.push(uploadRes.secure_url);
     } catch (err) {

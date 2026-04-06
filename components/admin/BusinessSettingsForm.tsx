@@ -10,6 +10,9 @@ const INITIAL_STATE: BusinessContactSettings = {
   supportEmail: null,
   businessName: null,
   restorePriceLabel: 'Restore for only ₱49',
+  shopeeStoreUrl: 'https://shopee.ph/',
+  tiktokShopUrl: 'https://www.tiktok.com/',
+  lazadaStoreUrl: 'https://www.lazada.com.ph/',
   facebookPageUrl: null,
   instagramUrl: null,
   supportMessageTemplate: null,
@@ -136,6 +139,56 @@ export default function BusinessSettingsForm() {
                 onChange={(e) => handleChange('restorePriceLabel', e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
                 placeholder="Restore for only ₱49"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm text-slate-600 mb-1">Shopee Store URL</label>
+              <input
+                value={settings.shopeeStoreUrl ?? ''}
+                onChange={(e) => handleChange('shopeeStoreUrl', e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
+                placeholder="https://shopee.ph/your-store"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm text-slate-600 mb-1">TikTok Shop URL</label>
+              <input
+                value={settings.tiktokShopUrl ?? ''}
+                onChange={(e) => handleChange('tiktokShopUrl', e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
+                placeholder="https://www.tiktok.com/@your-store"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm text-slate-600 mb-1">Lazada Store URL</label>
+              <input
+                value={settings.lazadaStoreUrl ?? ''}
+                onChange={(e) => handleChange('lazadaStoreUrl', e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
+                placeholder="https://www.lazada.com.ph/shop/your-store"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm text-slate-600 mb-1">Facebook Page URL</label>
+              <input
+                value={settings.facebookPageUrl ?? ''}
+                onChange={(e) => handleChange('facebookPageUrl', e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
+                placeholder="https://facebook.com/your-page"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm text-slate-600 mb-1">Instagram URL</label>
+              <input
+                value={settings.instagramUrl ?? ''}
+                onChange={(e) => handleChange('instagramUrl', e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
+                placeholder="https://instagram.com/your-profile"
               />
             </div>
 

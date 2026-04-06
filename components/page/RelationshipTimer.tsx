@@ -1,5 +1,7 @@
 'use client';
 
+import { isDarkTheme as checkIsDarkTheme } from '@/lib/theme-color-helpers';
+
 import React, { useEffect, useState, useMemo } from 'react';
 import type { ThemeKey } from '@/config/themeConfig';
 
@@ -117,7 +119,7 @@ export default function RelationshipTimer({
   }, [anniversary]);
 
   // Heart icon based on theme
-  const heartIcon = theme === 'dark_elegant' ? '💛' : '💕';
+  const heartIcon = checkIsDarkTheme(theme) ? '💛' : '💕';
 
   // Format duration string
   const durationText = useMemo(() => {

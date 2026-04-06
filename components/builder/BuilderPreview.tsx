@@ -8,6 +8,7 @@ import { getThemeConfig } from '@/config/themeConfig';
 import { LAYOUT_CONFIG } from '@/config/layoutConfig';
 import { SECTION_CONFIG } from '@/config/sectionConfig';
 import { resolveHeroCoverPhoto } from '@/lib/site-type-utils';
+import { optimizeCloudinaryDeliveryUrl } from '@/lib/cloudinary-url';
 
 interface BuilderPreviewProps {
   config: SiteConfig;
@@ -93,7 +94,13 @@ export default function BuilderPreview({
 
   // Get cover photo
   const coverPhotoUrl = useMemo(() => {
-    return resolveHeroCoverPhoto({ hero: config.hero, cover_photo_index: config.cover_photo_index }, photoPreviews);
+    const resolved = resolveHeroCoverPhoto({ hero: config.hero, cover_photo_index: config.cover_photo_index }, photoPreviews);
+    if (!resolved) return null;
+    return optimizeCloudinaryDeliveryUrl(resolved, {
+      quality: 'auto:good',
+      width: 960,
+      crop: 'limit',
+    });
   }, [photoPreviews, config.cover_photo_index, config.hero]);
 
   // Use helper functions for proper empty state handling

@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import QRCodeStyling from 'qr-code-styling';
+import type { ThemeKey } from '@/config/themeConfig';
+import { getCardStyleClasses } from '@/lib/theme-color-helpers';
+import { optimizeCloudinaryDeliveryUrl } from '@/lib/cloudinary-url';
 
 export type QrCardStyle =
   | 'none'
@@ -57,8 +60,9 @@ function getPhotoStyle(transform?: PhotoTransform) {
   const offsetY = transform?.offsetY ?? 0;
 
   return {
-    transform: `translate(${offsetX}px, ${offsetY}px) scale(${zoom})`,
+    transform: `scale(${zoom})`,
     transformOrigin: 'center center',
+    objectPosition: `calc(50% + ${offsetX}px) calc(50% + ${offsetY}px)`,
   } as const;
 }
 
@@ -70,9 +74,22 @@ export function QrKeepsakeCard({
   cardSize = 'large',
   photoUrl,
   photoTransform,
+  theme,
 }: Props) {
   const qrRef = useRef<HTMLDivElement>(null);
   const [isClient, setIsClient] = useState(false);
+
+  // Get theme-based card style
+  const cardStyleClass = (() => {
+    if (!theme || typeof theme !== 'object' || !('key' in theme)) {
+      return 'rounded-lg';
+    }
+    try {
+      return getCardStyleClasses(theme as unknown as ThemeKey);
+    } catch {
+      return 'rounded-lg';
+    }
+  })();
 
   const qrConfig = {
     color: '#e11d48',
@@ -84,6 +101,13 @@ export function QrKeepsakeCard({
     showNames: true,
     ...config,
   };
+
+  const qrPixelSize =
+    qrConfig.cardStyle === 'polaroid'
+      ? cardSize === 'small'
+        ? 50
+        : 56
+      : undefined;
 
   const size = useMemo(() => {
     return cardSize === 'small'
@@ -115,6 +139,17 @@ export function QrKeepsakeCard({
         };
   }, [cardSize]);
 
+  const optimizedPhotoUrl = useMemo(() => {
+    if (!photoUrl) return '';
+    const target = cardSize === 'small' ? 240 : 300;
+    return optimizeCloudinaryDeliveryUrl(photoUrl, {
+      quality: 'auto:good',
+      width: target,
+      height: target,
+      crop: 'fill',
+    });
+  }, [photoUrl, cardSize]);
+
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -133,8 +168,8 @@ export function QrKeepsakeCard({
     };
 
     const qr = new QRCodeStyling({
-      width: size.qr,
-      height: size.qr,
+      width: qrPixelSize ?? size.qr,
+      height: qrPixelSize ?? size.qr,
       data: qrDataUrl,
       type: 'canvas',
       dotsOptions: {
@@ -167,38 +202,51 @@ export function QrKeepsakeCard({
 
     qrRef.current.innerHTML = '';
     qr.append(qrRef.current);
-  }, [qrDataUrl, isClient, qrConfig.color, qrConfig.qrDesign, qrConfig.style, size.qr]);
+  }, [
+    qrDataUrl,
+    isClient,
+    qrConfig.cardStyle,
+    qrConfig.color,
+    qrConfig.qrDesign,
+    qrConfig.style,
+    qrPixelSize,
+    size.qr,
+  ]);
 
-  const imageBlock = photoUrl ? (
+  const imageBlock = optimizedPhotoUrl ? (
     <div
-      className="overflow-hidden border border-slate-200 bg-slate-50"
+      className={`overflow-hidden bg-slate-50 border border-slate-200 ${cardStyleClass}`}
       style={{
         width: `${size.photo}px`,
         height: `${size.photo}px`,
-        borderRadius: '10px',
         flexShrink: 0,
         position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
     >
       <img
-        src={photoUrl}
+        src={optimizedPhotoUrl}
         alt="Keepsake"
-        className="absolute left-1/2 top-1/2 h-full w-full object-cover"
+        className="object-cover"
         style={{
           ...getPhotoStyle(photoTransform),
-          minWidth: '100%',
-          minHeight: '100%',
+          width: '100%',
+          height: '100%',
+          position: 'absolute',
+          top: 0,
+          left: 0,
         }}
         draggable={false}
       />
     </div>
   ) : (
     <div
-      className="flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 text-slate-400"
+      className={`flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 text-slate-400 ${cardStyleClass}`}
       style={{
         width: `${size.photo}px`,
         height: `${size.photo}px`,
-        borderRadius: '10px',
         fontSize: cardSize === 'small' ? '9px' : '10px',
         flexShrink: 0,
       }}
@@ -209,19 +257,25 @@ export function QrKeepsakeCard({
 
   const qrBlock = (
     <div
-      className="bg-white"
+      className={cardStyleClass}
       style={{
         padding: '4px',
-        borderRadius: '10px',
         border: '1px solid #d9d9d9',
         flexShrink: 0,
+        backgroundColor: '#ffffff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
     >
       <div
         ref={qrRef}
         style={{
-          width: `${size.qr}px`,
-          height: `${size.qr}px`,
+          width: `${qrPixelSize ?? size.qr}px`,
+          height: `${qrPixelSize ?? size.qr}px`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       />
     </div>
@@ -230,53 +284,58 @@ export function QrKeepsakeCard({
   if (qrConfig.cardStyle === 'polaroid') {
     return (
       <div
-        className="relative bg-white print:shadow-none"
+        className={`relative bg-white print:shadow-none ${cardStyleClass}`}
         style={{
           width: size.w,
           height: size.h,
-          borderRadius: size.radius,
           padding: size.padding,
           border: '1px solid #d4d4d8',
           overflow: 'hidden',
         }}
       >
         <div className="flex h-full flex-col">
-          <div className="relative flex-1 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
-            {photoUrl ? (
-              <img
-                src={photoUrl}
-                alt="Polaroid keepsake"
-                className="absolute left-1/2 top-1/2 h-full w-full object-cover"
-                style={{
-                  ...getPhotoStyle(photoTransform),
-                  minWidth: '100%',
-                  minHeight: '100%',
-                }}
-                draggable={false}
-              />
+          <div className="relative min-h-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+            {optimizedPhotoUrl ? (
+              <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+                <img
+                  src={optimizedPhotoUrl}
+                  alt="Polaroid keepsake"
+                  className="object-cover"
+                  style={{
+                    ...getPhotoStyle(photoTransform),
+                    width: '100%',
+                    height: '100%',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                  }}
+                  draggable={false}
+                />
+              </div>
             ) : (
               <div className="flex h-full items-center justify-center text-xs text-slate-400">
                 No photo
               </div>
             )}
+
+            <div className="absolute bottom-2 right-2">{qrBlock}</div>
           </div>
 
-          <div className="mt-2 flex items-end justify-between gap-2">
-            <div className="min-w-0 flex-1">
+          <div className="mt-2 min-w-0">
+            <div
+              className="truncate uppercase tracking-[0.12em] text-slate-500"
+              style={{ fontSize: size.footer }}
+            >
+              {qrConfig.subtitle}
+            </div>
+            <div className="min-w-0">
               <div
                 className="truncate font-semibold text-slate-900"
                 style={{ fontSize: size.title, lineHeight: 1.1 }}
               >
                 {customerName} &amp; {partnerName}
               </div>
-              <div
-                className="truncate text-slate-500"
-                style={{ fontSize: size.footer, marginTop: '2px' }}
-              >
-                {qrConfig.subtitle}
-              </div>
             </div>
-            {qrBlock}
           </div>
         </div>
       </div>
@@ -286,11 +345,10 @@ export function QrKeepsakeCard({
   if (qrConfig.cardStyle === 'minimal_card') {
     return (
       <div
-        className="relative bg-white print:shadow-none"
+        className={`relative bg-white print:shadow-none ${cardStyleClass}`}
         style={{
           width: size.w,
           height: size.h,
-          borderRadius: size.radius,
           padding: size.padding,
           border: '1px solid #d4d4d8',
           overflow: 'hidden',
@@ -334,11 +392,10 @@ export function QrKeepsakeCard({
   if (qrConfig.cardStyle === 'birthday_card') {
     return (
       <div
-        className="relative overflow-hidden print:shadow-none"
+        className={`relative overflow-hidden print:shadow-none ${cardStyleClass}`}
         style={{
           width: size.w,
           height: size.h,
-          borderRadius: size.radius,
           border: '1px solid #f1c4d7',
           background: '#fffafc',
         }}
@@ -387,11 +444,10 @@ export function QrKeepsakeCard({
   if (qrConfig.cardStyle === 'none') {
     return (
       <div
-        className="relative bg-white print:shadow-none"
+        className={`relative bg-white print:shadow-none ${cardStyleClass}`}
         style={{
           width: size.w,
           height: size.h,
-          borderRadius: size.radius,
           padding: size.padding,
           border: '1px solid #d4d4d8',
           overflow: 'hidden',
@@ -407,11 +463,10 @@ export function QrKeepsakeCard({
 
   return (
     <div
-      className="relative overflow-hidden print:shadow-none"
+      className={`relative overflow-hidden print:shadow-none ${cardStyleClass}`}
       style={{
         width: size.w,
         height: size.h,
-        borderRadius: size.radius,
         background: qrConfig.background || '#fffafc',
         border: '1px solid #e9c7d2',
       }}

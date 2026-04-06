@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { isArchived, isExpired } from '@/lib/site-status';
+import { getDaysUntilExpiration, getEffectiveSiteStatus } from '@/lib/site-status';
 
 const safeSlug = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
@@ -17,11 +17,23 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ slu
       return NextResponse.json({ success: false, message: 'slug is required' }, { status: 400 });
     }
 
-    const { data: site, error } = await supabase
+    const lookupByWebsiteName = await supabase
       .from('sites')
       .select('id, website_name, status, expires_at, updated_at, config')
       .eq('website_name', slug)
       .maybeSingle();
+
+    const lookupBySlug =
+      lookupByWebsiteName.error || !lookupByWebsiteName.data
+        ? await supabase
+            .from('sites')
+            .select('id, website_name, status, expires_at, updated_at, config')
+            .eq('slug', slug)
+            .maybeSingle()
+        : null;
+
+    const site = lookupByWebsiteName.data || lookupBySlug?.data || null;
+    const error = lookupByWebsiteName.error || lookupBySlug?.error || null;
 
     if (error) {
       return NextResponse.json({ success: false, message: error.message }, { status: 500 });
@@ -31,11 +43,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ slu
       return NextResponse.json({ success: true, exists: false, slug });
     }
 
-    const status = isArchived(site as any)
-      ? 'archived'
-      : isExpired(site as any)
-        ? 'expired'
-        : (site.status || 'active').toString().toLowerCase();
+    const status = getEffectiveSiteStatus(site as any);
+    const daysRemaining = getDaysUntilExpiration(site.expires_at || null);
+    const expiringSoon = typeof daysRemaining === 'number' && daysRemaining >= 0 && daysRemaining <= 7;
 
     const config = (site.config || {}) as Record<string, any>;
     const fulfillment = (config.fulfillment || {}) as Record<string, any>;
@@ -48,6 +58,11 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ slu
       website_name: site.website_name,
       status,
       expires_at: site.expires_at || null,
+      hosting: {
+        status,
+        days_remaining: daysRemaining,
+        expiring_soon: expiringSoon,
+      },
       updated_at: site.updated_at || null,
       redirect_url: `/r/${site.website_name}`,
       destination_url:

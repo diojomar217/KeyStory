@@ -1,6 +1,7 @@
 import { OccasionType, getOccasionMetadata } from './occasion-registry';
 import { Participant } from './types';
 import { formatOccasionDisplayName } from './public-site-copy';
+import { optimizeCloudinaryDeliveryUrl } from './cloudinary-url';
 
 export type DecoratorSet = {
   iconSet: string[];
@@ -344,18 +345,11 @@ export const resolveDecorations = (siteType: OccasionType): DecoratorSet => {
 };
 
 const optCloudinaryUrl = (url: string, isHero: boolean): string => {
-  if (!url || !url.includes('cloudinary.com')) return url;
-
-  // If already optimized with f_auto/q_auto, skip modification
-  if (url.includes('f_auto') || url.includes('q_auto')) {
-    return url;
-  }
-
-  const cloudinaryUploadSegment = '/upload/';
-  if (!url.includes(cloudinaryUploadSegment)) return url;
-
-  const quality = isHero ? 'auto:good' : 'auto:eco';
-  return url.replace(cloudinaryUploadSegment, `/upload/f_auto,q_${quality}/`);
+  return optimizeCloudinaryDeliveryUrl(url, {
+    quality: isHero ? 'auto:good' : 'auto:eco',
+    width: isHero ? 1920 : 1280,
+    crop: 'limit',
+  });
 };
 
 export const resolveHeroCoverPhoto = (

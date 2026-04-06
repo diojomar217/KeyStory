@@ -32,6 +32,7 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
   // Lightbox state
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const hasCoverPhoto = typeof coverPhotoIndex === 'number' && coverPhotoIndex >= 0;
 
   if (!photos || photos.length === 0) {
     return null;
@@ -234,7 +235,37 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
           })()}
         </ScrollReveal>
 
-        
+        <ScrollReveal animation="fade-up" delay={90}>
+          <div className="mb-7 flex flex-wrap items-center gap-2">
+            <span
+              className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em]"
+              style={{
+                backgroundColor: themeUtils.colors.card,
+                borderColor: themeUtils.colors.border,
+                color: themeUtils.colors.text,
+              }}
+            >
+              <span aria-hidden="true">Gallery</span>
+              {photos.length} photos
+            </span>
+            {hasCoverPhoto && (
+              <span
+                className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em]"
+                style={{
+                  backgroundColor: `${themeUtils.colors.secondary}55`,
+                  borderColor: themeUtils.colors.border,
+                  color: themeUtils.colors.primary,
+                }}
+              >
+                <span aria-hidden="true">Cover</span>
+                cover highlight enabled
+              </span>
+            )}
+            <span className="text-xs" style={{ color: themeUtils.colors.text }}>
+              Tap any photo to view full-screen
+            </span>
+          </div>
+        </ScrollReveal>
 
         {/* Gallery Content */}
         {template === 'grid' && renderGrid()}

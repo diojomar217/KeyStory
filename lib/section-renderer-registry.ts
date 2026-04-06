@@ -196,6 +196,8 @@ home: {
     component: PlaylistSection,
     getProps: (config) => ({
       theme: config.theme,
+      siteType: config.siteType,
+      autoplay: config.songAutoplay || config.song_autoplay || false,
       songLink: config.songLink || config.song_link || '',
     }),
   },

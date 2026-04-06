@@ -33,12 +33,19 @@ export async function POST(req: NextRequest) {
   const cleanName = (data.website_name || '').trim();
   const websiteSlug = cleanName ? `${slugify(cleanName)}-${randomSuffix()}` : baseSlug;
   const photoUrls: string[] = [];
+  const seenPhotoInputs = new Set<string>();
 
   // Upload images to Cloudinary (server-side)
   if (Array.isArray(data.photos) && data.photos.length > 0) {
     for (const photo of data.photos) {
+      if (typeof photo !== 'string' || !photo.trim()) continue;
+
+      const normalizedPhotoInput = photo.trim();
+      if (seenPhotoInputs.has(normalizedPhotoInput)) continue;
+      seenPhotoInputs.add(normalizedPhotoInput);
+
       try {
-        const url = await uploadToCloudinary(photo);
+        const url = await uploadToCloudinary(normalizedPhotoInput);
         photoUrls.push(url);
       } catch (err) {
         console.error('Cloudinary upload failed', err);
