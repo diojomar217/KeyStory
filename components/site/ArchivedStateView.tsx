@@ -106,7 +106,7 @@ export default function ArchivedStateView({ slug, siteName, expiresAt, siteType,
             amount={49}
             websiteName={siteName || slug}
             customerName={''}
-            customerEmail={''}
+            customerEmail={normalizedSettings.supportEmail || ''}
             className="mb-2"
           />
           <span className="text-xs text-slate-500">Restore instantly via GCash, Card, or GrabPay</span>
@@ -119,20 +119,7 @@ export default function ArchivedStateView({ slug, siteName, expiresAt, siteType,
           {normalizedSettings.businessName && <p><span className="font-semibold text-slate-700 dark:text-slate-200">Business:</span> {normalizedSettings.businessName}</p>}
         </div>
 
-        <div className="mt-6">
-          <a
-            href={safePrimaryLink}
-            target={safePrimaryLink === '#' ? undefined : '_blank'}
-            rel={safePrimaryLink === '#' ? undefined : 'noreferrer'}
-            onClick={() => console.log('restore-click', { slug, siteName, status })}
-            className={`inline-flex items-center justify-center px-6 py-3 text-sm font-semibold text-white rounded-xl shadow-lg transition ${
-              anyContactAvailable ? 'bg-rose-600 hover:bg-rose-700' : 'bg-slate-300 text-slate-600 cursor-not-allowed'
-            }`}
-          >
-            Restore This Memory ❤️
-          </a>
-          <p className="mt-2 text-xs text-slate-500">{normalizedSettings.restorePriceLabel}</p>
-        </div>
+       
 
         <div className="mt-8 text-left">
           <p className="text-base font-semibold text-slate-700 dark:text-slate-200">Need help? Message us</p>

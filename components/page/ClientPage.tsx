@@ -1017,7 +1017,7 @@ export default function ClientPage({
             amount={49}
             websiteName={slug || 'KeyStory'}
             customerName={resolvedCustomerName}
-            customerEmail={''}
+            customerEmail={config?.people?.email || config?.customer_email || ''}
             className="mt-2"
           />
         </div>

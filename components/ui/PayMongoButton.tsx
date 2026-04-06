@@ -23,8 +23,15 @@ const PayMongoButton: React.FC<PayMongoButtonProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState(customerEmail || '');
+  const [touched, setTouched] = useState(false);
 
   const handlePay = async () => {
+    setTouched(true);
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      setError('A valid email is required.');
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -35,7 +42,7 @@ const PayMongoButton: React.FC<PayMongoButtonProps> = ({
           amount,
           websiteName,
           customerName,
-          customerEmail,
+          customerEmail: email,
           customerPhone,
           preferredMethod,
           orderId,
@@ -56,15 +63,25 @@ const PayMongoButton: React.FC<PayMongoButtonProps> = ({
 
   return (
     <div className={className}>
+      <input
+        type="email"
+        className="mb-2 px-3 py-2 border rounded w-full text-sm"
+        placeholder="Your email (required for receipt)"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+        onBlur={() => setTouched(true)}
+        required
+        aria-label="Email address"
+      />
       <button
         type="button"
-        onClick={handlePay}
         disabled={loading}
-        className="inline-flex items-center justify-center px-5 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold shadow disabled:opacity-60"
+        onClick={handlePay}
+        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold shadow-sm bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 transition ${loading ? 'opacity-60 cursor-not-allowed' : ''}`}
       >
-        {loading ? 'Redirecting...' : 'Restore via PayMongo'}
+        {loading ? 'Processing...' : 'Restore via PayMongo'}
       </button>
-      {error && <div className="mt-2 text-xs text-rose-600">{error}</div>}
+      {error && <div className="mt-2 text-sm text-red-600">{error}</div>}
     </div>
   );
 };
