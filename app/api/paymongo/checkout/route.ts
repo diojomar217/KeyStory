@@ -1,10 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { sanitizePath, buildReturnUrl } from '@/lib/paymongo-utils';
 
 type PaymentMethodType = 'gcash' | 'card' | 'grab_pay';
+type FlowType = 'create' | 'extension';
 
 const ALLOWED_PAYMENT_METHODS: PaymentMethodType[] = ['gcash', 'card', 'grab_pay'];
 
 const toBase64 = (value: string) => Buffer.from(value).toString('base64');
+
+interface CheckoutBody {
+  amount?: number | string;
+  websiteName?: string;
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  preferredMethod?: PaymentMethodType;
+  orderId?: string;
+  flowType?: FlowType;
+  slug?: string;
+  successPath?: string;
+  cancelPath?: string;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,14 +32,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json();
-    const amount = Number(body?.amount || 0);
-    const websiteName = String(body?.websiteName || 'KeyStory Order');
-    const customerName = String(body?.customerName || 'Customer');
-    const customerEmail = String(body?.customerEmail || '').trim();
-    const customerPhone = String(body?.customerPhone || '').trim();
-    const preferredMethod = String(body?.preferredMethod || 'gcash') as PaymentMethodType;
-    const orderId = String(body?.orderId || '').trim();
+    const body = (await req.json()) as CheckoutBody;
+
+    const amount = Number(body?.amount ?? 0);
+    const websiteName = String(body?.websiteName ?? 'KeyStory Order');
+    const customerName = String(body?.customerName ?? 'Customer');
+    const customerEmail = String(body?.customerEmail ?? '').trim();
+    const customerPhone = String(body?.customerPhone ?? '').trim();
+    const preferredMethod = String(body?.preferredMethod ?? 'gcash') as PaymentMethodType;
+    const orderId = String(body?.orderId ?? '').trim();
+    const flowType: FlowType = body?.flowType === 'extension' ? 'extension' : 'create';
+    const slug = String(body?.slug ?? '').trim();
+    const rawSuccessPath = body?.successPath;
+    const rawCancelPath = body?.cancelPath;
 
     if (!amount || amount <= 0) {
       return NextResponse.json({ success: false, message: 'Invalid amount' }, { status: 400 });
@@ -37,15 +58,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Invalid payment method' }, { status: 400 });
     }
 
+    if (flowType === 'extension' && !slug) {
+      return NextResponse.json({ success: false, message: 'slug is required for extension flow' }, { status: 400 });
+    }
+
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || new URL(req.url).origin;
     const amountInCentavos = Math.round(amount * 100);
-    const successParams = new URLSearchParams({ payment: 'success' });
-    const cancelParams = new URLSearchParams({ payment: 'cancelled' });
 
-    if (orderId) {
-      successParams.set('orderId', orderId);
-      cancelParams.set('orderId', orderId);
-    }
+    const successPath = sanitizePath(rawSuccessPath as string | undefined, '/create');
+    const cancelPath = sanitizePath(rawCancelPath as string | undefined, '/create');
+
+    const successUrl = buildReturnUrl(baseUrl, successPath, 'success', orderId || undefined);
+    const cancelUrl = buildReturnUrl(baseUrl, cancelPath, 'cancelled', orderId || undefined);
+
+    const metadata: Record<string, string> = { flowType };
+    if (orderId) metadata.orderId = orderId;
+    if (slug) metadata.slug = slug;
 
     const paymongoPayload = {
       data: {
@@ -58,7 +86,10 @@ export async function POST(req: NextRequest) {
           send_email_receipt: true,
           show_description: true,
           show_line_items: true,
-          description: `KeyStory order for ${websiteName}`,
+          description:
+            flowType === 'extension'
+              ? `KeyStory extension payment for ${websiteName}`
+              : `KeyStory order for ${websiteName}`,
           line_items: [
             {
               currency: 'PHP',
@@ -68,8 +99,9 @@ export async function POST(req: NextRequest) {
             },
           ],
           payment_method_types: [preferredMethod],
-          success_url: `${baseUrl}/create?${successParams.toString()}`,
-          cancel_url: `${baseUrl}/create?${cancelParams.toString()}`,
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+          metadata,
         },
       },
     };
@@ -92,7 +124,7 @@ export async function POST(req: NextRequest) {
         paymongoData?.errors?.[0]?.title ||
         'Failed to create PayMongo checkout session';
 
-      return NextResponse.json({ success: false, message }, { status: 400 });
+      return NextResponse.json({ success: false, message }, { status: paymongoResponse.status || 400 });
     }
 
     return NextResponse.json({
@@ -102,6 +134,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('PayMongo checkout creation failed:', error);
-    return NextResponse.json({ success: false, message: error.message || 'Unexpected error' }, { status: 500 });
+    return NextResponse.json({ success: false, message: error?.message || 'Unexpected error' }, { status: 500 });
   }
 }

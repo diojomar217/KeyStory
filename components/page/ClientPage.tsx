@@ -996,6 +996,10 @@ export default function ClientPage({
             customerName={resolvedCustomerName}
             customerEmail={config?.people?.email || config?.customer_email || ''}
             className="mt-2"
+            flowType="extension"
+            slug={slug}
+            successPath={slug ? `/site/${slug}` : window.location.pathname + window.location.search}
+            cancelPath={slug ? `/site/${slug}` : window.location.pathname + window.location.search}
           />
         </div>
       )}

@@ -355,18 +355,13 @@ export default function Home() {
               QR Only or QR + NFC Products
             </p>
             <h1 className="display-title mt-5 text-4xl font-black leading-tight text-[#111827] md:text-6xl">
-              Premium Keychains That Open Your Story by Scan or Tap
+              Turn Your Memories Into Something You Can Hold ❤️
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-[#475569]">
-              We build beautiful personal websites linked to custom QR + NFC keychains. Perfect for gifts, couple memories, birthdays, and milestone moments.
+              Turn your memories into a personalized website—linked to a custom QR or NFC keychain you can carry anywhere.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <a
-                href="/create"
-                className="cta-solid rounded-full bg-[#111827] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#1f2937]"
-              >
-                Build Your Keychain
-              </a>
+              
               <a
                 href={publicLinks.shopeeStoreUrl}
                 target="_blank"
@@ -384,6 +379,12 @@ export default function Home() {
                 className="cta-outline rounded-full border border-[#111827] bg-white px-6 py-3 text-sm font-bold text-[#111827] transition hover:bg-[#f1f5f9]"
               >
                 Visit TikTok Shop
+              </a>
+              <a
+                href="/create"
+                className="cta-solid rounded-full bg-[#111827] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#1f2937]"
+              >
+                Build Your Keychain
               </a>
               <a
                 href="#samples"
@@ -694,14 +695,24 @@ export default function Home() {
               )}
               {messengerUrl && (
                 <a
-                  href={messengerUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => trackEvent('quick_contact_messenger_click')}
-                  className="block w-full rounded-xl bg-[#0284c7] px-4 py-3 text-center text-sm font-bold text-white transition hover:bg-[#0369a1]"
-                >
-                  Message on Messenger
-                </a>
+  href={messengerUrl}
+  target="_blank"
+  rel="noopener noreferrer"
+  onClick={() => trackEvent('quick_contact_messenger_click')}
+  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#0284c7] px-4 py-3 text-center text-sm font-bold text-white transition hover:bg-[#0369a1]"
+>
+  {/* Messenger Icon */}
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className="w-5 h-5"
+  >
+    <path d="M12 2C6.477 2 2 6.145 2 11.25c0 2.91 1.592 5.502 4.09 7.19V22l3.318-1.82c.885.244 1.82.37 2.792.37 5.523 0 10-4.145 10-9.25S17.523 2 12 2zm.9 12.65l-2.55-2.72-4.35 2.72 4.95-5.26 2.6 2.72 4.3-2.72-4.95 5.26z" />
+  </svg>
+
+  Message on Messenger
+</a>
               )}
               {publicLinks.facebookPageUrl && (
                 <a
@@ -750,21 +761,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-
-        <section id="build" className="scroll-mt-24 py-12 md:py-16">
-          <div className="rounded-3xl border border-[#0f172a]/10 bg-white/90 p-8 md:p-10 text-center">
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#64748b]">Order Flow</p>
-            <h2 className="mt-2 text-3xl font-black text-[#0f172a] md:text-4xl">Price Estimator + Live Customizer Moved</h2>
-            <p className="mx-auto mt-3 max-w-2xl text-[#475569]">
-              We moved the full ordering experience to a dedicated page so customers can complete product selection, personalization, review, and submit in one clean flow.
-            </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <a href="/create" className="rounded-full bg-[#0f172a] px-6 py-3 text-sm font-bold text-white">Start Order Form</a>
-              <a href={publicLinks.shopeeStoreUrl} target="_blank" rel="noopener noreferrer" className="rounded-full border border-[#0f172a]/20 bg-white px-6 py-3 text-sm font-bold text-[#0f172a]">Shop on Shopee</a>
-            </div>
-          </div>
-        </section>
-
         <section className="py-12 md:py-16">
           <div className="rounded-3xl border border-[#0f172a]/10 bg-[#0f172a] px-6 py-10 text-center text-white md:px-10">
             <p className="text-xs font-semibold uppercase tracking-widest text-white/70">Ready to launch your keepsake</p>
@@ -850,15 +846,73 @@ export default function Home() {
           <p className="mt-4">© 2026 Keystory</p>
         </footer>
       </main>
+<div className="fixed right-4 top-1/2 z-30 hidden w-44 -translate-y-1/2 space-y-2 rounded-2xl border border-[#0f172a]/10 bg-white/95 p-3 shadow-xl backdrop-blur lg:block">
 
-      <div className="fixed right-4 top-1/2 z-30 hidden w-44 -translate-y-1/2 space-y-2 rounded-2xl border border-[#0f172a]/10 bg-white/95 p-3 shadow-xl backdrop-blur lg:block">
-        <a href="/create" className="block rounded-lg bg-[#0f172a] px-3 py-2 text-center text-xs font-bold text-white">Customize</a>
-        <a href={publicLinks.shopeeStoreUrl} target="_blank" rel="noopener noreferrer" className="block rounded-lg bg-[#f97316] px-3 py-2 text-center text-xs font-bold text-white">Shop Shopee</a>
-        <a href={publicLinks.tiktokShopUrl} target="_blank" rel="noopener noreferrer" className="block rounded-lg border border-[#0f172a]/20 px-3 py-2 text-center text-xs font-bold text-[#0f172a]">TikTok</a>
-        <a href={publicLinks.lazadaStoreUrl} target="_blank" rel="noopener noreferrer" className="block rounded-lg border border-[#0f172a]/20 px-3 py-2 text-center text-xs font-bold text-[#0f172a]">Lazada</a>
-        <a href={publicLinks.facebookPageUrl || 'https://facebook.com/'} target="_blank" rel="noopener noreferrer" className="block rounded-lg bg-[#1d4ed8] px-3 py-2 text-center text-xs font-bold text-white">Facebook</a>
-      </div>
+  {/* Customize (Primary CTA) */}
+  <a
+    href="/create"
+    className="flex items-center justify-center gap-2 rounded-lg bg-[#0f172a] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#020617]"
+  >
+    ✨ Customize
+  </a>
 
+  {/* Shopee */}
+  <a
+    href={publicLinks.shopeeStoreUrl}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="flex items-center justify-center gap-2 rounded-lg bg-[#EE4D2D] px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
+  >
+    {/* Shopee Bag Icon */}
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M6 7h12l-1 13H7L6 7zm3-3a3 3 0 016 0h-2a1 1 0 00-2 0H9z"/>
+    </svg>
+    Shopee
+  </a>
+
+  {/* TikTok */}
+  <a
+    href={publicLinks.tiktokShopUrl}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="flex items-center justify-center gap-2 rounded-lg bg-black px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
+  >
+    {/* TikTok Logo */}
+    <svg className="w-4 h-4" viewBox="0 0 48 48" fill="currentColor">
+      <path d="M34 6c2.2 2.6 5.2 4.2 8 4.4v6.4c-2.9-.1-5.6-1-8-2.6v12.7c0 6.4-5.2 11.6-11.6 11.6S10.8 33.3 10.8 27s5.2-11.6 11.6-11.6c.6 0 1.1 0 1.6.1v6.3c-.5-.2-1-.3-1.6-.3-3 0-5.4 2.4-5.4 5.4S19.4 32.3 22.4 32.3 27.8 30 27.8 27V6H34z"/>
+    </svg>
+    TikTok
+  </a>
+
+  {/* Lazada */}
+  <a
+    href={publicLinks.lazadaStoreUrl}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="flex items-center justify-center gap-2 rounded-lg bg-[#6C19FF] px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
+  >
+    {/* Lazada Heart Cube */}
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2l8 5v10l-8 5-8-5V7l8-5zm0 5.5c-1.7-2-5-1.2-5 1.5 0 2.2 3.5 4.5 5 6 1.5-1.5 5-3.8 5-6 0-2.7-3.3-3.5-5-1.5z"/>
+    </svg>
+    Lazada
+  </a>
+
+  {/* Messenger / Facebook */}
+  <a
+    href={publicLinks.facebookPageUrl || 'https://facebook.com/'}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="flex items-center justify-center gap-2 rounded-lg bg-[#1877F2] px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
+  >
+    {/* Messenger Icon */}
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.5 2 2 6.1 2 11.2c0 2.9 1.6 5.5 4.1 7.2V22l3.3-1.8c.9.2 1.8.3 2.8.3 5.5 0 10-4.1 10-9.2S17.5 2 12 2zm.9 12.6l-2.5-2.7-4.4 2.7 5-5.3 2.6 2.7 4.3-2.7-5 5.3z"/>
+    </svg>
+    Message
+  </a>
+
+</div>
       <div className="fixed bottom-4 left-1/2 z-40 w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 rounded-2xl border border-[#0f172a]/15 bg-white/95 p-2 shadow-2xl backdrop-blur md:hidden">
         <div className="grid grid-cols-3 gap-2">
           <a href="/create" className="rounded-xl bg-[#0f172a] px-3 py-3 text-center text-xs font-bold text-white">

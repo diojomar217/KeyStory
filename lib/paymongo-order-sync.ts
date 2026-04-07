@@ -54,7 +54,7 @@ export async function findOrderByCheckoutSessionId(checkoutSessionId: string): P
   const { data: candidates, error: fallbackError } = await supabase
     .from('sites')
     .select('*')
-    .in('status', ['pending', 'active'])
+    .in('status', ['pending', 'active', 'archived'])
     .order('created_at', { ascending: false })
     .limit(250);
 
@@ -84,6 +84,8 @@ export async function markOrderPaid(order: Site, checkoutSessionId: string, paid
     throw new Error('Order id is required');
   }
 
+  console.log('[MARK_ORDER_PAID] called', { orderId: order.id, checkoutSessionId, paidAt });
+
   const updatedConfig = {
     ...(order.config || {}),
     fulfillment: {
@@ -107,6 +109,8 @@ export async function markOrderPaid(order: Site, checkoutSessionId: string, paid
     status: 'active',
     config: updatedConfig,
   });
+
+  console.log('[MARK_ORDER_PAID] updated site', { id: updated?.id, status: updated?.status, payment: updated?.config?.payment });
 
   return updated;
 }
