@@ -126,7 +126,7 @@ export default async function LovePage({ params }: PageProps) {
     const ExpiredSitePage = (await import('@/components/site/ExpiredSitePage')).default;
     return (
       <ExpiredSitePage
-        slug={slug}
+        siteSlug={slug}
         websiteName={data.website_name || data.slug}
         status="expired"
         expiresAt={data.expires_at || undefined}
