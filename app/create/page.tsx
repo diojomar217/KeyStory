@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import PayMongoButton from '@/components/ui/PayMongoButton';
 import { useSearchParams } from 'next/navigation';
 import TemplateSelector from '@/components/templates/TemplateSelector';
 import ThemeSelector from '@/components/builder/ThemeSelector';
@@ -119,6 +120,7 @@ function CreatePageContent() {
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [paymentMessage, setPaymentMessage] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [creatingOrder, setCreatingOrder] = useState(false);
   const finalizeHandledRef = useRef(false);
   const [step3Errors, setStep3Errors] = useState<Record<string, string>>({});
   const [step5Errors, setStep5Errors] = useState<Record<string, string>>({});
@@ -516,7 +518,55 @@ function CreatePageContent() {
   useEffect(() => {
     if (paymentStatus === 'success') {
       setStep(6);
-      completeOrderAfterPayment();
+
+      (async () => {
+        setPaymentMessage('Verifying payment...');
+
+        // Prefer explicit query param orderId, then localStorage pendingOrderId, then in-memory orderId
+        const pendingId = orderIdFromQuery || window.localStorage.getItem('pendingOrderId') || orderId || '';
+
+        if (pendingId) {
+          try {
+            const res = await fetch('/api/paymongo/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ orderId: pendingId }),
+            });
+            const json = await res.json().catch(() => ({}));
+
+            if (res.ok && json?.success) {
+              try {
+                const orderResponse = await fetch(`/api/orders?id=${encodeURIComponent(pendingId)}`);
+                const orderResult = await orderResponse.json().catch(() => ({}));
+                const existingOrder = orderResult?.order;
+
+                if (existingOrder?.config?.payment?.status === 'paid') {
+                  setSubmittedId(String(existingOrder?.id || pendingId));
+                  setOrderId(String(existingOrder?.id || pendingId));
+                  setTransactionId(
+                    String(
+                      existingOrder?.config?.payment?.transactionId || existingOrder?.config?.payment?.checkoutSessionId || ''
+                    )
+                  );
+                  setPaymentMessage('Payment successful. Your order is now marked as ship.');
+                  window.localStorage.removeItem('pendingOrderId');
+                  window.localStorage.removeItem('pendingCheckoutSessionId');
+                  window.localStorage.removeItem(CREATE_DRAFT_KEY);
+                  return;
+                }
+              } catch (e) {
+                // ignore and fall through to confirmation flow
+              }
+            }
+          } catch (e) {
+            // ignore and fall through to confirmation flow
+          }
+        }
+
+        // If verification didn't confirm payment yet, fall back to the existing confirm flow
+        completeOrderAfterPayment();
+      })();
+
       return;
     }
 
@@ -525,6 +575,34 @@ function CreatePageContent() {
       setPaymentMessage('Payment was cancelled. You can try again anytime.');
     }
   }, [paymentStatus]);
+
+  useEffect(() => {
+    if (step !== 6) return;
+    if (orderId) return;
+
+    (async () => {
+      try {
+        setCreatingOrder(true);
+        const payload = buildOrderPayload();
+        const createOrderResponse = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const createOrderResult = await createOrderResponse.json().catch(() => ({}));
+        if (createOrderResponse.ok && createOrderResult?.success && createOrderResult?.site?.id) {
+          const createdOrderId = String(createOrderResult.site.id);
+          setOrderId(createdOrderId);
+        }
+      } catch (e) {
+        // ignore order creation failures here; user can still proceed
+      } finally {
+        setCreatingOrder(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   const startPayMongoCheckout = async () => {
     if (submitting) return;
@@ -557,6 +635,9 @@ function CreatePageContent() {
           customerPhone: orderDetails.phone,
           preferredMethod: paymentMethod,
           orderId: createdOrderId,
+          flowType: 'create',
+          successPath: window.location.pathname + window.location.search,
+          cancelPath: window.location.pathname + window.location.search,
         }),
       });
 
@@ -1405,26 +1486,27 @@ function CreatePageContent() {
                         If you need changes to the design, shipping details, or want help choosing a product, you can go back and edit your order before checkout.
                       </p>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 items-start">
                       <button type="button" onClick={() => setStep(5)} className="rounded-full border border-[#0f172a]/20 px-5 py-2.5 text-sm font-semibold hover:bg-[#f8fafc]">← Back</button>
-                      <button
-                        type="button"
-                        disabled={!canProceedStep6 || submitting}
-                        onClick={startPayMongoCheckout}
-                        className={`${PRIMARY_BUTTON_CLASS} flex items-center gap-2 px-7 py-3 text-base`}
-                      >
-                        {submitting ? (
-                          <>
-                            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="white" strokeWidth="4" />
-                              <path className="opacity-75" fill="white" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                            </svg>
-                            Redirecting to PayMongo…
-                          </>
+                      <div className="flex-1">
+                        {creatingOrder ? (
+                          <div className="rounded-2xl border border-[#0f172a]/10 bg-white p-4 text-center text-sm text-slate-700">Preparing your order…</div>
                         ) : (
-                          <>Pay ₱{estimatedTotal} Securely</>
+                          <PayMongoButton
+                            amount={estimatedTotal}
+                            websiteName={personalization.websiteTitle || 'KeyStory Website Order'}
+                            customerName={orderDetails.fullName}
+                            customerEmail={orderDetails.email}
+                            customerPhone={orderDetails.phone}
+                            preferredMethod={paymentMethod}
+                            orderId={orderId || undefined}
+                            flowType="create"
+                            successPath="/create"
+                            cancelPath="/create"
+                            className="w-full"
+                          />
                         )}
-                      </button>
+                      </div>
                     </div>
                     {paymentMessage && (
                       <div className={`rounded-xl border px-4 py-3 text-sm font-semibold ${paymentStatus === 'cancelled' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-red-200 bg-red-50 text-red-700'}`}>

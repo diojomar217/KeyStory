@@ -1,4 +1,5 @@
 "use client";
+
 import dynamic from 'next/dynamic';
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -14,8 +15,8 @@ const PayMongoButton = dynamic(
 );
 
 interface ArchivedStateViewProps {
-  slug: string;
-  siteName?: string;
+  slug: string; // MUST be the real DB slug
+  siteName?: string; // display name / website_name
   expiresAt?: string;
   siteType?: string;
   status?: 'archived' | 'expired';
@@ -223,14 +224,17 @@ export default function ArchivedStateView({
   useEffect(() => {
     try {
       const payment = searchParams?.get?.('payment');
+      console.log('[ARCHIVED VIEW] payment param', payment, { slug });
+
       if (payment === 'success') {
+        console.log('[ARCHIVED VIEW] starting verify');
         setShowSuccessBanner(true);
         setVerifying(true);
 
-        // remove the query param so UI stays clean (replace state)
         const url = new URL(window.location.href);
         url.searchParams.delete('payment');
         url.searchParams.delete('orderId');
+        console.log('[ARCHIVED VIEW] cleaning url', url.pathname + url.search);
         router.replace(url.pathname + url.search);
 
         (async () => {
@@ -238,24 +242,35 @@ export default function ArchivedStateView({
             const res = await fetch('/api/paymongo/verify', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ slug }),
+              body: JSON.stringify({ websiteName: siteName || slug }),
             });
+
             const json = await res.json().catch(() => ({}));
+            console.log('[ARCHIVED VIEW] verify response', {
+              ok: res.ok,
+              status: res.status,
+              json,
+            });
+
             if (res.ok && json?.success) {
               setVerifyMessage('Payment successful — restoring your page now.');
-              // Give the user a moment to read the message, then navigate to the site
+
               setTimeout(() => {
                 try {
-                  router.replace(`/site/${slug}`);
-                } catch (e) {
+                  router.replace(`/site/${encodeURIComponent(siteName || slug)}`);
+                } catch {
                   // ignore navigation errors
                 }
               }, 900);
             } else {
-              setVerifyMessage('Payment recorded. Verifying on the server — this may take a few moments.');
+              setVerifyMessage(
+                'Payment recorded. Verifying on the server — this may take a few moments.'
+              );
             }
-          } catch (e) {
-            setVerifyMessage('Verification request failed. We will update your page when payment is processed.');
+          } catch {
+            setVerifyMessage(
+              'Verification request failed. We will update your page when payment is processed.'
+            );
           } finally {
             setVerifying(false);
           }
@@ -264,8 +279,7 @@ export default function ArchivedStateView({
     } catch {
       // ignore
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [router, searchParams, slug]);
 
   const title =
     status === 'archived'
@@ -281,7 +295,6 @@ export default function ArchivedStateView({
     <main className="min-h-screen bg-[linear-gradient(180deg,#fff7f8_0%,#fff1f2_35%,#ffffff_100%)] px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
         <div className="grid min-h-[calc(100vh-4rem)] items-start gap-6 lg:grid-cols-[1.08fr_0.92fr]">
-          {/* LEFT SIDE */}
           <section className="rounded-[30px] border border-white/70 bg-white/80 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur sm:p-8 lg:p-10">
             <div className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold tracking-wide text-rose-700">
               <span className="text-sm">❤️</span>
@@ -297,8 +310,19 @@ export default function ArchivedStateView({
                 <div className="flex items-center gap-3">
                   <CheckCircleIcon className="h-5 w-5 text-emerald-700" />
                   <div>
-                    <div className="font-semibold">{verifying ? 'Verifying payment…' : verifyMessage ? 'Payment successful' : 'Payment successful'}</div>
-                    <div className="text-sm">{verifying ? 'Please wait while we verify your payment on the server.' : verifyMessage || 'Thanks — your restore is being processed. If it does not appear shortly, contact support.'}</div>
+                    <div className="font-semibold">
+                      {verifying
+                        ? 'Verifying payment…'
+                        : verifyMessage
+                        ? 'Payment successful'
+                        : 'Payment successful'}
+                    </div>
+                    <div className="text-sm">
+                      {verifying
+                        ? 'Please wait while we verify your payment on the server.'
+                        : verifyMessage ||
+                          'Thanks — your restore is being processed. If it does not appear shortly, contact support.'}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -469,7 +493,6 @@ export default function ArchivedStateView({
             </div>
           </section>
 
-          {/* RIGHT SIDE */}
           <aside className="rounded-[30px] border border-slate-200 bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,0.10)] sm:p-5 lg:sticky lg:top-8">
             <div className="rounded-[24px] border border-slate-200 bg-slate-50/70 p-4">
               <div className="flex items-center justify-between gap-3">
@@ -509,16 +532,17 @@ export default function ArchivedStateView({
 
               <div className="mt-5">
                 <PayMongoButton
-  amount={49}
-  websiteName={siteName || slug}
-  customerName=""
-  customerEmail=""
-  className="w-full"
-    successPath={`/site/${slug}`}
-    cancelPath={`/site/${slug}`}
-    flowType="extension"
-    slug={slug}
-/>
+                  amount={49}
+                  websiteName={baseLabel}
+                  customerName=""
+                  customerEmail=""
+                  orderId={searchParams.get('orderId') ?? undefined}
+                  className="w-full"
+                  successPath={`/site/${encodeURIComponent(siteName || slug)}`}
+cancelPath={`/site/${encodeURIComponent(siteName || slug)}`}
+                  flowType="extension"
+                  slug={slug}
+                />
               </div>
 
               <p className="mt-4 text-center text-xs leading-5 text-slate-500">

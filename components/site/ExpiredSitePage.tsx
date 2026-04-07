@@ -5,28 +5,26 @@ type Props = {
   websiteName?: string;
   status: 'expired' | 'archived';
   expiresAt?: string;
-  slug: string;
+  siteSlug: string;
   siteType?: string;
 };
 
-export default async function ExpiredSitePage({ websiteName, status, expiresAt, slug, siteType }: Props) {
+export default async function ExpiredSitePage({
+  websiteName,
+  status,
+  expiresAt,
+  siteSlug,
+  siteType,
+}: Props) {
   const settings = await getBusinessContactSettings();
-
-  if (status === 'archived') {
-    return <ArchivedStateView slug={slug} siteName={websiteName} expiresAt={expiresAt} siteType={siteType} status="archived" settings={settings} />;
-  }
-
-  const expiresFormatted = expiresAt
-    ? new Date(expiresAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-    : 'Unknown';
 
   return (
     <ArchivedStateView
-      slug={slug}
+      slug={siteSlug}
       siteName={websiteName}
       expiresAt={expiresAt}
       siteType={siteType}
-      status="expired"
+      status={status}
       settings={settings}
     />
   );

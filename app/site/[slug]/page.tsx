@@ -113,7 +113,7 @@ export default async function LovePage({ params }: PageProps) {
     const ArchivedSitePage = (await import('@/components/site/ExpiredSitePage')).default;
     return (
       <ArchivedSitePage
-        slug={slug}
+        siteSlug={slug}
         websiteName={data.website_name || data.slug}
         status="archived"
         expiresAt={data.expires_at || undefined}

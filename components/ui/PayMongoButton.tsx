@@ -8,11 +8,11 @@ interface PayMongoButtonProps {
   customerPhone?: string;
   preferredMethod?: 'gcash' | 'card' | 'grab_pay';
   orderId?: string;
-  successPath?: string;
+  flowType: 'create' | 'extension';
+  slug?: string;
+  successPath: string;
   cancelPath?: string;
   className?: string;
-  flowType?: 'create' | 'extension';
-  slug?: string;
 }
 
 type PaymentMethod = 'gcash' | 'card' | 'grab_pay';
@@ -120,11 +120,11 @@ const PayMongoButton: React.FC<PayMongoButtonProps> = ({
   customerPhone = '',
   preferredMethod = 'gcash',
   orderId = '',
+  flowType = 'create',
+  slug,
   successPath,
   cancelPath,
   className = '',
-  flowType = 'create',
-  slug,
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -182,8 +182,18 @@ const PayMongoButton: React.FC<PayMongoButtonProps> = ({
 
     setLoading(true);
 
+    // Validate slug for extension flow early
+    if (flowType === 'extension' && (!slug || !String(slug).trim())) {
+      setError('Missing site identifier (slug) for extension payments.');
+      return;
+    }
+
     try {
-      // Debug: log outgoing checkout payload
+      // Resolve return paths (use provided, fall back to current location)
+      const resolvedSuccessPath =
+        successPath ?? (typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/');
+      const resolvedCancelPath = cancelPath ?? resolvedSuccessPath;
+
       const payload = {
         amount,
         websiteName,
@@ -192,21 +202,18 @@ const PayMongoButton: React.FC<PayMongoButtonProps> = ({
         customerPhone,
         preferredMethod: preferred,
         orderId,
-        successPath: successPath || undefined,
-        cancelPath: cancelPath || undefined,
         flowType,
-        ...(slug ? { slug } : {}),
-      };
+        slug: slug || undefined,
+        successPath: resolvedSuccessPath,
+        cancelPath: resolvedCancelPath,
+      } as const;
+
       try {
         console.log('[PAYMONGO/CLIENT] starting checkout', payload);
       } catch (e) {
         // ignore console errors in restricted envs
       }
-      if (flowType === 'extension' && (!slug || !String(slug).trim())) {
-        setError('Missing site identifier (slug) for extension payments.');
-        setLoading(false);
-        return;
-      }
+
       const res = await fetch('/api/paymongo/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -227,6 +234,80 @@ const PayMongoButton: React.FC<PayMongoButtonProps> = ({
         } catch {
           // ignore localStorage issues
         }
+
+        // Persist the PayMongo session id to the order/site so the verify endpoint
+        // (and webhook lookup) can reliably map sessions to records.
+        const sessionId = data.sessionId ?? data.session_id ?? data?.id ?? null;
+        (async () => {
+          try {
+            if (sessionId) {
+              // If we have an explicit orderId, update that record
+              if (orderId && String(orderId).trim()) {
+                try {
+                  const orderRes = await fetch(`/api/orders?id=${encodeURIComponent(String(orderId))}`);
+                  const orderJson = await orderRes.json().catch(() => ({}));
+                  const existingOrder = orderJson?.order || orderJson?.site || null;
+                  const existingConfig = (existingOrder?.config || {});
+                  const updatedConfig = {
+                    ...(existingConfig || {}),
+                    payment: {
+                      ...(existingConfig?.payment || {}),
+                      checkoutSessionId: sessionId,
+                      transactionId: sessionId,
+                      status: existingConfig?.payment?.status === 'paid' ? 'paid' : 'pending',
+                      lastSyncAt: new Date().toISOString(),
+                    },
+                  };
+
+                  await fetch('/api/orders', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: String(orderId), config: updatedConfig, status: existingOrder?.status || 'pending' }),
+                  });
+
+                  try { console.log('[PAYMONGO/CLIENT] persisted checkoutSessionId to order', { orderId: String(orderId), sessionId }); } catch(e) {}
+                } catch (e) {
+                  try { console.warn('[PAYMONGO/CLIENT] failed to persist session to order', e); } catch(e) {}
+                }
+              } else if (slug) {
+                // If we only have a slug (extension flow), try to look up site id by slug
+                try {
+                  const statusRes = await fetch(`/api/site/${encodeURIComponent(String(slug))}/status`);
+                  const statusJson = await statusRes.json().catch(() => ({}));
+                  if (statusJson?.success && statusJson?.exists && statusJson?.site_id) {
+                    const siteId = statusJson.site_id;
+                    const existingRes = await fetch(`/api/orders?id=${encodeURIComponent(String(siteId))}`);
+                    const existingJson = await existingRes.json().catch(() => ({}));
+                    const existingOrder = existingJson?.order || existingJson?.site || null;
+                    const existingConfig = (existingOrder?.config || {});
+                    const updatedConfig = {
+                      ...(existingConfig || {}),
+                      payment: {
+                        ...(existingConfig?.payment || {}),
+                        checkoutSessionId: sessionId,
+                        transactionId: sessionId,
+                        status: existingConfig?.payment?.status === 'paid' ? 'paid' : 'pending',
+                        lastSyncAt: new Date().toISOString(),
+                      },
+                    };
+
+                    await fetch('/api/orders', {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ id: String(siteId), config: updatedConfig, status: existingOrder?.status || 'pending' }),
+                    });
+
+                    try { console.log('[PAYMONGO/CLIENT] persisted checkoutSessionId to site by slug', { slug, siteId, sessionId }); } catch(e) {}
+                  }
+                } catch (e) {
+                  try { console.warn('[PAYMONGO/CLIENT] failed to persist session by slug', e); } catch(e) {}
+                }
+              }
+            }
+          } catch (err) {
+            try { console.warn('[PAYMONGO/CLIENT] failed to persist checkout session', err); } catch(e) {}
+          }
+        })();
 
         setCheckoutUrl(data.checkoutUrl);
         setInfo(
