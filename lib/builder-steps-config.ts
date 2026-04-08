@@ -89,8 +89,15 @@ export const validateHeroStep = (
 ): ValidationResult => {
   // Love message is only required if the Love Letter section is enabled
   const requiresMessage = config.sections?.includes('love_letter');
-  if (requiresMessage && !form.message?.trim()) {
-    return { valid: false, error: 'Love message is required' };
+  if (requiresMessage) {
+    const loveLetterContent = (
+      (config.section_content && (config.section_content as any).love_letter && (((config.section_content as any).love_letter.content) || ((config.section_content as any).love_letter.text))) ||
+      form.message ||
+      ''
+    ).toString().trim();
+    if (!loveLetterContent) {
+      return { valid: false, error: 'Love message is required' };
+    }
   }
 
   return { valid: true };
@@ -176,13 +183,7 @@ export const validateContentStep = (
     return { valid: false, error: 'Timeline section requires at least one event' };
   }
   
-  // Love Letter requires text content
-  if (sections.includes('love_letter') && sectionContent.love_letter) {
-    const loveLetterContent = sectionContent.love_letter.content || '';
-    if (!loveLetterContent.trim()) {
-      return { valid: false, error: 'Love Letter section requires content' };
-    }
-  }
+  // (Handled later) — prefer checking unified source (section_content OR top-level message)
   
   // Our Story requires text content
   if (sections.includes('our_story') && sectionContent.our_story) {
@@ -208,9 +209,17 @@ export const validateContentStep = (
     }
   }
   
-  // Love Letter requires hero message content (moved from step 2 into content)
-  if (sections.includes('love_letter') && !form.message?.trim()) {
-    return { valid: false, error: 'Love message is required when Love Letter section is selected' };
+  // Love Letter requires text content. Accept either the structured section content
+  // (`section_content.love_letter.content` or `.text`) or the legacy top-level `form.message`.
+  if (sections.includes('love_letter')) {
+    const loveLetterContent = (
+      (sectionContent.love_letter && (sectionContent.love_letter.content || sectionContent.love_letter.text)) ||
+      form.message ||
+      ''
+    ).toString().trim();
+    if (!loveLetterContent) {
+      return { valid: false, error: 'Love message is required when Love Letter section is selected' };
+    }
   }
 
   // Song requires song link (from section_content)
