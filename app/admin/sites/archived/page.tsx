@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Site } from '@/lib/supabase';
+import { isArchived } from '@/lib/site-status';
 import WebsitesTable from '@/components/admin/WebsitesTable';
 import EmptyState from '@/components/admin/EmptyState';
 import ConfirmDeleteModal from '@/components/admin/ConfirmDeleteModal';
@@ -26,9 +27,7 @@ export default function ArchivedSitesPage() {
       const res = await fetch('/api/orders?status=archived&limit=100&offset=0');
       if (!res.ok) throw new Error('Failed to load sites');
       const data = await res.json();
-      const archived = (data.orders || []).filter(
-        (site: Site) => (site.status || '').toLowerCase() === 'archived' || site.config?.archive?.archived === true,
-      );
+      const archived = (data.orders || []).filter((site: Site) => isArchived(site));
       setSites(archived);
     } catch (error) {
       console.error('Failed to fetch archived sites:', error);

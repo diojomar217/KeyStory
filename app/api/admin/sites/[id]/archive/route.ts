@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isAdminRequestAuthorized, unauthorizedAdminResponse } from '@/lib/api/admin-auth';
 import { getWebsiteByIdWithConfig } from '@/lib/db/websites';
 import { createArchiveForSite } from '@/lib/archiver';
+import { isArchived } from '@/lib/site-status';
 import { recordAdminAudit } from '@/lib/reliability/audit';
 import { captureError } from '@/lib/reliability/monitoring';
 
@@ -26,7 +27,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ success: false, message: 'Site not found' }, { status: 404 });
     }
 
-    if ((site.status || '').toLowerCase() === 'archived' || site.config?.archive?.archived === true) {
+    if (isArchived(site as any)) {
       return NextResponse.json({ success: true, message: 'Already archived' });
     }
 

@@ -56,26 +56,23 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const effectiveBase = existingExpires > now ? existingExpires : now;
     const nextExpires = addMonths(effectiveBase, durationMap[durationKey]);
 
+    const updatedConfig = {
+      ...(site.config || {}),
+      hosting: {
+        ...((site.config || {})?.hosting || {}),
+        lastRenewedAt: now.toISOString(),
+        lastRenewDuration: durationKey,
+        previousExpiresAt: site.expires_at || null,
+      },
+    };
+
     const { error: updateError } = await supabase
       .from('sites')
       .update({
         expires_at: nextExpires,
         status: 'active',
         archived_at: null,
-        config: {
-          ...(site.config || {}),
-          hosting: {
-            ...((site.config || {})?.hosting || {}),
-            lastRenewedAt: now.toISOString(),
-            lastRenewDuration: durationKey,
-            previousExpiresAt: site.expires_at || null,
-          },
-          archive: {
-            ...((site.config || {})?.archive || {}),
-            archived: false,
-            restoredAt: now.toISOString(),
-          },
-        },
+        config: updatedConfig,
       })
       .eq('id', id);
 
