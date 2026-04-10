@@ -188,8 +188,9 @@ export default function EditWebsitePage() {
   );
 
   const publishChecklist: ChecklistItem[] = useMemo(
-    () =>
-      buildPublishChecklist({
+    () => {
+      const effectiveTagline = (form.tagline && form.tagline.trim()) || (config.section_content?.home?.tagline && String(config.section_content.home.tagline)) || config.tagline || '';
+      return buildPublishChecklist({
         websiteName: form.website_name,
         participants: form.participants,
         specialDate: form.specialDate,
@@ -197,8 +198,9 @@ export default function EditWebsitePage() {
         sections: config.sections,
         templates: config.templates as Record<string, string | undefined>,
         message: form.message,
-        tagline: form.tagline,
-      }),
+        tagline: effectiveTagline,
+      });
+    },
     [form, config, photoPreviews.length]
   );
 

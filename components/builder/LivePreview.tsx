@@ -228,54 +228,6 @@ export default function LivePreview({
   const content = (
     <div className="h-full flex flex-col">
       {/* Device Toggle */}
-      <div className="flex items-center justify-center gap-2 px-3 py-2 border-b border-slate-200/50 bg-white/50 backdrop-blur-sm">
-        <button
-          onClick={() => setDevice("desktop")}
-          className={`p-2 rounded-lg transition-all ${
-            device === "desktop"
-              ? "bg-rose-100 text-rose-600"
-              : "text-slate-400 hover:bg-slate-100"
-          }`}
-          title="Desktop view"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-            />
-          </svg>
-        </button>
-        <button
-          onClick={() => setDevice("mobile")}
-          className={`p-2 rounded-lg transition-all ${
-            device === "mobile"
-              ? "bg-rose-100 text-rose-600"
-              : "text-slate-400 hover:bg-slate-100"
-          }`}
-          title="Mobile view"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
-            />
-          </svg>
-        </button>
-      </div>
 
       {/* Preview Content */}
       <div className="flex-1 overflow-y-auto p-3">
@@ -336,6 +288,54 @@ export default function LivePreview({
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                 <h3 className="font-semibold text-slate-800">Live Preview</h3>
+              </div>
+              <div className="flex items-center justify-center gap-2 px-3 py-2 border-b border-slate-200/50 bg-white/50 backdrop-blur-sm">
+                <button
+                  onClick={() => setDevice("desktop")}
+                  className={`p-2 rounded-lg transition-all ${
+                    device === "desktop"
+                      ? "bg-rose-100 text-rose-600"
+                      : "text-slate-400 hover:bg-slate-100"
+                  }`}
+                  title="Desktop view"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setDevice("mobile")}
+                  className={`p-2 rounded-lg transition-all ${
+                    device === "mobile"
+                      ? "bg-rose-100 text-rose-600"
+                      : "text-slate-400 hover:bg-slate-100"
+                  }`}
+                  title="Mobile view"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
+                    />
+                  </svg>
+                </button>
               </div>
               <span className="text-xs text-slate-400">
                 {sections.length} section{sections.length !== 1 ? "s" : ""}
