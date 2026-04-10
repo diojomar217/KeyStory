@@ -102,7 +102,10 @@ export default function GallerySection({ theme, template, photos, coverPhotoInde
               placeholder="blur"
               blurDataURL={blurPlaceholder}
               loading={idx < 2 ? 'eager' : 'lazy'}
-              priority={idx < 4}
+              // Ensure priority is only used for the very first images so it never
+              // conflicts with a lazy loading value. Using too many priority images
+              // can also hurt performance, so limit to first 1-2 images.
+              priority={idx < 2}
             />
             {/* Overlay on hover */}
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">

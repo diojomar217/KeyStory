@@ -11,7 +11,9 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60 * 60 * 24,
     deviceSizes: [360, 414, 640, 768, 1024, 1280, 1536, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    qualities: [75, 80],
+    // Include commonly used quality values. Cloudinary may produce images
+    // with q_auto that result in quality 86 — include it to avoid Next.js warnings.
+    qualities: [75, 80, 86],
     remotePatterns: [
       {
         protocol: 'https',
