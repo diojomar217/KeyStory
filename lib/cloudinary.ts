@@ -44,7 +44,7 @@ export async function uploadToCloudinary(dataUrl: string, options: CloudinaryUpl
   const stripMetadata = options.stripMetadata ?? true;
 
   const progressiveFlags = stripMetadata
-    ? 'progressive,strip_profile'
+    ? 'progressive'
     : 'progressive';
 
   const transformation: any[] = [{ width: maxWidth, crop }];

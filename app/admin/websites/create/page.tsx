@@ -597,7 +597,6 @@ export default function CreateWebsitePage() {
 
     setForm((prev) => ({ ...prev, photos: validImages }));
     setPhotoPreviews(newPreviews);
-
     analyzeImageQuality(validImages)
       .then((warnings) => setPhotoQualityWarnings(warnings.slice(0, 4)))
       .catch(() => setPhotoQualityWarnings([]));
@@ -1457,14 +1456,24 @@ export default function CreateWebsitePage() {
                 <SectionContentInputs
                   config={config}
                   onSectionContentChange={handleSectionContentChange}
+                    onRemovePhoto={(index: number) => {
+                      // Remove handler for Create flow: remove matching preview + file (do not persist blob URLs)
+                      setPhotoPreviews((prev) => {
+                        const next = prev.slice();
+                        const removed = next.splice(index, 1)[0];
+                        try { if (removed && removed.startsWith('blob:')) URL.revokeObjectURL(removed); } catch {}
+                        setForm((fPrev) => ({ ...fPrev, photos: (fPrev.photos || []).filter((_, i) => i !== index) }));
+                        return next;
+                      });
+                    }}
                   validationErrors={(() => {
                     const errors: Record<string, boolean> = {};
                     const { sections = [], section_content = {} } = config;
                     sections.forEach((key: string) => {
                       const meta = getSectionMetadata(key as import('@/lib/types').Section);
                       if (meta?.required) {
-                        // Gallery: must have at least 1 photo (use config.photos)
-                        if (key === 'gallery' && (!form.photos || !Array.isArray(form.photos) || form.photos.length === 0)) {
+                        // Gallery: must have at least 1 photo (check previews or any existing photos)
+                        if (key === 'gallery' && (photoPreviews.length === 0 && (!((form as any).existingPhotos) || (form as any).existingPhotos.length === 0))) {
                           errors[key] = true;
                         }
                         // Timeline: must have at least 1 event (use config.timeline_events)

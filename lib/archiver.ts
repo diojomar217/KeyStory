@@ -166,7 +166,7 @@ export async function restoreSiteFromArchive(site: Site): Promise<Site> {
         format: 'webp',
         transformation: [
           { width: 1920, crop: 'limit' },
-          { quality: 'auto:good', fetch_format: 'auto', flags: 'progressive,strip_profile' },
+          { quality: 'auto:good', fetch_format: 'auto', flags: 'progressive' },
         ],
       });
       restoredUrls.push(uploadRes.secure_url);

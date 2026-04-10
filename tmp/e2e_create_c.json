@@ -1,0 +1,14 @@
+{
+  "website_name": "e2e-create-legacy",
+  "occasion": "couple",
+  "customer_name": "Eve",
+  "partner_name": "Frank",
+  "specialDate": "2025-03-03",
+  "config": {
+    "section_content": {
+      "gallery": {
+        "photos": ["https://via.placeholder.com/150/ABCDEF/000000"]
+      }
+    }
+  }
+}

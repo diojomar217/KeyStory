@@ -174,14 +174,12 @@ export default async function LovePage({ params }: PageProps) {
   // Get section content (new feature for dynamic content)
   const sectionContent = (config.section_content as Record<string, unknown>) || undefined;
 
-  // Get photos - from config.media or fallback older fields
-  const rawPhotosCandidate = Array.isArray(config?.media?.photos)
+  // Get photos - prefer config.media.photos; fallback to section_content.gallery.photos for legacy
+  const rawPhotosCandidate = Array.isArray(config?.media?.photos) && config.media.photos.length > 0
     ? config.media.photos
-    : Array.isArray(data.photos)
-      ? data.photos
-      : Array.isArray(config.photos)
-        ? config.photos
-        : [];
+    : Array.isArray(config?.section_content?.gallery?.photos) && config.section_content.gallery.photos.length > 0
+      ? config.section_content.gallery.photos
+      : [];
 
   const photosRaw: string[] = Array.isArray(rawPhotosCandidate)
     ? rawPhotosCandidate.filter(

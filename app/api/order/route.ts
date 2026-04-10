@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, Site } from '@/lib/supabase';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import { normalizeAndUploadPhotos } from '@/lib/media';
 import { generateQRCode } from '@/lib/qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
@@ -22,14 +23,18 @@ const addMonths = (date: Date, months: number): string => {
 
 const DEFAULT_HOSTING_MONTHS = 6;
 
-const normalizeUniqueTextArray = (input: unknown[]): string[] => {
+const normalizeUniqueTextArray = (input: unknown[], _maxLen?: number): string[] => {
   const seen = new Set<string>();
   const result: string[] = [];
+
+  if (!Array.isArray(input)) return result;
 
   for (const item of input) {
     if (typeof item !== 'string') continue;
     const normalized = item.trim();
-    if (!normalized || seen.has(normalized)) continue;
+    if (!normalized) continue;
+    if (normalized.startsWith('blob:') || normalized.startsWith('file:')) continue;
+    if (seen.has(normalized)) continue;
     seen.add(normalized);
     result.push(normalized);
   }
@@ -196,40 +201,9 @@ export async function POST(req: NextRequest) {
     const website_name = cleanName ? await resolveUniqueWebsiteName(normalized) : slug;
 
     const MAX_SITE_IMAGES = 18;
-    // upload pictures (cost-controlled)
-    const photoUrls: string[] = [];
-    const photoUploadWarnings: string[] = [];
-    const seenPhotoInputs = new Set<string>();
-    let pendingPhotoUploads = 0;
-
-    if (Array.isArray(data.photos) && data.photos.length > 0) {
-      const photosToProcess = data.photos.slice(0, MAX_SITE_IMAGES);
-      for (const photo of photosToProcess) {
-        if (typeof photo === 'string' && !photo.trim()) continue;
-
-        if (typeof photo === 'string') {
-          const normalizedPhotoInput = photo.trim();
-          if (seenPhotoInputs.has(normalizedPhotoInput)) continue;
-          seenPhotoInputs.add(normalizedPhotoInput);
-        }
-
-        if (typeof photo === 'string' && photo.startsWith('data:')) {
-          try {
-            const url = await uploadToCloudinary(photo, { isHero: false });
-            photoUrls.push(url);
-          } catch (err: any) {
-            console.error('cloudinary upload error', err);
-            photoUploadWarnings.push(err?.message || 'Photo upload failed');
-            pendingPhotoUploads += 1;
-          }
-        } else if (typeof photo === 'string') {
-          photoUrls.push(photo);
-        }
-      }
-      if (data.photos.length > MAX_SITE_IMAGES) {
-        console.warn(`Image limit exceeded, only storing first ${MAX_SITE_IMAGES} photos`);
-      }
-    }
+    // upload / normalize photos (cost-controlled)
+    const { photos: photoUrls, warnings: photoUploadWarnings, pendingUploads: pendingPhotoUploads } =
+      await normalizeAndUploadPhotos(Array.isArray(data.photos) ? data.photos : [], { maxImages: MAX_SITE_IMAGES });
 
     const uniquePhotoUrls = normalizeUniqueTextArray(photoUrls);
 
@@ -322,6 +296,25 @@ export async function POST(req: NextRequest) {
         ...(heroCoverPhotoUrl ? { coverPhotoUrl: heroCoverPhotoUrl } : {}),
       },
     };
+
+    // Sanitize any gallery photo arrays in section_content to avoid persisting browser-local blob URLs
+    try {
+      // Persist canonical photos to `media.photos` only; remove legacy gallery.photos when we have canonical list
+      if (Array.isArray(uniquePhotoUrls) && uniquePhotoUrls.length > 0) {
+        if (siteConfig?.section_content?.gallery) {
+          const gallery = { ...(siteConfig.section_content.gallery || {}) } as any;
+          if (gallery && Object.prototype.hasOwnProperty.call(gallery, 'photos')) {
+            delete gallery.photos;
+            siteConfig.section_content = {
+              ...(siteConfig.section_content || {}),
+              gallery,
+            };
+          }
+        }
+      } else if (Array.isArray(siteConfig?.section_content?.gallery?.photos)) {
+        siteConfig.section_content.gallery.photos = normalizeUniqueTextArray(siteConfig.section_content.gallery.photos || [], 18);
+      }
+    } catch (err) {}
 
     const validation = validateAndNormalizeSiteConfig(siteConfig);
     if (validation.errors.length > 0) {

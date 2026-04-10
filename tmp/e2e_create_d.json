@@ -1,0 +1,15 @@
+{
+  "website_name": "e2e-create-hero-fallback",
+  "occasion": "couple",
+  "customer_name": "Gina",
+  "partner_name": "Hank",
+  "specialDate": "2025-04-04",
+  "photos": [
+    "https://via.placeholder.com/150/0000FF/808080",
+    "https://via.placeholder.com/150/FF0000/FFFFFF"
+  ],
+  "config": {
+    "hero": { "coverPhotoIndex": 5 },
+    "cover_photo_index": 0
+  }
+}

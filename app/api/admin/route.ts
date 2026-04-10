@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { createWebsite as insertSite, updateWebsite as updateSite, deleteWebsite as deleteSite, listWebsites as getSites, getWebsiteById as getSiteById } from '@/lib/db/websites';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import { normalizeAndUploadPhotos } from '@/lib/media';
 import { supabase, Site } from '@/lib/supabase';
 import { createHash } from 'crypto';
 import { getIdempotencyReplay, saveIdempotencyResult } from '@/lib/db/idempotency';
@@ -34,14 +35,19 @@ const invalidatePublicSiteCaches = (siteId?: string | null, slug?: string | null
   }
 };
 
-const normalizeUniqueTextArray = (input: unknown[]): string[] => {
+const normalizeUniqueTextArray = (input: unknown[], _maxLen?: number): string[] => {
   const seen = new Set<string>();
   const result: string[] = [];
+
+  if (!Array.isArray(input)) return result;
 
   for (const item of input) {
     if (typeof item !== 'string') continue;
     const normalized = item.trim();
-    if (!normalized || seen.has(normalized)) continue;
+    if (!normalized) continue;
+    // Skip browser-local object URLs which are not persistable server-side
+    if (normalized.startsWith('blob:') || normalized.startsWith('file:')) continue;
+    if (seen.has(normalized)) continue;
     seen.add(normalized);
     result.push(normalized);
   }
@@ -271,32 +277,8 @@ export async function PUT(req: NextRequest) {
         ? updates.config.media.photos
         : [];
 
-    const processedPhotos: string[] = [];
-    const photoUploadWarnings: string[] = [];
-    const seenPhotoInputs = new Set<string>();
-    let pendingPhotoUploads = 0;
-
-    for (const photo of inputPhotos) {
-      if (typeof photo === 'string') {
-        const normalizedPhotoInput = photo.trim();
-        if (!normalizedPhotoInput) continue;
-        if (seenPhotoInputs.has(normalizedPhotoInput)) continue;
-        seenPhotoInputs.add(normalizedPhotoInput);
-      }
-
-      if (typeof photo === 'string' && photo.startsWith('data:')) {
-        try {
-          const uploaded = await uploadToCloudinary(photo, { isHero: false });
-          processedPhotos.push(uploaded);
-        } catch (err: any) {
-          console.error('admin photo upload error', err);
-          photoUploadWarnings.push(err?.message || 'Photo upload failed');
-          pendingPhotoUploads += 1;
-        }
-      } else if (typeof photo === 'string' && photo.trim()) {
-        processedPhotos.push(photo);
-      }
-    }
+    const { photos: processedPhotos, warnings: photoUploadWarnings, pendingUploads: pendingPhotoUploads } =
+      await normalizeAndUploadPhotos(inputPhotos, { maxImages: 18 });
 
     const uniqueProcessedPhotos = normalizeUniqueTextArray(processedPhotos);
 
@@ -420,6 +402,33 @@ export async function PUT(req: NextRequest) {
             : undefined,
       },
     };
+
+    // Sanitize any gallery or media photo arrays to avoid persisting browser-local blob URLs
+    try {
+      if (Array.isArray(updateObj.config?.media?.photos)) {
+        updateObj.config.media.photos = normalizeUniqueTextArray(updateObj.config.media.photos || [], 18);
+      }
+    } catch (err) {}
+
+    try {
+      // We persist canonical photo URLs only to `config.media.photos`.
+      // Remove legacy `section_content.gallery.photos` when we have canonical photos to avoid duplication.
+      if (Array.isArray(uniqueProcessedPhotos) && uniqueProcessedPhotos.length > 0) {
+        if (updateObj.config?.section_content?.gallery) {
+          const gallery = { ...(updateObj.config.section_content.gallery || {}) } as any;
+          if (gallery && Object.prototype.hasOwnProperty.call(gallery, 'photos')) {
+            delete gallery.photos;
+            updateObj.config.section_content = {
+              ...(updateObj.config.section_content || {}),
+              gallery,
+            };
+          }
+        }
+      } else if (Array.isArray(updateObj.config?.section_content?.gallery?.photos)) {
+        // Sanitize any existing legacy gallery.photos (no blob/file URLs)
+        updateObj.config.section_content.gallery.photos = normalizeUniqueTextArray(updateObj.config.section_content.gallery.photos || [], 18);
+      }
+    } catch (err) {}
 
     const validation = validateAndNormalizeSiteConfig(updateObj.config);
     if (validation.errors.length > 0) {

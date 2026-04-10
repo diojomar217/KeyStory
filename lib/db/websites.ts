@@ -32,6 +32,20 @@ const stripUnsupportedLegacyColumns = <T extends Record<string, any>>(input: T):
   delete sanitized.anniversary_date;
   delete sanitized.song_link;
   delete sanitized.photos;
+  try {
+    if (
+      sanitized.config &&
+      sanitized.config.section_content &&
+      sanitized.config.section_content.gallery &&
+      Object.prototype.hasOwnProperty.call(sanitized.config.section_content.gallery, 'photos')
+    ) {
+      const gallery = { ...(sanitized.config.section_content.gallery || {}) } as any;
+      delete gallery.photos;
+      sanitized.config = { ...(sanitized.config || {}), section_content: { ...(sanitized.config.section_content || {}), gallery } };
+    }
+  } catch (err) {
+    // Non-fatal: if structure unexpected, leave as-is
+  }
   return sanitized;
 };
 

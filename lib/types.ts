@@ -400,6 +400,19 @@ export interface SiteAnalyticsEvent {
   created_at: string;
 }
 
+// Gallery UI + state helpers
+export interface GalleryPhotoItem {
+  id: string;
+  url: string; // remote URL or local object/data URL used for preview
+  file?: File | null; // optional File reference for new uploads
+  isExisting?: boolean; // true when this came from the server (existing remote URL)
+}
+
+export interface GalleryState {
+  photos: GalleryPhotoItem[];
+  removedExistingPhotos?: string[];
+}
+
 // Gift Item
 export interface GiftItem {
   id: string;

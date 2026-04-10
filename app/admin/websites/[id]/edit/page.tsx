@@ -670,23 +670,54 @@ export default function EditWebsitePage() {
       .then((warnings) => setPhotoQualityWarnings(warnings.slice(0, 4)))
       .catch(() => setPhotoQualityWarnings([]));
 
-    // Always keep gallery section_content in sync with all gallery images (existing + new)
-    setConfig((prev) => {
-      const allGallery = [
-        ...(form.existingPhotos || []),
-        ...newPreviews,
-      ];
-      return {
-        ...prev,
-        section_content: {
-          ...prev.section_content,
-          gallery: { photos: allGallery },
-        },
-      };
-    });
-
     if (config.cover_photo_index !== undefined && config.cover_photo_index >= validImages.length) {
       setConfig({ ...config, cover_photo_index: undefined });
+    }
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    const existingCount = (form.existingPhotos || []).length;
+    if (index < existingCount) {
+      // Removing an existing saved photo — update saved list only (do not persist previews)
+      const nextExisting = (form.existingPhotos || []).slice();
+      nextExisting.splice(index, 1);
+      setForm((prev) => ({ ...prev, existingPhotos: nextExisting }));
+      setConfig((prev) => ({
+        ...prev,
+        section_content: {
+          ...(prev.section_content || {}),
+          gallery: { photos: nextExisting },
+        },
+        media: {
+          ...(prev.media || {}),
+          photos: nextExisting,
+        },
+      }));
+    } else {
+      // Removing a newly added file preview
+      const newIndex = index - existingCount;
+      const removed = photoPreviews[newIndex];
+      try {
+        if (removed && removed.startsWith('blob:')) URL.revokeObjectURL(removed);
+      } catch {}
+      setPhotoPreviews((prev) => {
+        const next = prev.slice();
+        next.splice(newIndex, 1);
+        // Keep config.media.photos reflecting only existing remote URLs
+        setConfig((cPrev) => ({
+          ...cPrev,
+          section_content: {
+            ...(cPrev.section_content || {}),
+            gallery: { photos: [...(form.existingPhotos || [])] },
+          },
+          media: {
+            ...(cPrev.media || {}),
+            photos: [...(form.existingPhotos || [])],
+          },
+        }));
+        return next;
+      });
+      setForm((prev) => ({ ...prev, photos: (prev.photos || []).filter((_, i) => i !== newIndex) }));
     }
   };
 
@@ -1502,6 +1533,7 @@ export default function EditWebsitePage() {
                 <SectionContentInputs
                   config={config}
                   onSectionContentChange={(sectionKey: string, content: any) => handleSectionContentChange(sectionKey as keyof SectionContentMap, content)}
+                  onRemovePhoto={handleRemovePhoto}
                   validationErrors={(() => {
                     const errors: Record<string, boolean> = {};
                     const { sections = [], section_content = {} } = config;
