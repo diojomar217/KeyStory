@@ -902,6 +902,26 @@ export default function EditWebsitePage() {
         throw new Error(err?.message || 'Invalid expiration date');
       }
 
+      // Sync song/playlist settings from section content (playlist/song sections)
+      const songContent = (normalizedConfig.section_content as any)?.song;
+      const playlistContent = (normalizedConfig.section_content as any)?.playlist;
+      let effectiveSongLink = (form.song_link || '').trim();
+      let effectiveSongAutoplay = !!form.song_autoplay;
+
+      if (songContent) {
+        effectiveSongLink = (songContent.song_link || '').trim();
+        effectiveSongAutoplay = !!songContent.song_autoplay;
+      } else if (playlistContent) {
+        effectiveSongLink = ((playlistContent.playlistUrl as string) || (playlistContent.song_link as string) || '').trim();
+        effectiveSongAutoplay = !!(playlistContent.song_autoplay || (playlistContent as any).autoplay);
+      }
+
+      normalizedConfig.media = {
+        ...(normalizedConfig.media || {}),
+        song_link: effectiveSongLink,
+        song_autoplay: effectiveSongAutoplay,
+      };
+
       const payload = {
         id,
         website_name: form.website_name,
@@ -912,8 +932,8 @@ export default function EditWebsitePage() {
         specialDate: form.specialDate,
         message: form.message,
         tagline: form.tagline,
-        song_link: form.song_link,
-        song_autoplay: form.song_autoplay,
+        song_link: normalizedConfig.media?.song_link || '',
+        song_autoplay: !!normalizedConfig.media?.song_autoplay,
         photos: allPhotos,
         config: normalizedConfig,
         password_input: effectivePasswordInput,
@@ -1238,39 +1258,7 @@ export default function EditWebsitePage() {
                 />
               </div>
 
-              {/* Music Settings */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-700 mb-3.5">Music Settings (optional)</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                      Song Or Playlist Link
-                    </label>
-                    <input
-                      name="song_link"
-                      type="text"
-                      placeholder="Spotify or YouTube music link"
-                      value={form.song_link || ''}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
-                      onChange={handleChange}
-                    />
-                    <p className="text-xs text-slate-400 mt-1">
-                      Paste a Spotify or YouTube music link. The player will appear in the music section.
-                    </p>
-                  </div>
-
-                  <label className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-slate-600">Auto-play music when site loads</span>
-                    <input
-                      name="song_autoplay"
-                      type="checkbox"
-                      checked={form.song_autoplay || false}
-                      onChange={handleChange}
-                      className="h-4 w-4 text-rose-500 rounded"
-                    />
-                  </label>
-                </div>
-              </div>
+              {/* Music Settings removed — configure playlist and autoplay in Step 5 */}
 
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1.5">

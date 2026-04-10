@@ -398,9 +398,9 @@ export default function SectionContentInputs({
 							<div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
 								<div className="flex items-center gap-2 mb-2">
 									<span className="font-semibold text-slate-700">Song</span>
-									<span className="ml-2 text-xs font-medium bg-sky-100 text-sky-600 rounded-full px-2 py-0.5">Configured in Details</span>
+									<span className="ml-2 text-xs font-medium bg-sky-100 text-sky-600 rounded-full px-2 py-0.5">Configured in Playlist</span>
 								</div>
-								<div className="text-slate-600 text-sm mb-1">Song link and autoplay are configured in earlier steps (Music settings).</div>
+								<div className="text-slate-600 text-sm mb-1">Song link and autoplay are configured in the Playlist section (Step 5).</div>
 							</div>
 						);
 						break;

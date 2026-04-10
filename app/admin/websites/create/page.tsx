@@ -552,13 +552,20 @@ export default function CreateWebsitePage() {
   const handleConfigChange = (newConfig: Partial<SiteConfig>) => {
     setConfig((prev) => {
       const merged = { ...prev, ...newConfig };
-      // If section_content.song exists, sync to media
+      // If section_content.song or section_content.playlist exists, sync to media
       const songContent = merged.section_content?.song;
+      const playlistContent = merged.section_content?.playlist;
       if (songContent) {
         merged.media = {
-          ...(merged.media || {}),
+          ...(prev.media || {}),
           song_link: songContent.song_link || '',
           song_autoplay: !!songContent.song_autoplay,
+        };
+      } else if (playlistContent) {
+        merged.media = {
+          ...(prev.media || {}),
+          song_link: (playlistContent.playlistUrl as string) || (playlistContent.song_link as string) || '',
+          song_autoplay: !!(playlistContent.song_autoplay || (playlistContent as any).autoplay),
         };
       }
       return merged;
@@ -1135,39 +1142,7 @@ export default function CreateWebsitePage() {
                 />
               </div>
 
-              {/* Music Settings */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-700 mb-3.5">Music Settings (optional)</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                      Song Or Playlist Link
-                    </label>
-                    <input
-                      name="song_link"
-                      type="text"
-                      placeholder="Spotify or YouTube music link"
-                      value={form.song_link || ''}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
-                      onChange={handleChange}
-                    />
-                    <p className="text-xs text-slate-400 mt-1">
-                      Paste a Spotify or YouTube music link. The player will appear in the music section.
-                    </p>
-                  </div>
-
-                  <label className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-slate-600">Auto-play music when site loads</span>
-                    <input
-                      name="song_autoplay"
-                      type="checkbox"
-                      checked={form.song_autoplay || false}
-                      onChange={handleChange}
-                      className="h-4 w-4 text-rose-500 rounded"
-                    />
-                  </label>
-                </div>
-              </div>
+              {/* Music Settings removed — configure playlist and autoplay in Step 5 */}
 
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1.5">
