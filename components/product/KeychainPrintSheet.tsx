@@ -37,52 +37,66 @@ interface KeychainPrintSheetProps {
   };
 }
 
-function PairCropMarks({ show, showCenterMarks = true }: { show: boolean; showCenterMarks?: boolean }) {
+function PairCropMarks({
+  show,
+  showCenterMarks = true,
+}: {
+  show: boolean;
+  showCenterMarks?: boolean;
+}) {
   if (!show) return null;
+
+  const isPrint =
+    typeof window !== 'undefined' ? window.matchMedia('print').matches : false;
+
+  const THICKNESS = isPrint ? '0.1mm' : '1px';
+  const LENGTH = isPrint ? '1.6mm' : '7px';
 
   const mark = {
     position: 'absolute' as const,
-    backgroundColor: '#222',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     zIndex: 20,
     pointerEvents: 'none' as const,
   };
 
+  const centerOffset = isPrint ? '0.05mm' : '0.5px';
+
   return (
     <>
-      <div style={{ ...mark, top: 0, left: 0, width: '2mm', height: '0.25mm' }} />
-      <div style={{ ...mark, top: 0, left: 0, width: '0.25mm', height: '2mm' }} />
+      <div style={{ ...mark, top: 0, left: 0, width: LENGTH, height: THICKNESS }} />
+      <div style={{ ...mark, top: 0, left: 0, width: THICKNESS, height: LENGTH }} />
 
-      <div style={{ ...mark, top: 0, right: 0, width: '2mm', height: '0.25mm' }} />
-      <div style={{ ...mark, top: 0, right: 0, width: '0.25mm', height: '2mm' }} />
+      <div style={{ ...mark, top: 0, right: 0, width: LENGTH, height: THICKNESS }} />
+      <div style={{ ...mark, top: 0, right: 0, width: THICKNESS, height: LENGTH }} />
 
-      <div style={{ ...mark, bottom: 0, left: 0, width: '2mm', height: '0.25mm' }} />
-      <div style={{ ...mark, bottom: 0, left: 0, width: '0.25mm', height: '2mm' }} />
+      <div style={{ ...mark, bottom: 0, left: 0, width: LENGTH, height: THICKNESS }} />
+      <div style={{ ...mark, bottom: 0, left: 0, width: THICKNESS, height: LENGTH }} />
 
-      <div style={{ ...mark, bottom: 0, right: 0, width: '2mm', height: '0.25mm' }} />
-      <div style={{ ...mark, bottom: 0, right: 0, width: '0.25mm', height: '2mm' }} />
+      <div style={{ ...mark, bottom: 0, right: 0, width: LENGTH, height: THICKNESS }} />
+      <div style={{ ...mark, bottom: 0, right: 0, width: THICKNESS, height: LENGTH }} />
 
-      {showCenterMarks ? (
+      {showCenterMarks && (
         <>
           <div
             style={{
               ...mark,
               top: 0,
-              left: 'calc(50% - 0.125mm)',
-              width: '0.25mm',
-              height: '2.2mm',
+              left: `calc(50% - ${centerOffset})`,
+              width: THICKNESS,
+              height: isPrint ? '1.8mm' : '7px',
             }}
           />
           <div
             style={{
               ...mark,
               bottom: 0,
-              left: 'calc(50% - 0.125mm)',
-              width: '0.25mm',
-              height: '2.2mm',
+              left: `calc(50% - ${centerOffset})`,
+              width: THICKNESS,
+              height: isPrint ? '1.8mm' : '7px',
             }}
           />
         </>
-      ) : null}
+      )}
     </>
   );
 }
