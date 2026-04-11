@@ -23,7 +23,7 @@ export type CreateWebsiteInput = Omit<Site, 'id'>;
 export type UpdateWebsiteInput = Partial<Site> & { id: string };
 
 const stripUnsupportedLegacyColumns = <T extends Record<string, any>>(input: T): T => {
-  const sanitized = { ...input };
+  const sanitized = { ...input } as any;
   delete sanitized.customer_name;
   delete sanitized.partner_name;
   delete sanitized.specialDate;
