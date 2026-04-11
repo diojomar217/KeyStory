@@ -57,9 +57,13 @@ export default function KeychainInsertPhoto({
 
   const nameFontSize =
     shape === 'heart'
-      ? Math.max(7, Math.min(10, widthMm * 0.16))
-      : Math.max(7, Math.min(10.5, widthMm * 0.19));
-  const subtitleFontSize = Math.max(5.8, Math.min(8.4, widthMm * 0.12));
+      ? Math.max(6.6, Math.min(8.4, widthMm * 0.13))
+      : Math.max(7.1, Math.min(9.5, widthMm * 0.17));
+
+  const subtitleFontSize =
+    shape === 'heart'
+      ? Math.max(5.1, Math.min(6.4, widthMm * 0.1))
+      : Math.max(5.2, Math.min(7, widthMm * 0.106));
 
   const renderEngravedFace = () => (
     <div
@@ -71,7 +75,7 @@ export default function KeychainInsertPhoto({
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
-        padding: printMode ? '1.6mm' : '8%',
+        padding: printMode ? '1.4mm' : '8%',
         background:
           'linear-gradient(145deg, #fbfaf8 0%, #e7ded2 30%, #b9ad9d 55%, #f7f3ed 100%)',
         color: '#2f261f',
@@ -80,17 +84,17 @@ export default function KeychainInsertPhoto({
     >
       <div
         style={{
-          width: '72%',
+          width: '70%',
           height: '1px',
           background: 'rgba(82, 65, 48, 0.35)',
-          marginBottom: printMode ? '1.2mm' : '10%',
+          marginBottom: printMode ? '1mm' : '9%',
         }}
       />
       <p
         className="font-semibold"
         style={{
           fontFamily: 'Georgia, "Times New Roman", serif',
-          fontSize: `${Math.max(nameFontSize, 8.5)}px`,
+          fontSize: `${Math.max(nameFontSize, 8)}px`,
           lineHeight: 1.12,
           letterSpacing: '0.08em',
           margin: 0,
@@ -105,9 +109,9 @@ export default function KeychainInsertPhoto({
           style={{
             fontFamily: 'Georgia, "Times New Roman", serif',
             fontSize: `${subtitleFontSize}px`,
-            lineHeight: 1.25,
+            lineHeight: 1.2,
             letterSpacing: '0.04em',
-            margin: printMode ? '1mm 0 0' : '8% 0 0',
+            margin: printMode ? '0.9mm 0 0' : '8% 0 0',
             opacity: 0.85,
             wordBreak: 'break-word',
           }}
@@ -117,10 +121,10 @@ export default function KeychainInsertPhoto({
       ) : null}
       <div
         style={{
-          width: '54%',
+          width: '52%',
           height: '1px',
           background: 'rgba(82, 65, 48, 0.35)',
-          marginTop: printMode ? '1.2mm' : '10%',
+          marginTop: printMode ? '1mm' : '9%',
         }}
       />
     </div>
@@ -131,7 +135,7 @@ export default function KeychainInsertPhoto({
       width: dimensions.width,
       height: dimensions.height,
       backgroundColor: '#ffffff',
-      border: showGuides && !printMode ? '2px dashed rgba(0,0,0,0.5)' : 'none',
+      border: showGuides && !printMode ? '2px dashed rgba(0,0,0,0.45)' : 'none',
       boxShadow: 'none',
       display: 'flex',
       alignItems: 'center',
@@ -141,78 +145,93 @@ export default function KeychainInsertPhoto({
       clipPath: getHeartClipPath(),
     };
 
-    const heartInnerStyle: CSSProperties = {
+    const heartPaperStyle: CSSProperties = {
       width: '100%',
       height: '100%',
-      backgroundColor: '#fffefb',
+      background: '#fffaf5',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'flex-start',
-      padding: '6px 4px',
+      padding: printMode ? '1.1mm 0.9mm 1.3mm' : '7% 5% 8%',
       boxSizing: 'border-box',
       overflow: 'hidden',
     };
 
+    const heartPhotoFrameStyle: CSSProperties = {
+      position: 'relative',
+      width: '72%',
+      flex: 1,
+      minHeight: 0,
+      backgroundColor: '#f3f0ea',
+      border: 'none',
+      overflow: 'hidden',
+      borderRadius: 0,
+      boxShadow: 'none',
+    };
+
+    const heartCaptionStyle: CSSProperties = {
+      width: '78%',
+      textAlign: 'center',
+      marginTop: printMode ? '0.8mm' : '6%',
+      paddingTop: printMode ? '0.35mm' : '2%',
+      boxSizing: 'border-box',
+    };
+
     return (
       <div style={heartContainerStyle}>
-        <div style={heartInnerStyle}>
-          {coupleNames && (
-            <div
-              style={{
-                width: '70%',
-                textAlign: 'center',
-                marginBottom: '4px',
-                padding: '2px 4px',
-                boxSizing: 'border-box',
-                flexShrink: 0,
-              }}
-            >
+        <div style={heartPaperStyle}>
+          <div style={heartPhotoFrameStyle}>
+            {variant === 'engraved' ? (
+              renderEngravedFace()
+            ) : coverPhotoUrl ? (
+              <Image
+                src={coverPhotoUrl}
+                alt="Cover photo"
+                fill
+                className="object-cover"
+                style={imageStyle}
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center">
+                <span className="text-xs text-slate-400">No Photo</span>
+              </div>
+            )}
+          </div>
+
+          {coupleNames && variant !== 'engraved' && (
+            <div style={heartCaptionStyle}>
               <p
-                className="text-slate-900 font-semibold"
                 style={{
                   fontFamily: 'Georgia, "Times New Roman", serif',
-                  letterSpacing: '0.04em',
+                  letterSpacing: '0.02em',
                   fontSize: `${nameFontSize}px`,
-                  lineHeight: 1.1,
+                  lineHeight: 1.06,
                   margin: 0,
+                  color: '#1f2937',
                   textShadow: printMode ? 'none' : '0 1px 0 rgba(255,255,255,0.65)',
                   wordBreak: 'break-word',
                 }}
               >
                 {coupleNames}
               </p>
+              {subtitle ? (
+                <p
+                  style={{
+                    fontFamily: 'Georgia, "Times New Roman", serif',
+                    fontSize: `${subtitleFontSize}px`,
+                    lineHeight: 1.1,
+                    margin: printMode ? '0.45mm 0 0' : '4% 0 0',
+                    color: '#667085',
+                    opacity: 0.94,
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  {subtitle}
+                </p>
+              ) : null}
             </div>
           )}
-
-          <div
-            className="relative flex-shrink-0 overflow-hidden"
-            style={{
-              flex: 1,
-              width: '70%',
-              backgroundColor: '#f3f2f0',
-              overflow: 'hidden',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 0,
-            }}
-          >
-            {variant === 'engraved' ? renderEngravedFace() : coverPhotoUrl ? (
-              <Image
-                src={coverPhotoUrl}
-                alt="Couple Cover Photo"
-                fill
-                className="object-cover"
-                style={imageStyle}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <span className="text-slate-400 text-xs">No Photo</span>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     );
@@ -233,44 +252,77 @@ export default function KeychainInsertPhoto({
   const polaroidStyle: CSSProperties = {
     width: '100%',
     height: '100%',
-    backgroundColor: '#fffefb',
-    border: printMode ? 'none' : '1px solid #e7ddd2',
+    backgroundColor: '#fffaf5',
+    border: 'none',
+    borderRadius: 0,
     boxSizing: 'border-box',
     display: 'grid',
-    gridTemplateRows: '1fr auto',
+    gridTemplateRows: variant === 'engraved' ? '1fr' : '69% 31%',
     overflow: 'hidden',
-    paddingTop: printMode ? '1mm' : '4%',
-    paddingLeft: printMode ? '1mm' : '4%',
-    paddingRight: printMode ? '1mm' : '4%',
-    paddingBottom: printMode ? '1.4mm' : '6%',
-    rowGap: printMode ? '0.8mm' : 0,
+    paddingTop: printMode ? '0.8mm' : '3.4%',
+    paddingLeft: printMode ? '0.8mm' : '4.2%',
+    paddingRight: printMode ? '0.8mm' : '4.2%',
+    paddingBottom: printMode ? '1.8mm' : '10%',
+    rowGap: printMode ? '0.45mm' : '4%',
+    boxShadow: 'none',
   };
 
   const photoFrameStyle: CSSProperties = {
     position: 'relative',
     width: '100%',
     minHeight: 0,
-    backgroundColor: '#f3f2f0',
-    border: '1px solid #ddd2c6',
+    backgroundColor: '#f3f0ea',
+    border: 'none',
     overflow: 'hidden',
+    borderRadius: 0,
+    boxShadow: 'none',
   };
 
-  const nameWrapStyle: CSSProperties = {
+  const captionWrapStyle: CSSProperties = {
     width: '100%',
     textAlign: 'center',
-    paddingTop: printMode ? '0.2mm' : '6%',
-    paddingLeft: printMode ? '0.6mm' : '4%',
-    paddingRight: printMode ? '0.6mm' : '4%',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: printMode ? '0.1mm' : '1.5%',
+    paddingLeft: printMode ? '0.4mm' : '4%',
+    paddingRight: printMode ? '0.4mm' : '4%',
     paddingBottom: 0,
-    backgroundColor: '#fffefb',
+    backgroundColor: '#fffaf5',
     boxSizing: 'border-box',
+  };
+
+  const nameStyle: CSSProperties = {
+    fontFamily: 'Georgia, "Times New Roman", serif',
+    letterSpacing: '0.02em',
+    fontSize: `${nameFontSize}px`,
+    lineHeight: 1.05,
+    margin: 0,
+    color: '#1f2937',
+    textShadow: printMode ? 'none' : '0 1px 0 rgba(255,255,255,0.65)',
+    wordBreak: 'break-word',
+    overflowWrap: 'break-word',
+  };
+
+  const subtitleStyle: CSSProperties = {
+    fontFamily: 'Georgia, "Times New Roman", serif',
+    fontSize: `${subtitleFontSize}px`,
+    lineHeight: 1.08,
+    margin: printMode ? '0.35mm 0 0' : '3.5% 0 0',
+    color: '#667085',
+    opacity: 0.94,
+    wordBreak: 'break-word',
+    overflowWrap: 'break-word',
   };
 
   return (
     <div style={containerStyle}>
       <div style={polaroidStyle}>
         <div style={photoFrameStyle}>
-          {variant === 'engraved' ? renderEngravedFace() : coverPhotoUrl ? (
+          {variant === 'engraved' ? (
+            renderEngravedFace()
+          ) : coverPhotoUrl ? (
             <Image
               src={coverPhotoUrl}
               alt="Couple Cover Photo"
@@ -279,28 +331,16 @@ export default function KeychainInsertPhoto({
               style={imageStyle}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <span className="text-slate-400 text-xs">No Photo</span>
+            <div className="flex h-full w-full items-center justify-center">
+              <span className="text-xs text-slate-400">No Photo</span>
             </div>
           )}
         </div>
 
         {coupleNames && variant !== 'engraved' && (
-          <div style={nameWrapStyle}>
-            <p
-              className="text-slate-900 font-semibold"
-              style={{
-                fontFamily: 'Georgia, "Times New Roman", serif',
-                letterSpacing: '0.03em',
-                fontSize: `${nameFontSize}px`,
-                lineHeight: 1.12,
-                margin: 0,
-                textShadow: printMode ? 'none' : '0 1px 0 rgba(255,255,255,0.65)',
-                wordBreak: 'break-word',
-              }}
-            >
-              {coupleNames}
-            </p>
+          <div style={captionWrapStyle}>
+            <p style={nameStyle}>{coupleNames}</p>
+            {subtitle ? <p style={subtitleStyle}>{subtitle}</p> : null}
           </div>
         )}
       </div>

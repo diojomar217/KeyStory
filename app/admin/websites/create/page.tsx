@@ -278,8 +278,9 @@ export default function CreateWebsitePage() {
   );
 
   const publishChecklist: ChecklistItem[] = useMemo(
-    () =>
-      buildPublishChecklist({
+    () => {
+      const effectiveTagline = (form.tagline && form.tagline.trim()) || (config.section_content?.home?.tagline && String(config.section_content.home.tagline)) || config.tagline || '';
+      return buildPublishChecklist({
         websiteName: form.website_name,
         participants: form.participants,
         specialDate: form.specialDate,
@@ -287,8 +288,9 @@ export default function CreateWebsitePage() {
         sections: config.sections,
         templates: config.templates as Record<string, string | undefined>,
         message: form.message,
-        tagline: form.tagline,
-      }),
+        tagline: effectiveTagline,
+      });
+    },
     [form, config]
   );
   useEffect(() => {
@@ -418,7 +420,8 @@ export default function CreateWebsitePage() {
       }
     }, [crop, zoom, croppedAreaPixels, heroPhotoPreview]);
   const [slugSanitized, setSlugSanitized] = useState(false);
-  const [explicitSubmit, setExplicitSubmit] = useState(false);
+  const [slugCheckState, setSlugCheckState] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
+  const [slugCheckMessage, setSlugCheckMessage] = useState('');
   const [passwordEnabled, setPasswordEnabled] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
@@ -453,6 +456,54 @@ export default function CreateWebsitePage() {
       }
     }
   }, [form.website_name, slugSanitized]);
+
+  const generateRandomSlug = () => {
+    const base = sanitizeSlug(form.website_name || 'site') || 'site';
+    const suffix = Math.floor(1000 + Math.random() * 9000).toString();
+    const candidate = `${base}-${suffix}`;
+    setForm((prev) => ({ ...prev, website_name: candidate }));
+    setSlugSanitized(true);
+    setSlugCheckState('checking');
+    setSlugCheckMessage('Checking availability...');
+  };
+
+  useEffect(() => {
+    const slug = (form.website_name || '').trim();
+    if (!slug) {
+      setSlugCheckState('idle');
+      setSlugCheckMessage('');
+      return;
+    }
+
+    if (!/^[a-z0-9-]+$/.test(slug)) {
+      setSlugCheckState('taken');
+      setSlugCheckMessage('Use lowercase letters, numbers, and hyphen only.');
+      return;
+    }
+
+    const timer = window.setTimeout(async () => {
+      try {
+        setSlugCheckState('checking');
+        setSlugCheckMessage('Checking availability...');
+        const response = await fetch(`/api/qrcode/verify?slug=${encodeURIComponent(slug)}`);
+        const result = await response.json();
+        if (!response.ok || !result?.success) throw new Error('Unable to validate slug');
+
+        if (result.exists) {
+          setSlugCheckState('taken');
+          setSlugCheckMessage('This slug is already in use. You can auto-generate a unique one.');
+        } else {
+          setSlugCheckState('available');
+          setSlugCheckMessage('Slug is available.');
+        }
+      } catch {
+        setSlugCheckState('idle');
+        setSlugCheckMessage('Could not validate slug right now.');
+      }
+    }, 400);
+
+    return () => window.clearTimeout(timer as unknown as number);
+  }, [form.website_name]);
 
   useEffect(() => {
     return () => {
@@ -552,13 +603,20 @@ export default function CreateWebsitePage() {
   const handleConfigChange = (newConfig: Partial<SiteConfig>) => {
     setConfig((prev) => {
       const merged = { ...prev, ...newConfig };
-      // If section_content.song exists, sync to media
+      // If section_content.song or section_content.playlist exists, sync to media
       const songContent = merged.section_content?.song;
+      const playlistContent = merged.section_content?.playlist;
       if (songContent) {
         merged.media = {
-          ...(merged.media || {}),
+          ...(prev.media || {}),
           song_link: songContent.song_link || '',
           song_autoplay: !!songContent.song_autoplay,
+        };
+      } else if (playlistContent) {
+        merged.media = {
+          ...(prev.media || {}),
+          song_link: (playlistContent.playlistUrl as string) || (playlistContent.song_link as string) || '',
+          song_autoplay: !!(playlistContent.song_autoplay || (playlistContent as any).autoplay),
         };
       }
       return merged;
@@ -597,7 +655,6 @@ export default function CreateWebsitePage() {
 
     setForm((prev) => ({ ...prev, photos: validImages }));
     setPhotoPreviews(newPreviews);
-
     analyzeImageQuality(validImages)
       .then((warnings) => setPhotoQualityWarnings(warnings.slice(0, 4)))
       .catch(() => setPhotoQualityWarnings([]));
@@ -845,14 +902,12 @@ export default function CreateWebsitePage() {
   };
 
   const handleSubmit = async () => {
-    if (!explicitSubmit) return;
 
     for (let step = 1; step <= TOTAL_STEPS; step++) {
       const validation = validateStep(step, form, config);
       if (!validation.valid) {
         setError(validation.error || 'Please complete all required content');
         setCurrentStep(step);
-        setExplicitSubmit(false);
         return;
       }
     }
@@ -970,7 +1025,6 @@ export default function CreateWebsitePage() {
       setError(err.message || 'Failed to save order. Please try again.');
     } finally {
       setLoading(false);
-      setExplicitSubmit(false);
     }
   };
 
@@ -1025,6 +1079,20 @@ export default function CreateWebsitePage() {
                 <p className="text-xs text-slate-400 mt-1">
                   Only letters, numbers, and hyphens allowed
                 </p>
+                <div className="mt-2 flex items-center gap-3">
+                  <p className={`text-xs ${slugCheckState === 'taken' ? 'text-rose-600' : slugCheckState === 'available' ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {slugCheckMessage || ''}
+                  </p>
+                  {slugCheckState === 'taken' && (
+                    <button
+                      type="button"
+                      onClick={generateRandomSlug}
+                      className="px-2 py-1 rounded-md text-xs bg-rose-50 border border-rose-200 text-rose-700"
+                    >
+                      Generate random slug
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -1136,39 +1204,7 @@ export default function CreateWebsitePage() {
                 />
               </div>
 
-              {/* Music Settings */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-700 mb-3.5">Music Settings (optional)</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                      Song Or Playlist Link
-                    </label>
-                    <input
-                      name="song_link"
-                      type="text"
-                      placeholder="Spotify or YouTube music link"
-                      value={form.song_link || ''}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
-                      onChange={handleChange}
-                    />
-                    <p className="text-xs text-slate-400 mt-1">
-                      Paste a Spotify or YouTube music link. The player will appear in the music section.
-                    </p>
-                  </div>
-
-                  <label className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-slate-600">Auto-play music when site loads</span>
-                    <input
-                      name="song_autoplay"
-                      type="checkbox"
-                      checked={form.song_autoplay || false}
-                      onChange={handleChange}
-                      className="h-4 w-4 text-rose-500 rounded"
-                    />
-                  </label>
-                </div>
-              </div>
+              {/* Music Settings removed — configure playlist and autoplay in Step 5 */}
 
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1.5">
@@ -1457,14 +1493,24 @@ export default function CreateWebsitePage() {
                 <SectionContentInputs
                   config={config}
                   onSectionContentChange={handleSectionContentChange}
+                    onRemovePhoto={(index: number) => {
+                      // Remove handler for Create flow: remove matching preview + file (do not persist blob URLs)
+                      setPhotoPreviews((prev) => {
+                        const next = prev.slice();
+                        const removed = next.splice(index, 1)[0];
+                        try { if (removed && removed.startsWith('blob:')) URL.revokeObjectURL(removed); } catch {}
+                        setForm((fPrev) => ({ ...fPrev, photos: (fPrev.photos || []).filter((_, i) => i !== index) }));
+                        return next;
+                      });
+                    }}
                   validationErrors={(() => {
                     const errors: Record<string, boolean> = {};
                     const { sections = [], section_content = {} } = config;
                     sections.forEach((key: string) => {
                       const meta = getSectionMetadata(key as import('@/lib/types').Section);
                       if (meta?.required) {
-                        // Gallery: must have at least 1 photo (use config.photos)
-                        if (key === 'gallery' && (!form.photos || !Array.isArray(form.photos) || form.photos.length === 0)) {
+                        // Gallery: must have at least 1 photo (check previews or any existing photos)
+                        if (key === 'gallery' && (photoPreviews.length === 0 && (!((form as any).existingPhotos) || (form as any).existingPhotos.length === 0))) {
                           errors[key] = true;
                         }
                         // Timeline: must have at least 1 event (use config.timeline_events)
@@ -2016,10 +2062,7 @@ export default function CreateWebsitePage() {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => {
-                        setExplicitSubmit(true);
-                        handleSubmit();
-                      }}
+                      onClick={handleSubmit}
                       className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
                       disabled={loading || reviewBlocked}
                       title={reviewBlocked && reviewBlockReasons.length > 0 ? reviewBlockReasons.join('\n') : undefined}

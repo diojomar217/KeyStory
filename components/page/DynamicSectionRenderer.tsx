@@ -155,7 +155,13 @@ const buildProps = (section: Section, props: DynamicSectionRendererProps): Recor
     anniversaryDate: props.anniversaryDate || config.specialDate || '',
     message: props.message || config.message || '',
     tagline: props.tagline || config.tagline,
-    photos: props.photos || config.media?.photos || [],
+    photos: (() => {
+      if (Array.isArray(props.photos) && props.photos.length > 0) return props.photos;
+      if (Array.isArray(config?.media?.photos) && config.media.photos.length > 0) return config.media.photos;
+      if (Array.isArray(config?.section_content?.gallery?.photos) && config.section_content.gallery.photos.length > 0) return config.section_content.gallery.photos;
+      if (Array.isArray((config as any)?.photos) && (config as any).photos.length > 0) return (config as any).photos;
+      return [];
+    })(),
     coverPhotoIndex: props.coverPhotoIndex ?? config.cover_photo_index,
     songLink: props.songLink || (config as any).song_link,
     song_link: (config as any).song_link,

@@ -102,7 +102,7 @@ export default function KeychainInsertPreview({
               qrScale={qrScale}
               qrDesign={qrDesign}
               printMode={false}
-              showGuides={true}
+              showGuides={false}
             />
           </div>
         </div>
@@ -123,7 +123,7 @@ export default function KeychainInsertPreview({
                 subtitle={backSideSubtitle}
                 scale={2}
                 printMode={false}
-                showGuides={true}
+                showGuides={false}
                 photoTransform={photoTransform}
               />
             </div>

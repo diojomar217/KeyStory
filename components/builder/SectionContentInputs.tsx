@@ -27,6 +27,7 @@ type SectionContentInputsProps = {
 	photoPreviews?: string[];
 	// Gallery photo props
 	handlePhotos?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+	onRemovePhoto?: (index: number) => void;
 };
 import { SECTION_CONFIG } from '../../config/sectionConfig';
 
@@ -61,6 +62,7 @@ export default function SectionContentInputs({
 	handleRemoveHeroPhoto,
 	photoPreviews,
 	handlePhotos,
+	onRemovePhoto,
 }: SectionContentInputsProps) {
 	const { sections = [], section_content = {} } = config || {};
 	const siteType = config?.occasion || 'couple';
@@ -92,10 +94,24 @@ export default function SectionContentInputs({
 				       if (key === 'home') {
 					       isComplete = Boolean(config.tagline && config.tagline.trim()) || (config.hero && typeof config.hero.coverPhotoIndex === 'number');
 					       label = isComplete ? 'Filled' : (isRequired ? 'Missing' : 'Empty');
-				       } else if (key === 'gallery') {
-					       const count = Array.isArray(photoPreviews) ? photoPreviews.length : 0;
-					       isComplete = count > 0;
-					       label = count > 0 ? `${count} photo${count > 1 ? 's' : ''}` : (isRequired ? 'Missing' : 'Empty');
+					} else if (key === 'gallery') {
+						// Build gallery array for editor UI by combining saved remote URLs
+						// (from section_content or config.media) with local previews. Do NOT
+						// persist blob/object URLs back into config here — previews are transient.
+						let galleryArr: string[] = [];
+						if (Array.isArray(section_content?.gallery?.photos)) {
+							galleryArr = section_content.gallery.photos.slice();
+						} else if (Array.isArray((config as any)?.media?.photos)) {
+							galleryArr = (config as any).media.photos.slice();
+						} else {
+							galleryArr = [];
+						}
+						if (Array.isArray(photoPreviews) && photoPreviews.length > 0) {
+							galleryArr = [...galleryArr, ...photoPreviews];
+						}
+						const count = Array.isArray(galleryArr) ? galleryArr.length : 0;
+						isComplete = count > 0;
+						label = count > 0 ? `${count} photo${count > 1 ? 's' : ''}` : (isRequired ? 'Missing' : 'Empty');
 					       } else if (key === 'timeline') {
 						       const count = Array.isArray(config.section_content?.timeline) ? config.section_content.timeline.length : 0;
 						       isComplete = count > 0;
@@ -301,14 +317,38 @@ export default function SectionContentInputs({
 										onChange={handlePhotos}
 									/>
 									<div className="text-xs text-slate-500 mt-2">Gallery images are auto-optimized (1600px max, auto format/quality) for fast site loading.</div>
-									{photoPreviews && photoPreviews.length > 0 && (
-										<div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-2">
-											{photoPreviews.map((preview, index) => (
-												<img key={index} src={preview} alt={`Gallery preview ${index + 1}`} className="w-full h-16 object-cover rounded" />
-											))}
-										</div>
-									)}
-									<div className="text-xs text-rose-500 mt-2 font-medium">Gallery section requires at least one photo</div>
+
+									{(() => {
+										const galleryArr = Array.isArray(section_content?.gallery?.photos)
+											? section_content.gallery.photos
+											: Array.isArray((config as any)?.media?.photos)
+												? (config as any).media.photos
+												: Array.isArray(photoPreviews)
+													? photoPreviews
+													: [];
+										if (galleryArr.length > 0) {
+											return (
+												<div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-2">
+													{galleryArr.map((preview: string, index: number) => (
+														<div key={index} className="relative rounded overflow-hidden">
+															<img src={preview} alt={`Gallery preview ${index + 1}`} className="w-full h-16 object-cover rounded" />
+															<button
+																type="button"
+																onClick={() => onRemovePhoto && onRemovePhoto(index)}
+																className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 text-[10px]"
+															>
+																Remove
+															</button>
+														</div>
+													))}
+												</div>
+											);
+										}
+										if (validationErrors && validationErrors['gallery']) {
+											return <div className="text-xs text-rose-500 mt-2 font-medium">Gallery section requires at least one photo</div>;
+										}
+										return null;
+									})()}
 								</div>
 							</div>
 						);
@@ -358,9 +398,9 @@ export default function SectionContentInputs({
 							<div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
 								<div className="flex items-center gap-2 mb-2">
 									<span className="font-semibold text-slate-700">Song</span>
-									<span className="ml-2 text-xs font-medium bg-sky-100 text-sky-600 rounded-full px-2 py-0.5">Configured in Details</span>
+									<span className="ml-2 text-xs font-medium bg-sky-100 text-sky-600 rounded-full px-2 py-0.5">Configured in Playlist</span>
 								</div>
-								<div className="text-slate-600 text-sm mb-1">Song link and autoplay are configured in earlier steps (Music settings).</div>
+								<div className="text-slate-600 text-sm mb-1">Song link and autoplay are configured in the Playlist section (Step 5).</div>
 							</div>
 						);
 						break;

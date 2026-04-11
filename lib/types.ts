@@ -400,6 +400,19 @@ export interface SiteAnalyticsEvent {
   created_at: string;
 }
 
+// Gallery UI + state helpers
+export interface GalleryPhotoItem {
+  id: string;
+  url: string; // remote URL or local object/data URL used for preview
+  file?: File | null; // optional File reference for new uploads
+  isExisting?: boolean; // true when this came from the server (existing remote URL)
+}
+
+export interface GalleryState {
+  photos: GalleryPhotoItem[];
+  removedExistingPhotos?: string[];
+}
+
 // Gift Item
 export interface GiftItem {
   id: string;
@@ -421,6 +434,11 @@ export interface RelationshipStats {
 // ============================================
 
 export interface SectionContentMap {
+  home?: {
+    tagline?: string;
+    coverPhotoUrl?: string;
+    coverPhotoIndex?: number;
+  };
   love_letter?: {
     text?: string;
     content?: string;
@@ -430,6 +448,9 @@ export interface SectionContentMap {
     content?: string;
   };
   timeline?: TimelineEvent[];
+  gallery?: {
+    photos: string[];
+  };
   first_date?: {
     content?: string;
     title?: string;
@@ -472,6 +493,10 @@ export interface SectionContentMap {
   playlist?: {
     playlistUrl: string;
     title: string;
+    // Backwards-compatible fields: some saved configs use `song_link` or `song_autoplay` on playlist
+    song_link?: string;
+    song_autoplay?: boolean;
+    autoplay?: boolean;
   };
   video_memories?: {
     videos: VideoMemory[];

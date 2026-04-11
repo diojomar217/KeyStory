@@ -1,0 +1,14 @@
+{
+  "website_name": "e2e-create-blob",
+  "occasion": "couple",
+  "customer_name": "Carol",
+  "partner_name": "Dan",
+  "specialDate": "2025-02-02",
+  "photos": [
+    "blob:fake-preview-12345",
+    "https://via.placeholder.com/150/00FF00/000000"
+  ],
+  "config": {
+    "hero": { "coverPhotoIndex": 0 }
+  }
+}

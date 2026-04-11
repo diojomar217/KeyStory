@@ -1,0 +1,14 @@
+{
+  "website_name": "e2e-create-remote",
+  "occasion": "couple",
+  "customer_name": "Alice",
+  "partner_name": "Bob",
+  "specialDate": "2025-01-01",
+  "photos": [
+    "https://via.placeholder.com/150/0000FF/808080",
+    "https://via.placeholder.com/150/FF0000/FFFFFF"
+  ],
+  "config": {
+    "hero": { "coverPhotoIndex": 1 }
+  }
+}

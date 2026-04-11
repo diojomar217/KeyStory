@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAdminRequestAuthorized, unauthorizedAdminResponse } from '@/lib/api/admin-auth';
 import { getWebsiteByIdWithConfig } from '@/lib/db/websites';
+import { isArchived } from '@/lib/site-status';
 import { restoreSiteFromArchive } from '@/lib/archiver';
 import { supabase } from '@/lib/supabase';
 import { recordAdminAudit } from '@/lib/reliability/audit';
@@ -27,8 +28,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ success: false, message: 'Site not found' }, { status: 404 });
     }
 
-    const isStatusArchived = (site.status || '').toLowerCase() === 'archived';
-    const hasArchiveMetadata = Boolean(site.config?.archive?.archivePath || site.config?.archive?.archived);
+    const isStatusArchived = isArchived(site as any);
+    // Only treat legacy archive metadata as a read-only source for the archive package path.
+    const hasArchiveMetadata = Boolean(site.config?.archive?.archivePath);
 
     if (!isStatusArchived) {
       return NextResponse.json({ success: false, message: 'Site is not archived' }, { status: 400 });
@@ -45,14 +47,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           status: 'active',
           archived_at: null,
           expires_at: newExpires.toISOString(),
-          config: {
-            ...site.config,
-            archive: {
-              ...(site.config?.archive || {}),
-              archived: false,
-              reason: 'restored-without-archive-metadata',
-            },
-          },
         })
         .eq('id', id)
         .select()

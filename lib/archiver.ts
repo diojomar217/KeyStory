@@ -120,15 +120,13 @@ export async function createArchiveForSite(site: Site): Promise<{ archivePath: s
     archivedAt: new Date().toISOString(),
   };
 
+  // Persist top-level archive markers only. Do NOT write into `config.archive` (legacy).
+  const archivedAtIso = new Date().toISOString();
   const { error } = await supabase
     .from('sites')
     .update({
       status: 'archived',
-      archived_at: new Date().toISOString(),
-      config: {
-        ...siteConfig,
-        archive: archiveInfo,
-      },
+      archived_at: archivedAtIso,
     })
     .eq('id', site.id);
 
@@ -139,9 +137,9 @@ export async function createArchiveForSite(site: Site): Promise<{ archivePath: s
 
 export async function restoreSiteFromArchive(site: Site): Promise<Site> {
   if (!site.id) throw new Error('Site id is required to restore');
-  if (!site.config?.archive?.archivePath) throw new Error('Missing archive path');
-
-  const archivePath = site.config.archive.archivePath;
+  // Try to find the archive path from legacy config (fallback only)
+  const archivePath = site.config?.archive?.archivePath;
+  if (!archivePath) throw new Error('Missing archive path');
   const buffer = await downloadArchivePackage(archivePath);
   if (!buffer) throw new Error('Archive file not found');
 
@@ -168,7 +166,7 @@ export async function restoreSiteFromArchive(site: Site): Promise<Site> {
         format: 'webp',
         transformation: [
           { width: 1920, crop: 'limit' },
-          { quality: 'auto:good', fetch_format: 'auto', flags: 'progressive,strip_profile' },
+          { quality: 'auto:good', fetch_format: 'auto', flags: 'progressive' },
         ],
       });
       restoredUrls.push(uploadRes.secure_url);
@@ -177,19 +175,23 @@ export async function restoreSiteFromArchive(site: Site): Promise<Site> {
     }
   }
 
-  // Rebuild config media references
-  const newConfig = {
+  // Rebuild config media references but DO NOT mutate or write into `config.archive`.
+  const existingConfig = site.config || {};
+  const mergedConfig: any = {
+    ...existingConfig,
     ...archivedConfig,
     media: {
-      ...archivedConfig.media,
+      ...((existingConfig && (existingConfig as any).media) || {}),
       photos: restoredUrls,
     },
-    archive: {
-      ...site.config.archive,
-      archived: false,
-      restoredAt: new Date().toISOString(),
-    },
   };
+
+  // Preserve any existing `config.archive` value without modifying it. Do not persist archivedConfig.archive.
+  if (existingConfig && Object.prototype.hasOwnProperty.call(existingConfig, 'archive')) {
+    mergedConfig.archive = existingConfig.archive;
+  } else {
+    if ('archive' in mergedConfig) delete mergedConfig.archive;
+  }
 
   const newExpiresAt = new Date();
   newExpiresAt.setMonth(newExpiresAt.getMonth() + 6);
@@ -200,7 +202,7 @@ export async function restoreSiteFromArchive(site: Site): Promise<Site> {
       status: 'active',
       expires_at: newExpiresAt.toISOString(),
       archived_at: null,
-      config: newConfig,
+      config: mergedConfig,
     })
     .eq('id', site.id)
     .select()

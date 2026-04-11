@@ -109,7 +109,11 @@ home: {
       anniversaryDate: config.anniversaryDate || config.specialDate || '',
       message: config.message,
       tagline: config.tagline,
-      photos: config.photos || [],
+      photos: Array.isArray(config?.media?.photos) && config.media.photos.length > 0
+        ? config.media.photos
+        : Array.isArray(config?.section_content?.gallery?.photos) && config.section_content.gallery.photos.length > 0
+          ? config.section_content.gallery.photos
+          : config.photos || [],
       coverPhotoIndex: config.coverPhotoIndex,
     }),
   },
@@ -119,7 +123,11 @@ home: {
     getProps: (config) => ({
       theme: config.theme,
       template: config.section_templates?.gallery || config.gallery_template || 'grid',
-      photos: config.photos || [],
+      photos: Array.isArray(config?.media?.photos) && config.media.photos.length > 0
+        ? config.media.photos
+        : Array.isArray(config?.section_content?.gallery?.photos) && config.section_content.gallery.photos.length > 0
+          ? config.section_content.gallery.photos
+          : config.photos || [],
       coverPhotoIndex: config.coverPhotoIndex,
     }),
   },
@@ -187,7 +195,11 @@ home: {
     component: PolaroidGallerySection,
     getProps: (config) => ({
       theme: config.theme,
-      photos: config.photos || [],
+      photos: Array.isArray(config?.media?.photos) && config.media.photos.length > 0
+        ? config.media.photos
+        : Array.isArray(config?.section_content?.gallery?.photos) && config.section_content.gallery.photos.length > 0
+          ? config.section_content.gallery.photos
+          : config.photos || [],
     }),
   },
   
@@ -405,7 +417,11 @@ home: {
     getProps: (config) => ({
       theme: config.theme,
       template: config.section_templates?.photo_highlights || config.section_templates?.gallery || config.gallery_template || 'grid',
-      photos: config.photos || [],
+      photos: Array.isArray(config?.media?.photos) && config.media.photos.length > 0
+        ? config.media.photos
+        : Array.isArray(config?.section_content?.gallery?.photos) && config.section_content.gallery.photos.length > 0
+          ? config.section_content.gallery.photos
+          : config.photos || [],
       coverPhotoIndex: config.coverPhotoIndex,
     }),
   },

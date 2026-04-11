@@ -434,6 +434,15 @@ export function PlaylistInput({ value, onChange }: PlaylistInputProps) {
           className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
         />
       </div>
+      <label className="flex items-center justify-between gap-3">
+        <span className="text-sm text-slate-600">Auto-play music when site loads</span>
+        <input
+          type="checkbox"
+          checked={Boolean((value as any)?.song_autoplay)}
+          onChange={(e) => onChange({ playlistUrl: value?.playlistUrl || '', title: value?.title || '', song_autoplay: e.target.checked })}
+          className="h-4 w-4 text-rose-500 rounded"
+        />
+      </label>
     </div>
   );
 }

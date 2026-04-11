@@ -79,19 +79,15 @@ function CropMarks({
 
   return (
     <>
-      {/* Top Left */}
       <div style={{ ...common, top: 0, left: 0, width: length, height: thickness }} />
       <div style={{ ...common, top: 0, left: 0, width: thickness, height: length }} />
 
-      {/* Top Right */}
       <div style={{ ...common, top: 0, right: 0, width: length, height: thickness }} />
       <div style={{ ...common, top: 0, right: 0, width: thickness, height: length }} />
 
-      {/* Bottom Left */}
       <div style={{ ...common, bottom: 0, left: 0, width: length, height: thickness }} />
       <div style={{ ...common, bottom: 0, left: 0, width: thickness, height: length }} />
 
-      {/* Bottom Right */}
       <div style={{ ...common, bottom: 0, right: 0, width: length, height: thickness }} />
       <div style={{ ...common, bottom: 0, right: 0, width: thickness, height: length }} />
     </>
@@ -123,16 +119,16 @@ export default function KeychainInsertQR({
   const heightPx = Number(dimensions.height.replace('px', ''));
 
   const safeAreaScale = getSafeAreaScale(shape);
-  const clampedScale = Math.max(0.9, Math.min(1.1, qrScale ?? 1));
+  const clampedScale = Math.max(0.85, Math.min(1.15, qrScale ?? 1));
   const shouldUseStyledQr = isClient && !!qrDataUrl;
 
-  const defaultCaptionFont = Math.max(7, Math.min(10.5, widthMm * 0.19));
-  const heartCaptionFont = Math.max(6, Math.min(8, widthMm * 0.14));
+  const defaultCaptionFont = Math.max(7.2, Math.min(10.6, widthMm * 0.2));
+  const heartCaptionFont = Math.max(6.2, Math.min(8.2, widthMm * 0.145));
 
   const qrSize =
     shape === 'heart'
-      ? Math.min(widthPx, heightPx) * safeAreaScale * 0.55 * clampedScale
-      : Math.min(widthPx * 0.68, heightPx * 0.48) * clampedScale;
+      ? Math.min(widthPx, heightPx) * safeAreaScale * 0.56 * clampedScale
+      : Math.min(widthPx * 0.72, heightPx * 0.5) * clampedScale;
 
   useEffect(() => {
     if (!shouldUseStyledQr || !qrRef.current) return;
@@ -205,7 +201,13 @@ export default function KeychainInsertQR({
 
     if (qrCodeUrl) {
       return (
-        <div className="relative bg-white" style={{ width: qrSize, height: qrSize }}>
+        <div
+          className="relative bg-white"
+          style={{
+            width: qrSize,
+            height: qrSize,
+          }}
+        >
           <img
             src={qrCodeUrl}
             alt="QR Code"
@@ -251,7 +253,7 @@ export default function KeychainInsertQR({
       position: 'absolute',
       inset: 0,
       clipPath: HEART_CLIP_PATH,
-      backgroundColor: '#fffefb',
+      backgroundColor: '#fffaf5',
       border: printMode ? 'none' : '1px solid #e8d7c5',
       boxShadow: printMode ? 'none' : '0 10px 24px rgba(0,0,0,0.08)',
       overflow: 'hidden',
@@ -270,10 +272,10 @@ export default function KeychainInsertQR({
 
     const heartCaptionWrapStyle: CSSProperties = {
       position: 'absolute',
-      top: '14%',
+      top: '13%',
       left: '50%',
       transform: 'translateX(-50%)',
-      width: '56%',
+      width: '58%',
       textAlign: 'center',
       padding: '2px 4px',
     };
@@ -281,7 +283,7 @@ export default function KeychainInsertQR({
     const heartQrWrapStyle: CSSProperties = {
       position: 'absolute',
       left: '50%',
-      top: '52%',
+      top: '55%',
       transform: 'translate(-50%, -50%)',
       width: `${qrSize}px`,
       height: `${qrSize}px`,
@@ -306,9 +308,9 @@ export default function KeychainInsertQR({
                 className="text-slate-900 font-semibold"
                 style={{
                   fontFamily: 'Georgia, "Times New Roman", serif',
-                  letterSpacing: '0.03em',
+                  letterSpacing: '0.02em',
                   fontSize: `${heartCaptionFont}px`,
-                  lineHeight: 1.15,
+                  lineHeight: 1.1,
                   margin: 0,
                   color: '#1f2937',
                   textShadow: printMode ? 'none' : '0 1px 0 rgba(255,255,255,0.7)',
@@ -341,28 +343,31 @@ export default function KeychainInsertQR({
   const polaroidStyle: CSSProperties = {
     width: '100%',
     height: '100%',
-    backgroundColor: '#fffefb',
-    border: printMode ? 'none' : '1px solid #e7ddd2',
+    backgroundColor: '#fffaf5',
+    border: printMode ? 'none' : '1px solid #e8ddd2',
+    borderRadius: 0,
     boxSizing: 'border-box',
     display: 'grid',
-    gridTemplateRows: '1fr auto',
+    gridTemplateRows: '69% 31%',
     overflow: 'hidden',
-    paddingTop: printMode ? '1mm' : '4%',
-    paddingLeft: printMode ? '1mm' : '4%',
-    paddingRight: printMode ? '1mm' : '4%',
-    paddingBottom: printMode ? '1.4mm' : '6%',
-    rowGap: printMode ? '0.8mm' : 0,
+    paddingTop: printMode ? '0.8mm' : '3.4%',
+    paddingLeft: printMode ? '0.8mm' : '4.2%',
+    paddingRight: printMode ? '0.8mm' : '4.2%',
+    paddingBottom: printMode ? '1.8mm' : '10%',
+    rowGap: printMode ? '0.45mm' : '4%',
+    boxShadow: printMode ? 'none' : '0 8px 18px rgba(15, 23, 42, 0.08)',
   };
 
   const qrFrameStyle: CSSProperties = {
     width: '100%',
     minHeight: 0,
     backgroundColor: '#ffffff',
-    border: '1px solid #ddd2c6',
+    border: 'none',
+    borderRadius: 0,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: printMode ? '0.8mm' : '3%',
+    padding: printMode ? '0.55mm' : '3.2%',
     boxSizing: 'border-box',
     overflow: 'hidden',
   };
@@ -370,11 +375,14 @@ export default function KeychainInsertQR({
   const captionWrapStyle: CSSProperties = {
     width: '100%',
     textAlign: 'center',
-    paddingTop: printMode ? '0.2mm' : '6%',
-    paddingLeft: printMode ? '0.6mm' : '4%',
-    paddingRight: printMode ? '0.6mm' : '4%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: printMode ? '0.15mm' : '2%',
+    paddingLeft: printMode ? '0.45mm' : '4%',
+    paddingRight: printMode ? '0.45mm' : '4%',
     paddingBottom: 0,
-    backgroundColor: '#fffefb',
+    backgroundColor: '#fffaf5',
     boxSizing: 'border-box',
   };
 
@@ -390,12 +398,14 @@ export default function KeychainInsertQR({
               className="text-slate-900 font-semibold"
               style={{
                 fontFamily: 'Georgia, "Times New Roman", serif',
-                letterSpacing: '0.03em',
+                letterSpacing: '0.02em',
                 fontSize: `${defaultCaptionFont}px`,
-                lineHeight: 1.12,
+                lineHeight: 1.08,
                 margin: 0,
+                color: '#1f2937',
                 textShadow: printMode ? 'none' : '0 1px 0 rgba(255,255,255,0.65)',
                 wordBreak: 'break-word',
+                overflowWrap: 'break-word',
               }}
             >
               {caption}

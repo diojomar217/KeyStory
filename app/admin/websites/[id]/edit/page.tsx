@@ -75,6 +75,15 @@ const isMaskedPasswordPlaceholder = (value?: string): boolean => {
   return normalized.length > 0 && /^[*•]+$/.test(normalized);
 };
 
+const sanitizeSlug = (value: string): string => {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+};
+
 export default function EditWebsitePage() {
         const MAX_IMAGE_UPLOAD_BYTES = 12 * 1024 * 1024; // 12 MB
 
@@ -187,9 +196,13 @@ export default function EditWebsitePage() {
     [form.participants]
   );
 
+  const [slugCheckState, setSlugCheckState] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
+  const [slugCheckMessage, setSlugCheckMessage] = useState('');
+
   const publishChecklist: ChecklistItem[] = useMemo(
-    () =>
-      buildPublishChecklist({
+    () => {
+      const effectiveTagline = (form.tagline && form.tagline.trim()) || (config.section_content?.home?.tagline && String(config.section_content.home.tagline)) || config.tagline || '';
+      return buildPublishChecklist({
         websiteName: form.website_name,
         participants: form.participants,
         specialDate: form.specialDate,
@@ -197,8 +210,9 @@ export default function EditWebsitePage() {
         sections: config.sections,
         templates: config.templates as Record<string, string | undefined>,
         message: form.message,
-        tagline: form.tagline,
-      }),
+        tagline: effectiveTagline,
+      });
+    },
     [form, config, photoPreviews.length]
   );
 
@@ -584,6 +598,58 @@ export default function EditWebsitePage() {
     handleChange(e as any);
   };
 
+  const generateRandomSlug = () => {
+    const base = sanitizeSlug(form.website_name || 'site') || 'site';
+    const suffix = Math.floor(1000 + Math.random() * 9000).toString();
+    const candidate = `${base}-${suffix}`;
+    setForm((prev) => ({ ...prev, website_name: candidate }));
+    setSlugCheckState('checking');
+    setSlugCheckMessage('Checking availability...');
+  };
+
+  useEffect(() => {
+    const slug = (form.website_name || '').trim();
+    if (!slug) {
+      setSlugCheckState('idle');
+      setSlugCheckMessage('');
+      return;
+    }
+
+    if (!/^[a-z0-9-]+$/.test(slug)) {
+      setSlugCheckState('taken');
+      setSlugCheckMessage('Use lowercase letters, numbers, and hyphen only.');
+      return;
+    }
+
+    const timer = window.setTimeout(async () => {
+      try {
+        setSlugCheckState('checking');
+        setSlugCheckMessage('Checking availability...');
+        const response = await fetch(`/api/qrcode/verify?slug=${encodeURIComponent(slug)}`);
+        const result = await response.json();
+        if (!response.ok || !result?.success) throw new Error('Unable to validate slug');
+
+        if (result.exists) {
+          if (String(result.site_id) === String(id)) {
+            setSlugCheckState('available');
+            setSlugCheckMessage('This is the current slug for this site.');
+          } else {
+            setSlugCheckState('taken');
+            setSlugCheckMessage('This slug is already used by another website.');
+          }
+        } else {
+          setSlugCheckState('available');
+          setSlugCheckMessage('Slug is available.');
+        }
+      } catch {
+        setSlugCheckState('idle');
+        setSlugCheckMessage('Could not validate slug right now.');
+      }
+    }, 400);
+
+    return () => window.clearTimeout(timer as unknown as number);
+  }, [form.website_name, id]);
+
 
   const handleConfigChange = (newConfig: Partial<SiteConfig>) => {
     setConfig((prev) => {
@@ -670,23 +736,54 @@ export default function EditWebsitePage() {
       .then((warnings) => setPhotoQualityWarnings(warnings.slice(0, 4)))
       .catch(() => setPhotoQualityWarnings([]));
 
-    // Always keep gallery section_content in sync with all gallery images (existing + new)
-    setConfig((prev) => {
-      const allGallery = [
-        ...(form.existingPhotos || []),
-        ...newPreviews,
-      ];
-      return {
-        ...prev,
-        section_content: {
-          ...prev.section_content,
-          gallery: { photos: allGallery },
-        },
-      };
-    });
-
     if (config.cover_photo_index !== undefined && config.cover_photo_index >= validImages.length) {
       setConfig({ ...config, cover_photo_index: undefined });
+    }
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    const existingCount = (form.existingPhotos || []).length;
+    if (index < existingCount) {
+      // Removing an existing saved photo — update saved list only (do not persist previews)
+      const nextExisting = (form.existingPhotos || []).slice();
+      nextExisting.splice(index, 1);
+      setForm((prev) => ({ ...prev, existingPhotos: nextExisting }));
+      setConfig((prev) => ({
+        ...prev,
+        section_content: {
+          ...(prev.section_content || {}),
+          gallery: { photos: nextExisting },
+        },
+        media: {
+          ...(prev.media || {}),
+          photos: nextExisting,
+        },
+      }));
+    } else {
+      // Removing a newly added file preview
+      const newIndex = index - existingCount;
+      const removed = photoPreviews[newIndex];
+      try {
+        if (removed && removed.startsWith('blob:')) URL.revokeObjectURL(removed);
+      } catch {}
+      setPhotoPreviews((prev) => {
+        const next = prev.slice();
+        next.splice(newIndex, 1);
+        // Keep config.media.photos reflecting only existing remote URLs
+        setConfig((cPrev) => ({
+          ...cPrev,
+          section_content: {
+            ...(cPrev.section_content || {}),
+            gallery: { photos: [...(form.existingPhotos || [])] },
+          },
+          media: {
+            ...(cPrev.media || {}),
+            photos: [...(form.existingPhotos || [])],
+          },
+        }));
+        return next;
+      });
+      setForm((prev) => ({ ...prev, photos: (prev.photos || []).filter((_, i) => i !== newIndex) }));
     }
   };
 
@@ -871,6 +968,26 @@ export default function EditWebsitePage() {
         throw new Error(err?.message || 'Invalid expiration date');
       }
 
+      // Sync song/playlist settings from section content (playlist/song sections)
+      const songContent = (normalizedConfig.section_content as any)?.song;
+      const playlistContent = (normalizedConfig.section_content as any)?.playlist;
+      let effectiveSongLink = (form.song_link || '').trim();
+      let effectiveSongAutoplay = !!form.song_autoplay;
+
+      if (songContent) {
+        effectiveSongLink = (songContent.song_link || '').trim();
+        effectiveSongAutoplay = !!songContent.song_autoplay;
+      } else if (playlistContent) {
+        effectiveSongLink = ((playlistContent.playlistUrl as string) || (playlistContent.song_link as string) || '').trim();
+        effectiveSongAutoplay = !!(playlistContent.song_autoplay || (playlistContent as any).autoplay);
+      }
+
+      normalizedConfig.media = {
+        ...(normalizedConfig.media || {}),
+        song_link: effectiveSongLink,
+        song_autoplay: effectiveSongAutoplay,
+      };
+
       const payload = {
         id,
         website_name: form.website_name,
@@ -881,8 +998,8 @@ export default function EditWebsitePage() {
         specialDate: form.specialDate,
         message: form.message,
         tagline: form.tagline,
-        song_link: form.song_link,
-        song_autoplay: form.song_autoplay,
+        song_link: normalizedConfig.media?.song_link || '',
+        song_autoplay: !!normalizedConfig.media?.song_autoplay,
         photos: allPhotos,
         config: normalizedConfig,
         password_input: effectivePasswordInput,
@@ -1095,6 +1212,20 @@ export default function EditWebsitePage() {
                 <p className="text-xs text-slate-400 mt-1">
                   Only letters, numbers, and hyphens allowed
                 </p>
+                <div className="mt-2 flex items-center gap-3">
+                  <p className={`text-xs ${slugCheckState === 'taken' ? 'text-rose-600' : slugCheckState === 'available' ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {slugCheckMessage || ''}
+                  </p>
+                  {slugCheckState === 'taken' && (
+                    <button
+                      type="button"
+                      onClick={generateRandomSlug}
+                      className="px-2 py-1 rounded-md text-xs bg-rose-50 border border-rose-200 text-rose-700"
+                    >
+                      Generate random slug
+                    </button>
+                  )}
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1.5">
@@ -1207,39 +1338,7 @@ export default function EditWebsitePage() {
                 />
               </div>
 
-              {/* Music Settings */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-700 mb-3.5">Music Settings (optional)</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                      Song Or Playlist Link
-                    </label>
-                    <input
-                      name="song_link"
-                      type="text"
-                      placeholder="Spotify or YouTube music link"
-                      value={form.song_link || ''}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
-                      onChange={handleChange}
-                    />
-                    <p className="text-xs text-slate-400 mt-1">
-                      Paste a Spotify or YouTube music link. The player will appear in the music section.
-                    </p>
-                  </div>
-
-                  <label className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-slate-600">Auto-play music when site loads</span>
-                    <input
-                      name="song_autoplay"
-                      type="checkbox"
-                      checked={form.song_autoplay || false}
-                      onChange={handleChange}
-                      className="h-4 w-4 text-rose-500 rounded"
-                    />
-                  </label>
-                </div>
-              </div>
+              {/* Music Settings removed — configure playlist and autoplay in Step 5 */}
 
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1.5">
@@ -1502,6 +1601,7 @@ export default function EditWebsitePage() {
                 <SectionContentInputs
                   config={config}
                   onSectionContentChange={(sectionKey: string, content: any) => handleSectionContentChange(sectionKey as keyof SectionContentMap, content)}
+                  onRemovePhoto={handleRemovePhoto}
                   validationErrors={(() => {
                     const errors: Record<string, boolean> = {};
                     const { sections = [], section_content = {} } = config;
@@ -1901,7 +2001,7 @@ export default function EditWebsitePage() {
 
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1">
-            <form onSubmit={handleFormSubmit}>
+            <div>
               {renderStepContent()}
 
               <div className="flex justify-between mt-8">
@@ -1933,7 +2033,8 @@ export default function EditWebsitePage() {
                   </button>
                 ) : (
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handleSubmit}
                     className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
                     disabled={loading}
                   >
@@ -1956,7 +2057,7 @@ export default function EditWebsitePage() {
                   </button>
                 )}
               </div>
-            </form>
+            </div>
           </div>
 
           <LivePreview

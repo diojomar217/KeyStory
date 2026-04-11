@@ -5,6 +5,8 @@ export type EffectiveSiteStatus = 'pending' | 'active' | 'expired' | 'archived';
 export function isExpired(site: Site): boolean {
   const status = (site.status || '').toString().toLowerCase();
 
+  // If the site is archived (top-level marker), treat it as not expired
+  if (site.archived_at) return false;
   if (status === 'archived') return false;
   if (status === 'expired') return true;
 
@@ -18,12 +20,19 @@ export function isExpired(site: Site): boolean {
 
 export function isArchived(site: Site): boolean {
   const status = (site.status || '').toString().toLowerCase();
+
+  // Primary source of truth: top-level `status`
   if (status === 'archived') return true;
-  if (site.config?.archive?.archived === true) return true;
+
+  // Secondary marker: top-level `archived_at`
+  if (site.archived_at) return true;
+
+  // Do NOT consult legacy `config.archive` for archived state. Top-level fields are authoritative.
+
   return false;
 }
 
-export function getEffectiveSiteStatus(site: Pick<Site, 'status' | 'expires_at' | 'config'>): EffectiveSiteStatus {
+export function getEffectiveSiteStatus(site: Pick<Site, 'status' | 'expires_at' | 'archived_at' | 'config'>): EffectiveSiteStatus {
   if (isArchived(site as Site)) return 'archived';
   if (isExpired(site as Site)) return 'expired';
 
