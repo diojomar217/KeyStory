@@ -422,7 +422,6 @@ export default function CreateWebsitePage() {
   const [slugSanitized, setSlugSanitized] = useState(false);
   const [slugCheckState, setSlugCheckState] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
   const [slugCheckMessage, setSlugCheckMessage] = useState('');
-  const [explicitSubmit, setExplicitSubmit] = useState(false);
   const [passwordEnabled, setPasswordEnabled] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
@@ -903,14 +902,12 @@ export default function CreateWebsitePage() {
   };
 
   const handleSubmit = async () => {
-    if (!explicitSubmit) return;
 
     for (let step = 1; step <= TOTAL_STEPS; step++) {
       const validation = validateStep(step, form, config);
       if (!validation.valid) {
         setError(validation.error || 'Please complete all required content');
         setCurrentStep(step);
-        setExplicitSubmit(false);
         return;
       }
     }
@@ -1028,7 +1025,6 @@ export default function CreateWebsitePage() {
       setError(err.message || 'Failed to save order. Please try again.');
     } finally {
       setLoading(false);
-      setExplicitSubmit(false);
     }
   };
 
@@ -2066,10 +2062,7 @@ export default function CreateWebsitePage() {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => {
-                        setExplicitSubmit(true);
-                        handleSubmit();
-                      }}
+                      onClick={handleSubmit}
                       className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
                       disabled={loading || reviewBlocked}
                       title={reviewBlocked && reviewBlockReasons.length > 0 ? reviewBlockReasons.join('\n') : undefined}
