@@ -434,6 +434,11 @@ export interface RelationshipStats {
 // ============================================
 
 export interface SectionContentMap {
+  home?: {
+    tagline?: string;
+    coverPhotoUrl?: string;
+    coverPhotoIndex?: number;
+  };
   love_letter?: {
     text?: string;
     content?: string;

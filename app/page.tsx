@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Playfair_Display, Sora } from 'next/font/google';
 import KeychainInsertPreview from '@/components/product/KeychainInsertPreview';
-import TemplateSelector from '@/components/templates/TemplateSelector';
 import { STARTER_TEMPLATES, getTemplatesByOccasion } from '@/components/templates/templateData';
 import { OccasionType, Participant } from '@/lib/types';
 import { OCCASION_REGISTRY } from '@/lib/occasion-registry';
@@ -40,16 +39,148 @@ type PublicBusinessLinks = {
   instagramUrl: string | null;
 };
 
+type SampleWebsiteItem = {
+  occasion: string;
+  url: string;
+  status: 'Live Soon' | 'Ready';
+  description: string;
+  accent: string;
+  badge: string;
+  featured?: boolean;
+};
+
 const DEFAULT_SHOPEE_URL = 'https://shopee.ph/';
 const DEFAULT_TIKTOK_URL = 'https://www.tiktok.com/';
 const DEFAULT_LAZADA_URL = 'https://www.lazada.com.ph/';
-const SAMPLE_WEBSITES = [
-  { occasion: 'Couple', url: 'http://localhost:3000/site/couple-demo', status: 'Live Soon' },
-  { occasion: 'Wedding', url: '#', status: 'Live Soon' },
-  { occasion: 'Birthday', url: '#', status: 'Live Soon' },
-  { occasion: 'Anniversary', url: '#', status: 'Live Soon' },
-  { occasion: 'Graduation', url: '#', status: 'Live Soon' },
-  { occasion: 'Baby Shower', url: '#', status: 'Live Soon' },
+const BASE_URL = (() => {
+  if (typeof window !== 'undefined' && window.location) {
+    return window.location.origin;
+  }
+  return (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_BASE_URL) || 'http://localhost:3000';
+})();
+
+const SAMPLE_WEBSITES: SampleWebsiteItem[] = [
+  {
+    occasion: 'Couple',
+    url: `${BASE_URL}/site/couple-demo`,
+    status: 'Ready',
+    description: 'Romantic landing page with love letter, timeline, gallery, and music.',
+    accent: 'from-rose-500 to-pink-500',
+    badge: '❤️',
+    featured: true,
+  },
+  {
+    occasion: 'Wedding',
+    url: `${BASE_URL}/site/wedding-demo`,
+    status: 'Ready',
+    description: 'Elegant wedding invite style with RSVP, schedule, and venue details.',
+    accent: 'from-amber-400 to-rose-400',
+    badge: '💍',
+  },
+  {
+    occasion: 'Birthday',
+    url: `${BASE_URL}/site/birthday-demo`,
+    status: 'Ready',
+    description: 'Fun birthday page with countdown, gallery, and surprise message.',
+    accent: 'from-fuchsia-500 to-orange-400',
+    badge: '🎂',
+  },
+  {
+    occasion: 'Anniversary',
+    url: `${BASE_URL}/site/anniversary-demo`,
+    status: 'Ready',
+    description: 'Memory-focused anniversary layout with milestones and highlights.',
+    accent: 'from-pink-500 to-red-400',
+    badge: '🥂',
+  },
+  {
+    occasion: 'Graduation',
+    url: `${BASE_URL}/site/graduation-demo`,
+    status: 'Ready',
+    description: 'Celebrate milestones, achievements, photos, and congratulatory notes.',
+    accent: 'from-sky-500 to-indigo-500',
+    badge: '🎓',
+  },
+  {
+    occasion: 'Baby Shower',
+    url: `${BASE_URL}/site/baby-shower-demo`,
+    status: 'Live Soon',
+    description: 'Soft pastel event page for invites, wishlist, and family greetings.',
+    accent: 'from-cyan-400 to-pink-300',
+    badge: '🍼',
+  },
+  {
+    occasion: 'Debut',
+    url: `${BASE_URL}/site/debut-demo`,
+    status: 'Live Soon',
+    description: 'Modern debut layout with event details, timeline, and photo story.',
+    accent: 'from-violet-500 to-pink-500',
+    badge: '✨',
+  },
+  {
+    occasion: 'Family',
+    url: `${BASE_URL}/site/family-demo`,
+    status: 'Live Soon',
+    description: 'Warm family-themed page for reunions, albums, and shared memories.',
+    accent: 'from-emerald-500 to-teal-500',
+    badge: '🏡',
+  },
+  {
+    occasion: "Father's Day",
+    url: `${BASE_URL}/site/fathers-day-demo`,
+    status: 'Live Soon',
+    description: 'Tribute-style page with appreciation notes and family moments.',
+    accent: 'from-slate-600 to-sky-500',
+    badge: '👔',
+  },
+  {
+    occasion: 'Friendship',
+    url: `${BASE_URL}/site/friendship-demo`,
+    status: 'Live Soon',
+    description: 'Fun scrapbook-style website for best friends and shared adventures.',
+    accent: 'from-yellow-400 to-orange-400',
+    badge: '🤝',
+  },
+  {
+    occasion: 'Memorial',
+    url: `${BASE_URL}/site/memorial-demo`,
+    status: 'Live Soon',
+    description: 'Simple and respectful tribute page for remembrance and legacy.',
+    accent: 'from-slate-500 to-zinc-700',
+    badge: '🕊️',
+  },
+  {
+    occasion: "Mother's Day",
+    url: `${BASE_URL}/site/mothers-day-demo`,
+    status: 'Live Soon',
+    description: 'A heartfelt appreciation page with messages, photos, and quotes.',
+    accent: 'from-rose-400 to-fuchsia-500',
+    badge: '🌷',
+  },
+  {
+    occasion: 'Proposal',
+    url: `${BASE_URL}/site/proposal-demo`,
+    status: 'Live Soon',
+    description: 'Romantic proposal reveal page with memories and future plans.',
+    accent: 'from-red-500 to-pink-500',
+    badge: '💖',
+  },
+  {
+    occasion: 'Travel',
+    url: `${BASE_URL}/site/travel-demo`,
+    status: 'Live Soon',
+    description: 'Adventure journal layout for trips, maps, highlights, and photos.',
+    accent: 'from-cyan-500 to-emerald-500',
+    badge: '✈️',
+  },
+  {
+    occasion: "Valentine's Day",
+    url: `${BASE_URL}/site/valentines-demo`,
+    status: 'Live Soon',
+    description: 'Special Valentine theme with romantic copy, gallery, and playlist.',
+    accent: 'from-rose-500 to-red-500',
+    badge: '💌',
+  },
 ];
 
 const STARTUP_PROMISES = [
@@ -165,15 +296,17 @@ export default function Home() {
   const [flowStep, setFlowStep] = useState<1 | 2 | 3 | 4>(1);
   const [selectedOccasion, setSelectedOccasion] = useState<OccasionType>('couple');
   const [selectedTemplateId, setSelectedTemplateId] = useState(STARTER_TEMPLATES[0]!.id);
-    const templatesForOccasion = useMemo(() => getTemplatesByOccasion(selectedOccasion), [selectedOccasion]);
+  const [sampleFilter, setSampleFilter] = useState<'All' | string>('All');
 
-    useEffect(() => {
-      if (!templatesForOccasion.length) return;
-      setSelectedTemplateId((prev) => {
-        const existsInOccasion = templatesForOccasion.some((template) => template.id === prev);
-        return existsInOccasion ? prev : templatesForOccasion[0]!.id;
-      });
-    }, [templatesForOccasion]);
+  const templatesForOccasion = useMemo(() => getTemplatesByOccasion(selectedOccasion), [selectedOccasion]);
+
+  useEffect(() => {
+    if (!templatesForOccasion.length) return;
+    setSelectedTemplateId((prev) => {
+      const existsInOccasion = templatesForOccasion.some((template) => template.id === prev);
+      return existsInOccasion ? prev : templatesForOccasion[0]!.id;
+    });
+  }, [templatesForOccasion]);
 
   const [publicLinks, setPublicLinks] = useState<PublicBusinessLinks>({
     whatsappNumber: null,
@@ -192,14 +325,10 @@ export default function Home() {
     const fetchPublicLinks = async () => {
       try {
         const res = await fetch('/api/public/business-settings', { method: 'GET' });
-        if (!res.ok) {
-          return;
-        }
+        if (!res.ok) return;
 
         const data = await res.json();
-        if (!isMounted) {
-          return;
-        }
+        if (!isMounted) return;
 
         setPublicLinks((prev) => ({
           ...prev,
@@ -213,7 +342,7 @@ export default function Home() {
           instagramUrl: typeof data.instagramUrl === 'string' && data.instagramUrl.trim() ? data.instagramUrl : null,
         }));
       } catch {
-        // Keep safe defaults if public settings are unavailable.
+        // Keep defaults.
       }
     };
 
@@ -228,10 +357,6 @@ export default function Home() {
     setShowSuccess(false);
     setOrderResult(null);
   };
-
-  const mockQrUrl = previewState.website_name
-    ? `/api/qr?data=${encodeURIComponent(`https://keystory.app/r/${previewState.website_name}`)}`
-    : undefined;
 
   const heroQrUrl = '/api/qr?data=' + encodeURIComponent('https://key-story.vercel.app/');
 
@@ -263,8 +388,6 @@ export default function Home() {
   const estimatedTotal = discountedSubtotal + selectedZoneConfig.shippingFee;
   const now = new Date();
   const hoursToCutoff = Math.max(0, 19 - now.getHours());
-  const estimatorSummary = `${selectedVariantConfig.label} • ${selectedFinishConfig.label} • ${selectedZoneConfig.label} • ETA ${selectedZoneConfig.eta}`;
-  const estimatorAddOns = [giftWrap ? 'Gift wrap' : null, rushProduction ? 'Rush production' : null].filter(Boolean).join(', ');
 
   const jumpToFlow = () => {
     setBuilderHighlight(true);
@@ -316,6 +439,13 @@ export default function Home() {
     );
   };
 
+  const featuredSample = SAMPLE_WEBSITES.find((item) => item.featured) || SAMPLE_WEBSITES[0];
+  const sampleFilters = ['All', ...SAMPLE_WEBSITES.map((item) => item.occasion)];
+  const visibleSamples =
+    sampleFilter === 'All'
+      ? SAMPLE_WEBSITES
+      : SAMPLE_WEBSITES.filter((item) => item.occasion === sampleFilter);
+
   return (
     <div className={`${sora.variable} ${playfair.variable} premium-surface min-h-screen bg-[#faf7f2] text-[#1f2937]`}>
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
@@ -347,8 +477,6 @@ export default function Home() {
       </header>
 
       <main className="mx-auto w-full max-w-7xl px-4 pb-20 md:px-6">
-        
-
         <section className="grid items-center gap-10 py-14 md:grid-cols-2 md:py-20">
           <div className="reveal-up">
             <p className="inline-flex rounded-full border border-[#0f172a]/15 bg-white/80 px-3 py-1 text-xs font-semibold tracking-wide text-[#0f172a]">
@@ -361,7 +489,6 @@ export default function Home() {
               Turn your memories into a personalized website—linked to a custom QR or NFC keychain you can carry anywhere.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              
               <a
                 href={publicLinks.shopeeStoreUrl}
                 target="_blank"
@@ -393,7 +520,7 @@ export default function Home() {
                 View Sample Websites
               </a>
             </div>
-              <div className="mt-10 grid grid-cols-2 gap-4 text-sm text-[#334155] sm:grid-cols-4">
+            <div className="mt-10 grid grid-cols-2 gap-4 text-sm text-[#334155] sm:grid-cols-4">
               <div className="rounded-2xl border border-white/70 bg-white/70 p-3 text-center shadow-sm">Fast Turnaround</div>
               <div className="rounded-2xl border border-white/70 bg-white/70 p-3 text-center shadow-sm">Waterproof Print</div>
               <div className="rounded-2xl border border-white/70 bg-white/70 p-3 text-center shadow-sm">Gift Ready</div>
@@ -562,33 +689,84 @@ export default function Home() {
         </section>
 
         <section id="samples" className="scroll-mt-24 py-12 md:py-16">
-          <div className="rounded-3xl border border-[#0f172a]/10 bg-white/85 p-8 md:p-10">
-            <div className="mb-6">
-              <p className="text-xs font-semibold uppercase tracking-widest text-[#475569]">Sample Websites</p>
-              <h2 className="mt-2 text-3xl font-black text-[#0f172a] md:text-4xl">Browse Demo Pages by Occasion</h2>
-              <p className="mt-3 max-w-3xl text-[#475569]">
-                Replace each placeholder with your real demo links. This section helps customers preview your style before they customize.
-              </p>
+          <div className="samples-shell relative overflow-hidden rounded-[2rem] border border-[#0f172a]/10 bg-white/85 p-6 shadow-[0_24px_70px_-40px_rgba(15,23,42,0.45)] md:p-10">
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute -top-12 right-12 h-40 w-40 rounded-full bg-[#fed7aa] opacity-60 blur-3xl" />
+              <div className="absolute bottom-0 left-0 h-44 w-44 rounded-full bg-[#dbeafe] opacity-60 blur-3xl" />
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {SAMPLE_WEBSITES.map((sample) => (
-                <a
-                  key={sample.occasion}
-                  href={sample.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="demo-tile group rounded-2xl border border-[#0f172a]/10 bg-[#f8fafc] p-4 transition hover:-translate-y-0.5 hover:border-[#0f172a]/30 hover:bg-white"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-lg font-bold text-[#0f172a]">{sample.occasion}</p>
-                    {/* <span className="rounded-full bg-[#0f172a]/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#0f172a]">
-                      {sample.status}
-                    </span> */}
-                  </div>
-                  <p className="mt-1 text-sm text-[#64748b]">Open {sample.occasion} sample website</p>
-                  <p className="mt-3 text-xs font-semibold uppercase tracking-widest text-[#0f172a]">View Demo</p>
-                </a>
-              ))}
+
+            <div>
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#0f172a]/10 bg-white/90 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-[#0f172a]">
+                  <span>Sample Websites</span>
+                </div>
+
+                <h2 className="display-title mt-4 text-4xl font-black leading-tight text-[#0f172a] md:text-5xl">
+                  Preview Real Demo Styles Before You Customize
+                </h2>
+                <p className="mt-4 max-w-2xl text-base leading-relaxed text-[#475569] md:text-lg">
+                  Help customers picture the final result faster. This section now feels more like a premium demo gallery instead of a plain link list.
+                </p>
+
+                <div className="mt-6 flex flex-wrap gap-2">
+                  {sampleFilters.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => setSampleFilter(item)}
+                      className={`rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] transition ${
+                        sampleFilter === item
+                          ? 'bg-[#0f172a] text-white shadow-lg'
+                          : 'border border-[#0f172a]/10 bg-white text-[#334155] hover:border-[#0f172a]/25 hover:bg-[#f8fafc]'
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
+                  {visibleSamples.map((sample) => (
+                    <article
+                      key={sample.occasion}
+                      className="group relative overflow-hidden rounded-3xl border border-[#0f172a]/10 bg-white/95 p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
+                    >
+                      <div className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${sample.accent}`} />
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[#0f172a]/10 bg-[#f8fafc] text-xl shadow-sm">
+                            {sample.badge}
+                          </div>
+                          <h3 className="text-xl font-black text-[#0f172a]">{sample.occasion}</h3>
+                          <p className="mt-2 text-sm leading-relaxed text-[#64748b]">
+                            {sample.description}
+                          </p>
+                        </div>
+
+                      </div>
+
+                      <div className="mt-5 flex items-center gap-2">
+                        <a
+                          href={sample.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center rounded-full bg-[#0f172a] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#111827]"
+                        >
+                          View Demo
+                        </a>
+                        <a
+                          href="/create"
+                          className="inline-flex items-center rounded-full border border-[#0f172a]/15 px-4 py-2 text-xs font-bold text-[#0f172a] transition hover:bg-[#f8fafc]"
+                        >
+                          Use This Style
+                        </a>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+
+              
             </div>
           </div>
         </section>
@@ -695,24 +873,17 @@ export default function Home() {
               )}
               {messengerUrl && (
                 <a
-  href={messengerUrl}
-  target="_blank"
-  rel="noopener noreferrer"
-  onClick={() => trackEvent('quick_contact_messenger_click')}
-  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#0284c7] px-4 py-3 text-center text-sm font-bold text-white transition hover:bg-[#0369a1]"
->
-  {/* Messenger Icon */}
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    className="w-5 h-5"
-  >
-    <path d="M12 2C6.477 2 2 6.145 2 11.25c0 2.91 1.592 5.502 4.09 7.19V22l3.318-1.82c.885.244 1.82.37 2.792.37 5.523 0 10-4.145 10-9.25S17.523 2 12 2zm.9 12.65l-2.55-2.72-4.35 2.72 4.95-5.26 2.6 2.72 4.3-2.72-4.95 5.26z" />
-  </svg>
-
-  Message on Messenger
-</a>
+                  href={messengerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackEvent('quick_contact_messenger_click')}
+                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#0284c7] px-4 py-3 text-center text-sm font-bold text-white transition hover:bg-[#0369a1]"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                    <path d="M12 2C6.477 2 2 6.145 2 11.25c0 2.91 1.592 5.502 4.09 7.19V22l3.318-1.82c.885.244 1.82.37 2.792.37 5.523 0 10-4.145 10-9.25S17.523 2 12 2zm.9 12.65l-2.55-2.72-4.35 2.72 4.95-5.26 2.6 2.72 4.3-2.72-4.95 5.26z" />
+                  </svg>
+                  Message on Messenger
+                </a>
               )}
               {publicLinks.facebookPageUrl && (
                 <a
@@ -761,6 +932,7 @@ export default function Home() {
             </div>
           </div>
         </section>
+
         <section className="py-12 md:py-16">
           <div className="rounded-3xl border border-[#0f172a]/10 bg-[#0f172a] px-6 py-10 text-center text-white md:px-10">
             <p className="text-xs font-semibold uppercase tracking-widest text-white/70">Ready to launch your keepsake</p>
@@ -846,73 +1018,64 @@ export default function Home() {
           <p className="mt-4">© 2026 Keystory</p>
         </footer>
       </main>
-<div className="fixed right-4 top-1/2 z-30 hidden w-44 -translate-y-1/2 space-y-2 rounded-2xl border border-[#0f172a]/10 bg-white/95 p-3 shadow-xl backdrop-blur lg:block">
 
-  {/* Customize (Primary CTA) */}
-  <a
-    href="/create"
-    className="flex items-center justify-center gap-2 rounded-lg bg-[#0f172a] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#020617]"
-  >
-    ✨ Customize
-  </a>
+      <div className="fixed right-4 top-1/2 z-30 hidden w-44 -translate-y-1/2 space-y-2 rounded-2xl border border-[#0f172a]/10 bg-white/95 p-3 shadow-xl backdrop-blur lg:block">
+        <a
+          href="/create"
+          className="flex items-center justify-center gap-2 rounded-lg bg-[#0f172a] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#020617]"
+        >
+          ✨ Customize
+        </a>
 
-  {/* Shopee */}
-  <a
-    href={publicLinks.shopeeStoreUrl}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="flex items-center justify-center gap-2 rounded-lg bg-[#EE4D2D] px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
-  >
-    {/* Shopee Bag Icon */}
-    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M6 7h12l-1 13H7L6 7zm3-3a3 3 0 016 0h-2a1 1 0 00-2 0H9z"/>
-    </svg>
-    Shopee
-  </a>
+        <a
+          href={publicLinks.shopeeStoreUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 rounded-lg bg-[#EE4D2D] px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M6 7h12l-1 13H7L6 7zm3-3a3 3 0 016 0h-2a1 1 0 00-2 0H9z"/>
+          </svg>
+          Shopee
+        </a>
 
-  {/* TikTok */}
-  <a
-    href={publicLinks.tiktokShopUrl}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="flex items-center justify-center gap-2 rounded-lg bg-black px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
-  >
-    {/* TikTok Logo */}
-    <svg className="w-4 h-4" viewBox="0 0 48 48" fill="currentColor">
-      <path d="M34 6c2.2 2.6 5.2 4.2 8 4.4v6.4c-2.9-.1-5.6-1-8-2.6v12.7c0 6.4-5.2 11.6-11.6 11.6S10.8 33.3 10.8 27s5.2-11.6 11.6-11.6c.6 0 1.1 0 1.6.1v6.3c-.5-.2-1-.3-1.6-.3-3 0-5.4 2.4-5.4 5.4S19.4 32.3 22.4 32.3 27.8 30 27.8 27V6H34z"/>
-    </svg>
-    TikTok
-  </a>
+        <a
+          href={publicLinks.tiktokShopUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 rounded-lg bg-black px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 48 48" fill="currentColor">
+            <path d="M34 6c2.2 2.6 5.2 4.2 8 4.4v6.4c-2.9-.1-5.6-1-8-2.6v12.7c0 6.4-5.2 11.6-11.6 11.6S10.8 33.3 10.8 27s5.2-11.6 11.6-11.6c.6 0 1.1 0 1.6.1v6.3c-.5-.2-1-.3-1.6-.3-3 0-5.4 2.4-5.4 5.4S19.4 32.3 22.4 32.3 27.8 30 27.8 27V6H34z"/>
+          </svg>
+          TikTok
+        </a>
 
-  {/* Lazada */}
-  <a
-    href={publicLinks.lazadaStoreUrl}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="flex items-center justify-center gap-2 rounded-lg bg-[#6C19FF] px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
-  >
-    {/* Lazada Heart Cube */}
-    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2l8 5v10l-8 5-8-5V7l8-5zm0 5.5c-1.7-2-5-1.2-5 1.5 0 2.2 3.5 4.5 5 6 1.5-1.5 5-3.8 5-6 0-2.7-3.3-3.5-5-1.5z"/>
-    </svg>
-    Lazada
-  </a>
+        <a
+          href={publicLinks.lazadaStoreUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 rounded-lg bg-[#6C19FF] px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2l8 5v10l-8 5-8-5V7l8-5zm0 5.5c-1.7-2-5-1.2-5 1.5 0 2.2 3.5 4.5 5 6 1.5-1.5 5-3.8 5-6 0-2.7-3.3-3.5-5-1.5z"/>
+          </svg>
+          Lazada
+        </a>
 
-  {/* Messenger / Facebook */}
-  <a
-    href={publicLinks.facebookPageUrl || 'https://facebook.com/'}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="flex items-center justify-center gap-2 rounded-lg bg-[#1877F2] px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
-  >
-    {/* Messenger Icon */}
-    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2C6.5 2 2 6.1 2 11.2c0 2.9 1.6 5.5 4.1 7.2V22l3.3-1.8c.9.2 1.8.3 2.8.3 5.5 0 10-4.1 10-9.2S17.5 2 12 2zm.9 12.6l-2.5-2.7-4.4 2.7 5-5.3 2.6 2.7 4.3-2.7-5 5.3z"/>
-    </svg>
-    Message
-  </a>
+        <a
+          href={publicLinks.facebookPageUrl || 'https://facebook.com/'}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 rounded-lg bg-[#1877F2] px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.5 2 2 6.1 2 11.2c0 2.9 1.6 5.5 4.1 7.2V22l3.3-1.8c.9.2 1.8.3 2.8.3 5.5 0 10-4.1 10-9.2S17.5 2 12 2zm.9 12.6l-2.5-2.7-4.4 2.7 5-5.3 2.6 2.7 4.3-2.7-5 5.3z"/>
+          </svg>
+          Message
+        </a>
+      </div>
 
-</div>
       <div className="fixed bottom-4 left-1/2 z-40 w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 rounded-2xl border border-[#0f172a]/15 bg-white/95 p-2 shadow-2xl backdrop-blur md:hidden">
         <div className="grid grid-cols-3 gap-2">
           <a href="/create" className="rounded-xl bg-[#0f172a] px-3 py-3 text-center text-xs font-bold text-white">
@@ -981,14 +1144,6 @@ export default function Home() {
           box-shadow: 0 14px 30px -20px rgba(15, 23, 42, 0.65);
         }
 
-        .hero-urgency {
-          background-image: linear-gradient(90deg, #0f172a 0%, #162238 70%, #1f2f4a 100%);
-        }
-
-        .info-strip {
-          background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(250, 247, 242, 0.85));
-        }
-
         .showcase-shell {
           position: relative;
           overflow: hidden;
@@ -1053,12 +1208,14 @@ export default function Home() {
           transform: translateX(30%);
         }
 
-        .demo-tile,
+        .samples-shell {
+          background-image: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(248,250,252,0.92));
+        }
+
         .faq-item {
           transition: all 220ms ease;
         }
 
-        .demo-tile:hover,
         .faq-item:hover {
           box-shadow: 0 14px 28px -24px rgba(15, 23, 42, 0.6);
         }
@@ -1073,10 +1230,6 @@ export default function Home() {
 
         .float-card {
           animation: floatCard 6s ease-in-out infinite;
-        }
-
-        .builder-highlight {
-          animation: pulseGlow 1.4s ease;
         }
 
         @keyframes revealUp {
@@ -1097,15 +1250,6 @@ export default function Home() {
           }
           50% {
             transform: translateY(-6px);
-          }
-        }
-
-        @keyframes pulseGlow {
-          0% {
-            box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.45);
-          }
-          100% {
-            box-shadow: 0 0 0 18px rgba(249, 115, 22, 0);
           }
         }
 
