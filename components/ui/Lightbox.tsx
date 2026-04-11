@@ -28,10 +28,14 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-function getDistance(touches: TouchList) {
-  if (touches.length < 2) return 0;
-  const dx = touches[0]!.clientX - touches[1]!.clientX;
-  const dy = touches[0]!.clientY - touches[1]!.clientY;
+function getDistance(touches: any) {
+  // Accept both DOM `TouchList` and React's `TouchList` types (looser typing)
+  if (!touches || typeof touches.length !== 'number' || touches.length < 2) return 0;
+  const t0 = touches[0];
+  const t1 = touches[1];
+  if (!t0 || !t1) return 0;
+  const dx = (t0.clientX || 0) - (t1.clientX || 0);
+  const dy = (t0.clientY || 0) - (t1.clientY || 0);
   return Math.sqrt(dx * dx + dy * dy);
 }
 

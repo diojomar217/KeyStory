@@ -448,6 +448,9 @@ export interface SectionContentMap {
     content?: string;
   };
   timeline?: TimelineEvent[];
+  gallery?: {
+    photos: string[];
+  };
   first_date?: {
     content?: string;
     title?: string;
@@ -490,6 +493,10 @@ export interface SectionContentMap {
   playlist?: {
     playlistUrl: string;
     title: string;
+    // Backwards-compatible fields: some saved configs use `song_link` or `song_autoplay` on playlist
+    song_link?: string;
+    song_autoplay?: boolean;
+    autoplay?: boolean;
   };
   video_memories?: {
     videos: VideoMemory[];
