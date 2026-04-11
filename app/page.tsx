@@ -44,7 +44,7 @@ const DEFAULT_SHOPEE_URL = 'https://shopee.ph/';
 const DEFAULT_TIKTOK_URL = 'https://www.tiktok.com/';
 const DEFAULT_LAZADA_URL = 'https://www.lazada.com.ph/';
 const SAMPLE_WEBSITES = [
-  { occasion: 'Couple', url: '#', status: 'Live Soon' },
+  { occasion: 'Couple', url: 'http://localhost:3000/site/couple-demo', status: 'Live Soon' },
   { occasion: 'Wedding', url: '#', status: 'Live Soon' },
   { occasion: 'Birthday', url: '#', status: 'Live Soon' },
   { occasion: 'Anniversary', url: '#', status: 'Live Soon' },
@@ -581,9 +581,9 @@ export default function Home() {
                 >
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-lg font-bold text-[#0f172a]">{sample.occasion}</p>
-                    <span className="rounded-full bg-[#0f172a]/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#0f172a]">
+                    {/* <span className="rounded-full bg-[#0f172a]/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#0f172a]">
                       {sample.status}
-                    </span>
+                    </span> */}
                   </div>
                   <p className="mt-1 text-sm text-[#64748b]">Open {sample.occasion} sample website</p>
                   <p className="mt-3 text-xs font-semibold uppercase tracking-widest text-[#0f172a]">View Demo</p>

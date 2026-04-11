@@ -53,24 +53,9 @@ const slugify = (text: string): string =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
-const randomSuffix = () => Math.floor(1000 + Math.random() * 9000).toString();
-
-const resolveUniqueWebsiteName = async (base: string): Promise<string> => {
-  const candidateBase = base.trim();
-
-  for (let i = 0; i < 5; i++) {
-    const candidate = `${candidateBase}-${randomSuffix()}`;
-    const { data } = await supabase
-      .from('sites')
-      .select('id')
-      .eq('website_name', candidate)
-      .maybeSingle();
-
-    if (!data) return candidate;
-  }
-
-  return `${candidateBase}-${Date.now()}`;
-};
+// NOTE: we intentionally do NOT auto-append numeric suffixes server-side anymore.
+// Clients should check availability and offer generation of a unique slug.
+// If a requested `website_name` is already taken, we return a 409 conflict.
 
 const normalizePasswordConfig = async (siteConfig: any, passwordInput?: string): Promise<any> => {
   if (!siteConfig) siteConfig = {};
@@ -198,7 +183,26 @@ export async function POST(req: NextRequest) {
     const slug = uuidv4();
     const cleanName = (data.website_name || '').trim();
     const normalized = cleanName ? slugify(cleanName) : slug;
-    const website_name = cleanName ? await resolveUniqueWebsiteName(normalized) : slug;
+
+    let website_name: string;
+    if (cleanName) {
+      const { data: existing, error: existingError } = await supabase
+        .from('sites')
+        .select('id')
+        .eq('website_name', normalized)
+        .maybeSingle();
+
+      if (existing) {
+        return NextResponse.json(
+          { success: false, message: 'Website name is already in use. Please choose a different website name or generate a unique slug.' },
+          { status: 409 }
+        );
+      }
+
+      website_name = normalized;
+    } else {
+      website_name = slug;
+    }
 
     const MAX_SITE_IMAGES = 18;
     // upload / normalize photos (cost-controlled)

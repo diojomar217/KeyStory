@@ -420,6 +420,8 @@ export default function CreateWebsitePage() {
       }
     }, [crop, zoom, croppedAreaPixels, heroPhotoPreview]);
   const [slugSanitized, setSlugSanitized] = useState(false);
+  const [slugCheckState, setSlugCheckState] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
+  const [slugCheckMessage, setSlugCheckMessage] = useState('');
   const [explicitSubmit, setExplicitSubmit] = useState(false);
   const [passwordEnabled, setPasswordEnabled] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -455,6 +457,54 @@ export default function CreateWebsitePage() {
       }
     }
   }, [form.website_name, slugSanitized]);
+
+  const generateRandomSlug = () => {
+    const base = sanitizeSlug(form.website_name || 'site') || 'site';
+    const suffix = Math.floor(1000 + Math.random() * 9000).toString();
+    const candidate = `${base}-${suffix}`;
+    setForm((prev) => ({ ...prev, website_name: candidate }));
+    setSlugSanitized(true);
+    setSlugCheckState('checking');
+    setSlugCheckMessage('Checking availability...');
+  };
+
+  useEffect(() => {
+    const slug = (form.website_name || '').trim();
+    if (!slug) {
+      setSlugCheckState('idle');
+      setSlugCheckMessage('');
+      return;
+    }
+
+    if (!/^[a-z0-9-]+$/.test(slug)) {
+      setSlugCheckState('taken');
+      setSlugCheckMessage('Use lowercase letters, numbers, and hyphen only.');
+      return;
+    }
+
+    const timer = window.setTimeout(async () => {
+      try {
+        setSlugCheckState('checking');
+        setSlugCheckMessage('Checking availability...');
+        const response = await fetch(`/api/qrcode/verify?slug=${encodeURIComponent(slug)}`);
+        const result = await response.json();
+        if (!response.ok || !result?.success) throw new Error('Unable to validate slug');
+
+        if (result.exists) {
+          setSlugCheckState('taken');
+          setSlugCheckMessage('This slug is already in use. You can auto-generate a unique one.');
+        } else {
+          setSlugCheckState('available');
+          setSlugCheckMessage('Slug is available.');
+        }
+      } catch {
+        setSlugCheckState('idle');
+        setSlugCheckMessage('Could not validate slug right now.');
+      }
+    }, 400);
+
+    return () => window.clearTimeout(timer as unknown as number);
+  }, [form.website_name]);
 
   useEffect(() => {
     return () => {
@@ -1033,6 +1083,20 @@ export default function CreateWebsitePage() {
                 <p className="text-xs text-slate-400 mt-1">
                   Only letters, numbers, and hyphens allowed
                 </p>
+                <div className="mt-2 flex items-center gap-3">
+                  <p className={`text-xs ${slugCheckState === 'taken' ? 'text-rose-600' : slugCheckState === 'available' ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {slugCheckMessage || ''}
+                  </p>
+                  {slugCheckState === 'taken' && (
+                    <button
+                      type="button"
+                      onClick={generateRandomSlug}
+                      className="px-2 py-1 rounded-md text-xs bg-rose-50 border border-rose-200 text-rose-700"
+                    >
+                      Generate random slug
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div>

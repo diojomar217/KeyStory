@@ -1,11 +1,11 @@
 // Unique Parallax Immersive Layout
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { motion, useAnimation, useInView } from 'framer-motion';
-import type { OccasionType, HomeTemplate } from '@/lib/types';
-import { getOccasionHeroSpec } from '../../config/occasionHeroConfig';
-import type { ThemeKey } from '@/config/themeConfig';
-import { isDarkTheme as checkIsDarkTheme } from '@/lib/theme-color-helpers';
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { motion, useAnimation, useInView } from "framer-motion";
+import type { OccasionType, HomeTemplate } from "@/lib/types";
+import { getOccasionHeroSpec } from "../../config/occasionHeroConfig";
+import type { ThemeKey } from "@/config/themeConfig";
+import { isDarkTheme as checkIsDarkTheme } from "@/lib/theme-color-helpers";
 
 interface ParallaxImmersiveProps {
   heroImage: string;
@@ -34,12 +34,14 @@ interface HomeSectionProps {
 }
 
 function FloatingHearts() {
-  const [hearts, setHearts] = useState<Array<{
-    left: number;
-    size: number;
-    delay: number;
-    duration: number;
-  }>>([]);
+  const [hearts, setHearts] = useState<
+    Array<{
+      left: number;
+      size: number;
+      delay: number;
+      duration: number;
+    }>
+  >([]);
 
   useEffect(() => {
     // Only run on client
@@ -57,14 +59,14 @@ function FloatingHearts() {
       {hearts.map((h, i) => (
         <motion.span
           key={i}
-          initial={{ y: '100vh', opacity: 0 }}
-          animate={{ y: '-10vh', opacity: [0, 0.7, 0] }}
+          initial={{ y: "100vh", opacity: 0 }}
+          animate={{ y: "-10vh", opacity: [0, 0.7, 0] }}
           transition={{
             duration: h.duration,
             delay: h.delay,
             repeat: Infinity,
-            repeatType: 'loop',
-            ease: 'easeInOut',
+            repeatType: "loop",
+            ease: "easeInOut",
           }}
           className="absolute text-pink-300/60 select-none pointer-events-none"
           style={{ left: `${h.left}%`, fontSize: h.size }}
@@ -83,17 +85,19 @@ function renderParallaxImmersive({
   theme,
   siteType,
   customerName,
-  partnerName
+  partnerName,
 }: ParallaxImmersiveProps) {
-  const occasionHero = getOccasionHeroSpec(siteType || 'couple');
+  const occasionHero = getOccasionHeroSpec(siteType || "couple");
   const hasPartnerName = Boolean(partnerName?.trim());
-  const parallaxHeading = hasPartnerName ? `${customerName} & ${partnerName}` : customerName;
+  const parallaxHeading = hasPartnerName
+    ? `${customerName} & ${partnerName}`
+    : customerName;
   const formattedDate = normalizedDate
     ? new Date(normalizedDate).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
     : null;
 
   // Parallax scroll effect
@@ -106,15 +110,15 @@ function renderParallaxImmersive({
     const handleScroll = () => {
       setScrollY(window.scrollY);
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Fade-in for text
-  const fgInView = useInView(fgRef, { once: true, margin: '-100px' });
+  const fgInView = useInView(fgRef, { once: true, margin: "-100px" });
   const fgControls = useAnimation();
   useEffect(() => {
-    if (fgInView) fgControls.start('visible');
+    if (fgInView) fgControls.start("visible");
   }, [fgInView, fgControls]);
 
   return (
@@ -124,7 +128,7 @@ function renderParallaxImmersive({
         ref={bgRef}
         className="absolute inset-0 z-0 pointer-events-none"
         style={{
-          transform: `translateY(${scrollY * 0.15}px)`
+          transform: `translateY(${scrollY * 0.15}px)`,
         }}
       >
         <FloatingHearts />
@@ -135,19 +139,19 @@ function renderParallaxImmersive({
         ref={midRef}
         className="relative z-10 flex items-center justify-center w-full mt-24 mb-8"
         style={{
-          transform: `translateY(${scrollY * 0.08}px)`
+          transform: `translateY(${scrollY * 0.08}px)`,
         }}
       >
         <motion.div
           className="relative w-40 h-40 md:w-56 md:h-56 lg:w-64 lg:h-64 rounded-3xl overflow-hidden shadow-2xl bg-white/40 flex items-center justify-center aspect-square group"
           whileHover={{ scale: 1.045, rotate: -3 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 18 }}
+          transition={{ type: "spring", stiffness: 200, damping: 18 }}
         >
           <img
             src={heroImage}
             alt="Jomar & Aki"
             className="object-cover w-full h-full rounded-3xl shadow-xl group-hover:shadow-2xl"
-            style={{ boxShadow: '0 8px 40px 0 rgba(255, 0, 128, 0.10)' }}
+            style={{ boxShadow: "0 8px 40px 0 rgba(255, 0, 128, 0.10)" }}
             loading="eager"
           />
           <div className="absolute inset-0 rounded-3xl bg-gradient-to-t from-pink-200/40 via-transparent to-white/10 pointer-events-none" />
@@ -163,7 +167,11 @@ function renderParallaxImmersive({
         animate={fgControls}
         variants={{
           hidden: { opacity: 0, y: 40 },
-          visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: 'easeOut' } }
+          visible: {
+            opacity: 1,
+            y: 0,
+            transition: { duration: 0.8, ease: "easeOut" },
+          },
         }}
       >
         <p className="mb-3 rounded-full border border-white/40 bg-white/40 px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-gray-700 backdrop-blur-md">
@@ -184,14 +192,24 @@ function renderParallaxImmersive({
           className="mb-7 px-7 py-4 rounded-full bg-white/30 backdrop-blur-md shadow-lg flex items-center gap-3 border border-white/40"
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: [0.95, 1.03, 1], opacity: 1 }}
-          transition={{ duration: 1.2, delay: 0.3, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
+          transition={{
+            duration: 1.2,
+            delay: 0.3,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut",
+          }}
         >
           <span className="text-xl text-pink-400 animate-pulse">💕</span>
           <div className="text-center">
             <div className="font-medium text-base text-gray-800">
-              {formattedDate ? `${occasionHero.datePrefix} ${formattedDate}` : 'Special moment captured forever'}
+              {formattedDate
+                ? `${occasionHero.datePrefix} ${formattedDate}`
+                : "Special moment captured forever"}
             </div>
-            <div className="text-xs text-gray-600">A keepsake made for this occasion</div>
+            <div className="text-xs text-gray-600">
+              A keepsake made for this occasion
+            </div>
           </div>
           <span className="text-xl text-pink-400 animate-pulse">💕</span>
         </motion.div>
@@ -208,21 +226,24 @@ function renderParallaxImmersive({
   );
 }
 
-
 // Removed duplicate React import
-import ParticlesCanvas from './ParticlesCanvas';
-import Image from 'next/image';
-import DedicatedOccasionHero from './DedicatedOccasionHeroes';
-import SharedOccasionHero, { type HeroHighlight } from './SharedOccasionHeroes';
+import ParticlesCanvas from "./ParticlesCanvas";
+import Image from "next/image";
+import DedicatedOccasionHero from "./DedicatedOccasionHeroes";
+import SharedOccasionHero, { type HeroHighlight } from "./SharedOccasionHeroes";
 // HomeTemplate imported above
-import { useTheme } from '../builder/ThemeWrapper';
-import RelationshipTimer from './RelationshipTimer';
-import { HeroDecorations, PremiumDualCTAs } from './HeroOverlay';
-import { resolveHeroConfig, resolveHeroCoverPhoto, resolveParticipantNames } from '@/lib/site-type-utils';
+import { useTheme } from "../builder/ThemeWrapper";
+import RelationshipTimer from "./RelationshipTimer";
+import { HeroDecorations, PremiumDualCTAs } from "./HeroOverlay";
+import {
+  resolveHeroConfig,
+  resolveHeroCoverPhoto,
+  resolveParticipantNames,
+} from "@/lib/site-type-utils";
 
 export default function HomeSection({
   theme,
-  siteType = 'couple',
+  siteType = "couple",
   config,
   template,
   customerName,
@@ -236,19 +257,24 @@ export default function HomeSection({
 }: HomeSectionProps) {
   const styles = useTheme(theme);
   const occasionHero = getOccasionHeroSpec(siteType);
-  const resolvedNames = resolveParticipantNames(siteType, config?.participants || [], customerName, partnerName);
+  const resolvedNames = resolveParticipantNames(
+    siteType,
+    config?.participants || [],
+    customerName,
+    partnerName,
+  );
   const primaryName = resolvedNames.primaryName;
   const secondaryName = resolvedNames.secondaryName;
   const [isLoaded, setIsLoaded] = useState(false);
   const premiumImageRef = useRef<HTMLDivElement>(null);
   const premiumCardRef = useRef<HTMLDivElement>(null);
-  const isBirthday = siteType === 'birthday';
+  const isBirthday = siteType === "birthday";
   const hasSecondaryName = Boolean(secondaryName?.trim());
   const showDualNames = !isBirthday && hasSecondaryName;
 
   const celebrantName = isBirthday
-    ? config?.people?.celebrant || primaryName || 'Birthday Star'
-    : primaryName || 'Your Name';
+    ? config?.people?.celebrant || primaryName || "Birthday Star"
+    : primaryName || "Your Name";
 
   const birthdayDate = isBirthday
     ? config?.dates?.birthday || config?.specialDate || anniversaryDate
@@ -261,10 +287,10 @@ export default function HomeSection({
 
   const formattedSpecialDate = normalizedDate
     ? new Date(normalizedDate).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
     : anniversaryDate;
 
   const shouldUseRelationshipTimer = showDualNames && Boolean(anniversaryDate);
@@ -272,72 +298,77 @@ export default function HomeSection({
   const heroConfig = resolveHeroConfig(
     siteType,
     isBirthday
-      ? [{ id: 'celebrant', name: celebrantName }]
+      ? [{ id: "celebrant", name: celebrantName }]
       : [
-        { id: 'customer', name: primaryName || 'Your Name' },
-        { id: 'partner', name: secondaryName || 'Partner Name' },
-      ],
-    normalizedDate
+          { id: "customer", name: primaryName || "Your Name" },
+          { id: "partner", name: secondaryName || "Partner Name" },
+        ],
+    normalizedDate,
   );
 
   const birthdayStats =
     isBirthday && normalizedDate
       ? (() => {
-        const birth = new Date(normalizedDate);
-        if (Number.isNaN(birth.getTime())) return null;
+          const birth = new Date(normalizedDate);
+          if (Number.isNaN(birth.getTime())) return null;
 
-        const now = new Date();
-        let nextBirth = new Date(birth);
-        nextBirth.setFullYear(now.getFullYear());
-        if (nextBirth < now) {
-          nextBirth.setFullYear(now.getFullYear() + 1);
-        }
+          const now = new Date();
+          let nextBirth = new Date(birth);
+          nextBirth.setFullYear(now.getFullYear());
+          if (nextBirth < now) {
+            nextBirth.setFullYear(now.getFullYear() + 1);
+          }
 
-        const ageTurning = nextBirth.getFullYear() - birth.getFullYear();
-        const diffMs = nextBirth.getTime() - now.getTime();
-        const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        const months = Math.floor(days / 30);
-        const remDays = days - months * 30;
-        const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const ageTurning = nextBirth.getFullYear() - birth.getFullYear();
+          const diffMs = nextBirth.getTime() - now.getTime();
+          const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+          const months = Math.floor(days / 30);
+          const remDays = days - months * 30;
+          const hours = Math.floor(
+            (diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+          );
 
-        return {
-          ageTurning,
-          eventDate: nextBirth.toLocaleDateString(undefined, {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }),
-          countdown: `${months} months • ${remDays} days • ${hours} hours remaining`,
-        };
-      })()
+          return {
+            ageTurning,
+            eventDate: nextBirth.toLocaleDateString(undefined, {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+            countdown: `${months} months • ${remDays} days • ${hours} hours remaining`,
+          };
+        })()
       : null;
 
   const heroImage =
     heroCoverPhotoUrl ||
-    resolveHeroCoverPhoto({ hero: config?.hero, cover_photo_index: coverPhotoIndex }, photos) ||
-    '/vercel.svg';
+    resolveHeroCoverPhoto(
+      { hero: config?.hero, cover_photo_index: coverPhotoIndex },
+      photos,
+    ) ||
+    "/vercel.svg";
 
   // Crop settings from config
   const crop = config?.hero?.crop;
 
   const getAccentColor = () => {
     switch (theme) {
-      case 'dark_elegant':
-        return 'amber';
-      case 'cute_pastel':
-        return 'purple';
-      case 'minimal_modern':
-        return 'slate';
+      case "dark_elegant":
+        return "amber";
+      case "cute_pastel":
+        return "purple";
+      case "minimal_modern":
+        return "slate";
       default:
-        return 'rose';
+        return "rose";
     }
   };
 
   const accentColor = getAccentColor();
-  const cinematicStageClass = 'animate-fade-in-up motion-reduce:animate-none';
+  const cinematicStageClass = "animate-fade-in-up motion-reduce:animate-none";
   const cinematicStageStyle = (delayMs: number) => ({
     animationDelay: `${delayMs}ms`,
-    animationDuration: '760ms',
+    animationDuration: "760ms",
   });
 
   useEffect(() => {
@@ -349,91 +380,151 @@ export default function HomeSection({
   const displayHeadline = isBirthday
     ? celebrantName
     : showDualNames
-      ? `${primaryName || 'Your Name'} & ${secondaryName || 'Partner Name'}`
-      : primaryName || 'Your Name';
-  const supportingNarrative = (tagline || message || heroConfig.description).trim();
+      ? `${primaryName || "Your Name"} & ${secondaryName || "Partner Name"}`
+      : primaryName || "Your Name";
+  const supportingNarrative = (
+    tagline ||
+    message ||
+    heroConfig.description
+  ).trim();
 
   const heroHighlights = useMemo<HeroHighlight[]>(() => {
-    const dateValue = formattedSpecialDate || 'Date to be announced';
+    const dateValue = formattedSpecialDate || "Date to be announced";
     const fallbackStory = message || tagline || heroConfig.description;
 
     switch (occasionHero.archetype) {
-      case 'ceremony_cinematic':
+      case "ceremony_cinematic":
         return [
-          { icon: '🗓️', label: occasionHero.datePrefix, value: dateValue },
-          { icon: '💌', label: 'Primary moment', value: occasionHero.primaryLabel },
-          { icon: '✨', label: 'Experience', value: occasionHero.secondaryLabel },
+          { icon: "🗓️", label: occasionHero.datePrefix, value: dateValue },
+          {
+            icon: "💌",
+            label: "Primary moment",
+            value: occasionHero.primaryLabel,
+          },
+          {
+            icon: "✨",
+            label: "Experience",
+            value: occasionHero.secondaryLabel,
+          },
         ];
-      case 'celebration_stage':
+      case "celebration_stage":
         return [
-          { icon: occasionHero.badge, label: 'Occasion', value: occasionHero.intro },
-          { icon: '📅', label: occasionHero.timerLabel, value: dateValue },
-          { icon: '🎊', label: 'Spotlight', value: birthdayStats ? `Turning ${birthdayStats.ageTurning}` : 'Celebration-ready' },
+          {
+            icon: occasionHero.badge,
+            label: "Occasion",
+            value: occasionHero.intro,
+          },
+          { icon: "📅", label: occasionHero.timerLabel, value: dateValue },
+          {
+            icon: "🎊",
+            label: "Spotlight",
+            value: birthdayStats
+              ? `Turning ${birthdayStats.ageTurning}`
+              : "Celebration-ready",
+          },
         ];
-      case 'scrapbook_story':
+      case "scrapbook_story":
         return [
-          { icon: '📸', label: 'Memory board', value: 'Photos, notes, and highlights' },
-          { icon: '💬', label: 'Story note', value: fallbackStory.slice(0, 36) || 'A page filled with warm memories' },
-          { icon: '🗓️', label: occasionHero.datePrefix, value: dateValue },
+          {
+            icon: "📸",
+            label: "Memory board",
+            value: "Photos, notes, and highlights",
+          },
+          {
+            icon: "💬",
+            label: "Story note",
+            value:
+              fallbackStory.slice(0, 36) || "A page filled with warm memories",
+          },
+          { icon: "🗓️", label: occasionHero.datePrefix, value: dateValue },
         ];
-      case 'tribute_minimal':
+      case "tribute_minimal":
         return [
-          { icon: '🕊️', label: 'Tribute', value: 'A quiet space for remembrance' },
-          { icon: '🗓️', label: occasionHero.datePrefix, value: dateValue },
-          { icon: '🤍', label: 'Dedication', value: fallbackStory.slice(0, 36) || 'Stories, photos, and tributes' },
+          {
+            icon: "🕊️",
+            label: "Tribute",
+            value: "A quiet space for remembrance",
+          },
+          { icon: "🗓️", label: occasionHero.datePrefix, value: dateValue },
+          {
+            icon: "🤍",
+            label: "Dedication",
+            value:
+              fallbackStory.slice(0, 36) || "Stories, photos, and tributes",
+          },
         ];
-      case 'travel_journal':
+      case "travel_journal":
         return [
-          { icon: '🧭', label: 'Journey', value: occasionHero.intro },
-          { icon: '📍', label: 'Trip note', value: fallbackStory.slice(0, 36) || 'A route worth remembering' },
-          { icon: '🗓️', label: occasionHero.datePrefix, value: dateValue },
+          { icon: "🧭", label: "Journey", value: occasionHero.intro },
+          {
+            icon: "📍",
+            label: "Trip note",
+            value: fallbackStory.slice(0, 36) || "A route worth remembering",
+          },
+          { icon: "🗓️", label: occasionHero.datePrefix, value: dateValue },
         ];
-      case 'romantic_editorial':
+      case "romantic_editorial":
       default:
         return [
-          { icon: occasionHero.badge, label: 'Chapter', value: occasionHero.intro },
-          { icon: '🗓️', label: occasionHero.datePrefix, value: dateValue },
-          { icon: '💞', label: 'Keepsake', value: fallbackStory.slice(0, 36) || 'A story designed to be revisited' },
+          {
+            icon: occasionHero.badge,
+            label: "Chapter",
+            value: occasionHero.intro,
+          },
+          { icon: "🗓️", label: occasionHero.datePrefix, value: dateValue },
+          {
+            icon: "💞",
+            label: "Keepsake",
+            value:
+              fallbackStory.slice(0, 36) || "A story designed to be revisited",
+          },
         ];
     }
-  }, [birthdayStats, formattedSpecialDate, heroConfig.description, message, occasionHero, tagline]);
+  }, [
+    birthdayStats,
+    formattedSpecialDate,
+    heroConfig.description,
+    message,
+    occasionHero,
+    tagline,
+  ]);
 
   const normalizedTemplate = useMemo(() => {
-    const raw = String(template || '')
+    const raw = String(template || "")
       .trim()
       .toLowerCase()
-      .replace(/[-\s]+/g, '_');
+      .replace(/[-\s]+/g, "_");
 
     const templateAliases: Record<string, string> = {
-      hero_centered: 'hero_centered',
-      split_layout: 'split_layout',
-      fullscreen_banner: 'fullscreen_banner',
-      parallax_immersive: 'parallax_immersive',
-      particles_fullscreen: 'particles_fullscreen',
+      hero_centered: "hero_centered",
+      split_layout: "split_layout",
+      fullscreen_banner: "fullscreen_banner",
+      parallax_immersive: "parallax_immersive",
+      particles_fullscreen: "particles_fullscreen",
 
-      hero_centered_layout: 'hero_centered',
-      split_layout_layout: 'split_layout',
-      fullscreen_banner_layout: 'fullscreen_banner',
+      hero_centered_layout: "hero_centered",
+      split_layout_layout: "split_layout",
+      fullscreen_banner_layout: "fullscreen_banner",
     };
 
-    return templateAliases[raw] || 'hero_centered';
+    return templateAliases[raw] || "hero_centered";
   }, [template]);
-
 
   const renderHeroCentered = () => {
     const primaryButtonClass =
-      occasionHero.archetype === 'tribute_minimal'
-        ? 'bg-white/95 text-slate-900 hover:bg-white shadow-[0_10px_30px_rgba(255,255,255,0.16)]'
-        : occasionHero.archetype === 'ceremony_cinematic'
-          ? 'bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 text-slate-900 hover:brightness-105 shadow-[0_10px_30px_rgba(251,191,36,0.28)]'
-          : occasionHero.archetype === 'celebration_stage'
-            ? 'bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-400 text-white hover:brightness-110 shadow-[0_10px_30px_rgba(236,72,153,0.30)]'
-            : 'bg-gradient-to-r from-rose-500 via-pink-500 to-orange-400 text-white hover:brightness-110 shadow-[0_10px_30px_rgba(244,63,94,0.25)]';
+      occasionHero.archetype === "tribute_minimal"
+        ? "bg-white/95 text-slate-900 hover:bg-white shadow-[0_10px_30px_rgba(255,255,255,0.16)]"
+        : occasionHero.archetype === "ceremony_cinematic"
+          ? "bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 text-slate-900 hover:brightness-105 shadow-[0_10px_30px_rgba(251,191,36,0.28)]"
+          : occasionHero.archetype === "celebration_stage"
+            ? "bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-400 text-white hover:brightness-110 shadow-[0_10px_30px_rgba(236,72,153,0.30)]"
+            : "bg-gradient-to-r from-rose-500 via-pink-500 to-orange-400 text-white hover:brightness-110 shadow-[0_10px_30px_rgba(244,63,94,0.25)]";
 
     const secondaryButtonClass =
-      occasionHero.archetype === 'tribute_minimal' || occasionHero.archetype === 'ceremony_cinematic'
-        ? 'border border-white/20 bg-white/10 text-white hover:bg-white/15'
-        : 'border border-rose-200/80 bg-white/90 text-rose-700 hover:bg-white hover:border-rose-300 shadow-sm';
+      occasionHero.archetype === "tribute_minimal" ||
+      occasionHero.archetype === "ceremony_cinematic"
+        ? "border border-white/20 bg-white/10 text-white hover:bg-white/15"
+        : "border border-rose-200/80 bg-white/90 text-rose-700 hover:bg-white hover:border-rose-300 shadow-sm";
 
     const sharedActions = (
       <div
@@ -471,42 +562,51 @@ export default function HomeSection({
             style={cinematicStageStyle(360 + idx * 80)}
           >
             <div className="mb-2 text-lg">{item.icon}</div>
-            <div className={`text-[11px] uppercase tracking-[0.24em] font-semibold ${styles.textMuted}`}>{item.label}</div>
-            <div className={`mt-2 text-sm font-semibold ${styles.text} line-clamp-2`}>{item.value}</div>
+            <div
+              className={`text-[11px] uppercase tracking-[0.24em] font-semibold ${styles.textMuted}`}
+            >
+              {item.label}
+            </div>
+            <div
+              className={`mt-2 text-sm font-semibold ${styles.text} line-clamp-2`}
+            >
+              {item.value}
+            </div>
           </div>
         ))}
       </div>
     );
 
     const isDarkEyebrow =
-      occasionHero.archetype === 'ceremony_cinematic' ||
-      occasionHero.archetype === 'tribute_minimal';
+      occasionHero.archetype === "ceremony_cinematic" ||
+      occasionHero.archetype === "tribute_minimal";
 
     const sharedEyebrow = (
       <div
-        className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 shadow-sm ${cinematicStageClass} ${isDarkEyebrow
-            ? 'border border-white/30 bg-white/20 backdrop-blur-md'
-            : 'border border-rose-200/90 bg-white/90'
-          }`}
+        className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 shadow-sm ${cinematicStageClass} ${
+          isDarkEyebrow
+            ? "border border-white/30 bg-white/20 backdrop-blur-md"
+            : "border border-rose-200/90 bg-white/90"
+        }`}
         style={cinematicStageStyle(120)}
       >
         <span>{occasionHero.badge}</span>
         <span
-          className={`text-[11px] font-semibold uppercase tracking-[0.3em] ${isDarkEyebrow ? 'text-white/90' : 'text-rose-700'}`}
+          className={`text-[11px] font-semibold uppercase tracking-[0.3em] ${isDarkEyebrow ? "text-white/90" : "text-rose-700"}`}
         >
           {occasionHero.intro}
         </span>
       </div>
     );
 
-    if (occasionHero.renderStrategy === 'dedicated') {
+    if (occasionHero.renderStrategy === "dedicated") {
       return (
         <DedicatedOccasionHero
           siteType={siteType}
           styles={styles}
           heroImage={heroImage}
           displayHeadline={displayHeadline}
-          formattedSpecialDate={formattedSpecialDate || 'Date to be announced'}
+          formattedSpecialDate={formattedSpecialDate || "Date to be announced"}
           supportingNarrative={supportingNarrative}
           occasionHero={occasionHero}
           heroHighlights={heroHighlights}
@@ -523,7 +623,7 @@ export default function HomeSection({
         occasionHero={occasionHero}
         heroImage={heroImage}
         displayHeadline={displayHeadline}
-        formattedSpecialDate={formattedSpecialDate || 'Date to be announced'}
+        formattedSpecialDate={formattedSpecialDate || "Date to be announced"}
         supportingNarrative={supportingNarrative}
         headlineText={displayHeadline}
         supportingText={supportingNarrative}
@@ -541,22 +641,21 @@ export default function HomeSection({
     );
   };
 
-
   const renderSplitLayout = () => {
     const isDark = checkIsDarkTheme(theme);
-    const isPastel = theme === 'cute_pastel';
-    const isMinimal = theme === 'minimal_modern';
+    const isPastel = theme === "cute_pastel";
+    const isMinimal = theme === "minimal_modern";
 
     const getAccentColor = () => {
       switch (theme) {
-        case 'dark_elegant':
-          return 'amber';
-        case 'cute_pastel':
-          return 'purple';
-        case 'minimal_modern':
-          return 'slate';
+        case "dark_elegant":
+          return "amber";
+        case "cute_pastel":
+          return "purple";
+        case "minimal_modern":
+          return "slate";
         default:
-          return 'rose';
+          return "rose";
       }
     };
     const accentColor = getAccentColor();
@@ -567,7 +666,7 @@ export default function HomeSection({
           <div className="relative h-[40vh] lg:h-auto min-h-[50vh] lg:min-h-screen overflow-hidden order-1 lg:order-1 hero-media-frame">
             <Image
               src={heroImage}
-              alt={`${primaryName} and ${secondaryName || 'Partner'}`}
+              alt={`${primaryName} and ${secondaryName || "Partner"}`}
               fill
               className="object-cover brightness-[0.85] lg:brightness-100 hero-media-premium"
               priority
@@ -576,7 +675,13 @@ export default function HomeSection({
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/20 to-transparent lg:hidden" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20 hidden lg:block" />
-            <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.3) 100%)' }} />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.3) 100%)",
+              }}
+            />
             <div className="hero-media-focus" />
 
             <div className="absolute bottom-6 left-6 lg:bottom-10 lg:left-10">
@@ -595,26 +700,30 @@ export default function HomeSection({
             className={`
               flex flex-col justify-center
               p-6 md:p-10 lg:p-12 xl:p-16
-              ${isDark ? 'bg-zinc-900' : isPastel ? 'bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50' : isMinimal ? 'bg-slate-50' : 'bg-white'}
+              ${isDark ? "bg-zinc-900" : isPastel ? "bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50" : isMinimal ? "bg-slate-50" : "bg-white"}
               relative
               order-2 lg:order-2
             `}
             style={{
-              paddingTop: 'max(1.5rem, env(safe-area-inset-top, 0px))',
-              paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))',
+              paddingTop: "max(1.5rem, env(safe-area-inset-top, 0px))",
+              paddingBottom: "max(1.5rem, env(safe-area-inset-bottom, 0px))",
             }}
           >
             <div className="max-w-lg mx-auto lg:mx-0 w-full">
-              <div className={`mb-6 lg:mb-8 ${cinematicStageClass}`} style={cinematicStageStyle(80)}>
+              <div
+                className={`mb-6 lg:mb-8 ${cinematicStageClass}`}
+                style={cinematicStageStyle(80)}
+              >
                 <span
-                  className={`text-4xl lg:text-5xl ${accentColor === 'amber'
-                      ? 'text-amber-300'
-                      : accentColor === 'purple'
-                        ? 'text-purple-400'
-                        : accentColor === 'slate'
-                          ? 'text-slate-400'
-                          : 'text-rose-400'
-                    }`}
+                  className={`text-4xl lg:text-5xl ${
+                    accentColor === "amber"
+                      ? "text-amber-300"
+                      : accentColor === "purple"
+                        ? "text-purple-400"
+                        : accentColor === "slate"
+                          ? "text-slate-400"
+                          : "text-rose-400"
+                  }`}
                 >
                   {occasionHero.badge}
                 </span>
@@ -627,7 +736,10 @@ export default function HomeSection({
                 {occasionHero.intro}
               </p>
 
-              <div className={`space-y-2 mb-6 ${cinematicStageClass}`} style={cinematicStageStyle(220)}>
+              <div
+                className={`space-y-2 mb-6 ${cinematicStageClass}`}
+                style={cinematicStageStyle(220)}
+              >
                 <h1
                   className={`
                     ${styles.heading}
@@ -682,21 +794,34 @@ export default function HomeSection({
                 {isBirthday ? (
                   birthdayStats ? (
                     <>
-                      Turning <span className={`font-medium ${styles.text}`}>{birthdayStats.ageTurning}</span> on{' '}
-                      <span className={`font-medium ${styles.text}`}>{birthdayStats.eventDate}</span>
+                      Turning{" "}
+                      <span className={`font-medium ${styles.text}`}>
+                        {birthdayStats.ageTurning}
+                      </span>{" "}
+                      on{" "}
+                      <span className={`font-medium ${styles.text}`}>
+                        {birthdayStats.eventDate}
+                      </span>
                     </>
                   ) : (
-                    <span className="opacity-70">Prime birthday celebration coming soon</span>
+                    <span className="opacity-70">
+                      Prime birthday celebration coming soon
+                    </span>
                   )
                 ) : (
                   <>
-                    {occasionHero.datePrefix}{' '}
-                    <span className={`font-medium ${styles.text}`}>{formattedSpecialDate || 'Date to be announced'}</span>
+                    {occasionHero.datePrefix}{" "}
+                    <span className={`font-medium ${styles.text}`}>
+                      {formattedSpecialDate || "Date to be announced"}
+                    </span>
                   </>
                 )}
               </p>
 
-              <div className={`mb-8 ${cinematicStageClass}`} style={cinematicStageStyle(360)}>
+              <div
+                className={`mb-8 ${cinematicStageClass}`}
+                style={cinematicStageStyle(360)}
+              >
                 {isBirthday ? (
                   birthdayStats ? (
                     <div
@@ -706,14 +831,23 @@ export default function HomeSection({
                     >
                       <span className="text-xl">✨</span>
                       <div className="text-center">
-                        <div className={`${styles.text} font-medium text-sm md:text-base`}>Countdown to the celebration</div>
-                        <div className="text-xs md:text-sm text-white/80">{birthdayStats.countdown}</div>
+                        <div
+                          className={`${styles.text} font-medium text-sm md:text-base`}
+                        >
+                          Countdown to the celebration
+                        </div>
+                        <div className="text-xs md:text-sm text-white/80">
+                          {birthdayStats.countdown}
+                        </div>
                       </div>
                       <span className="text-xl">🎈</span>
                     </div>
                   ) : null
                 ) : shouldUseRelationshipTimer ? (
-                  <RelationshipTimer anniversary={anniversaryDate} theme={theme} />
+                  <RelationshipTimer
+                    anniversary={anniversaryDate}
+                    theme={theme}
+                  />
                 ) : (
                   <div
                     className={`
@@ -722,8 +856,14 @@ export default function HomeSection({
                   >
                     <span className="text-xl">{occasionHero.badge}</span>
                     <div className="text-center">
-                      <div className={`${styles.text} font-medium text-sm md:text-base`}>{occasionHero.timerLabel}</div>
-                      <div className="text-xs md:text-sm text-white/80">{formattedSpecialDate || 'Date to be announced'}</div>
+                      <div
+                        className={`${styles.text} font-medium text-sm md:text-base`}
+                      >
+                        {occasionHero.timerLabel}
+                      </div>
+                      <div className="text-xs md:text-sm text-white/80">
+                        {formattedSpecialDate || "Date to be announced"}
+                      </div>
                     </div>
                     <span className="text-xl">✨</span>
                   </div>
@@ -731,12 +871,15 @@ export default function HomeSection({
               </div>
 
               {tagline && (
-                <div className={`mb-8 ${cinematicStageClass}`} style={cinematicStageStyle(420)}>
+                <div
+                  className={`mb-8 ${cinematicStageClass}`}
+                  style={cinematicStageStyle(420)}
+                >
                   <p
                     className={`
                       text-base md:text-lg lg:text-xl
                       leading-relaxed
-                      ${isDark ? 'text-white/70' : 'text-gray-600'}
+                      ${isDark ? "text-white/70" : "text-gray-600"}
                       font-light
                       italic
                       max-w-md
@@ -746,27 +889,29 @@ export default function HomeSection({
                     `}
                   >
                     <span
-                      className={`absolute left-0 top-0 text-2xl leading-none ${accentColor === 'amber'
-                          ? 'text-amber-300/50'
-                          : accentColor === 'purple'
-                            ? 'text-purple-400/50'
-                            : accentColor === 'slate'
-                              ? 'text-slate-400/50'
-                              : 'text-rose-400/50'
-                        }`}
+                      className={`absolute left-0 top-0 text-2xl leading-none ${
+                        accentColor === "amber"
+                          ? "text-amber-300/50"
+                          : accentColor === "purple"
+                            ? "text-purple-400/50"
+                            : accentColor === "slate"
+                              ? "text-slate-400/50"
+                              : "text-rose-400/50"
+                      }`}
                     >
                       &ldquo;
                     </span>
                     {tagline}
                     <span
-                      className={`absolute -bottom-1 text-2xl leading-none ${accentColor === 'amber'
-                          ? 'text-amber-300/50'
-                          : accentColor === 'purple'
-                            ? 'text-purple-400/50'
-                            : accentColor === 'slate'
-                              ? 'text-slate-400/50'
-                              : 'text-rose-400/50'
-                        }`}
+                      className={`absolute -bottom-1 text-2xl leading-none ${
+                        accentColor === "amber"
+                          ? "text-amber-300/50"
+                          : accentColor === "purple"
+                            ? "text-purple-400/50"
+                            : accentColor === "slate"
+                              ? "text-slate-400/50"
+                              : "text-rose-400/50"
+                      }`}
                     >
                       &rdquo;
                     </span>
@@ -796,9 +941,13 @@ export default function HomeSection({
                     premium-cta-shell premium-cta-primary
                   "
                 >
-                  <span className="transition-transform group-hover:animate-pulse">{heroConfig.cta.startIcon}</span>
+                  <span className="transition-transform group-hover:animate-pulse">
+                    {heroConfig.cta.startIcon}
+                  </span>
                   {occasionHero.primaryLabel}
-                  <span className="transition-transform group-hover:translate-y-0.5">{heroConfig.cta.endIcon}</span>
+                  <span className="transition-transform group-hover:translate-y-0.5">
+                    {heroConfig.cta.endIcon}
+                  </span>
                 </a>
 
                 {occasionHero.showSecondaryCta && (
@@ -821,14 +970,26 @@ export default function HomeSection({
                       premium-cta-shell premium-cta-secondary
                     "
                     style={{
-                      backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.6)',
-                      borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
-                      color: isDark ? 'white' : isPastel ? '#be185d' : isMinimal ? '#475569' : '#be185d',
+                      backgroundColor: isDark
+                        ? "rgba(255,255,255,0.1)"
+                        : "rgba(255,255,255,0.6)",
+                      borderColor: isDark
+                        ? "rgba(255,255,255,0.2)"
+                        : "rgba(0,0,0,0.1)",
+                      color: isDark
+                        ? "white"
+                        : isPastel
+                          ? "#be185d"
+                          : isMinimal
+                            ? "#475569"
+                            : "#be185d",
                     }}
                   >
                     <span>{heroConfig.cta.endIcon}</span>
                     {occasionHero.secondaryLabel}
-                    <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                    <span className="transition-transform group-hover:translate-x-0.5">
+                      →
+                    </span>
                   </a>
                 )}
               </div>
@@ -850,90 +1011,89 @@ export default function HomeSection({
               no-underline
             "
           >
-            <span className="text-xs uppercase tracking-widest opacity-70">Explore</span>
+            <span className="text-xs uppercase tracking-widest opacity-70">
+              Explore
+            </span>
             <span className="animate-bounce text-lg">↓</span>
           </a>
         </div>
       </div>
     );
   };
+  
+  const effectiveTagline = supportingNarrative;
+
   const renderFullscreenBanner = () => {
     return (
-      <div className={`relative min-h-screen flex items-center justify-center overflow-hidden ${styles.heroBg}`}>
-        {/* Background */}
-        <div className="absolute inset-0 hero-media-frame">
+      <section className="relative min-h-screen isolate overflow-hidden">
+        {/* Background image */}
+        <div className="absolute inset-0 -z-10">
           <Image
             src={heroImage}
-            alt="Background"
+            alt="Hero background"
             fill
-            className="object-cover scale-[1.02] hero-media-premium"
             priority
             sizes="100vw"
-            quality={86}
+            quality={90}
+            className="object-cover object-center"
           />
 
-          {/* Stronger layered overlays */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/60 to-black/80" />
-          <div className="absolute inset-0 bg-black/15" />
-          <div className={`absolute inset-0 ${styles.overlay}`} />
-          <div className="absolute inset-0" style={{ background: styles.heroVignette }} />
-          <div className="hero-media-focus" />
-
-          {/* Soft center focus glow */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-[520px] h-[520px] rounded-full bg-white/8 blur-3xl" />
-          </div>
+          {/* Softer overlays */}
+          <div className="absolute inset-0 bg-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/35 to-black/55" />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(circle at center, rgba(255,255,255,0.06) 0%, rgba(0,0,0,0.18) 45%, rgba(0,0,0,0.42) 100%)",
+            }}
+          />
         </div>
 
         {/* Decorations */}
-        <div className="opacity-70">
+        <div className="absolute inset-0 z-[1] pointer-events-none opacity-70">
           <HeroDecorations theme={theme} siteType={siteType} variant="full" />
         </div>
 
         {/* Main content */}
         <div
-          className="relative z-10 text-center text-white px-4 flex flex-col items-center justify-center max-w-3xl mx-auto"
+          className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 text-center text-white"
           style={{
-            paddingTop: 'max(1rem, env(safe-area-inset-top, 0px))',
-            paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px))',
+            paddingTop: "max(1rem, env(safe-area-inset-top, 0px))",
+            paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))",
           }}
         >
-          <div className={`mb-6 ${cinematicStageClass}`} style={cinematicStageStyle(80)}>
-            <span className="text-5xl md:text-6xl animate-pulse motion-reduce:animate-none inline-block">
+          <div
+            className={`mb-6 ${cinematicStageClass}`}
+            style={cinematicStageStyle(80)}
+          >
+            <span className="inline-block animate-pulse text-5xl md:text-6xl motion-reduce:animate-none">
               {occasionHero.badge}
             </span>
           </div>
 
           <p
-            className={`uppercase tracking-[0.24em] text-xs md:text-sm text-white/70 mb-4 font-semibold ${cinematicStageClass}`}
+            className={`mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-white/75 md:text-sm ${cinematicStageClass}`}
             style={cinematicStageStyle(150)}
           >
             {occasionHero.intro}
           </p>
 
           <h1
-            className={`
-            ${styles.heading}
-            text-4xl md:text-6xl lg:text-7xl
-            font-semibold
-            mb-5
-            leading-tight
-            tracking-wide
-            drop-shadow-[0_6px_30px_rgba(0,0,0,0.5)]
-          ${cinematicStageClass}`}
+            className={`${styles.heading} ${cinematicStageClass} mb-5 text-4xl font-semibold leading-tight tracking-wide text-white drop-shadow-[0_6px_30px_rgba(0,0,0,0.45)] md:text-6xl lg:text-7xl`}
             style={cinematicStageStyle(220)}
           >
             {isBirthday ? (
               celebrantName
             ) : (
               <>
-                {primaryName || 'Your Name'}
+                {primaryName || "Your Name"}
                 {showDualNames && (
                   <>
-                    <span className="block md:inline mx-0 md:mx-4 text-3xl md:text-4xl text-rose-300/85 font-light">
+                    <span className="mx-0 block text-3xl font-light text-rose-300/90 md:mx-4 md:inline md:text-4xl">
                       &
                     </span>
-                    {secondaryName || 'Partner Name'}
+                    {secondaryName || "Partner Name"}
                   </>
                 )}
               </>
@@ -941,56 +1101,54 @@ export default function HomeSection({
           </h1>
 
           <p
-            className={`text-base md:text-lg mb-4 text-white/75 font-light tracking-wide drop-shadow-md ${cinematicStageClass}`}
+            className={`mb-4 text-base font-light tracking-wide text-white/95 drop-shadow-md md:text-lg ${cinematicStageClass}`}
             style={cinematicStageStyle(300)}
           >
             {isBirthday ? (
               birthdayStats ? (
                 <>
-                  Turning {birthdayStats.ageTurning} on{' '}
-                  <span className="font-normal text-white/90">{birthdayStats.eventDate}</span>
+                  Turning {birthdayStats.ageTurning} on{" "}
+                  <span className="font-normal text-white/95">
+                    {birthdayStats.eventDate}
+                  </span>
                 </>
               ) : (
-                <span className="font-normal text-white/85">Let’s celebrate your special day</span>
+                <span className="font-normal text-white/90">
+                  Let’s celebrate your special day
+                </span>
               )
             ) : (
               <>
-                {occasionHero.datePrefix}{' '}
-                <span className="font-normal text-white/90">{formattedSpecialDate || 'Date to be announced'}</span>
+                {occasionHero.datePrefix}{" "}
+                <span className="font-normal text-white/95">
+                  {formattedSpecialDate || "Date to be announced"}
+                </span>
               </>
             )}
           </p>
 
-
-          {tagline && (
+          {effectiveTagline && (
             <p
               className={`text-base md:text-lg mb-6 text-white/90 font-light italic tracking-wide drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)] ${cinematicStageClass}`}
               style={cinematicStageStyle(360)}
             >
-              &ldquo;{tagline}&rdquo;
+              &ldquo;{effectiveTagline}&rdquo;
             </p>
           )}
 
-          <div className={`mb-7 ${cinematicStageClass}`} style={cinematicStageStyle(430)}>
+          <div
+            className={`mb-7 ${cinematicStageClass}`}
+            style={cinematicStageStyle(430)}
+          >
             {isBirthday ? (
               birthdayStats ? (
-                <div
-                  className="
-                  inline-flex items-center gap-3 rounded-full
-                  px-5 py-3 md:px-7 md:py-3.5
-                  border border-white/20
-                  bg-white/10
-                  backdrop-blur-md
-                  shadow-[0_12px_40px_rgba(0,0,0,0.18)]
-                  transition-all duration-300
-                "
-                >
+                <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-5 py-3 shadow-[0_12px_40px_rgba(0,0,0,0.18)] backdrop-blur-md md:px-7 md:py-3.5">
                   <span className="text-xl">✨</span>
                   <div className="text-center">
-                    <div className="text-sm md:text-base font-medium text-white">
+                    <div className="text-sm font-medium text-white md:text-base">
                       Countdown to the celebration
                     </div>
-                    <div className="text-xs md:text-sm text-white/80">
+                    <div className="text-xs text-white/80 md:text-sm">
                       {birthdayStats.countdown}
                     </div>
                   </div>
@@ -999,37 +1157,34 @@ export default function HomeSection({
               ) : null
             ) : shouldUseRelationshipTimer ? (
               <div className="scale-[0.96] opacity-95">
-                <RelationshipTimer anniversary={anniversaryDate} theme={theme} />
+                <RelationshipTimer
+                  anniversary={anniversaryDate}
+                  theme={theme}
+                />
               </div>
             ) : (
-              <div
-                className="
-                  inline-flex items-center gap-3 rounded-full
-                  px-5 py-3 md:px-7 md:py-3.5
-                  border border-white/20
-                  bg-white/10
-                  backdrop-blur-md
-                  shadow-[0_12px_40px_rgba(0,0,0,0.18)]
-                "
-              >
+              <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-5 py-3 backdrop-blur-md shadow-[0_12px_40px_rgba(0,0,0,0.18)] md:px-7 md:py-3.5">
                 <span className="text-xl">{occasionHero.badge}</span>
                 <div className="text-center">
-                  <div className="text-sm md:text-base font-medium text-white">{occasionHero.timerLabel}</div>
-                  <div className="text-xs md:text-sm text-white/80">{formattedSpecialDate || 'Date to be announced'}</div>
+                  <div className="text-sm font-medium text-white md:text-base">
+                    {occasionHero.timerLabel}
+                  </div>
+                  <div className="text-xs text-white/80 md:text-sm">
+                    {formattedSpecialDate || "Date to be announced"}
+                  </div>
                 </div>
                 <span className="text-xl">✨</span>
               </div>
             )}
           </div>
-
         </div>
 
         {/* CTA area */}
         <div
-          className={`absolute bottom-10 left-1/2 -translate-x-1/2 z-10 ${cinematicStageClass}`}
+          className={`absolute left-1/2 z-10 -translate-x-1/2 ${cinematicStageClass}`}
           style={{
             ...cinematicStageStyle(520),
-            bottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))',
+            bottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))",
           }}
         >
           <div className="scale-[0.98]">
@@ -1040,16 +1195,16 @@ export default function HomeSection({
             />
           </div>
         </div>
-      </div>
+      </section>
     );
   };
 
   switch (normalizedTemplate) {
-    case 'split_layout':
+    case "split_layout":
       return renderSplitLayout();
-    case 'fullscreen_banner':
+    case "fullscreen_banner":
       return renderFullscreenBanner();
-    case 'parallax_immersive':
+    case "parallax_immersive":
       return renderParallaxImmersive({
         heroImage,
         tagline,
@@ -1057,11 +1212,11 @@ export default function HomeSection({
         theme,
         siteType,
         customerName: primaryName,
-        partnerName: secondaryName
+        partnerName: secondaryName,
       });
-    case 'particles_fullscreen':
+    case "particles_fullscreen":
       return renderFullscreenBanner();
-    case 'hero_centered':
+    case "hero_centered":
     default:
       return renderHeroCentered();
   }

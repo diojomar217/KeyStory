@@ -75,6 +75,15 @@ const isMaskedPasswordPlaceholder = (value?: string): boolean => {
   return normalized.length > 0 && /^[*•]+$/.test(normalized);
 };
 
+const sanitizeSlug = (value: string): string => {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+};
+
 export default function EditWebsitePage() {
         const MAX_IMAGE_UPLOAD_BYTES = 12 * 1024 * 1024; // 12 MB
 
@@ -186,6 +195,9 @@ export default function EditWebsitePage() {
     () => detectDuplicateParticipantNames(form.participants || []),
     [form.participants]
   );
+
+  const [slugCheckState, setSlugCheckState] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
+  const [slugCheckMessage, setSlugCheckMessage] = useState('');
 
   const publishChecklist: ChecklistItem[] = useMemo(
     () => {
@@ -585,6 +597,58 @@ export default function EditWebsitePage() {
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     handleChange(e as any);
   };
+
+  const generateRandomSlug = () => {
+    const base = sanitizeSlug(form.website_name || 'site') || 'site';
+    const suffix = Math.floor(1000 + Math.random() * 9000).toString();
+    const candidate = `${base}-${suffix}`;
+    setForm((prev) => ({ ...prev, website_name: candidate }));
+    setSlugCheckState('checking');
+    setSlugCheckMessage('Checking availability...');
+  };
+
+  useEffect(() => {
+    const slug = (form.website_name || '').trim();
+    if (!slug) {
+      setSlugCheckState('idle');
+      setSlugCheckMessage('');
+      return;
+    }
+
+    if (!/^[a-z0-9-]+$/.test(slug)) {
+      setSlugCheckState('taken');
+      setSlugCheckMessage('Use lowercase letters, numbers, and hyphen only.');
+      return;
+    }
+
+    const timer = window.setTimeout(async () => {
+      try {
+        setSlugCheckState('checking');
+        setSlugCheckMessage('Checking availability...');
+        const response = await fetch(`/api/qrcode/verify?slug=${encodeURIComponent(slug)}`);
+        const result = await response.json();
+        if (!response.ok || !result?.success) throw new Error('Unable to validate slug');
+
+        if (result.exists) {
+          if (String(result.site_id) === String(id)) {
+            setSlugCheckState('available');
+            setSlugCheckMessage('This is the current slug for this site.');
+          } else {
+            setSlugCheckState('taken');
+            setSlugCheckMessage('This slug is already used by another website.');
+          }
+        } else {
+          setSlugCheckState('available');
+          setSlugCheckMessage('Slug is available.');
+        }
+      } catch {
+        setSlugCheckState('idle');
+        setSlugCheckMessage('Could not validate slug right now.');
+      }
+    }, 400);
+
+    return () => window.clearTimeout(timer as unknown as number);
+  }, [form.website_name, id]);
 
 
   const handleConfigChange = (newConfig: Partial<SiteConfig>) => {
@@ -1148,6 +1212,20 @@ export default function EditWebsitePage() {
                 <p className="text-xs text-slate-400 mt-1">
                   Only letters, numbers, and hyphens allowed
                 </p>
+                <div className="mt-2 flex items-center gap-3">
+                  <p className={`text-xs ${slugCheckState === 'taken' ? 'text-rose-600' : slugCheckState === 'available' ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {slugCheckMessage || ''}
+                  </p>
+                  {slugCheckState === 'taken' && (
+                    <button
+                      type="button"
+                      onClick={generateRandomSlug}
+                      className="px-2 py-1 rounded-md text-xs bg-rose-50 border border-rose-200 text-rose-700"
+                    >
+                      Generate random slug
+                    </button>
+                  )}
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1.5">
@@ -1923,7 +2001,7 @@ export default function EditWebsitePage() {
 
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1">
-            <form onSubmit={handleFormSubmit}>
+            <div>
               {renderStepContent()}
 
               <div className="flex justify-between mt-8">
@@ -1955,7 +2033,8 @@ export default function EditWebsitePage() {
                   </button>
                 ) : (
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handleSubmit}
                     className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
                     disabled={loading}
                   >
@@ -1978,7 +2057,7 @@ export default function EditWebsitePage() {
                   </button>
                 )}
               </div>
-            </form>
+            </div>
           </div>
 
           <LivePreview
