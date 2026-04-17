@@ -889,6 +889,227 @@ export function MemoryMapInput({ value, onChange }: MemoryMapInputProps) {
   );
 }
 
+// Invitation Input for Baptism
+interface InvitationInputProps {
+  value?: SectionContentMap['invitation'];
+  onChange: (value: SectionContentMap['invitation']) => void;
+}
+
+export function InvitationInput({ value, onChange }: InvitationInputProps) {
+  const greeting = value?.greeting || '';
+  const intro = value?.intro || '';
+  const body = value?.body || value?.invitationMessage || '';
+  const supportMessage = value?.supportMessage || '';
+  const closingText = value?.closingText || '';
+  const signoff = value?.signoff || '';
+  const signedBy = value?.signedBy || '';
+  const godparentMessage = value?.godparentMessage || '';
+
+  const update = (patch: Record<string, any>) => onChange({ ...(value || {}), ...patch });
+
+  return (
+    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Greeting (optional)</label>
+          <input
+            type="text"
+            value={greeting}
+            onChange={(e) => update({ greeting: e.target.value })}
+            placeholder="e.g., Dear family and friends"
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Sign-off (optional)</label>
+          <input
+            type="text"
+            value={signoff}
+            onChange={(e) => update({ signoff: e.target.value })}
+            placeholder="e.g., With love"
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400"
+          />
+        </div>
+      </div>
+
+      <TextContentInput
+        label="Intro (short)"
+        value={intro}
+        onChange={(v) => update({ intro: v })}
+        rows={3}
+      />
+
+      <TextContentInput
+        label="Main Invitation Text"
+        value={body}
+        onChange={(v) => update({ body: v, invitationMessage: v })}
+        rows={6}
+      />
+
+      <TextContentInput
+        label="Support Message / Godparent Note (optional)"
+        value={supportMessage || godparentMessage}
+        onChange={(v) => update({ supportMessage: v, godparentMessage: v })}
+        rows={3}
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Closing Text (optional)</label>
+          <input
+            type="text"
+            value={closingText}
+            onChange={(e) => update({ closingText: e.target.value })}
+            placeholder="e.g., Looking forward to celebrating together"
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Signed By (optional)</label>
+          <input
+            type="text"
+            value={signedBy}
+            onChange={(e) => update({ signedBy: e.target.value })}
+            placeholder="e.g., Parent names"
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Schedule Input for Baptism
+interface ScheduleInputProps {
+  value?: SectionContentMap['schedule'];
+  onChange: (value: SectionContentMap['schedule']) => void;
+}
+
+export function ScheduleInput({ value, onChange }: ScheduleInputProps) {
+  const items = value?.schedule || [];
+
+  return (
+    <RepeaterInput
+      label="Event Schedule"
+      items={items.map((it: any, idx: number) => ({ id: it.id || `s-${idx}`, title: it.title || '', time: it.time || '' }))}
+      onChange={(items) => onChange({ schedule: items.map((it: any) => ({ title: it.title || '', time: it.time || '' })) })}
+      addButtonText="Add schedule item"
+      emptyText="Add schedule items (e.g., Ceremony, Reception)"
+      renderItem={(item, _, onUpdate) => (
+        <div className="space-y-2">
+          <input
+            type="text"
+            value={item.title || ''}
+            onChange={(e) => onUpdate({ title: e.target.value })}
+            placeholder="Title (e.g., Ceremony)"
+            className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 text-sm"
+          />
+          <input
+            type="time"
+            value={item.time || ''}
+            onChange={(e) => onUpdate({ time: e.target.value })}
+            className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 text-sm"
+          />
+        </div>
+      )}
+    />
+  );
+}
+
+// Dress Code Input for Baptism
+interface DressCodeInputProps {
+  value?: SectionContentMap['dress_code'];
+  onChange: (value: SectionContentMap['dress_code']) => void;
+}
+
+export function DressCodeInput({ value, onChange }: DressCodeInputProps) {
+  const dressCode = value?.dressCode || '';
+  const themeColor = value?.themeColor || '#ffffff';
+
+  return (
+    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-4">
+      <TextContentInput
+        label="Dress Code"
+        value={dressCode}
+        onChange={(v) => onChange({ ...(value || {}), dressCode: v })}
+        placeholder="e.g., Smart casual, Pastel attire"
+      />
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">Theme Accent Color</label>
+        <input type="color" value={themeColor} onChange={(e) => onChange({ ...(value || {}), themeColor: e.target.value })} className="w-16 h-10 p-0 border-0" />
+        <p className="text-xs text-slate-400 mt-1">Optional color swatch to show alongside dress code.</p>
+      </div>
+    </div>
+  );
+}
+
+// Map Input for Baptism
+interface MapInputProps {
+  value?: SectionContentMap['map_section'];
+  onChange: (value: SectionContentMap['map_section']) => void;
+}
+
+export function MapInput({ value, onChange }: MapInputProps) {
+  const mapLink = value?.mapLink || '';
+
+  return (
+    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-4">
+      <UrlContentInput
+        label="Google Maps Link or Embed URL"
+        value={mapLink}
+        onChange={(v) => onChange({ ...(value || {}), mapLink: v })}
+        placeholder="https://www.google.com/maps/place/..."
+        helperText="If you paste an embed URL the map will be embedded on the page."
+      />
+    </div>
+  );
+}
+
+// Closing Input for Baptism
+interface ClosingInputProps {
+  value?: SectionContentMap['closing'];
+  onChange: (value: SectionContentMap['closing']) => void;
+}
+
+export function ClosingInput({ value, onChange }: ClosingInputProps) {
+  const closingMessage = value?.closingMessage || '';
+  const parentNames = value?.parentNames || '';
+
+  return (
+    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-4">
+      <TextContentInput
+        label="Closing Message"
+        value={closingMessage}
+        onChange={(v) => onChange({ ...(value || {}), closingMessage: v })}
+        rows={4}
+      />
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">Parent(s) Names</label>
+        <input type="text" value={parentNames} onChange={(e) => onChange({ ...(value || {}), parentNames: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 text-sm" />
+      </div>
+    </div>
+  );
+}
+
+// RSVP Input (toggle)
+interface RSVPInputProps {
+  value?: SectionContentMap['rsvp'];
+  onChange: (value: SectionContentMap['rsvp']) => void;
+}
+
+export function RSVPInput({ value, onChange }: RSVPInputProps) {
+  const enabled = value?.enabled ?? true;
+
+  return (
+    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+      <label className="flex items-center gap-3">
+        <input type="checkbox" checked={enabled} onChange={(e) => onChange({ ...(value || {}), enabled: e.target.checked })} />
+        <span className="text-sm">Enable RSVP form</span>
+      </label>
+    </div>
+  );
+}
+
 // Guest Messages (Config only - informational)
 interface GuestMessagesInputProps {
   value?: SectionContentMap['guest_messages'];

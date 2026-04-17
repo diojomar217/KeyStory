@@ -44,6 +44,7 @@ type LocalForm = {
   customer_name: string;
   partner_name: string;
   specialDate: string;
+  eventTime?: string;
   message: string;
   tagline: string;
   song_link: string;
@@ -328,6 +329,7 @@ export default function EditWebsitePage() {
         const customerName = site.config?.people?.primary || site.customer_name || '';
         const partnerName = site.config?.people?.secondary || site.partner_name || '';
         const specialDateValue = site.config?.dates?.special_date || site.specialDate || '';
+        const eventTimeValue = site.config?.eventTime || site.config?.section_content?.home?.eventTime || '';
 
         const partnerFromData = (site.config?.people?.secondary || site.partner_name || '').toString().trim();
         const customerFromData = (site.config?.people?.primary || site.customer_name || '').toString().trim();
@@ -388,6 +390,7 @@ export default function EditWebsitePage() {
           customer_name: customerName,
           partner_name: partnerName,
           specialDate: specialDateValue,
+          eventTime: eventTimeValue,
           message: site.config?.message || site.message || '',
           tagline: taglineValue,
           song_link: site.config?.media?.song_link || site.song_link || '',
@@ -688,6 +691,7 @@ export default function EditWebsitePage() {
       message: form.message,
       tagline: form.tagline,
       specialDate: form.specialDate,
+      eventTime: form.eventTime,
       hero: {
         ...(prev.hero || {}),
         coverPhotoIndex: typeof form.heroPhotoIndex === 'number' ? form.heroPhotoIndex : prev.hero?.coverPhotoIndex,
@@ -698,7 +702,7 @@ export default function EditWebsitePage() {
         song_autoplay: !!form.song_autoplay,
       },
     }));
-  }, [form.occasion, form.participants, form.message, form.tagline, form.specialDate, form.song_link, form.song_autoplay, form.heroPhotoIndex]);
+  }, [form.occasion, form.participants, form.message, form.tagline, form.specialDate, form.eventTime, form.song_link, form.song_autoplay, form.heroPhotoIndex]);
 
   const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
@@ -917,6 +921,8 @@ export default function EditWebsitePage() {
           secondary?: string;
         };
       };
+      // Ensure top-level eventTime is kept in config for consistency
+      normalizedConfig.eventTime = form.eventTime;
       const primaryParticipantName = (form.participants?.[0]?.name || '').trim();
       const secondaryParticipantName = (form.participants?.[1]?.name || '').trim();
       const resolvedCustomerName = primaryParticipantName || (form.customer_name || '').trim();
@@ -996,6 +1002,7 @@ export default function EditWebsitePage() {
         customer_name: resolvedCustomerName,
         partner_name: resolvedPartnerName,
         specialDate: form.specialDate,
+        eventTime: form.eventTime,
         message: form.message,
         tagline: form.tagline,
         song_link: normalizedConfig.media?.song_link || '',
@@ -1091,6 +1098,7 @@ export default function EditWebsitePage() {
         occasion: form.occasion,
         participants: form.participants,
         specialDate: form.specialDate,
+        eventTime: form.eventTime,
         tagline: form.tagline,
         message: form.message,
         song_link: form.song_link,
@@ -1127,6 +1135,7 @@ export default function EditWebsitePage() {
       occasion: (template.form.occasion as OccasionType) || prev.occasion,
       participants: sanitizedParticipants.length > 0 ? sanitizedParticipants : prev.participants,
       specialDate: template.form.specialDate || prev.specialDate,
+      eventTime: (template.form as any).eventTime || prev.eventTime,
       tagline: template.form.tagline || prev.tagline,
       message: template.form.message || prev.message,
       song_link: template.form.song_link || prev.song_link,
@@ -1147,6 +1156,7 @@ export default function EditWebsitePage() {
         occasion: form.occasion,
         participants: form.participants,
         specialDate: form.specialDate,
+        eventTime: form.eventTime,
         message: form.message,
         tagline: form.tagline,
         song_link: form.song_link,
@@ -1333,6 +1343,19 @@ export default function EditWebsitePage() {
                   required
                   type="date"
                   value={form.specialDate}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                  Event Time (optional)
+                </label>
+                <input
+                  name="eventTime"
+                  type="time"
+                  value={form.eventTime || ''}
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
                   onChange={handleChange}
                 />
@@ -1598,6 +1621,32 @@ export default function EditWebsitePage() {
                   </div>
                 )}
 
+                {form.occasion === 'baptism' && (
+                  <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-600 mb-1.5">Event Date</label>
+                      <input
+                        name="specialDate"
+                        type="date"
+                        value={form.specialDate}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                        onChange={handleChange}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-600 mb-1.5">Event Time</label>
+                      <input
+                        name="eventTime"
+                        type="time"
+                        value={form.eventTime || ''}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                        onChange={handleChange}
+                      />
+                    </div>
+                  </div>
+                )}
+
                 <SectionContentInputs
                   config={config}
                   onSectionContentChange={(sectionKey: string, content: any) => handleSectionContentChange(sectionKey as keyof SectionContentMap, content)}
@@ -1710,7 +1759,13 @@ export default function EditWebsitePage() {
                         : <span className="text-slate-400">Not set</span>
                     }
                   </div>
-                  <div><span className="font-medium">Special Date:</span> {form.specialDate ? new Date(form.specialDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : <span className="text-slate-400">Not set</span>}</div>
+                  <div>
+                    <span className="font-medium">Special Date:</span>
+                    {form.specialDate
+                      ? `${new Date(form.specialDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}${form.eventTime ? ' • ' + form.eventTime : ''}`
+                      : <span className="text-slate-400">Not set</span>
+                    }
+                  </div>
                   <div><span className="font-medium">Occasion:</span> {toLabel(form.occasion)}</div>
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Password:</span>

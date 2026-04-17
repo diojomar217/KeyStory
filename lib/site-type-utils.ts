@@ -499,6 +499,11 @@ export const resolveFooterConfig = (siteType: OccasionType, displayName: string)
         tagline: 'For the strength, care, and love that always stayed 🧡',
         decorations: ['🧡', '✨', '⭐', '🤎', '👔'],
       };
+    case 'baptism':
+      return {
+        tagline: 'Blessed with love on this special day ✨',
+        decorations: ['👶', '✝️', '✨'],
+      };
     case 'couple':
     default:
       return {

@@ -35,6 +35,8 @@ export default function FooterSection({
     partnerName,
   );
 
+  const isBaptism = resolvedSiteType === 'baptism';
+
   const activeFooter = resolveFooterConfig(resolvedSiteType, displayName);
 
   const footerColors = {
@@ -60,10 +62,12 @@ export default function FooterSection({
           ))}
         </div>
 
-        {/* Person name */}
-        <h3 className={`${styles.heading} text-2xl md:text-3xl mb-3 tracking-wide`} style={{ color: footerColors.title }}>
-          {displayName}
-        </h3>
+        {/* Person name (hidden for baptism — we don't surface celebrant/parent names in footer) */}
+        {!isBaptism && (
+          <h3 className={`${styles.heading} text-2xl md:text-3xl mb-3 tracking-wide`} style={{ color: footerColors.title }}>
+            {displayName}
+          </h3>
+        )}
 
         {/* Closing tagline */}
         <p className="mb-6 font-light italic" style={{ color: footerColors.body }}>{activeFooter.tagline}</p>
@@ -77,9 +81,9 @@ export default function FooterSection({
           }}
         />
 
-        {/* Year */}
+        {/* Year / copyright - for baptism don't include personal names */}
         <p className="text-xs mt-3" style={{ color: footerColors.faint }}>
-          © {new Date().getFullYear()} {displayName}
+          © {new Date().getFullYear()}{isBaptism ? '' : ` ${displayName}`}
         </p>
       </div>
     </footer>

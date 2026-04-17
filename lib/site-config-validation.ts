@@ -1,4 +1,5 @@
 import { DEFAULT_THEME } from '@/config/defaults';
+import { v4 as uuidv4 } from 'uuid';
 
 type ValidationResult = {
   config: Record<string, any>;
@@ -7,6 +8,29 @@ type ValidationResult = {
 
 const isPlainObject = (value: unknown): value is Record<string, any> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const normalizeParticipantsArray = (input: unknown): Array<{ id: string; name: string; role?: string }> => {
+  if (!Array.isArray(input)) return [];
+  const out: Array<{ id: string; name: string; role?: string }> = [];
+  for (const item of input) {
+    if (!item) continue;
+    if (typeof item === 'string') {
+      const name = item.trim().slice(0, 120);
+      if (!name) continue;
+      out.push({ id: uuidv4(), name });
+      continue;
+    }
+
+    if (isPlainObject(item)) {
+      const name = typeof item.name === 'string' ? item.name.trim().slice(0, 120) : '';
+      if (!name) continue;
+      const id = typeof item.id === 'string' && item.id.trim() ? item.id.trim() : uuidv4();
+      const role = typeof item.role === 'string' ? item.role.trim().slice(0, 50) : undefined;
+      out.push({ id, name, role });
+    }
+  }
+  return out;
+};
 
 const normalizeUniqueStringArray = (input: unknown, maxItems: number): string[] => {
   if (!Array.isArray(input)) return [];
@@ -54,6 +78,8 @@ export function validateAndNormalizeSiteConfig(input: unknown): ValidationResult
       }
     : { special_date: '' };
 
+  const participants = normalizeParticipantsArray(source.participants);
+
   const hero = isPlainObject(source.hero)
     ? {
         ...source.hero,
@@ -79,6 +105,7 @@ export function validateAndNormalizeSiteConfig(input: unknown): ValidationResult
     occasion: typeof source.occasion === 'string' ? source.occasion.trim() : undefined,
     sections,
     people,
+    participants,
     dates,
     message,
     tagline,

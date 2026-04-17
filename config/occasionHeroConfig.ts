@@ -111,6 +111,18 @@ export const OCCASION_HERO_OVERRIDES: Partial<Record<OccasionType, Partial<Occas
     secondaryLabel: 'View Predictions',
     timerLabel: 'Baby countdown',
   },
+  baptism: {
+    archetype: 'scrapbook_story',
+    badge: '👶',
+    intro: 'Baptism Celebration',
+    datePrefix: 'Baptism Date',
+    primaryTarget: 'parents-message',
+    secondaryTarget: 'gallery',
+    primaryLabel: 'Read Parents Message',
+    secondaryLabel: 'View Photos',
+    timerLabel: 'Baptism date',
+    showSecondaryCta: true,
+  },
   debut: {
     archetype: 'celebration_stage',
     badge: '👑',

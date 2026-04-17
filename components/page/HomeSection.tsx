@@ -693,7 +693,7 @@ export default function HomeSection({
               </span>
             </div>
 
-            <HeroDecorations theme={theme} siteType={siteType} variant="full" />
+            {/* <HeroDecorations theme={theme} siteType={siteType} variant="full" /> */}
           </div>
 
           <div

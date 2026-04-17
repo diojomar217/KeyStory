@@ -18,6 +18,7 @@ export type OccasionType =
   | 'anniversary'
   | 'graduation'
   | 'baby_shower'
+  | 'baptism'
   | 'debut'
   | 'memorial'
   | 'family'
@@ -142,6 +143,19 @@ export const OCCASION_REGISTRY: Record<OccasionType, OccasionMetadata> = {
     participantsLabel: 'Parents-to-be',
     specialDateLabel: 'Due Date',
     supportedThemes: ['soft_pastel', 'cute_pastel', 'dreamy_pink'],
+    isProductionReady: false,
+  },
+  baptism: {
+    key: 'baptism',
+    label: 'Baptism',
+    description: 'Celebrate a baptism ceremony and welcome the child',
+    icon: '👶',
+    color: '#60A5FA',
+    defaultSections: ['home', 'gallery', 'event_details', 'parents_message', 'guest_messages'],
+    defaultTheme: 'soft_pastel',
+    participantsLabel: 'Child',
+    specialDateLabel: 'Baptism Date',
+    supportedThemes: ['soft_pastel', 'cute_pastel'],
     isProductionReady: false,
   },
   debut: {
@@ -285,6 +299,7 @@ export const getParticipantLabel = (occasion: OccasionType): string => {
 export const OCCASION_PREVIEW_URLS = {
   couple: '/previews/couple-preview.jpg',
   wedding: '/previews/wedding-preview.jpg',
+  baptism: '/previews/baptism-preview.jpg',
   // Add more as implemented
 } as const;
 

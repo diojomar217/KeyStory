@@ -16,6 +16,7 @@ export interface LocalTemplate {
     occasion?: string;
     participants?: Array<{ id?: string; name?: string; role?: string }>;
     specialDate?: string;
+    eventTime?: string;
     tagline?: string;
     message?: string;
     song_link?: string;

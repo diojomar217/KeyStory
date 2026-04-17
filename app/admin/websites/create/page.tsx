@@ -67,7 +67,7 @@ import {
 } from '@/lib/builder-experience';
 
 
-type LocalForm = Omit<CreateOrderPayload, 'config' | 'photos'> & { occasion: OccasionType; photos: File[]; heroPhoto?: File | null; heroPhotoIndex?: number; song_autoplay?: boolean; password_input?: string };
+type LocalForm = Omit<CreateOrderPayload, 'config' | 'photos'> & { occasion: OccasionType; photos: File[]; heroPhoto?: File | null; heroPhotoIndex?: number; song_autoplay?: boolean; password_input?: string; eventTime?: string };
 
 function buildParticipantsForOccasion(
   occasion: OccasionType,
@@ -99,22 +99,23 @@ const DRAFT_KEY = 'create-website-draft-v1';
 function getInitialDraft(): { form: LocalForm; config: SiteConfig; currentStep: number; completedSteps: number[] } {
   const validOccasions = SITE_TYPES.map((siteType) => siteType.key) as OccasionType[];
   if (typeof window === 'undefined') {
-    return {
-      form: {
-        website_name: '',
-        occasion: 'couple' as OccasionType,
-        participants: [
-          { id: 'customer', name: '', role: 'primary' },
-          { id: 'partner', name: '', role: 'partner' }
-        ],
-        specialDate: '',
-        message: '',
-        tagline: '',
-        song_link: '',
-        song_autoplay: false,
-        photos: [],
-        password_input: '',
-      },
+      return {
+        form: {
+          website_name: '',
+          occasion: 'couple' as OccasionType,
+          participants: [
+            { id: 'customer', name: '', role: 'primary' },
+            { id: 'partner', name: '', role: 'partner' }
+          ],
+          specialDate: '',
+          eventTime: '',
+          message: '',
+          tagline: '',
+          song_link: '',
+          song_autoplay: false,
+          photos: [],
+          password_input: '',
+        },
       config: {
         occasion: 'couple' as OccasionType,
         theme: DEFAULT_THEME,
@@ -137,6 +138,7 @@ function getInitialDraft(): { form: LocalForm; config: SiteConfig; currentStep: 
       { id: 'partner', name: '', role: 'partner' }
     ],
     specialDate: '',
+    eventTime: '',
     message: '',
     tagline: '',
     song_link: '',
@@ -523,6 +525,7 @@ export default function CreateWebsitePage() {
       message: form.message,
       tagline: form.tagline,
       specialDate: form.specialDate,
+      eventTime: form.eventTime,
       hero: {
         ...(prev.hero || {}),
         coverPhotoIndex: typeof form.heroPhotoIndex === 'number' ? form.heroPhotoIndex : prev.hero?.coverPhotoIndex,
@@ -533,7 +536,7 @@ export default function CreateWebsitePage() {
         song_autoplay: !!form.song_autoplay,
       },
     }));
-  }, [form.occasion, form.participants, form.message, form.tagline, form.specialDate, form.song_link, form.song_autoplay, form.heroPhotoIndex]);
+  }, [form.occasion, form.participants, form.message, form.tagline, form.specialDate, form.eventTime, form.song_link, form.song_autoplay, form.heroPhotoIndex]);
 
   useEffect(() => {
     setConfig((prev) => {
@@ -789,6 +792,7 @@ export default function CreateWebsitePage() {
         occasion: form.occasion,
         participants: form.participants,
         specialDate: form.specialDate,
+        eventTime: form.eventTime,
         tagline: form.tagline,
         message: form.message,
         song_link: form.song_link,
@@ -826,6 +830,7 @@ export default function CreateWebsitePage() {
       occasion: (template.form.occasion as OccasionType) || prev.occasion,
       participants: sanitizedParticipants.length > 0 ? sanitizedParticipants : prev.participants,
       specialDate: template.form.specialDate || prev.specialDate,
+      eventTime: (template.form as any).eventTime || prev.eventTime,
       tagline: template.form.tagline || prev.tagline,
       message: template.form.message || prev.message,
       song_link: template.form.song_link || prev.song_link,
@@ -949,6 +954,8 @@ export default function CreateWebsitePage() {
       }
 
       const normalizedConfig = { ...config };
+      // Keep top-level eventTime for consistency with edit flow
+      normalizedConfig.eventTime = form.eventTime;
       if (normalizedConfig.hero?.coverPhotoUrl?.startsWith('blob:')) {
         delete normalizedConfig.hero.coverPhotoUrl;
       }
@@ -982,6 +989,7 @@ export default function CreateWebsitePage() {
         customer_name: resolvedCustomerName,
         partner_name: resolvedPartnerName,
         specialDate: form.specialDate,
+        eventTime: form.eventTime,
         message: form.message,
         tagline: form.tagline,
         participants: Array.isArray(form.participants) ? form.participants : undefined,
@@ -1199,6 +1207,19 @@ export default function CreateWebsitePage() {
                   required
                   type="date"
                   value={form.specialDate}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                  Event Time (optional)
+                </label>
+                <input
+                  name="eventTime"
+                  type="time"
+                  value={form.eventTime || ''}
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
                   onChange={handleChange}
                 />
@@ -1487,6 +1508,32 @@ export default function CreateWebsitePage() {
                         <li key={index}>{warning}</li>
                       ))}
                     </ul>
+                  </div>
+                )}
+
+                {form.occasion === 'baptism' && (
+                  <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-600 mb-1.5">Event Date</label>
+                      <input
+                        name="specialDate"
+                        type="date"
+                        value={form.specialDate}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                        onChange={handleChange}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-600 mb-1.5">Event Time</label>
+                      <input
+                        name="eventTime"
+                        type="time"
+                        value={form.eventTime || ''}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                        onChange={handleChange}
+                      />
+                    </div>
                   </div>
                 )}
 

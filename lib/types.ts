@@ -62,7 +62,12 @@ export type Section =
   | 'family_message'
   | 'travel_timeline'
   | 'travel_notes'
-  | 'message_letter';
+  | 'message_letter'
+  | 'invitation'
+  | 'schedule'
+  | 'dress_code'
+  | 'closing'
+  | 'map_section';
 
 // Gallery layout options - replaces separate gallery sections
 export type GalleryLayout = 'grid' | 'polaroid' | 'carousel';
@@ -173,6 +178,7 @@ export interface SiteConfig {
   message?: string;
   participants?: Participant[];
   specialDate?: string;
+  eventTime?: string;
   media?: {
     photos?: string[];
     song_link?: string;
@@ -216,6 +222,34 @@ export interface SiteConfig {
     id: string;
     label: string;
   };
+}
+
+// ============================================
+// BAPTISM CONFIG - Typed shape for baptism template
+// ============================================
+export interface BaptismConfig {
+  childName: string;
+  eventTitle: string;
+  subtitle?: string;
+  eventDate: string;
+  eventTime: string;
+  churchName: string;
+  churchAddress: string;
+  receptionName?: string;
+  receptionAddress?: string;
+  parentsNames: string;
+  invitationMessage: string;
+  godparentMessage?: string;
+  dressCode?: string;
+  themeColor?: string;
+  schedule?: {
+    title: string;
+    time: string;
+  }[];
+  galleryPhotos?: string[];
+  rsvpEnabled: boolean;
+  mapLink?: string;
+  closingMessage?: string;
 }
 
 export type SiteAnalyticsEventType =
@@ -493,6 +527,14 @@ export interface SectionContentMap {
   playlist?: {
     playlistUrl: string;
     title: string;
+    // Optional richer metadata used by the playlist UI
+    playlistTemplate?: string;
+    subtitle?: string;
+    songTitle?: string;
+    artistName?: string;
+    coverImageUrl?: string;
+    description?: string;
+    lyricsExcerpt?: string;
     // Backwards-compatible fields: some saved configs use `song_link` or `song_autoplay` on playlist
     song_link?: string;
     song_autoplay?: boolean;
@@ -549,6 +591,36 @@ export interface SectionContentMap {
     time?: string;
     dressCode?: string;
   };
+  invitation?: {
+    invitationMessage?: string;
+    godparentMessage?: string;
+    // Extended invitation fields for richer invitations
+    greeting?: string;
+    intro?: string;
+    body?: string;
+    supportMessage?: string;
+    closingText?: string;
+    signoff?: string;
+    signedBy?: string;
+  };
+  schedule?: {
+    schedule?: {
+      title: string;
+      time: string;
+    }[];
+  };
+  dress_code?: {
+    dressCode?: string;
+    themeColor?: string;
+  };
+  map_section?: {
+    mapLink?: string;
+    locations?: MemoryMapLocation[];
+  };
+  closing?: {
+    closingMessage?: string;
+    parentNames?: string;
+  };
   gift_wishlist?: {
     items: string[];
   };
@@ -580,6 +652,7 @@ export interface SectionContentMap {
     messages?: GuestMessage[];
   };
   rsvp?: {
+    enabled?: boolean;
     deadline?: string;
     note?: string;
     messages?: GuestMessage[];
