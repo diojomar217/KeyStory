@@ -137,6 +137,27 @@ export const SITE_TYPE_CONFIG = {
     ],
   },
 
+  baptism: {
+    label: 'Baptism',
+    icon: '👶',
+    description: 'Celebrate a baptism ceremony and welcome the child.',
+    sections: [
+      'home',
+      'invitation',
+      'gallery',
+      'event_details',
+      'schedule',
+      'dress_code',
+      'map_section',
+      'rsvp',
+      'parents_message',
+      'guest_messages',
+      'playlist',
+      'photo_highlights',
+      'video_memories',
+    ],
+  },
+
   debut: {
     label: 'Debut',
     icon: '👑',

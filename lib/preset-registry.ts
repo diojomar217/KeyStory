@@ -318,6 +318,46 @@ export const PRESET_REGISTRY: OccasionPreset[] = [
     },
   },
   {
+    id: 'baptism_serene',
+    siteType: 'baptism',
+    label: 'Baptism Serene',
+    description: 'A gentle baptism template for photos, blessings, and family messages.',
+    badge: 'Baptism',
+    defaults: {
+      sections: ['home', 'gallery', 'event_details', 'parents_message', 'guest_messages', 'photo_highlights', 'playlist'],
+      theme: 'soft_pastel',
+      layout_preset: 'soft_scrapbook',
+      templates: {
+        home: 'hero_centered',
+        gallery: 'grid',
+      },
+      copy: {
+        tagline: "Welcome to our little one's celebration.",
+        message: 'Share photos, blessings, and memories from this special day.',
+      },
+    },
+  },
+  {
+    id: 'baptism_modern',
+    siteType: 'baptism',
+    label: 'Baptism Modern',
+    description: 'Clean, modern baptism template focusing on photos and blessings.',
+    badge: 'Baptism',
+    defaults: {
+      sections: ['home', 'photo_highlights', 'gallery', 'event_details', 'parents_message', 'guest_messages'],
+      theme: 'minimal_modern',
+      layout_preset: 'photo_showcase',
+      templates: {
+        home: 'split_layout',
+        gallery: 'grid',
+      },
+      copy: {
+        tagline: "Blessed beginnings, captured beautifully.",
+        message: "A simple, modern page to collect photos and blessings from the baptism day.",
+      },
+    },
+  },
+  {
     id: 'debut_glam',
     siteType: 'debut',
     label: 'Debut Glam',

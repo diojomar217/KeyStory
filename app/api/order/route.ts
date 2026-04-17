@@ -277,6 +277,13 @@ export async function POST(req: NextRequest) {
       timeline_template: undefined,
       song_template: undefined,
       templates,
+      // Preserve participants passed explicitly in the top-level request first,
+      // otherwise fall back to any participants that were present in the raw config.
+      participants: Array.isArray(data.participants)
+        ? data.participants
+        : Array.isArray(participants)
+          ? participants
+          : [],
       people: {
         primary: customerName,
         secondary: partnerName,

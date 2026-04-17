@@ -61,6 +61,11 @@ export const OCCASION_PARTICIPANT_FIELDS: Record<OccasionType, ParticipantFieldC
   fathers_day: [
     { id: 'father', role: 'honoree', label: "Father's Name", placeholder: "Father's name" },
   ],
+  baptism: [
+    { id: 'child', role: 'celebrant', label: "Child's Name", placeholder: "Child's name" },
+    { id: 'parent_1', role: 'parent', label: "Parent's Name", placeholder: "Parent's name" },
+    { id: 'parent_2', role: 'parent', label: 'Co-parent Name', placeholder: 'Co-parent name' },
+  ],
 };
 
 export const OCCASION_DATE_LABELS: Partial<Record<OccasionType, string>> = {
@@ -79,6 +84,7 @@ export const OCCASION_DATE_LABELS: Partial<Record<OccasionType, string>> = {
   valentines: "Valentine's Date",
   mothers_day: "Mother's Day Date",
   fathers_day: "Father's Day Date",
+  baptism: 'Baptism Date',
 };
 
 export function getParticipantFieldsForOccasion(occasion: OccasionType): ParticipantFieldConfig[] {

@@ -45,7 +45,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const displayName = resolveDisplayName(siteType, config?.participants || [], customerName, partnerName);
   const specialDate = config?.dates?.special_date || data.specialDate || '';
   const tagline = config?.tagline || data.tagline || '';
-  const title = buildOccasionTitle(siteType, displayName, humanizedSiteTitle);
+  // For baptism sites, use the humanized slug as the page title (e.g. "anyas-baptism" -> "Anyas Baptism").
+  const title = siteType === 'baptism'
+    ? humanizedSiteTitle
+    : buildOccasionTitle(siteType, displayName, humanizedSiteTitle);
   const description = buildOccasionDescription(siteType, displayName || humanizedSiteTitle, tagline, specialDate);
   const siteUrl = `${getBaseUrl()}/site/${slug}`;
   const socialImageUrl = buildSocialImageUrl(slug);
@@ -257,6 +260,7 @@ export default async function LovePage({ params }: PageProps) {
     <ClientPage
         siteType={siteType}
         config={config}
+        siteId={siteId}
         slug={slug}
         theme={theme}
         sections={sections}

@@ -1,0 +1,30 @@
+{
+  "id": "baptism_modern",
+  "label": "Baptism Invitation — Modern",
+  "description": "Clean, modern baptism layout with photo highlights, event details, and guest messages.",
+  "sections": [
+    "home",
+    "photo_highlights",
+    "gallery",
+    "event_details",
+    "schedule",
+    "dress_code",
+    "parents_message",
+    "guest_messages",
+    "rsvp"
+  ],
+  "defaults": {
+    "theme": "minimal_modern",
+    "preset_badge": "👶",
+    "childName": "Baby Name",
+    "parentsNames": "Parent & Parent",
+    "eventTitle": "Baptism Ceremony",
+    "eventDate": "2026-06-12",
+    "eventTime": "11:00 AM",
+    "churchName": "Modern Chapel",
+    "churchAddress": "50 Modern Ave",
+    "invitationMessage": "Join us as we celebrate our child's baptism.",
+    "rsvpEnabled": true,
+    "mapLink": "https://maps.google.com/?q=Modern+Chapel"
+  }
+}

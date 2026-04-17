@@ -121,17 +121,24 @@ function getPreviewId(section: Section): string {
   return SECTION_PREVIEW_MAP[section] ?? `${section.replace(/_/g, '-')}-preview`;
 }
 
-export const SECTION_CONFIG: SectionConfigEntry[] = SECTION_ORDER.map((section) => {
+// Merge SECTION_ORDER with any keys present in the registry but not enumerated
+const registryKeys = Object.keys(SECTION_REGISTRY) as Section[];
+const ALL_SECTION_KEYS: Section[] = [
+  ...SECTION_ORDER,
+  ...registryKeys.filter((k) => !SECTION_ORDER.includes(k)),
+];
+
+export const SECTION_CONFIG: SectionConfigEntry[] = ALL_SECTION_KEYS.map((section) => {
   const metadata = SECTION_REGISTRY[section];
 
   return {
-    key: metadata.key,
-    label: metadata.title,
-    description: metadata.description,
-    icon: metadata.icon,
+    key: metadata?.key ?? section,
+    label: metadata?.title ?? section,
+    description: metadata?.description ?? '',
+    icon: metadata?.icon ?? '',
     preview: getPreviewId(section),
-    required: metadata.required,
-    defaultEnabled: metadata.defaultEnabled,
+    required: metadata?.required ?? false,
+    defaultEnabled: metadata?.defaultEnabled ?? false,
   };
 });
 

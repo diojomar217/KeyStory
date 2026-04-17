@@ -202,6 +202,11 @@ export function getSectionValidationStatus(
     travel_timeline: 'valid',
     travel_notes: 'valid',
     message_letter: 'valid',
+    invitation: 'valid',
+    schedule: 'valid',
+    dress_code: 'valid',
+    closing: 'valid',
+    map_section: 'valid',
   };
   
   // Check gallery

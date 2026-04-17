@@ -1,0 +1,34 @@
+{
+  "id": "baptism_serene",
+  "label": "Baptism Invitation — Serene",
+  "description": "Soft pastel baptism invitation layout with invitation, event details, schedule, map, RSVP, and closing.",
+  "sections": [
+    "home",
+    "invitation",
+    "event_details",
+    "schedule",
+    "dress_code",
+    "gallery",
+    "map_section",
+    "rsvp",
+    "closing"
+  ],
+  "defaults": {
+    "theme": "soft_pastel",
+    "preset_badge": "👶",
+    "childName": "Baby Name",
+    "parentsNames": "Parent & Parent",
+    "eventTitle": "Baptism Ceremony",
+    "subtitle": "A blessed celebration",
+    "eventDate": "2026-06-12",
+    "eventTime": "10:00 AM",
+    "churchName": "St. Mary's Church",
+    "churchAddress": "123 Church St.",
+    "receptionName": "Family Reception",
+    "receptionAddress": "Banquet Hall, 45 Main Ave",
+    "invitationMessage": "You are warmly invited to the baptism of our child.",
+    "rsvpEnabled": true,
+    "mapLink": "https://maps.google.com/?q=St.+Mary%27s+Church",
+    "closingMessage": "With love and gratitude."
+  }
+}

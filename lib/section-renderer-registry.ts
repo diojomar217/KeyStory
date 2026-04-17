@@ -20,6 +20,13 @@ import MemoryMapSection from '@/components/sections/shared/MemoryMapSection';
 import GuestMessagesSection from '@/components/sections/shared/GuestMessagesSection';
 import VideoMemoriesSection from '@/components/sections/shared/VideoMemoriesSection';
 import PlaylistSection from '@/components/sections/shared/PlaylistSection';
+// Baptism-specific sections
+import InvitationSection from '@/components/sections/baptism/InvitationSection';
+import EventDetailsSection from '@/components/sections/baptism/EventDetailsSection';
+import ScheduleSection from '@/components/sections/baptism/ScheduleSection';
+import DressCodeSection from '@/components/sections/baptism/DressCodeSection';
+import RSVPSection from '@/components/sections/baptism/RSVPSection';
+import MapSection from '@/components/sections/baptism/MapSection';
 
 // Import couple-specific sections
 import LoveLetterSection from '@/components/sections/couple/LoveLetterSection';
@@ -332,6 +339,38 @@ home: {
       dressCode: config.dressCode || 'To be announced',
     }),
   },
+  // Baptism / Invitation sections
+  invitation: {
+    component: InvitationSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      invitation: config.section_content?.invitation || undefined,
+      invitationMessage: config.section_content?.invitation?.invitationMessage || config.invitationMessage || config.message || '',
+      godparentMessage: config.section_content?.invitation?.godparentMessage || config.godparentMessage || '',
+    }),
+  },
+  schedule: {
+    component: ScheduleSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      schedule: config.section_content?.schedule?.schedule || config.schedule || [],
+    }),
+  },
+  dress_code: {
+    component: DressCodeSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      dressCode: config.section_content?.dress_code?.dressCode || config.dressCode || '',
+      themeColor: config.section_content?.dress_code?.themeColor || config.themeColor || '',
+    }),
+  },
+  map_section: {
+    component: MapSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      mapLink: config.section_content?.map_section?.mapLink || config.mapLink || '',
+    }),
+  },
   wedding_timeline: {
     component: TimelineSection,
     getProps: (config) => ({
@@ -349,9 +388,17 @@ home: {
     }),
   },
   rsvp: {
-    component: GuestMessagesSection,
+    component: RSVPSection,
     getProps: (config) => ({
       theme: config.theme,
+      rsvpEnabled: config.section_content?.rsvp?.enabled ?? config.rsvpEnabled ?? true,
+    }),
+  },
+  closing: {
+    component: LoveLetterSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      message: config.section_content?.closing?.closingMessage || config.closingMessage || config.message || '',
     }),
   },
   couple_message: {

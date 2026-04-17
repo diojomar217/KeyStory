@@ -29,6 +29,12 @@ import LetterToFutureSection from '@/components/sections/couple/LetterToFutureSe
 import GiftSection from '@/components/sections/couple/GiftSection';
 import SurpriseMessageSection from '@/components/sections/couple/SurpriseMessageSection';
 import PlaylistSection from '@/components/sections/shared/PlaylistSection';
+import InvitationSection from '@/components/sections/baptism/InvitationSection';
+import ScheduleSection from '@/components/sections/baptism/ScheduleSection';
+import DressCodeSection from '@/components/sections/baptism/DressCodeSection';
+import RSVPSection from '@/components/sections/baptism/RSVPSection';
+import MapSection from '@/components/sections/baptism/MapSection';
+import EventDetailsSection from '@/components/sections/baptism/EventDetailsSection';
 
 // ============================================
 // PROPS INTERFACE
@@ -116,7 +122,12 @@ const RENDERER_COMPONENTS: Record<Section, React.ComponentType<any>> = {
   event_details: OurStorySection,
   wedding_timeline: TimelineSection,
   gift_registry: GiftSection,
-  rsvp: GuestMessagesSection,
+  rsvp: RSVPSection,
+  invitation: InvitationSection,
+  schedule: ScheduleSection,
+  dress_code: DressCodeSection,
+  map_section: MapSection,
+  closing: LoveLetterSection,
   couple_message: LoveLetterSection,
   graduation_message: LoveLetterSection,
   countdown: AnniversaryCountdownSection,
@@ -372,11 +383,54 @@ const buildProps = (section: Section, props: DynamicSectionRendererProps): Recor
       };
 
     case 'guest_messages':
-    case 'rsvp':
       return {
         theme: mergedConfig.theme,
         siteType: mergedConfig.siteType,
         messages: sectionContent[section]?.messages || sectionContent.guest_messages?.messages,
+      };
+
+    case 'rsvp':
+      return {
+        theme: mergedConfig.theme,
+        siteType: mergedConfig.siteType,
+        rsvpEnabled: sectionContent.rsvp?.enabled ?? true,
+      };
+
+    case 'invitation':
+      return {
+        theme: mergedConfig.theme,
+        siteType: mergedConfig.siteType,
+        invitationMessage: sectionContent.invitation?.invitationMessage || sectionContent.invitation?.text || mergedConfig.message,
+        godparentMessage: sectionContent.invitation?.godparentMessage || '',
+      };
+
+    case 'schedule':
+      return {
+        theme: mergedConfig.theme,
+        siteType: mergedConfig.siteType,
+        schedule: sectionContent.schedule?.schedule || [],
+      };
+
+    case 'dress_code':
+      return {
+        theme: mergedConfig.theme,
+        siteType: mergedConfig.siteType,
+        dressCode: sectionContent.dress_code?.dressCode || '',
+        themeColor: sectionContent.dress_code?.themeColor || (mergedConfig as any).themeColor || undefined,
+      };
+
+    case 'map_section':
+      return {
+        theme: mergedConfig.theme,
+        siteType: mergedConfig.siteType,
+        mapLink: sectionContent.map_section?.mapLink || '',
+      };
+
+    case 'closing':
+      return {
+        theme: mergedConfig.theme,
+        siteType: mergedConfig.siteType,
+        message: sectionContent.closing?.closingMessage || mergedConfig.message,
       };
 
     // Sections with no special props
