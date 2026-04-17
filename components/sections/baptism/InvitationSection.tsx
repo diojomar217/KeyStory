@@ -36,39 +36,35 @@ export default function InvitationSection({
 }: InvitationSectionProps) {
   const { colors } = useThemeUtils(theme);
 
-  const data = invitation || {
-    invitationMessage,
-    godparentMessage,
-  };
-
   const safeGuestName = guestName?.trim();
+
   const greeting = safeGuestName
     ? `Hi ${safeGuestName
         .toLowerCase()
         .replace(/\b\w/g, (c) => c.toUpperCase())},`
-    : data.greeting || "Dear Family,";
+    : invitation?.greeting || "Dear Family,";
 
   const intro =
-    data.intro ||
+    invitation?.intro ||
     "As we prepare for Anya’s baptism and birthday, we’ve been thinking about the people we trust and look up to—those who can help guide and support her as she grows.";
 
   const body =
-    data.body ||
-    data.invitationMessage ||
+    invitation?.body ||
+    invitationMessage ||
     "With that, we would be deeply honored to have you as one of her godparents.";
 
   const support =
-    data.supportMessage ||
-    data.godparentMessage ||
+    invitation?.supportMessage ||
+    invitation?.godparentMessage ||
     godparentMessage ||
     "Your faith, guidance, and love would mean so much as she grows and learns in her journey.";
 
   const closing =
-    data.closingText ||
+    invitation?.closingText ||
     "We sincerely hope you can be part of this blessed and meaningful occasion.";
 
-  const signoff = data.signoff || "With love and blessings,";
-  const signedBy = data.signedBy || "Adrian & Jenica";
+  const signoff = invitation?.signoff || "With love and blessings,";
+  const signedBy = invitation?.signedBy || "Adrian & Jenica";
 
   const textColor = colors?.text || "#6a2f39";
   const accentColor = "#c98a96";
