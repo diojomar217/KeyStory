@@ -5,6 +5,7 @@ import type { ThemeKey } from '@/config/themeConfig';
 import ClientPage from '@/components/page/ClientPage';
 import { isExpired, isArchived } from '@/lib/site-status';
 import { getApprovedGuestMessagesBySiteId, getPublicSiteBySlug } from '@/lib/site-data';
+import { getBusinessContactSettings } from '@/lib/business-contact-settings';
 import { resolveDisplayName, resolveHeroCoverPhoto } from '@/lib/site-type-utils';
 import { optimizeCloudinaryDeliveryUrl } from '@/lib/cloudinary-url';
 import {
@@ -262,6 +263,7 @@ export default async function LovePage({ params }: PageProps) {
         config={config}
         siteId={siteId}
         slug={slug}
+      analyticsEnabled={(await getBusinessContactSettings())?.analyticsEnabled ?? null}
         theme={theme}
         sections={sections}
         homeTemplate={homeTemplate}

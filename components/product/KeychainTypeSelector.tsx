@@ -9,6 +9,8 @@ interface KeychainTypeSelectorProps {
   customHeight: number;
   onCustomWidthChange: (width: number) => void;
   onCustomHeightChange: (height: number) => void;
+  sizes?: KeychainSize[];
+  title?: string;
 }
 
 export default function KeychainTypeSelector({
@@ -18,10 +20,12 @@ export default function KeychainTypeSelector({
   customHeight,
   onCustomWidthChange,
   onCustomHeightChange,
+  sizes = KEYCHAIN_SIZES,
+  title = 'Keychain Type',
 }: KeychainTypeSelectorProps) {
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedLabel = e.target.value;
-    const size = KEYCHAIN_SIZES.find((s) => s.label === selectedLabel);
+    const size = sizes.find((s) => s.label === selectedLabel);
     if (size) {
       onSizeChange(size);
     }
@@ -46,7 +50,7 @@ export default function KeychainTypeSelector({
             d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
           />
         </svg>
-        Keychain Type
+        {title}
       </h3>
 
       {/* Size Selector Dropdown */}
@@ -63,7 +67,7 @@ export default function KeychainTypeSelector({
           onChange={handleSelectChange}
           className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-slate-900 transition-colors"
         >
-          {KEYCHAIN_SIZES.map((size) => (
+          {sizes.map((size) => (
             <option key={size.label} value={size.label}>
               {size.description || size.label}
             </option>
@@ -138,14 +142,13 @@ export default function KeychainTypeSelector({
 
       {/* Size Guide */}
       <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
-        <p className="text-sm font-semibold text-slate-800 mb-2">Keychain Insert Sizes (portrait by default)</p>
+        <p className="text-sm font-semibold text-slate-800 mb-2">{title} Sizes (portrait by default)</p>
         <ul className="text-xs text-slate-600 list-disc list-inside space-y-1">
-          <li>Small Portrait: 30mm × 45mm</li>
-          <li>Medium Portrait: 35mm × 50mm (recommended for clear acrylic)</li>
-          <li>QR Keychain: 31mm × 48mm</li>
-          <li>Large Portrait: 40mm × 60mm</li>
-          <li>Square: 35mm × 35mm</li>
-          <li>NFC Tap Keychain: 30mm × 50mm</li>
+          {sizes.map((s) => (
+            <li key={s.label}>
+              {s.label}: {s.width_mm > 0 && s.height_mm > 0 ? `${s.width_mm}mm × ${s.height_mm}mm` : s.description}
+            </li>
+          ))}
         </ul>
       </div>
 

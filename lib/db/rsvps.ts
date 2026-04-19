@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import supabaseAdmin from '@/lib/supabaseAdmin';
 
 export type RsvpRecord = {
   id: string;
@@ -69,22 +70,38 @@ export async function insertRsvp(input: InsertRsvpInput) {
     return { duplicate: true };
   }
 
-  const { error } = await supabase.from('rsvps').insert({
-    site_id: resolvedSiteId,
-    name,
-    contact_number: input.contact_number || null,
-    attendance,
-    godparent_confirmation: input.godparent_confirmation || null,
-    companions: input.companions || 0,
-    message: input.message || null,
-  });
+  const client = supabaseAdmin ?? supabase;
 
-  if (error) throw error;
+  try {
+    const { error } = await client.from('rsvps').insert({
+      site_id: resolvedSiteId,
+      name,
+      contact_number: input.contact_number || null,
+      attendance,
+      godparent_confirmation: input.godparent_confirmation || null,
+      companions: input.companions || 0,
+      message: input.message || null,
+    });
+
+    if (error) throw error;
+  } catch (err: any) {
+    // Row-level security or permission errors are common when using anon key
+    // in a DB with RLS. Surface a clearer message for devs.
+    if (err && (err.code === '42501' || /row-level security/i.test(err.message || ''))) {
+      const msg = 'Database rejected RSVP insert due to row-level security. Ensure SUPABASE_SERVICE_ROLE_KEY is set or add an insert policy for the `rsvps` table.';
+      const e = new Error(msg);
+      // Attach original error details for debugging
+      (e as any).original = err;
+      throw e;
+    }
+    throw err;
+  }
   return { success: true };
 }
 
 export async function getRsvpsBySiteId(siteId: string) {
-  const { data, error } = await supabase
+  const client = supabaseAdmin ?? supabase;
+  const { data, error } = await client
     .from('rsvps')
     .select('id, site_id, name, contact_number, attendance, godparent_confirmation, companions, message, created_at')
     .eq('site_id', siteId)

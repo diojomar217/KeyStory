@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { getPublicSiteBySlug } from '@/lib/site-data';
+import { getBusinessContactSettings } from '@/lib/business-contact-settings';
 import { getRsvpsBySiteId } from '@/lib/db/rsvps';
 import HostHeader from '@/components/host/HostHeader';
 import HostDashboardClient from '@/components/host/HostDashboardClient';
@@ -14,10 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const site = await getPublicSiteBySlug(slug);
-
-  if (!site) {
-    return <div className="p-6">Page not found</div>;
-  }
+  if (!site) return <div className="p-6">Page not found</div>;
 
   const siteId = site.id as string;
   const rsvps = await getRsvpsBySiteId(siteId);
@@ -29,11 +27,13 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const subtitle = cfg.subtitle || cfg.invitationMessage || '';
 
   return (
-    <div className="w-full px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-14">
-      <div className="mx-auto w-full max-w-[1800px]">
-        <div className="mt-6">
-          <HostDashboardClient initialRsvps={rsvps} slug={slug} siteId={siteId} />
-        </div>
+    <div className="p-4 max-w-3xl mx-auto">
+      <HostHeader title={title} date={dateDisplay} parents={parents} subtitle={subtitle} />
+
+      <div className="mt-6">
+        {/* Client dashboard handles filtering, refresh, and list rendering */}
+        {/* initialRsvps passed for immediate render, dashboard will re-fetch from /api/rsvp */}
+          <HostDashboardClient initialRsvps={rsvps} slug={slug} siteId={siteId} analyticsEnabled={(await getBusinessContactSettings())?.analyticsEnabled ?? null} />
       </div>
     </div>
   );

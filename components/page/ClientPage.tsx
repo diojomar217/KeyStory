@@ -117,6 +117,7 @@ type Props = {
   sectionContent?: SectionContentMap;
   slug?: string;
   approvedGuestMessages?: GuestMessageRecord[];
+  analyticsEnabled?: boolean | null;
 };
 
 export default function ClientPage({
@@ -144,6 +145,7 @@ export default function ClientPage({
   approvedGuestMessages,
   songAutoplay = false,
   slug,
+  analyticsEnabled = null,
 }: Props) {
   // --- Hosting Status Banner Logic ---
   // Only show for public site view (not expired/archived)
@@ -243,6 +245,10 @@ export default function ClientPage({
   const trackAnalyticsEvent = useCallback(
     (eventType: SiteAnalyticsEventType, source: string, dedupeKey?: string) => {
       if (!slug || typeof window === "undefined") return;
+      // Global admin toggle
+      if (analyticsEnabled === false) return;
+      // Per-site toggle in the site config (explicit false disables tracking)
+      if (config && typeof (config as any).analytics_enabled !== 'undefined' && (config as any).analytics_enabled === false) return;
 
       if (dedupeKey) {
         const sessionKey = `analytics_${slug}_${dedupeKey}`;
@@ -258,7 +264,7 @@ export default function ClientPage({
         console.warn(`Analytics ${eventType} tracking failed:`, err);
       });
     },
-    [slug],
+    [slug, analyticsEnabled],
   );
 
   // Check localStorage on mount to determine if we should skip the opening

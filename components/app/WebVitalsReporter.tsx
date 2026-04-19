@@ -1,7 +1,11 @@
-'use client';
+"use client";
 
 import { useEffect } from 'react';
 import { featureFlags } from '@/lib/reliability/feature-flags';
+
+type Props = {
+  analyticsEnabled?: boolean | null;
+};
 
 type Metric = {
   id: string;
@@ -13,8 +17,10 @@ type Metric = {
 
 const supportsSendBeacon = (): boolean => typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function';
 
-export default function WebVitalsReporter() {
+export default function WebVitalsReporter({ analyticsEnabled }: Props) {
   useEffect(() => {
+    // respect global toggle from admin settings
+    if (analyticsEnabled === false) return;
     if (!featureFlags.webVitalsTracking()) return;
 
     let cancelled = false;

@@ -79,6 +79,10 @@ async function fetchPublicSiteBySlugUncached(slug: string): Promise<PublicSiteDa
   } as PublicSiteData;
 }
 
+export async function getPublicSiteBySlugNoCache(slug: string): Promise<PublicSiteData | null> {
+  return fetchPublicSiteBySlugUncached(slug);
+}
+
 export async function getPublicSiteBySlug(slug: string): Promise<PublicSiteData | null> {
   if (!slug) return null;
 
