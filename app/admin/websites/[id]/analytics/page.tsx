@@ -14,6 +14,8 @@ export default function AnalyticsPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [analyticsEnabled, setAnalyticsEnabled] = useState<boolean | null>(null);
+  const [toggling, setToggling] = useState(false);
   const [totalVisits, setTotalVisits] = useState(0);
   const [totalQrScans, setTotalQrScans] = useState(0);
   const [lastVisited, setLastVisited] = useState<string | null>(null);
@@ -26,6 +28,17 @@ export default function AnalyticsPage() {
   const fetchAnalytics = async () => {
     setLoading(true);
     setError('');
+
+    // fetch analytics flag
+    try {
+      const flagRes = await fetch(`/api/admin/sites/${encodeURIComponent(siteId)}/analytics`);
+      const flagData = await flagRes.json();
+      if (flagRes.ok) {
+        setAnalyticsEnabled(!!flagData.analytics_enabled);
+      }
+    } catch (e) {
+      // non-fatal; defaults apply
+    }
 
     try {
       const res = await fetch(`/api/admin/analytics?site_id=${encodeURIComponent(siteId)}`);
@@ -69,16 +82,48 @@ export default function AnalyticsPage() {
           <h1 className="text-2xl font-bold text-slate-900">Website Analytics</h1>
           <p className="text-sm text-slate-500">Track visits, QR engagement, and public interaction events for this site.</p>
         </div>
-        <div className="flex gap-2">
-          <Link
-            href={`/admin/websites/${siteId}/edit`}
-            className="rounded-xl border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50"
-          >Back to Edit</Link>
-          <button
-            onClick={fetchAnalytics}
-            className="rounded-xl bg-rose-600 px-3 py-2 text-sm text-white hover:bg-rose-700"
-          >Refresh</button>
-        </div>
+          <div className="flex gap-2 items-center">
+            <Link
+              href={`/admin/websites/${siteId}/edit`}
+              className="rounded-xl border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50"
+            >Back to Edit</Link>
+            <button
+              onClick={fetchAnalytics}
+              className="rounded-xl bg-rose-600 px-3 py-2 text-sm text-white hover:bg-rose-700"
+            >Refresh</button>
+
+            <div className="ml-2 flex items-center gap-3">
+              <div className="text-sm text-slate-500">Analytics</div>
+              <button
+                disabled={toggling || analyticsEnabled === null}
+                onClick={async () => {
+                  if (analyticsEnabled === null) return;
+                  setToggling(true);
+                  const next = !analyticsEnabled;
+                  try {
+                    const res = await fetch(`/api/admin/sites/${encodeURIComponent(siteId)}/analytics`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ enabled: next }),
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                      setAnalyticsEnabled(!!data.analytics_enabled);
+                    } else {
+                      console.error('Failed to update analytics flag', data);
+                    }
+                  } catch (err) {
+                    console.error(err);
+                  } finally {
+                    setToggling(false);
+                  }
+                }}
+                className={`rounded-xl px-3 py-2 text-sm ${analyticsEnabled ? 'bg-green-600 text-white' : 'border border-slate-300 bg-white'}`}
+              >
+                {analyticsEnabled ? 'Enabled' : 'Disabled'}
+              </button>
+            </div>
+          </div>
       </div>
 
       {error && <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-700">{error}</div>}

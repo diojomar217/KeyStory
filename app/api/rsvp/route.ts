@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import * as rsvpDb from '@/lib/db/rsvps';
 import { sendRsvpNotification } from '@/lib/email';
+import { getPublicSiteBySlug } from '@/lib/site-data';
 
 const clean = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
 
@@ -13,14 +14,9 @@ export async function GET(req: NextRequest) {
   try {
     let resolvedSiteId = siteId;
     if (!resolvedSiteId && slug) {
-      const { data: site, error: siteError } = await supabase
-        .from('sites')
-        .select('id')
-        .eq('website_name', slug)
-        .maybeSingle();
-      if (siteError) throw siteError;
+      const site = await getPublicSiteBySlug(slug);
       if (!site) return NextResponse.json({ error: 'Site not found' }, { status: 404 });
-      resolvedSiteId = site.id;
+      resolvedSiteId = site.id as string;
     }
 
     if (!resolvedSiteId) return NextResponse.json({ error: 'Missing site_id or slug' }, { status: 400 });

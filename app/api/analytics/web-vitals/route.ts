@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase';
 import { webVitalOverBudget } from '@/config/performanceBudget';
 import { captureWarning } from '@/lib/reliability/monitoring';
 import { enforceRateLimit } from '@/lib/reliability/rate-limit';
+import { getBusinessContactSettings } from '@/lib/business-contact-settings';
+import { getPublicSiteBySlugNoCache } from '@/lib/site-data';
 
 type WebVitalInput = {
   id?: string;
@@ -22,6 +24,31 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = (await req.json()) as WebVitalInput;
+
+    // Respect global analytics toggle from business settings (no-op success when disabled)
+    try {
+      const biz = await getBusinessContactSettings();
+      if (biz && typeof biz.analyticsEnabled !== 'undefined' && biz.analyticsEnabled === false) {
+        return NextResponse.json({ success: true });
+      }
+    } catch (e) {
+      // ignore and continue — best-effort
+    }
+
+    // If path looks like /site/:slug or /host/:slug, check site-level analytics setting
+    try {
+      const path = (body.path || '').toString();
+      const segs = path.split('/').filter(Boolean);
+      const [first, second] = segs;
+      if ((first === 'site' || first === 'host') && second) {
+        const site = await getPublicSiteBySlugNoCache(second);
+        if (site && site.config && typeof (site.config as any).analytics_enabled !== 'undefined' && (site.config as any).analytics_enabled === false) {
+          return NextResponse.json({ success: true });
+        }
+      }
+    } catch (e) {
+      // ignore and continue
+    }
     const name = (body.name || '').toString().toUpperCase();
     const value = Number(body.value);
 

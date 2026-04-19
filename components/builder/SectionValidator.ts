@@ -170,6 +170,7 @@ export function getSectionValidationStatus(
     birthday_countdown: 'valid',
     birthday_timeline: 'valid',
     party_details: 'valid',
+    gift_ideas: 'valid',
     gift_wishlist: 'valid',
     relationship_stats: 'valid',
     memory_map: 'valid',

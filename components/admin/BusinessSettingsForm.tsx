@@ -16,6 +16,7 @@ const INITIAL_STATE: BusinessContactSettings = {
   facebookPageUrl: null,
   instagramUrl: null,
   supportMessageTemplate: null,
+  analyticsEnabled: true,
 };
 
 export default function BusinessSettingsForm() {
@@ -42,6 +43,10 @@ export default function BusinessSettingsForm() {
 
   const handleChange = (key: keyof BusinessContactSettings, value: string) => {
     setSettings((prev) => ({ ...prev, [key]: value || null }));
+  };
+
+  const handleBoolChange = (key: keyof BusinessContactSettings, value: boolean) => {
+    setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
   const save = async (event: React.FormEvent) => {
@@ -200,6 +205,18 @@ export default function BusinessSettingsForm() {
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
                 placeholder="Hi! I want to restore my website (slug: {slug})"
               />
+            </div>
+
+            <div>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!settings.analyticsEnabled}
+                  onChange={(e) => handleBoolChange('analyticsEnabled', e.target.checked)}
+                  className="w-5 h-5 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                />
+                <span className="text-sm text-slate-700">Enable Web Analytics (global)</span>
+              </label>
             </div>
 
             <div className="pt-4">

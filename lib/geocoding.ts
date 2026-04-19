@@ -19,6 +19,37 @@ export interface GeocodingError {
   error: string;
 }
 
+// Parse coordinates from a Google Maps URL or a plain lat,lng pair in the query.
+function parseCoordinatesFromQuery(q: string): { lat: number; lng: number } | null {
+  if (!q) return null;
+
+  // Pattern: !3d{lat}!4d{lng}
+  let m = q.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/);
+  if (m) {
+    const lat = parseFloat(m[1]);
+    const lng = parseFloat(m[2]);
+    if (!isNaN(lat) && !isNaN(lng)) return { lat, lng };
+  }
+
+  // Pattern: @lat,lng (common in Google Maps URLs)
+  m = q.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+  if (m) {
+    const lat = parseFloat(m[1]);
+    const lng = parseFloat(m[2]);
+    if (!isNaN(lat) && !isNaN(lng)) return { lat, lng };
+  }
+
+  // Generic coordinate pair like "15.1954095, 120.5821143"
+  m = q.match(/\b(-?\d{1,3}\.\d+)\s*,?\s*(-?\d{1,3}\.\d+)\b/);
+  if (m) {
+    const lat = parseFloat(m[1]);
+    const lng = parseFloat(m[2]);
+    if (!isNaN(lat) && !isNaN(lng)) return { lat, lng };
+  }
+
+  return null;
+}
+
 /**
  * Search for places using Nominatim (OpenStreetMap)
  * @param query - Search query string
@@ -31,9 +62,24 @@ export async function searchPlaces(query: string): Promise<SearchResult[]> {
 
   const trimmedQuery = query.trim();
 
+  // If the query contains a Google Maps URL or a direct coordinate pair,
+  // parse coordinates and return the reverse-geocoded location as a single
+  // search result. This lets users paste Google Maps links directly.
   try {
+    const coords = parseCoordinatesFromQuery(trimmedQuery);
+    if (coords && isValidCoordinates(coords.lat, coords.lng)) {
+      const rev = await reverseGeocode(coords.lat, coords.lng);
+      if (rev) return [rev];
+      // If reverse didn't return anything, fall through to normal search
+    }
+  } catch (e) {
+    // ignore and continue with string-based search
+  }
+
+  try {
+    // Request namedetails and extratags to surface POI names and alternate names
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(trimmedQuery)}&limit=5&addressdetails=1`,
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(trimmedQuery)}&limit=7&addressdetails=1&namedetails=1&extratags=1`,
       {
         headers: {
           // Nominatim requires a User-Agent header
@@ -58,18 +104,25 @@ export async function searchPlaces(query: string): Promise<SearchResult[]> {
     const results: SearchResult[] = data
       .filter((item: any) => item.lat && item.lon)
       .map((item: any) => {
-        // Extract a readable name from the result
-        let name = item.name;
-        if (!name) {
-          // Use address components to build a name
-          const addressParts = [];
-          if (item.address?.city) addressParts.push(item.address.city);
-          else if (item.address?.town) addressParts.push(item.address.town);
-          else if (item.address?.village) addressParts.push(item.address.village);
-          else if (item.address?.county) addressParts.push(item.address.county);
-          
-          if (item.address?.country) addressParts.push(item.address.country);
-          name = addressParts.length > 0 ? addressParts.join(', ') : item.display_name;
+        // Extract a readable name from the result. Prefer explicit namedetails
+        // (POI/name variants) when available, then the `name` property, then
+        // fall back to the first segment of display_name.
+        const displayPrimary = (item.display_name || '').split(',')[0].trim();
+        const namedetailName = item.namedetails?.name || item.namedetails?.['name:en'] || item.namedetails?.['name:en_US'];
+        let name = namedetailName || item.name || displayPrimary || item.display_name;
+
+        // If item.name exists but is just the road or city (e.g., "Arenal Lane"),
+        // prefer the more descriptive display primary or namedetail.
+        try {
+          const road = (item.address?.road || '').toLowerCase();
+          const city = (item.address?.city || item.address?.town || item.address?.village || '').toLowerCase();
+          const rawName = (item.name || '').toLowerCase();
+          if (rawName && (rawName === road || rawName === city)) {
+            if (namedetailName) name = namedetailName;
+            else if (displayPrimary) name = displayPrimary;
+          }
+        } catch (e) {
+          // ignore and keep fallback name
         }
 
         // Build a formatted address string
@@ -106,7 +159,7 @@ export async function searchPlaces(query: string): Promise<SearchResult[]> {
 export async function reverseGeocode(lat: number, lng: number): Promise<SearchResult | null> {
   try {
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&namedetails=1`,
       {
         headers: {
           'User-Agent': 'Keystory-LoveStoryBuilder/1.0',
@@ -125,16 +178,39 @@ export async function reverseGeocode(lat: number, lng: number): Promise<SearchRe
       return null;
     }
 
+    // Prefer an explicit name if provided by the reverse endpoint (POI),
+    // then namedetails, then fall back to the first segment of display_name.
+    const displayPrimary = (data.display_name || '').split(',')[0].trim();
+    let name = data.name || (data.namedetails && data.namedetails.name) || displayPrimary || 'Selected Location';
+
+    // If the address contains a POI-like field, prefer that (amenity, tourism, building, etc.)
+    try {
+      const poiFields = ['place_of_worship', 'amenity', 'tourism', 'building', 'attraction', 'historic', 'leisure', 'shop'];
+      for (const key of poiFields) {
+        if (data.address && data.address[key]) {
+          name = data.address[key];
+          break;
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    const addressParts: string[] = [];
+    if (data.address?.road) addressParts.push(data.address.road);
+    if (data.address?.suburb) addressParts.push(data.address.suburb);
+    if (data.address?.city || data.address?.town || data.address?.village) addressParts.push(data.address.city || data.address.town || data.address.village);
+    if (data.address?.country) addressParts.push(data.address.country);
+    const address = addressParts.length > 0 ? addressParts.join(', ') : undefined;
+
     return {
       placeId: data.place_id?.toString() || '',
-      name: data.address?.city || data.address?.town || data.address?.village || data.display_name?.split(',')[0] || 'Selected Location',
+      name,
       displayName: data.display_name,
       lat: parseFloat(data.lat),
       lng: parseFloat(data.lon),
       type: data.type || 'place',
-      address: data.address?.road ? 
-        `${data.address.road}, ${data.address.city || data.address.town || ''}`.trim() : 
-        undefined,
+      address,
     };
   } catch (error) {
     console.error('Reverse geocoding error:', error);

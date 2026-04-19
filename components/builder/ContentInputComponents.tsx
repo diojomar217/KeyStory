@@ -12,7 +12,7 @@ import {
   GiftItem,
   MemoryMapLocation
 } from '@/lib/types';
-import { searchPlaces, SearchResult, isValidCoordinates } from '@/lib/geocoding';
+import { searchPlaces, SearchResult, isValidCoordinates, reverseGeocode } from '@/lib/geocoding';
 
 // ============================================
 // TEXT INPUT COMPONENT
@@ -696,6 +696,30 @@ function MemoryMapLocationCard({ item, onUpdate }: MemoryMapLocationCardProps) {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // When the user enters manual coordinates, attempt a reverse lookup
+  useEffect(() => {
+    if (inputMode !== 'manual') return;
+    const lat = item.lat || 0;
+    const lng = item.lng || 0;
+    if (!isValidCoordinates(lat, lng)) return;
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const res = await reverseGeocode(lat, lng);
+        if (res) {
+          onUpdate({ name: res.name, address: res.address, lat: res.lat, lng: res.lng });
+        }
+      } catch (err) {
+        // ignore reverse errors
+      } finally {
+        setIsSearching(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [inputMode, item.lat, item.lng]);
+
   const handleSelectResult = (result: SearchResult) => {
     onUpdate({
       name: result.name,
@@ -708,6 +732,23 @@ function MemoryMapLocationCard({ item, onUpdate }: MemoryMapLocationCardProps) {
   };
 
   const hasValidCoords = isValidCoordinates(item.lat || 0, item.lng || 0);
+
+  const getDisplayLocationLabel = () => {
+    const name = item.name?.trim();
+    const addr = item.address?.trim();
+
+    // Prefer POI-like names (church, parish, cathedral, chapel, basilica, shrine)
+    const poiRe = /(church|parish|cathedral|chapel|basilica|shrine|mosque|temple|san |santo |sta |st\.|san\s)/i;
+    if (name && poiRe.test(name)) return name;
+
+    // If name exists and is meaningfully different from address, show name first
+    if (name && addr && name.toLowerCase() !== addr.toLowerCase()) return `${name}${addr ? ` • ${addr}` : ''}`;
+
+    // Fallback to address or coordinates
+    if (addr) return addr;
+    if (hasValidCoords) return `${(item.lat || 0).toFixed(4)}, ${(item.lng || 0).toFixed(4)}`;
+    return null;
+  };
 
   return (
     <div className="space-y-3">
@@ -841,11 +882,12 @@ function MemoryMapLocationCard({ item, onUpdate }: MemoryMapLocationCardProps) {
       )}
 
       {/* Selected Address Display */}
-      {item.address && (
-        <p className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">
-          📍 {item.address}
-        </p>
-      )}
+      {(() => {
+        const label = getDisplayLocationLabel();
+        return label ? (
+          <p className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">📍 {label}</p>
+        ) : null;
+      })()}
 
       {/* Description */}
       <textarea
@@ -884,6 +926,147 @@ export function MemoryMapInput({ value, onChange }: MemoryMapInputProps) {
           item={item as MemoryMapLocation} 
           onUpdate={onUpdate as (updates: Partial<MemoryMapLocation>) => void} 
         />
+      )}
+    />
+  );
+}
+
+// Image uploader for an event location (uploads to Cloudinary via server API)
+function EventLocationImageUploader({
+  item,
+  onUpdate,
+}: {
+  item: MemoryMapLocation;
+  onUpdate: (updates: Partial<MemoryMapLocation>) => void;
+}) {
+  const [preview, setPreview] = useState<string | null>(item.imageUrl || null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPreview(item.imageUrl || null);
+  }, [item.imageUrl]);
+
+  const handleFile = async (file?: File | null) => {
+    if (!file) return;
+    setError(null);
+    const objectUrl = URL.createObjectURL(file);
+    setPreview(objectUrl);
+    setUploading(true);
+
+    try {
+      const form = new FormData();
+      form.append('file', file);
+
+      const res = await fetch('/api/uploads/cloudinary', {
+        method: 'POST',
+        body: form,
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.message || 'Upload failed');
+      }
+
+      onUpdate({ imageUrl: data.url });
+      // keep preview pointing to uploaded URL
+      setPreview(data.url);
+    } catch (err: any) {
+      console.error('Upload error', err);
+      setError(err?.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+      // revoke local object URL after a short delay to avoid flicker
+      setTimeout(() => {
+        try {
+          if (preview && preview.startsWith('blob:')) URL.revokeObjectURL(preview);
+        } catch (e) {
+          /* ignore */
+        }
+      }, 2000);
+    }
+  };
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] || null;
+    handleFile(f);
+  };
+
+  const handleRemove = () => {
+    onUpdate({ imageUrl: '' });
+    setPreview(null);
+  };
+
+  return (
+    <div className="space-y-2">
+      {preview ? (
+        <div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={preview} alt={item.name || 'preview'} className="w-full h-36 object-cover rounded-lg" />
+          <div className="flex items-center gap-2 mt-2">
+            <label className="inline-flex items-center px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 cursor-pointer">
+              Replace
+              <input type="file" accept="image/*" onChange={onFileChange} className="sr-only" />
+            </label>
+            <button type="button" onClick={handleRemove} className="px-3 py-2 bg-rose-50 text-rose-600 border border-rose-100 rounded-lg text-sm">Remove</button>
+            {uploading && <span className="text-xs text-slate-500">Uploading…</span>}
+          </div>
+          {error && <p className="text-xs text-rose-500 mt-1">{error}</p>}
+        </div>
+      ) : (
+        <div>
+          <label className="block text-xs text-slate-500 mb-1">Upload Photo (optional)</label>
+          <input type="file" accept="image/*" onChange={onFileChange} className="w-full" />
+          {uploading && <p className="text-xs text-slate-500">Uploading…</p>}
+          {error && <p className="text-xs text-rose-500 mt-1">{error}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Event Locations Input - for sections like baptism event_details
+interface EventLocationsInputProps {
+  value?: SectionContentMap['event_details'];
+  onChange: (value: SectionContentMap['event_details']) => void;
+}
+
+export function EventLocationsInput({ value, onChange }: EventLocationsInputProps) {
+  const locations = value?.locations || [];
+
+  return (
+    <RepeaterInput
+      label="Event Locations"
+      items={locations}
+      onChange={(items) => onChange({ locations: items as MemoryMapLocation[] })}
+      required={false}
+      addButtonText="Add Location"
+      emptyText="Add ceremony / reception locations"
+      renderItem={(item, _, onUpdate) => (
+        <div className="space-y-3 pr-6">
+          <MemoryMapLocationCard
+            item={item as MemoryMapLocation}
+            onUpdate={onUpdate as (updates: Partial<MemoryMapLocation>) => void}
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Time (optional)</label>
+              <input
+                type="time"
+                value={item.time || ''}
+                onChange={(e) => onUpdate({ time: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 text-sm"
+              />
+            </div>
+            <div>
+              <EventLocationImageUploader
+                item={item as MemoryMapLocation}
+                onUpdate={onUpdate as (updates: Partial<MemoryMapLocation>) => void}
+              />
+            </div>
+          </div>
+        </div>
       )}
     />
   );

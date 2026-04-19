@@ -144,6 +144,8 @@ export const SITE_TYPE_CONFIG = {
     sections: [
       'home',
       'invitation',
+      'gift_ideas',
+      'gift_wishlist',
       'gallery',
       'event_details',
       'schedule',

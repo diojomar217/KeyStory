@@ -15,6 +15,7 @@ export type BusinessContactSettings = {
   facebookPageUrl: string | null;
   instagramUrl: string | null;
   supportMessageTemplate: string | null;
+  analyticsEnabled?: boolean | null;
 };
 
 const envSettings: BusinessContactSettings = {
@@ -30,6 +31,7 @@ const envSettings: BusinessContactSettings = {
   facebookPageUrl: process.env.NEXT_PUBLIC_FACEBOOK_PAGE_URL || null,
   instagramUrl: process.env.NEXT_PUBLIC_INSTAGRAM_URL || null,
   supportMessageTemplate: process.env.NEXT_PUBLIC_SUPPORT_MESSAGE_TEMPLATE || null,
+  analyticsEnabled: typeof process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== 'undefined' ? (String(process.env.NEXT_PUBLIC_ANALYTICS_ENABLED).toLowerCase() === 'true') : null,
 };
 
 let inMemoryFallback: BusinessContactSettings | null = null;
@@ -42,7 +44,7 @@ export async function getBusinessContactSettings(): Promise<BusinessContactSetti
     const { data, error } = await supabase
       .from('business_settings')
       .select(
-        'whatsapp_number, messenger_username, messenger_url, support_email, business_name, restore_price_label, shopee_store_url, tiktok_shop_url, lazada_store_url, facebook_page_url, instagram_url, support_message_template'
+        'whatsapp_number, messenger_username, messenger_url, support_email, business_name, restore_price_label, shopee_store_url, tiktok_shop_url, lazada_store_url, facebook_page_url, instagram_url, support_message_template, analytics_enabled'
       )
       .single();
 
@@ -60,6 +62,7 @@ export async function getBusinessContactSettings(): Promise<BusinessContactSetti
         facebookPageUrl: data.facebook_page_url || fallback.facebookPageUrl,
         instagramUrl: data.instagram_url || fallback.instagramUrl,
         supportMessageTemplate: data.support_message_template || fallback.supportMessageTemplate,
+        analyticsEnabled: typeof data.analytics_enabled === 'undefined' ? fallback.analyticsEnabled : !!data.analytics_enabled,
       };
 
       return { ...settings, ...(inMemoryFallback || {}) };
@@ -90,6 +93,7 @@ export async function upsertBusinessContactSettings(settings: Partial<BusinessCo
     facebook_page_url: settings.facebookPageUrl || null,
     instagram_url: settings.instagramUrl || null,
     support_message_template: settings.supportMessageTemplate || null,
+    analytics_enabled: typeof settings.analyticsEnabled === 'undefined' ? null : !!settings.analyticsEnabled,
   };
 
   try {
@@ -116,6 +120,7 @@ export async function upsertBusinessContactSettings(settings: Partial<BusinessCo
       facebookPageUrl: payload.facebook_page_url,
       instagramUrl: payload.instagram_url,
       supportMessageTemplate: payload.support_message_template,
+      analyticsEnabled: payload.analytics_enabled,
     };
 
     return data;
@@ -136,6 +141,7 @@ export async function upsertBusinessContactSettings(settings: Partial<BusinessCo
       facebookPageUrl: payload.facebook_page_url,
       instagramUrl: payload.instagram_url,
       supportMessageTemplate: payload.support_message_template,
+      analyticsEnabled: payload.analytics_enabled,
     };
 
     return inMemoryFallback;
