@@ -81,12 +81,12 @@ function PremiumInputField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-[1.2rem] border px-4 py-3 text-[15px] outline-none transition-all duration-300 placeholder:text-[#bba7ab] focus:bg-white/70 focus:shadow-[0_6px_18px_rgba(0,0,0,0.05)]"
+        className="w-full rounded-[1.2rem] border px-4 py-3.5 text-[15px] outline-none transition-all duration-300 placeholder:text-[#bba7ab] focus:bg-white/80 focus:shadow-[0_0_0_4px_rgba(201,138,150,0.12)]"
         style={{
           color: textColor,
-          borderColor: `${accentColor}18`,
-          background: "rgba(255,255,255,0.34)",
-          boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)",
+          borderColor: `${accentColor}24`,
+          background: "rgba(255,255,255,0.48)",
+          boxShadow: "inset 0 1px 2px rgba(0,0,0,0.035)",
           fontFamily: '"Georgia", "Times New Roman", serif',
         }}
       />
@@ -115,12 +115,12 @@ function PremiumSelectField({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-[1.2rem] border px-4 py-3 text-[15px] outline-none transition-all duration-300 focus:bg-white/70 focus:shadow-[0_6px_18px_rgba(0,0,0,0.05)]"
+        className="w-full rounded-[1.2rem] border px-4 py-3.5 text-[15px] outline-none transition-all duration-300 focus:bg-white/80 focus:shadow-[0_0_0_4px_rgba(201,138,150,0.12)]"
         style={{
           color: textColor,
-          borderColor: `${accentColor}18`,
-          background: "rgba(255,255,255,0.34)",
-          boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)",
+          borderColor: `${accentColor}24`,
+          background: "rgba(255,255,255,0.48)",
+          boxShadow: "inset 0 1px 2px rgba(0,0,0,0.035)",
           fontFamily: '"Georgia", "Times New Roman", serif',
         }}
       >
@@ -153,12 +153,12 @@ function PremiumTextareaField({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={5}
-        className="w-full resize-none rounded-[1.2rem] border px-4 py-3 text-[15px] outline-none transition-all duration-300 placeholder:text-[#bba7ab] focus:bg-white/70 focus:shadow-[0_6px_18px_rgba(0,0,0,0.05)]"
+        className="w-full resize-none rounded-[1.2rem] border px-4 py-3.5 text-[15px] outline-none transition-all duration-300 placeholder:text-[#bba7ab] focus:bg-white/80 focus:shadow-[0_0_0_4px_rgba(201,138,150,0.12)]"
         style={{
           color: textColor,
-          borderColor: `${accentColor}18`,
-          background: "rgba(255,255,255,0.34)",
-          boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)",
+          borderColor: `${accentColor}24`,
+          background: "rgba(255,255,255,0.48)",
+          boxShadow: "inset 0 1px 2px rgba(0,0,0,0.035)",
           fontFamily: '"Georgia", "Times New Roman", serif',
         }}
       />
@@ -176,25 +176,23 @@ export default function RSVPSection({
   const [fullName, setFullName] = useState("");
   const [contactNumber, setContactNumber] = useState("");
   const [attendance, setAttendance] = useState<"yes" | "no" | "maybe">("yes");
-  const [godparentConfirmation, setGodparentConfirmation] = useState<
-    "yes" | "no"
-  >("no");
+  const [godparentConfirmation, setGodparentConfirmation] = useState<"yes" | "no">("no");
   const [companions, setCompanions] = useState<number>(0);
   const [message, setMessage] = useState("");
-  const [status, setStatus] = useState<
-    "idle" | "loading" | "success" | "error"
-  >("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [feedback, setFeedback] = useState("");
 
   const textColor = colors?.text || "#6a2f39";
   const accentColor = "#c98a96";
   const goldAccent = "#d8b16c";
 
+  const isAttending = attendance === "yes" || attendance === "maybe";
+
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!fullName.trim() || !attendance) {
-      setFeedback("Name and attendance are required.");
+      setFeedback("Please enter your name and attendance.");
       setStatus("error");
       return;
     }
@@ -207,8 +205,8 @@ export default function RSVPSection({
         name: fullName.trim(),
         contact_number: contactNumber.trim() || undefined,
         attendance,
-        godparent_confirmation: godparentConfirmation,
-        companions: companions || 0,
+        godparent_confirmation: isAttending ? godparentConfirmation : "no",
+        companions: isAttending ? companions || 0 : 0,
         message: message.trim() || undefined,
       };
 
@@ -218,10 +216,12 @@ export default function RSVPSection({
         const parts = path.split("/").filter(Boolean);
         const siteIndex = parts.indexOf("site");
         const hostIndex = parts.indexOf("host");
-        if (siteIndex >= 0 && parts[siteIndex + 1])
+
+        if (siteIndex >= 0 && parts[siteIndex + 1]) {
           payload.slug = parts[siteIndex + 1];
-        else if (hostIndex >= 0 && parts[hostIndex + 1])
+        } else if (hostIndex >= 0 && parts[hostIndex + 1]) {
           payload.slug = parts[hostIndex + 1];
+        }
       }
 
       const res = await fetch("/api/rsvp", {
@@ -231,6 +231,7 @@ export default function RSVPSection({
       });
 
       const json = await res.json();
+
       if (!res.ok || json?.error) {
         setStatus("error");
         setFeedback(json?.error || "Failed to submit RSVP.");
@@ -246,8 +247,8 @@ export default function RSVPSection({
       setStatus("success");
       setFeedback(
         json?.duplicate
-          ? "Duplicate RSVP detected. Thank you."
-          : "RSVP submitted. Thank you!"
+          ? "We already received your RSVP. Thank you 💌"
+          : "Thank you for your response 💖 We’re excited to celebrate with you!"
       );
     } catch (err) {
       console.error(err);
@@ -261,26 +262,26 @@ export default function RSVPSection({
   return (
     <section
       id="rsvp"
-      className="relative overflow-hidden px-4 py-20 md:px-6 md:py-24 lg:py-28"
+      className="relative overflow-hidden px-4 py-16 md:px-6 md:py-24 lg:py-28"
     >
       <div className="pointer-events-none absolute inset-0">
         <div
-          className="absolute left-[-3rem] top-10 h-36 w-36 rounded-full blur-3xl opacity-[0.08]"
+          className="absolute left-[-3rem] top-10 h-40 w-40 rounded-full blur-3xl opacity-[0.10]"
           style={{ backgroundColor: accentColor }}
         />
         <div
-          className="absolute right-[-2rem] top-20 h-44 w-44 rounded-full blur-3xl opacity-[0.06]"
-          style={{ backgroundColor: accentColor }}
+          className="absolute right-[-2rem] top-20 h-48 w-48 rounded-full blur-3xl opacity-[0.08]"
+          style={{ backgroundColor: "#ffd6df" }}
         />
         <div
-          className="absolute left-1/2 top-0 h-24 w-24 -translate-x-1/2 rounded-full blur-3xl opacity-[0.05]"
+          className="absolute left-1/2 top-0 h-28 w-28 -translate-x-1/2 rounded-full blur-3xl opacity-[0.08]"
           style={{ backgroundColor: goldAccent }}
         />
       </div>
 
       <div className="relative mx-auto max-w-5xl">
         <ScrollReveal>
-          <div className="mb-10 text-center">
+          <div className="mb-8 text-center md:mb-10">
             <div
               className="inline-flex items-center justify-center rounded-full border bg-white/80 px-4 py-2 shadow-sm"
               style={{ borderColor: `${accentColor}22` }}
@@ -310,7 +311,7 @@ export default function RSVPSection({
             </h2>
 
             <p
-              className="mx-auto mt-3 max-w-2xl text-sm md:text-base"
+              className="mx-auto mt-3 max-w-2xl text-sm leading-6 md:text-base"
               style={{
                 color: `${textColor}B3`,
                 fontFamily: "system-ui, sans-serif",
@@ -331,30 +332,30 @@ export default function RSVPSection({
         </ScrollReveal>
 
         <ScrollReveal delay={80}>
-          <div className="relative mt-10">
+          <div className="relative mt-8">
             <div
               className="absolute inset-0 translate-y-2 scale-[0.99] rounded-[2rem]"
               style={{
                 background:
-                  "linear-gradient(180deg, rgba(233,220,215,0.78), rgba(226,210,205,0.56))",
+                  "linear-gradient(180deg, rgba(255,221,229,0.45), rgba(244,219,224,0.30))",
               }}
             />
 
             <div
-              className="relative rounded-[2rem] border px-6 py-8 md:px-10 md:py-10"
+              className="relative rounded-[2rem] border px-5 py-7 md:px-10 md:py-10"
               style={{
-                borderColor: "#e8dede",
+                borderColor: "#f1d8de",
                 background:
-                  "linear-gradient(180deg, #fffaf8 0%, #f3e8e5 100%)",
+                  "linear-gradient(180deg, rgba(255,250,251,0.96) 0%, rgba(253,238,242,0.92) 100%)",
                 boxShadow:
-                  "0 30px 80px rgba(106,47,57,0.14), 0 10px 25px rgba(106,47,57,0.05)",
+                  "0 30px 80px rgba(106,47,57,0.12), 0 10px 25px rgba(106,47,57,0.04)",
               }}
             >
               <div
-                className="pointer-events-none absolute inset-0 opacity-[0.03]"
+                className="pointer-events-none absolute inset-0 opacity-[0.025]"
                 style={{
                   backgroundImage:
-                    "radial-gradient(circle at 1px 1px, rgba(0,0,0,0.12) 1px, transparent 0)",
+                    "radial-gradient(circle at 1px 1px, rgba(106,47,57,0.18) 1px, transparent 0)",
                   backgroundSize: "24px 24px",
                 }}
               />
@@ -370,23 +371,12 @@ export default function RSVPSection({
                     label="Full Name"
                     value={fullName}
                     onChange={setFullName}
-                    placeholder="e.g., Maria Cruz"
+                    placeholder="Your full name"
                     accentColor={accentColor}
                     textColor={textColor}
                     required
                   />
 
-                  <PremiumInputField
-                    label="Contact Number"
-                    value={contactNumber}
-                    onChange={setContactNumber}
-                    placeholder="e.g., +63 912 345 6789"
-                    accentColor={accentColor}
-                    textColor={textColor}
-                  />
-                </div>
-
-                <div className="mt-5 grid gap-5 md:grid-cols-3">
                   <PremiumSelectField
                     label="Attendance"
                     value={attendance}
@@ -394,42 +384,59 @@ export default function RSVPSection({
                     accentColor={accentColor}
                     textColor={textColor}
                   >
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
+                    <option value="yes">Yes, I will attend</option>
+                    <option value="no">Sorry, I cannot attend</option>
                     <option value="maybe">Maybe</option>
                   </PremiumSelectField>
-
-                  <PremiumInputField
-                    label="Companions"
-                    type="number"
-                    min={0}
-                    value={String(companions)}
-                    onChange={(value) => setCompanions(Number(value || 0))}
-                    placeholder="0"
-                    accentColor={accentColor}
-                    textColor={textColor}
-                  />
-
-                  <PremiumSelectField
-                    label="Godparent"
-                    value={godparentConfirmation}
-                    onChange={(value) =>
-                      setGodparentConfirmation(value as any)
-                    }
-                    accentColor={accentColor}
-                    textColor={textColor}
-                  >
-                    <option value="no">No</option>
-                    <option value="yes">Yes</option>
-                  </PremiumSelectField>
                 </div>
+
+                <p
+                  className="mt-3 text-sm leading-6"
+                  style={{
+                    color: `${textColor}99`,
+                    fontFamily: "system-ui, sans-serif",
+                  }}
+                >
+                  {attendance === "yes" &&
+                    "We can’t wait to celebrate this blessing with you 💖"}
+                  {attendance === "maybe" &&
+                    "No worries — just let us know for now so we can plan gently 💌"}
+                  {attendance === "no" &&
+                    "Thank you for letting us know. We’ll miss you on this special day 💌"}
+                </p>
+
+                {isAttending ? (
+                  <div className="mt-5 grid gap-5 md:grid-cols-2">
+                    <PremiumInputField
+                      label="Companions"
+                      type="number"
+                      min={0}
+                      value={String(companions)}
+                      onChange={(value) => setCompanions(Number(value || 0))}
+                      placeholder="0"
+                      accentColor={accentColor}
+                      textColor={textColor}
+                    />
+
+                    <PremiumSelectField
+                      label="Godparent"
+                      value={godparentConfirmation}
+                      onChange={(value) => setGodparentConfirmation(value as any)}
+                      accentColor={accentColor}
+                      textColor={textColor}
+                    >
+                      <option value="no">No</option>
+                      <option value="yes">Yes</option>
+                    </PremiumSelectField>
+                  </div>
+                ) : null}
 
                 <div className="mt-5">
                   <PremiumTextareaField
                     label="Message"
                     value={message}
                     onChange={setMessage}
-                    placeholder="Write a short message or note"
+                    placeholder="Leave a short message for the family"
                     accentColor={accentColor}
                     textColor={textColor}
                   />
@@ -439,19 +446,21 @@ export default function RSVPSection({
                   <button
                     type="submit"
                     disabled={status === "loading"}
-                    className="inline-flex min-w-[180px] items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(193,100,118,0.28)] transition duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70"
+                    className="inline-flex min-w-[210px] items-center justify-center rounded-full px-7 py-3.5 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(193,100,118,0.28)] transition duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70"
                     style={{
                       background:
                         "linear-gradient(135deg, #c16476 0%, #b4586a 100%)",
                     }}
                   >
-                    {status === "loading" ? "Sending..." : "Send RSVP"}
+                    {status === "loading"
+                      ? "Sending..."
+                      : "Confirm Attendance 💌"}
                   </button>
 
-                  <div className="md:max-w-[320px]">
+                  <div className="md:max-w-[340px]">
                     {feedback ? (
                       <div
-                        className="rounded-[1rem] border px-4 py-3 text-sm"
+                        className="rounded-[1rem] border px-4 py-3 text-sm leading-6"
                         style={{
                           borderColor:
                             status === "success"
@@ -463,6 +472,7 @@ export default function RSVPSection({
                               : "rgba(254,242,242,0.85)",
                           color:
                             status === "success" ? "#15803d" : "#b91c1c",
+                          fontFamily: "system-ui, sans-serif",
                         }}
                       >
                         {feedback}

@@ -329,7 +329,8 @@ export const validateContentStep = (
   // Event Details require at least one field
   if (sections.includes('event_details')) {
     const details = sectionContent.event_details || {};
-    if (!details.location && !details.date && !details.time && !details.dressCode) {
+    const hasLocationsArray = Array.isArray(details.locations) && details.locations.some((it: any) => ((typeof it.name === 'string' && it.name.trim()) || (typeof it.lat === 'number' && typeof it.lng === 'number')));
+    if (!hasLocationsArray && !details.location && !details.date && !details.time && !details.dressCode) {
       return { valid: false, error: 'Event Details section requires at least one field filled in' };
     }
   }

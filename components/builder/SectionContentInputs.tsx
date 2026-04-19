@@ -41,6 +41,7 @@ import {
   FutureDreamsInput,
   VideoMemoriesInput,
   MemoryMapInput,
+  EventLocationsInput,
   SurpriseMessageInput,
   LetterToFutureInput,
   GiftSectionInput,
@@ -50,6 +51,7 @@ import {
   ScheduleInput,
   DressCodeInput,
   MapInput,
+  SafetyProtocolInput,
   ClosingInput,
   RSVPInput,
 } from "./ContentInputComponents";
@@ -812,6 +814,14 @@ export default function SectionContentInputs({
               />
             );
             break;
+          case "safety_protocol":
+            content = (
+              <SafetyProtocolInput
+                value={section_content?.safety_protocol}
+                onChange={(val) => onSectionContentChange("safety_protocol", val)}
+              />
+            );
+            break;
           case "closing":
             content = (
               <ClosingInput
@@ -985,8 +995,7 @@ export default function SectionContentInputs({
               </div>
             );
             break;
-          case "party_details":
-          case "event_details": {
+          case "party_details": {
             const details = section_content?.[section.key] || {};
             content = (
               <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3">
@@ -1041,6 +1050,16 @@ export default function SectionContentInputs({
             );
             break;
           }
+
+          case "event_details": {
+            content = (
+              <EventLocationsInput
+                value={section_content?.event_details}
+                onChange={(val) => onSectionContentChange("event_details", val)}
+              />
+            );
+            break;
+          }
           case "gift_wishlist":
           case "gift_registry": {
             const wishlist = section_content?.[section.key] || {};
@@ -1057,14 +1076,49 @@ export default function SectionContentInputs({
                   onChange={(e) => {
                     const items = e.target.value
                       .split("\n")
-                      .map((v) => v.trim())
-                      .filter(Boolean);
+                      .map((v) => v.trim());
                     onSectionContentChange(section.key, { ...wishlist, items });
                   }}
                 />
                 <p className="text-xs text-slate-500">
                   Each line becomes one wishlist/registry item.
                 </p>
+              </div>
+            );
+            break;
+          }
+          case "gift_ideas": {
+            const ideas = section_content?.gift_ideas || {};
+            const itemsText = Array.isArray(ideas.items) ? ideas.items.join("\n") : "";
+            content = (
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3">
+                <span className="font-semibold text-lg">{sectionTitle}</span>
+                <input
+                  type="text"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200"
+                  placeholder="Section title (optional)"
+                  value={ideas.title || ''}
+                  onChange={(e) => onSectionContentChange('gift_ideas', { ...ideas, title: e.target.value })}
+                />
+                <input
+                  type="text"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200"
+                  placeholder="Section subtitle (optional)"
+                  value={ideas.subtitle || ''}
+                  onChange={(e) => onSectionContentChange('gift_ideas', { ...ideas, subtitle: e.target.value })}
+                />
+                <textarea
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 min-h-[120px]"
+                  placeholder="One gift idea per line"
+                  value={itemsText}
+                  onChange={(e) => {
+                    const items = e.target.value
+                      .split("\n")
+                      .map((v) => v.trim());
+                    onSectionContentChange('gift_ideas', { ...ideas, items });
+                  }}
+                />
+                <p className="text-xs text-slate-500">Each line becomes one gift idea.</p>
               </div>
             );
             break;

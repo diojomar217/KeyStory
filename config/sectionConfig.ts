@@ -90,6 +90,7 @@ const SECTION_PREVIEW_MAP: Partial<Record<Section, string>> = {
   birthday_timeline: 'birthday-timeline-preview',
   party_details: 'party-details-preview',
   gift_wishlist: 'gift-wishlist-preview',
+  gift_ideas: 'gift-ideas-preview',
   wedding_countdown: 'wedding-countdown-preview',
   event_details: 'event-details-preview',
   wedding_timeline: 'wedding-timeline-preview',

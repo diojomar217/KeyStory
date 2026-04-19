@@ -32,6 +32,7 @@ export type Section =
   | 'birthday_timeline'
   | 'party_details'
   | 'gift_wishlist'
+  | 'gift_ideas'
   | 'relationship_stats'
   | 'memory_map'
   | 'polaroid_gallery'        // DEPRECATED - use gallery with layout="polaroid"
@@ -67,7 +68,8 @@ export type Section =
   | 'schedule'
   | 'dress_code'
   | 'closing'
-  | 'map_section';
+  | 'map_section'
+  | 'safety_protocol';
 
 // Gallery layout options - replaces separate gallery sections
 export type GalleryLayout = 'grid' | 'polaroid' | 'carousel';
@@ -412,6 +414,9 @@ export interface MemoryMapLocation {
   description?: string;
   date?: string;
   address?: string; // Optional formatted address from search
+  time?: string;
+  imageUrl?: string;
+  googleMapsUrl?: string;
 }
 
 export interface GuestMessageRecord {
@@ -586,9 +591,8 @@ export interface SectionContentMap {
     dressCode?: string;
   };
   event_details?: {
-    location?: string;
-    date?: string;
-    time?: string;
+    // Support multiple event locations (e.g., ceremony, reception)
+    locations?: MemoryMapLocation[];
     dressCode?: string;
   };
   invitation?: {
@@ -624,11 +628,30 @@ export interface SectionContentMap {
   gift_wishlist?: {
     items: string[];
   };
+  gift_ideas?: {
+    title?: string;
+    subtitle?: string;
+    items?: string[];
+  };
   gift_registry?: {
     items: string[];
   };
   photo_highlights?: {
     photos: string[];
+  };
+  safety_protocol?: {
+    content?: string; // Freeform guidance or HTML/Markdown
+    guidelines?: string[]; // Short bullet points for quick scanning
+    contactName?: string;
+    contactPhone?: string;
+    pdfUrl?: string; // Optional link to a downloadable safety document
+    // Optional structured items (title, optional description, optional image)
+    items?: {
+      id?: string;
+      title?: string;
+      description?: string;
+      imageUrl?: string;
+    }[];
   };
   reasons_love_you?: {
     reasons: ReasonILoveYou[];

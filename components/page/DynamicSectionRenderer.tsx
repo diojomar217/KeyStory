@@ -35,6 +35,8 @@ import DressCodeSection from '@/components/sections/baptism/DressCodeSection';
 import RSVPSection from '@/components/sections/baptism/RSVPSection';
 import MapSection from '@/components/sections/baptism/MapSection';
 import EventDetailsSection from '@/components/sections/baptism/EventDetailsSection';
+import GiftIdeasSection from '@/components/sections/shared/GiftIdeasSection';
+import SafetyProtocolSection from '@/components/sections/shared/SafetyProtocolSection';
 
 // ============================================
 // PROPS INTERFACE
@@ -118,6 +120,7 @@ const RENDERER_COMPONENTS: Record<Section, React.ComponentType<any>> = {
   birthday_timeline: TimelineSection,
   party_details: OurStorySection,
   gift_wishlist: GiftSection,
+  gift_ideas: GiftIdeasSection,
   wedding_countdown: AnniversaryCountdownSection,
   event_details: OurStorySection,
   wedding_timeline: TimelineSection,
@@ -127,6 +130,7 @@ const RENDERER_COMPONENTS: Record<Section, React.ComponentType<any>> = {
   schedule: ScheduleSection,
   dress_code: DressCodeSection,
   map_section: MapSection,
+  safety_protocol: SafetyProtocolSection,
   closing: LoveLetterSection,
   couple_message: LoveLetterSection,
   graduation_message: LoveLetterSection,

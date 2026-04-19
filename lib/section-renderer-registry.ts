@@ -20,6 +20,7 @@ import MemoryMapSection from '@/components/sections/shared/MemoryMapSection';
 import GuestMessagesSection from '@/components/sections/shared/GuestMessagesSection';
 import VideoMemoriesSection from '@/components/sections/shared/VideoMemoriesSection';
 import PlaylistSection from '@/components/sections/shared/PlaylistSection';
+import SafetyProtocolSection from '@/components/sections/shared/SafetyProtocolSection';
 // Baptism-specific sections
 import InvitationSection from '@/components/sections/baptism/InvitationSection';
 import EventDetailsSection from '@/components/sections/baptism/EventDetailsSection';
@@ -49,6 +50,7 @@ import BirthdayCountdownSection from '@/components/sections/birthday/BirthdayCou
 import BirthdayTimelineSection from '@/components/sections/birthday/BirthdayTimelineSection';
 import PartyDetailsSection from '@/components/sections/birthday/PartyDetailsSection';
 import GiftWishlistSection from '@/components/sections/birthday/GiftWishlistSection';
+import GiftIdeasSection from '@/components/sections/shared/GiftIdeasSection';
 
 // ============================================
 // SECTION RENDERER PROPS - Base interface for all section renderers
@@ -322,6 +324,15 @@ home: {
       items: config.giftWishlist || [],
     }),
   },
+  gift_ideas: {
+    component: GiftIdeasSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      giftIdeas: config.section_content?.gift_ideas?.items || config.giftIdeas || [],
+      title: config.section_content?.gift_ideas?.title || 'Gift Ideas',
+      subtitle: config.section_content?.gift_ideas?.subtitle || 'Your presence and prayers are more than enough, but if you wish to give, here are a few things we would appreciate.',
+    }),
+  },
   wedding_countdown: {
     component: AnniversaryCountdownSection,
     getProps: (config) => ({
@@ -369,6 +380,18 @@ home: {
     getProps: (config) => ({
       theme: config.theme,
       mapLink: config.section_content?.map_section?.mapLink || config.mapLink || '',
+    }),
+  },
+  safety_protocol: {
+    component: SafetyProtocolSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      content: config.section_content?.safety_protocol?.content || config.safetyProtocol || '',
+      guidelines: config.section_content?.safety_protocol?.guidelines || [],
+      contactName: config.section_content?.safety_protocol?.contactName || config.safetyContactName || '',
+      contactPhone: config.section_content?.safety_protocol?.contactPhone || config.safetyContactPhone || '',
+      pdfUrl: config.section_content?.safety_protocol?.pdfUrl || config.safetyPdfUrl || '',
+      items: config.section_content?.safety_protocol?.items || [],
     }),
   },
   wedding_timeline: {
