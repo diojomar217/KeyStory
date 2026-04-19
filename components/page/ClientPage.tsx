@@ -69,6 +69,8 @@ import BirthdayCountdownSection from "../sections/birthday/BirthdayCountdownSect
 import BirthdayTimelineSection from "../sections/birthday/BirthdayTimelineSection";
 import PartyDetailsSection from "../sections/birthday/PartyDetailsSection";
 import GiftWishlistSection from "../sections/birthday/GiftWishlistSection";
+import GiftIdeasSection from "../sections/shared/GiftIdeasSection";
+import EventDetailsSection from "../sections/baptism/EventDetailsSection";
 import WeddingCountdownSection from "../sections/shared/WeddingCountdownSection";
 import GiftRegistrySection from "../sections/shared/GiftRegistrySection";
 import { OccasionProvider } from "./OccasionContext";
@@ -806,7 +808,32 @@ console.log('activeSections:', activeSections);
           );
 
         case "party_details":
+          return (
+            <PartyDetailsSection
+              key={section}
+              theme={theme}
+              location={contentForSection?.location}
+              date={contentForSection?.date}
+              time={contentForSection?.time}
+              dressCode={contentForSection?.dressCode}
+            />
+          );
+
         case "event_details":
+          // For baptism pages, render the richer EventDetailsSection which
+          // supports multiple locations. Fallback to PartyDetailsSection for
+          // other occasion types for backward compatibility.
+          if (siteType === "baptism") {
+            return (
+              <EventDetailsSection
+                key={section}
+                theme={theme}
+                locations={
+                  contentForSection?.locations || sectionContent?.event_details?.locations || []
+                }
+              />
+            );
+          }
           return (
             <PartyDetailsSection
               key={section}
@@ -838,6 +865,21 @@ console.log('activeSections:', activeSections);
                 contentForSection?.items ||
                 sectionContent?.gift_registry?.items ||
                 sectionContent?.gift_wishlist?.items
+              }
+            />
+          );
+
+        case "gift_ideas":
+          return (
+            <GiftIdeasSection
+              key={section}
+              theme={theme}
+              giftIdeas={
+                contentForSection?.items || sectionContent?.gift_ideas?.items || []
+              }
+              title={contentForSection?.title || sectionContent?.gift_ideas?.title}
+              subtitle={
+                contentForSection?.subtitle || sectionContent?.gift_ideas?.subtitle
               }
             />
           );

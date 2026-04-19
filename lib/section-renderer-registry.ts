@@ -49,6 +49,7 @@ import BirthdayCountdownSection from '@/components/sections/birthday/BirthdayCou
 import BirthdayTimelineSection from '@/components/sections/birthday/BirthdayTimelineSection';
 import PartyDetailsSection from '@/components/sections/birthday/PartyDetailsSection';
 import GiftWishlistSection from '@/components/sections/birthday/GiftWishlistSection';
+import GiftIdeasSection from '@/components/sections/shared/GiftIdeasSection';
 
 // ============================================
 // SECTION RENDERER PROPS - Base interface for all section renderers
@@ -320,6 +321,15 @@ home: {
     getProps: (config) => ({
       theme: config.theme,
       items: config.giftWishlist || [],
+    }),
+  },
+  gift_ideas: {
+    component: GiftIdeasSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      giftIdeas: config.section_content?.gift_ideas?.items || config.giftIdeas || [],
+      title: config.section_content?.gift_ideas?.title || 'Gift Ideas',
+      subtitle: config.section_content?.gift_ideas?.subtitle || 'Your presence and prayers are more than enough, but if you wish to give, here are a few things we would appreciate.',
     }),
   },
   wedding_countdown: {

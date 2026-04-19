@@ -1718,11 +1718,12 @@ export default function EditWebsitePage() {
             (key === 'school_memories' && Array.isArray((config as any).timeline_events) && (config as any).timeline_events.length > 0) ||
             (key === 'achievements' && Array.isArray((config as any).timeline_events) && (config as any).timeline_events.length > 0) ||
             (key === 'travel_timeline' && Array.isArray((config as any).timeline_events) && (config as any).timeline_events.length > 0) ||
-            (key === 'event_details' && sectionContent && ((typeof sectionContent.location === 'string' && sectionContent.location.trim()) || (typeof sectionContent.date === 'string' && sectionContent.date.trim()))) ||
+            (key === 'event_details' && sectionContent && ((Array.isArray(sectionContent.locations) && sectionContent.locations.some((it: any) => ((typeof it.name === 'string' && it.name.trim()) || (typeof it.lat === 'number' && typeof it.lng === 'number')))) || (typeof sectionContent.location === 'string' && sectionContent.location.trim()) || (typeof sectionContent.date === 'string' && sectionContent.date.trim()))) ||
             (key === 'party_details' && sectionContent && ((typeof sectionContent.location === 'string' && sectionContent.location.trim()) || (typeof sectionContent.date === 'string' && sectionContent.date.trim()))) ||
             (key === 'rsvp' && rsvpContent && ((typeof rsvpContent.deadline === 'string' && rsvpContent.deadline.trim()) || (Array.isArray(rsvpContent.messages) && rsvpContent.messages.length > 0))) ||
-            (key === 'gift_wishlist' && sectionContent && Array.isArray(sectionContent.items) && sectionContent.items.length > 0) ||
-            (key === 'gift_registry' && sectionContent && Array.isArray(sectionContent.items) && sectionContent.items.length > 0) ||
+            (key === 'gift_wishlist' && sectionContent && Array.isArray(sectionContent.items) && sectionContent.items.some((it: any) => typeof it === 'string' && it.trim().length > 0)) ||
+            (key === 'gift_registry' && sectionContent && Array.isArray(sectionContent.items) && sectionContent.items.some((it: any) => typeof it === 'string' && it.trim().length > 0)) ||
+            (key === 'gift_ideas' && sectionContent && Array.isArray(sectionContent.items) && sectionContent.items.some((it: any) => typeof it === 'string' && it.trim().length > 0)) ||
             (key === 'surprise_message' && sectionContent && ((typeof sectionContent.message === 'string' && sectionContent.message.trim()) || (typeof sectionContent.hint === 'string' && sectionContent.hint.trim()))) ||
             (sectionContent && (
               (Array.isArray(sectionContent.gifts) && sectionContent.gifts.length > 0) ||

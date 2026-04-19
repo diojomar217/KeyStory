@@ -32,6 +32,7 @@ export type Section =
   | 'birthday_timeline'
   | 'party_details'
   | 'gift_wishlist'
+  | 'gift_ideas'
   | 'relationship_stats'
   | 'memory_map'
   | 'polaroid_gallery'        // DEPRECATED - use gallery with layout="polaroid"
@@ -412,6 +413,8 @@ export interface MemoryMapLocation {
   description?: string;
   date?: string;
   address?: string; // Optional formatted address from search
+  time?: string;
+  imageUrl?: string;
 }
 
 export interface GuestMessageRecord {
@@ -586,9 +589,8 @@ export interface SectionContentMap {
     dressCode?: string;
   };
   event_details?: {
-    location?: string;
-    date?: string;
-    time?: string;
+    // Support multiple event locations (e.g., ceremony, reception)
+    locations?: MemoryMapLocation[];
     dressCode?: string;
   };
   invitation?: {
@@ -623,6 +625,11 @@ export interface SectionContentMap {
   };
   gift_wishlist?: {
     items: string[];
+  };
+  gift_ideas?: {
+    title?: string;
+    subtitle?: string;
+    items?: string[];
   };
   gift_registry?: {
     items: string[];
