@@ -121,6 +121,7 @@ const RENDERER_COMPONENTS: Record<Section, React.ComponentType<any>> = {
   party_details: OurStorySection,
   gift_wishlist: GiftSection,
   gift_ideas: GiftIdeasSection,
+  gift_ideas: GiftIdeasSection,
   wedding_countdown: AnniversaryCountdownSection,
   event_details: OurStorySection,
   wedding_timeline: TimelineSection,

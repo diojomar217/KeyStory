@@ -71,6 +71,8 @@ import PartyDetailsSection from "../sections/birthday/PartyDetailsSection";
 import GiftWishlistSection from "../sections/birthday/GiftWishlistSection";
 import GiftIdeasSection from "../sections/shared/GiftIdeasSection";
 import EventDetailsSection from "../sections/baptism/EventDetailsSection";
+import GiftIdeasSection from "../sections/shared/GiftIdeasSection";
+import EventDetailsSection from "../sections/baptism/EventDetailsSection";
 import WeddingCountdownSection from "../sections/shared/WeddingCountdownSection";
 import GiftRegistrySection from "../sections/shared/GiftRegistrySection";
 import SafetyProtocolSection from "../sections/shared/SafetyProtocolSection";
@@ -820,7 +822,32 @@ console.log('activeSections:', activeSections);
             />
           );
 
+          return (
+            <PartyDetailsSection
+              key={section}
+              theme={theme}
+              location={contentForSection?.location}
+              date={contentForSection?.date}
+              time={contentForSection?.time}
+              dressCode={contentForSection?.dressCode}
+            />
+          );
+
         case "event_details":
+          // For baptism pages, render the richer EventDetailsSection which
+          // supports multiple locations. Fallback to PartyDetailsSection for
+          // other occasion types for backward compatibility.
+          if (siteType === "baptism") {
+            return (
+              <EventDetailsSection
+                key={section}
+                theme={theme}
+                locations={
+                  contentForSection?.locations || sectionContent?.event_details?.locations || []
+                }
+              />
+            );
+          }
           // For baptism pages, render the richer EventDetailsSection which
           // supports multiple locations. Fallback to PartyDetailsSection for
           // other occasion types for backward compatibility.

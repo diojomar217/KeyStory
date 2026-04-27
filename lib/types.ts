@@ -33,6 +33,7 @@ export type Section =
   | 'party_details'
   | 'gift_wishlist'
   | 'gift_ideas'
+  | 'gift_ideas'
   | 'relationship_stats'
   | 'memory_map'
   | 'polaroid_gallery'        // DEPRECATED - use gallery with layout="polaroid"
@@ -593,6 +594,8 @@ export interface SectionContentMap {
   event_details?: {
     // Support multiple event locations (e.g., ceremony, reception)
     locations?: MemoryMapLocation[];
+    // Support multiple event locations (e.g., ceremony, reception)
+    locations?: MemoryMapLocation[];
     dressCode?: string;
   };
   invitation?: {
@@ -627,6 +630,11 @@ export interface SectionContentMap {
   };
   gift_wishlist?: {
     items: string[];
+  };
+  gift_ideas?: {
+    title?: string;
+    subtitle?: string;
+    items?: string[];
   };
   gift_ideas?: {
     title?: string;
