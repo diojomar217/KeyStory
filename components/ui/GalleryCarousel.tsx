@@ -360,12 +360,12 @@ export default function GalleryCarousel({
                   {sectionTitle || 'Captured with Love'}
                 </p>
 
-                <p
+                {/* <p
                   className="mx-auto mt-1.5 max-w-[24rem] text-[11px] leading-relaxed sm:mt-2 sm:text-sm"
                   style={{ color: `${themeUtils.colors.text}d8` }}
                 >
                   {sectionSubtitle || 'A few cherished moments from our little one’s journey'}
-                </p>
+                </p> */}
               </div>
             </div>
           </div>

@@ -27,61 +27,113 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   const data = await getPublicSiteBySlug(slug);
   const humanizedSiteTitle = slug ? humanizeSlug(slug) : 'Story';
+  // Build a safe base URL preferring the public env var
+  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL && process.env.NEXT_PUBLIC_SITE_URL.trim())
+    ? process.env.NEXT_PUBLIC_SITE_URL.trim()
+    : getBaseUrl();
 
+  // Fallback metadata if site not found
   if (!data) {
+    const siteUrl = `${baseUrl.replace(/\/$/, '')}/site/${slug}`;
+    const fallbackTitle = 'KeyStory';
+    const fallbackDescription = 'Share and celebrate special moments.';
+    const fallbackImage = '/default-og-image.png';
+
     return {
-      title: slug ? `${humanizedSiteTitle} - Page Not Found` : 'Page Not Found',
-      description: 'This site does not exist or the link is invalid.',
-      robots: {
-        index: false,
-        follow: false,
+      title: fallbackTitle,
+      description: fallbackDescription,
+      openGraph: {
+        title: fallbackTitle,
+        description: fallbackDescription,
+        url: siteUrl,
+        siteName: 'KeyStory',
+        images: [
+          {
+            url: fallbackImage,
+            width: 1200,
+            height: 630,
+            alt: fallbackTitle,
+          },
+        ],
+        type: 'website',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: fallbackTitle,
+        description: fallbackDescription,
+        images: [fallbackImage],
       },
     };
   }
 
-  const siteType = (data.site_type as OccasionType) || 'couple';
   const config = data.config || {};
-  const customerName = config?.people?.primary || data.customer_name || config?.customer_name || '';
-  const partnerName = config?.people?.secondary || data.partner_name || config?.partner_name || '';
-  const displayName = resolveDisplayName(siteType, config?.participants || [], customerName, partnerName);
-  const specialDate = config?.dates?.special_date || data.specialDate || '';
-  const tagline = config?.tagline || data.tagline || '';
-  // For baptism sites, use the humanized slug as the page title (e.g. "anyas-baptism" -> "Anyas Baptism").
-  const title = siteType === 'baptism'
-    ? humanizedSiteTitle
-    : buildOccasionTitle(siteType, displayName, humanizedSiteTitle);
-  const description = buildOccasionDescription(siteType, displayName || humanizedSiteTitle, tagline, specialDate);
-  const siteUrl = `${getBaseUrl()}/site/${slug}`;
-  const socialImageUrl = buildSocialImageUrl(slug);
+  const sectionContent = (config.section_content as Record<string, unknown>) || {};
+  const home = (sectionContent?.home as Record<string, unknown>) || {};
+
+  // Derive celebrant / display name
+  const celebrantName =
+    (config as any)?.people?.primary || data.customer_name || (config as any)?.customer_name || '';
+
+  const homeEventTitle =
+    typeof (home as any).eventTitle === 'string' && (home as any).eventTitle.trim().length > 0
+      ? (home as any).eventTitle.trim()
+      : undefined;
+
+  const title = homeEventTitle || `${celebrantName ? celebrantName : humanizedSiteTitle}'s Celebration`;
+
+  const description =
+    typeof (home as any).shortMessage === 'string' && (home as any).shortMessage.trim().length > 0
+      ? (home as any).shortMessage.trim()
+      : typeof (home as any).subtitle === 'string' && (home as any).subtitle.trim().length > 0
+      ? (home as any).subtitle.trim()
+      : 'You are warmly invited to celebrate this special day with us.';
+
+  // Image preference: home.heroImage -> config.hero.coverPhotoUrl -> first media photo -> default
+  const extractHomeHero = (): string | null => {
+    const h = home as any;
+    if (!h) return null;
+    if (typeof h.heroImage === 'string' && h.heroImage.trim()) return h.heroImage.trim();
+    if (h.heroImage && typeof h.heroImage.url === 'string' && h.heroImage.url.trim()) return h.heroImage.url.trim();
+    return null;
+  };
+
+  const homeHero = extractHomeHero();
+  const heroCoverPhotoUrl = typeof (config as any)?.hero?.coverPhotoUrl === 'string' && (config as any).hero.coverPhotoUrl.trim()
+    ? (config as any).hero.coverPhotoUrl.trim()
+    : null;
+  const firstMediaPhoto = Array.isArray((config as any)?.media?.photos) && (config as any).media.photos.length > 0 && typeof (config as any).media.photos[0] === 'string'
+    ? (config as any).media.photos[0]
+    : null;
+
+  const image = homeHero || heroCoverPhotoUrl || firstMediaPhoto || buildSocialImageUrl(slug) || '/default-og-image.png';
+
+  const siteUrl = `${baseUrl.replace(/\/$/, '')}/site/${slug}`;
+
   const unavailable = isArchived(data) || isExpired(data);
 
   return {
     title,
     description,
-    alternates: {
-      canonical: siteUrl,
-    },
     openGraph: {
       title,
       description,
       url: siteUrl,
-      type: 'website',
       siteName: 'KeyStory',
-      locale: 'en_US',
-      images: socialImageUrl
-        ? [
-            {
-              url: socialImageUrl,
-              alt: `${displayName || humanizedSiteTitle} social preview`,
-            },
-          ]
-        : undefined,
+      images: [
+        {
+          url: image,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+      type: 'website',
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: socialImageUrl ? [socialImageUrl] : undefined,
+      images: [image],
     },
     robots: unavailable
       ? {

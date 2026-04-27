@@ -89,6 +89,7 @@ export function validateAndNormalizeSiteConfig(input: unknown): ValidationResult
     : {};
 
   const sectionContent = isPlainObject(source.section_content) ? source.section_content : {};
+  const sectionAssets = isPlainObject(source.section_assets) ? source.section_assets : {};
   const timeline = Array.isArray(source.timeline) ? source.timeline : [];
   const qr = isPlainObject(source.qr) ? source.qr : undefined;
   const preset = isPlainObject(source.preset) ? source.preset : undefined;
@@ -123,6 +124,7 @@ export function validateAndNormalizeSiteConfig(input: unknown): ValidationResult
     },
     timeline,
     section_content: sectionContent,
+    section_assets: sectionAssets,
     hero,
     qr_data_url: typeof source.qr_data_url === 'string' ? source.qr_data_url.trim() : undefined,
     ...(qr ? { qr } : {}),

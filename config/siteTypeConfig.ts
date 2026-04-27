@@ -144,6 +144,7 @@ export const SITE_TYPE_CONFIG = {
     sections: [
       'home',
       'invitation',
+      'closing',
       'gift_ideas',
       'gift_wishlist',
       'gallery',
@@ -151,6 +152,7 @@ export const SITE_TYPE_CONFIG = {
       'schedule',
       'dress_code',
       'map_section',
+      'safety_protocol',
       'rsvp',
       'parents_message',
       'guest_messages',

@@ -33,6 +33,7 @@ export type Section =
   | 'party_details'
   | 'gift_wishlist'
   | 'gift_ideas'
+  | 'gift_ideas'
   | 'relationship_stats'
   | 'memory_map'
   | 'polaroid_gallery'        // DEPRECATED - use gallery with layout="polaroid"
@@ -68,7 +69,8 @@ export type Section =
   | 'schedule'
   | 'dress_code'
   | 'closing'
-  | 'map_section';
+  | 'map_section'
+  | 'safety_protocol';
 
 // Gallery layout options - replaces separate gallery sections
 export type GalleryLayout = 'grid' | 'polaroid' | 'carousel';
@@ -164,6 +166,17 @@ export interface Participant {
   role?: string; // 'primary', 'partner', 'bride', 'groom', etc.
 }
 
+export type SectionAsset = {
+  enabled?: boolean;
+  backgroundImage?: string;
+  leftImage?: string;
+  rightImage?: string;
+  topImage?: string;
+  bottomImage?: string;
+};
+
+export type SectionAssetMap = Partial<Record<Section, SectionAsset>>;
+
 export interface SiteConfig {
   occasion: OccasionType;
   theme: string;
@@ -191,6 +204,7 @@ export interface SiteConfig {
   };
   password_input?: string;
   section_content?: SectionContentMap;
+  section_assets?: SectionAssetMap;
   // Legacy template fields (use section_templates instead)
   home_template?: string;
   gallery_template?: string;
@@ -415,6 +429,7 @@ export interface MemoryMapLocation {
   address?: string; // Optional formatted address from search
   time?: string;
   imageUrl?: string;
+  googleMapsUrl?: string;
 }
 
 export interface GuestMessageRecord {
@@ -592,6 +607,9 @@ export interface SectionContentMap {
     // Support multiple event locations (e.g., ceremony, reception)
     locations?: MemoryMapLocation[];
     dressCode?: string;
+    attireGuide?: string;
+    godparentAttire?: string;
+    themeColors?: string[];
   };
   invitation?: {
     invitationMessage?: string;
@@ -620,8 +638,10 @@ export interface SectionContentMap {
     locations?: MemoryMapLocation[];
   };
   closing?: {
+    title?: string;
     closingMessage?: string;
     parentNames?: string;
+    finalLine?: string;
   };
   gift_wishlist?: {
     items: string[];
@@ -636,6 +656,20 @@ export interface SectionContentMap {
   };
   photo_highlights?: {
     photos: string[];
+  };
+  safety_protocol?: {
+    content?: string; // Freeform guidance or HTML/Markdown
+    guidelines?: string[]; // Short bullet points for quick scanning
+    contactName?: string;
+    contactPhone?: string;
+    pdfUrl?: string; // Optional link to a downloadable safety document
+    // Optional structured items (title, optional description, optional image)
+    items?: {
+      id?: string;
+      title?: string;
+      description?: string;
+      imageUrl?: string;
+    }[];
   };
   reasons_love_you?: {
     reasons: ReasonILoveYou[];

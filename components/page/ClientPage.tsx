@@ -12,7 +12,7 @@ const PayMongoButton = dynamic(() => import("../ui/PayMongoButton"), {
   ssr: false,
 });
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, isValidElement, cloneElement, Children, Fragment } from "react";
 import {
   HomeTemplate,
   GalleryTemplate,
@@ -73,9 +73,11 @@ import GiftIdeasSection from "../sections/shared/GiftIdeasSection";
 import EventDetailsSection from "../sections/baptism/EventDetailsSection";
 import WeddingCountdownSection from "../sections/shared/WeddingCountdownSection";
 import GiftRegistrySection from "../sections/shared/GiftRegistrySection";
+import SafetyProtocolSection from "../sections/shared/SafetyProtocolSection";
 import { OccasionProvider } from "./OccasionContext";
 import RSVPSection from "../sections/baptism/RSVPSection";
 import InvitationSection from "../sections/baptism/InvitationSection";
+import ClosingSection from "../sections/baptism/ClosingSection";
 
 // Import backward compatibility helpers
 import {
@@ -490,14 +492,20 @@ export default function ClientPage({
         sectionContent as Record<string, any> | undefined
       )?.[resolvedSection];
       const contentForSection = rawSectionContent || resolvedSectionContent;
-console.log('activeSections:', activeSections);
+      const assets = (config as any)?.section_assets?.[section] || {};
+
+      let node: React.ReactNode = null;
       switch (resolvedSection) {
         case "home":
-          return null; // Home is rendered above
+          node = null; // Home is rendered above
+          break;
 
         case "love_letter":
-          if (!message && !contentForSection?.content) return null;
-          return (
+          if (!message && !contentForSection?.content) {
+            node = null;
+            break;
+          }
+          node = (
             <LoveLetterSection
               key={section}
               message={contentForSection?.content || message}
@@ -505,9 +513,10 @@ console.log('activeSections:', activeSections);
               siteType={siteType}
             />
           );
+          break;
 
         case "our_story":
-          return (
+          node = (
             <OurStorySection
               key={section}
               theme={theme}
@@ -518,6 +527,7 @@ console.log('activeSections:', activeSections);
               variant={variant}
             />
           );
+          break;
 
         case "life_story":
         case "travel_notes":
@@ -819,11 +829,22 @@ console.log('activeSections:', activeSections);
             />
           );
 
+          return (
+            <PartyDetailsSection
+              key={section}
+              theme={theme}
+              location={contentForSection?.location}
+              date={contentForSection?.date}
+              time={contentForSection?.time}
+              dressCode={contentForSection?.dressCode}
+            />
+          );
+
         case "event_details":
           // For baptism pages, render the richer EventDetailsSection which
           // supports multiple locations. Fallback to PartyDetailsSection for
           // other occasion types for backward compatibility.
-          if (siteType === "baptism") {
+          if (String(siteType) === "baptism") {
             return (
               <EventDetailsSection
                 key={section}
@@ -831,6 +852,7 @@ console.log('activeSections:', activeSections);
                 locations={
                   contentForSection?.locations || sectionContent?.event_details?.locations || []
                 }
+                eventDetails={contentForSection || sectionContent?.event_details || {}}
               />
             );
           }
@@ -881,6 +903,20 @@ console.log('activeSections:', activeSections);
               subtitle={
                 contentForSection?.subtitle || sectionContent?.gift_ideas?.subtitle
               }
+            />
+          );
+
+        case "safety_protocol":
+          return (
+            <SafetyProtocolSection
+              key={section}
+              theme={theme}
+              content={contentForSection?.content || sectionContent?.safety_protocol?.content}
+              guidelines={contentForSection?.guidelines || sectionContent?.safety_protocol?.guidelines || []}
+              contactName={contentForSection?.contactName || sectionContent?.safety_protocol?.contactName}
+              contactPhone={contentForSection?.contactPhone || sectionContent?.safety_protocol?.contactPhone}
+              pdfUrl={contentForSection?.pdfUrl || sectionContent?.safety_protocol?.pdfUrl}
+              items={contentForSection?.items || sectionContent?.safety_protocol?.items || []}
             />
           );
 
@@ -994,6 +1030,41 @@ console.log('activeSections:', activeSections);
                 (config as any)?.godparentMessage ||
                 ""
               }
+            />
+          );
+
+        case "closing":
+          const closingContent = contentForSection || sectionContent?.closing || {};
+          const parentsFromParticipants = Array.isArray(config?.participants)
+            ? [config.participants[1]?.name, config.participants[2]?.name].filter(Boolean).join(' & ')
+            : '';
+          const parentNamesVal =
+            closingContent?.parentNames ||
+            sectionContent?.closing?.parentNames ||
+            config?.parentsNames ||
+            config?.hostNames ||
+            parentsFromParticipants ||
+            [resolvedCustomerName, resolvedPartnerName].filter(Boolean).join(' & ');
+
+          return (
+            <ClosingSection
+              key={section}
+              theme={theme}
+              title={closingContent?.title || sectionContent?.closing?.title || 'Thank You'}
+              closingMessage={
+                closingContent?.closingMessage ||
+                sectionContent?.closing?.closingMessage ||
+                message ||
+                "Thank you for taking the time to be part of this special moment in our lives. Your presence, love, and blessings mean so much to our family as we celebrate this beautiful milestone."
+              }
+              parentNames={parentNamesVal}
+              finalLine={
+                closingContent?.finalLine ||
+                sectionContent?.closing?.finalLine ||
+                (resolvedCustomerName ? `See you on ${resolvedCustomerName}'s special day ✨` : "We can’t wait to share this joyful day with you 💖")
+              }
+              celebrant={resolvedCustomerName}
+              assets={(config as any)?.section_assets?.closing || {}}
             />
           );
 
@@ -1113,6 +1184,7 @@ console.log('activeSections:', activeSections);
                     photos={photos}
                     coverPhotoIndex={coverPhotoIndex}
                     heroCoverPhotoUrl={heroCoverPhotoUrl}
+                    assets={(config as any)?.section_assets?.home || {}}
                   />
                 ) : (
                   <HomeSection
@@ -1120,6 +1192,7 @@ console.log('activeSections:', activeSections);
                     siteType={siteType}
                     config={config}
                     template={homeTemplate}
+                    assets={(config as any)?.section_assets?.home || {}}
                     customerName={resolvedCustomerName}
                     partnerName={resolvedPartnerName}
                     anniversaryDate={anniversaryDate}
@@ -1165,6 +1238,21 @@ console.log('activeSections:', activeSections);
                   );
                   if (!sectionNode) return;
 
+                  // Inject assets into the rendered section element if possible
+                  const sectionAssets = (config as any)?.section_assets?.[section] || {};
+                  let injectedNode: React.ReactNode = sectionNode;
+                  if (isValidElement(sectionNode)) {
+                    // Handle fragments by cloning their children and injecting props
+                    if ((sectionNode as any).type === Fragment) {
+                      const children = Children.map((sectionNode as any).props.children, (child: any) =>
+                        isValidElement(child) ? cloneElement(child as any, { assets: sectionAssets }) : child,
+                      );
+                      injectedNode = <>{children}</>;
+                    } else {
+                      injectedNode = cloneElement(sectionNode as any, { assets: sectionAssets });
+                    }
+                  }
+
                   // Add separator before new section only when previous section exists
                   if (renderedSectionCount > 0) {
                     const prevVariant = getSectionVariantLocal(
@@ -1193,7 +1281,7 @@ console.log('activeSections:', activeSections);
                       className={sectionWrapperClass}
                       style={{ animationDelay: `${sectionAnimationDelay}s` }}
                     >
-                      {sectionNode}
+                      {injectedNode}
                     </div>,
                   );
 

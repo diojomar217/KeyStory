@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ThemeKey } from '@/config/themeConfig';
+import type { SectionAsset } from '@/lib/types';
 import { useThemeUtils } from '../../builder/ThemeWrapper';
 import {
   getCardStyleClasses,
@@ -16,6 +17,7 @@ import ScrollReveal from '../../ui/ScrollReveal';
 interface Props {
   theme: ThemeKey;
   birthdayDate: string;
+  assets?: SectionAsset;
 }
 
 interface Countdown {
@@ -43,10 +45,10 @@ export default function BirthdayCountdownSection({ theme, birthdayDate }: Props)
       }
 
       const now = new Date();
-      let nextBirthday = new Date(now.getFullYear(), date.getMonth(), date.getDate());
-      if (now > nextBirthday) {
-        nextBirthday.setFullYear(now.getFullYear() + 1);
-      }
+          const nextBirthday = new Date(now.getFullYear(), date.getMonth(), date.getDate());
+          if (now > nextBirthday) {
+            nextBirthday.setFullYear(now.getFullYear() + 1);
+          }
 
       const diff = nextBirthday.getTime() - now.getTime();
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));

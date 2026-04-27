@@ -1,7 +1,7 @@
 'use client';
 
 import type { ThemeKey } from '@/config/themeConfig';
-import type { OccasionType } from '@/lib/types';
+import type { OccasionType, SectionAsset } from '@/lib/types';
 import { useThemeUtils } from '../../builder/ThemeWrapper';
 import {
   getCardStyleClasses,
@@ -19,6 +19,7 @@ interface Props {
   coupleNames: string;
   qrCodeUrl?: string;
   qrDataUrl?: string;
+  assets?: SectionAsset;
 }
 
 export default function QRKeepsakeSection({ theme, siteType = 'couple', slug, coupleNames, qrCodeUrl, qrDataUrl }: Props) {

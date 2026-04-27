@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react";
 import type { ThemeKey } from "@/config/themeConfig";
-import type { OccasionType } from "@/lib/types";
+import type { OccasionType, SectionAsset } from "@/lib/types";
 import { getMusicEmbedInfo } from "@/lib/musicEmbed";
 import SectionHeader from "../../page/SectionHeader";
 import { useThemeUtils } from "../../builder/ThemeWrapper";
@@ -32,6 +32,7 @@ interface PlaylistSectionProps {
 
   // NEW
   ambientMode?: boolean; // if true + minimal template, music loads without visible section
+  assets?: SectionAsset;
 }
 
 interface OccasionPlaylistCopy {

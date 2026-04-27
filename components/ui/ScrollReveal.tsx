@@ -39,10 +39,15 @@ export default function ScrollReveal({
     const element = elementRef.current;
     if (!element) return;
 
+    let timeoutId: number | null = null;
+
     if (prefersReducedMotion) {
       element.style.transitionDelay = '0ms';
-      setIsVisible(true);
-      return;
+      // Schedule state update asynchronously to avoid sync setState in effect
+      timeoutId = window.setTimeout(() => setIsVisible(true), 0);
+      return () => {
+        if (timeoutId) clearTimeout(timeoutId);
+      };
     }
 
     // Set initial delay if any
@@ -70,6 +75,7 @@ export default function ScrollReveal({
     observer.observe(element);
 
     return () => {
+      if (timeoutId) clearTimeout(timeoutId);
       observer.disconnect();
     };
   }, [threshold, once, delay, prefersReducedMotion]);

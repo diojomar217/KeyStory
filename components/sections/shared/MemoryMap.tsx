@@ -19,34 +19,42 @@ const fixLeafletIcon = () => {
     shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
   });
 };
-
-const createHeartIcon = () => {
+const createLocationPinIcon = () => {
   return L.divIcon({
-    className: 'custom-heart-marker',
+    className: 'custom-pin-marker',
     html: `
       <div style="
-        background:#ec4899;
-        width:34px;
-        height:34px;
-        border-radius:50% 50% 50% 0;
-        transform:rotate(-45deg);
+        width:36px;
+        height:36px;
         display:flex;
         align-items:center;
         justify-content:center;
-        box-shadow:0 8px 20px rgba(236,72,153,0.25);
-        border:2px solid white;
+        position:relative;
       ">
-        <span style="
-          transform:rotate(45deg);
-          color:white;
-          font-size:14px;
-          line-height:1;
-        ">❤</span>
+        <div style="
+          width:34px;
+          height:34px;
+          background:#ec4899;
+          border-radius:50% 50% 50% 0;
+          transform:rotate(-45deg);
+          box-shadow:0 10px 22px rgba(236,72,153,0.25);
+          border:2px solid white;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        ">
+          <span style="
+            transform:rotate(45deg);
+            color:white;
+            font-size:14px;
+          ">
+          </span>
+        </div>
       </div>
     `,
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -34],
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    popupAnchor: [0, -36],
   });
 };
 
@@ -276,7 +284,7 @@ export default function MemoryMap({ locations, theme }: MemoryMapProps) {
             <Marker
               key={location.id}
               position={[location.lat, location.lng]}
-              icon={createHeartIcon()}
+              icon={createLocationPinIcon()}
               eventHandlers={{
                 click: () => setSelectedLocation(location.id),
               }}
@@ -470,3 +478,4 @@ export default function MemoryMap({ locations, theme }: MemoryMapProps) {
     </div>
   );
 }
+

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import type { GuestMessage, GuestMessageRecord, OccasionType } from '@/lib/types';
+import type { GuestMessage, GuestMessageRecord, OccasionType, SectionAsset } from '@/lib/types';
 import type { ThemeKey } from '@/config/themeConfig';
 import { useThemeUtils } from '../../builder/ThemeWrapper';
 import { GridSectionLayout } from '../../page/SectionLayouts';
@@ -21,6 +21,7 @@ interface GuestMessagesSectionProps {
   approvedMessages?: GuestMessageRecord[]; // from DB
   slug?: string;
   variant?: 'default' | 'alt';
+  assets?: SectionAsset;
 }
 
 const maxNameLength = 50;

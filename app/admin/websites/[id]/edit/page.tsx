@@ -134,6 +134,7 @@ export default function EditWebsitePage() {
       timeline_events: [],
       cover_photo_index: undefined,
       section_content: {},
+      section_assets: {},
     });
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [heroPhotoPreview, setHeroPhotoPreview] = useState<string | null>(null);
@@ -453,6 +454,7 @@ export default function EditWebsitePage() {
           section_divider_style: site.config?.section_divider_style,
           layout_preset: site.config?.layout_preset,
           preset: site.config?.preset,
+          section_assets: site.config?.section_assets || {},
           hero: {
             ...(site.config?.hero || {}),
             coverPhotoUrl: site.config?.hero?.coverPhotoUrl,
@@ -467,7 +469,6 @@ export default function EditWebsitePage() {
         };
 
         // Only set selectedPresetId if it matches a valid preset for the loaded occasion
-        const { getPresetsForOccasion } = require('@/lib/preset-registry');
         const validPresets = getPresetsForOccasion(loadedOccasion);
 
         // Set config first (configPatch is now always defined)
@@ -523,9 +524,8 @@ export default function EditWebsitePage() {
 
         // Set selectedPresetId if preset is present and valid for the current occasion
         if (site.config?.preset?.id) {
-          const { getPresetsForOccasion } = require('@/lib/preset-registry');
-          const validPresets = getPresetsForOccasion(occasionValue);
-          if (validPresets.some((p: any) => p.id === site.config.preset.id)) {
+          const validPresetsForOccasion = getPresetsForOccasion(occasionValue);
+          if (validPresetsForOccasion.some((p: any) => p.id === site.config.preset.id)) {
             setSelectedPresetId(site.config.preset.id);
           } else {
             setSelectedPresetId(null);
@@ -857,6 +857,19 @@ export default function EditWebsitePage() {
     }));
   };
 
+  const handleSectionAssetsChange = (sectionKey: string, assets: Record<string, any>) => {
+    setConfig((prev) => ({
+      ...prev,
+      section_assets: {
+        ...(prev.section_assets || {}),
+        [sectionKey]: {
+          ...(prev.section_assets?.[sectionKey as Section] || {}),
+          ...assets,
+        },
+      },
+    }));
+  };
+
   const handleNext = () => {
     const validation = validateStep(currentStep, form, config);
     if (!validation.valid) {
@@ -1026,7 +1039,7 @@ export default function EditWebsitePage() {
         }
         return true;
       } catch (err: any) {
-        let errorMessage = err?.message || 'Server error (500)';
+        const errorMessage = err?.message || 'Server error (500)';
         setError(`Update failed: ${errorMessage}`);
         return false;
       }
@@ -1650,6 +1663,7 @@ export default function EditWebsitePage() {
                 <SectionContentInputs
                   config={config}
                   onSectionContentChange={(sectionKey: string, content: any) => handleSectionContentChange(sectionKey as keyof SectionContentMap, content)}
+                  onSectionAssetsChange={handleSectionAssetsChange}
                   onRemovePhoto={handleRemovePhoto}
                   validationErrors={(() => {
                     const errors: Record<string, boolean> = {};

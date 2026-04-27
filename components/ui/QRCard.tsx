@@ -56,6 +56,8 @@ export default function QRCard({
   const qrRef = useRef<HTMLDivElement>(null);
   const qrCodeInstanceRef = useRef<QRCodeStyling | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const [taglineText, setTaglineText] = useState<string>('');
+  const [instructionText, setInstructionText] = useState<string>('');
 
   // Size configurations - maps to actual card sizes
   const sizeConfig = {
@@ -66,11 +68,18 @@ export default function QRCard({
 
   useEffect(() => {
     setIsClient(true);
+    // Choose random tagline/instruction on client-side only
+    try {
+      const tl = getThemeTaglines(theme);
+      setTaglineText(tl[Math.floor(Math.random() * tl.length)]);
+      setInstructionText(scanInstructions[Math.floor(Math.random() * scanInstructions.length)]);
+    } catch (e) {
+      // ignore
+    }
   }, []);
-
   const taglines = getThemeTaglines(theme);
-  const tagline = taglines[Math.floor(Math.random() * taglines.length)];
-  const instruction = scanInstructions[Math.floor(Math.random() * scanInstructions.length)];
+  const tagline = taglineText || taglines[0] || '';
+  const instruction = instructionText || scanInstructions[0];
   
   // Get theme-aware styling
   const cardStyleClass = getCardStyleClasses(theme);

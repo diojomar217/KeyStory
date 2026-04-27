@@ -1,6 +1,7 @@
 'use client';
 
 import type { ThemeKey } from '@/config/themeConfig';
+import type { SectionAsset } from '@/lib/types';
 import { useThemeUtils } from '../../builder/ThemeWrapper';
 import {
   getCardStyleClasses,
@@ -20,6 +21,7 @@ interface FirstDateSectionProps {
     description?: string;
     photo?: string;
   };
+  assets?: SectionAsset;
 }
 
 export default function FirstDateSection({ 

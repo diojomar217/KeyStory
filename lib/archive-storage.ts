@@ -14,11 +14,49 @@ type S3Config = {
 };
 
 const streamToBuffer = async (stream: any): Promise<Buffer> => {
-  const chunks: Buffer[] = [];
-  for await (const chunk of stream) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  // Handle common Body types returned by AWS SDK `GetObjectCommand`
+  if (!stream) return Buffer.alloc(0);
+
+  // If it's already a Buffer
+  if (Buffer.isBuffer(stream)) return stream;
+
+  // If it's a string
+  if (typeof stream === 'string') return Buffer.from(stream);
+
+  // Browser blob-like (has arrayBuffer)
+  if (typeof stream.arrayBuffer === 'function') {
+    const ab = await stream.arrayBuffer();
+    return Buffer.from(ab);
   }
-  return Buffer.concat(chunks);
+
+  // If it's an AsyncIterable (Node readable streams and modern SDK bodies)
+  if (typeof stream[Symbol.asyncIterator] === 'function') {
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream as AsyncIterable<any>) {
+      if (typeof chunk === 'string') {
+        chunks.push(Buffer.from(chunk));
+      } else if (Buffer.isBuffer(chunk)) {
+        chunks.push(chunk);
+      } else {
+        chunks.push(Buffer.from(chunk));
+      }
+    }
+    return Buffer.concat(chunks);
+  }
+
+  // Fallback: Node stream with event API
+  if (typeof stream.on === 'function') {
+    return await new Promise<Buffer>((resolve, reject) => {
+      const parts: Buffer[] = [];
+      stream.on('data', (chunk: any) => {
+        parts.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+      });
+      stream.on('end', () => resolve(Buffer.concat(parts)));
+      stream.on('error', (err: any) => reject(err));
+    });
+  }
+
+  throw new Error('Unsupported stream/body type');
 };
 
 const getS3Config = (): S3Config => {

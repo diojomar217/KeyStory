@@ -1,7 +1,7 @@
 'use client';
 
 import type { ThemeKey } from '@/config/themeConfig';
-import type { OccasionType } from '@/lib/types';
+import type { OccasionType, SectionAsset } from '@/lib/types';
 import { useThemeUtils } from '../../builder/ThemeWrapper';
 import SectionHeader from '../../page/SectionHeader';
 import { getSectionCopy } from '@/lib/section-copy';
@@ -20,6 +20,7 @@ interface FutureDreamsSectionProps {
   siteType?: OccasionType;
   dreams?: FutureDream[];
   variant?: 'default' | 'alt';
+  assets?: SectionAsset;
 }
 
 export default function FutureDreamsSection({ 

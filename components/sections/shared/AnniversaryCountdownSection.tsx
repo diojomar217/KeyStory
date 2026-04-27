@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import type { CSSProperties } from 'react';
 import type { ThemeKey } from '@/config/themeConfig';
+import type { SectionAsset } from '@/lib/types';
 import { useThemeUtils } from '../../builder/ThemeWrapper';
 import {
   getCardStyleClasses,
@@ -18,6 +19,7 @@ interface AnniversaryCountdownSectionProps {
   anniversaryDate: string;
   yearsTogether?: number;
   variant?: 'default' | 'alt';
+  assets?: SectionAsset;
 }
 
 interface Countdown {

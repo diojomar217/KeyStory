@@ -1,6 +1,7 @@
 "use client";
 
 import type { ThemeKey } from '@/config/themeConfig';
+import type { SectionAsset } from '@/lib/types';
 import { useThemeUtils } from '../../builder/ThemeWrapper';
 import SectionHeader from '../../page/SectionHeader';
 import ScrollReveal from '../../ui/ScrollReveal';
@@ -13,6 +14,7 @@ interface ScheduleItem {
 interface ScheduleSectionProps {
   theme: ThemeKey;
   schedule?: ScheduleItem[];
+  assets?: SectionAsset;
 }
 
 export default function ScheduleSection({ theme, schedule = [] }: ScheduleSectionProps) {

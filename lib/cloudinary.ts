@@ -47,7 +47,7 @@ export async function uploadToCloudinary(dataUrl: string, options: CloudinaryUpl
     ? 'progressive'
     : 'progressive';
 
-  const transformation: any[] = [{ width: maxWidth, crop }];
+  const transformation: Array<Record<string, unknown>> = [{ width: maxWidth, crop }];
   transformation.push({
     quality,
     fetch_format: fetchFormat,

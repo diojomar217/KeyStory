@@ -20,6 +20,7 @@ import MemoryMapSection from '@/components/sections/shared/MemoryMapSection';
 import GuestMessagesSection from '@/components/sections/shared/GuestMessagesSection';
 import VideoMemoriesSection from '@/components/sections/shared/VideoMemoriesSection';
 import PlaylistSection from '@/components/sections/shared/PlaylistSection';
+import SafetyProtocolSection from '@/components/sections/shared/SafetyProtocolSection';
 // Baptism-specific sections
 import InvitationSection from '@/components/sections/baptism/InvitationSection';
 import EventDetailsSection from '@/components/sections/baptism/EventDetailsSection';
@@ -27,6 +28,7 @@ import ScheduleSection from '@/components/sections/baptism/ScheduleSection';
 import DressCodeSection from '@/components/sections/baptism/DressCodeSection';
 import RSVPSection from '@/components/sections/baptism/RSVPSection';
 import MapSection from '@/components/sections/baptism/MapSection';
+import ClosingSection from '@/components/sections/baptism/ClosingSection';
 
 // Import couple-specific sections
 import LoveLetterSection from '@/components/sections/couple/LoveLetterSection';
@@ -381,6 +383,18 @@ home: {
       mapLink: config.section_content?.map_section?.mapLink || config.mapLink || '',
     }),
   },
+  safety_protocol: {
+    component: SafetyProtocolSection,
+    getProps: (config) => ({
+      theme: config.theme,
+      content: config.section_content?.safety_protocol?.content || config.safetyProtocol || '',
+      guidelines: config.section_content?.safety_protocol?.guidelines || [],
+      contactName: config.section_content?.safety_protocol?.contactName || config.safetyContactName || '',
+      contactPhone: config.section_content?.safety_protocol?.contactPhone || config.safetyContactPhone || '',
+      pdfUrl: config.section_content?.safety_protocol?.pdfUrl || config.safetyPdfUrl || '',
+      items: config.section_content?.safety_protocol?.items || [],
+    }),
+  },
   wedding_timeline: {
     component: TimelineSection,
     getProps: (config) => ({
@@ -405,10 +419,31 @@ home: {
     }),
   },
   closing: {
-    component: LoveLetterSection,
+    component: ClosingSection,
     getProps: (config) => ({
       theme: config.theme,
-      message: config.section_content?.closing?.closingMessage || config.closingMessage || config.message || '',
+      title: config.section_content?.closing?.title || 'Thank You',
+      closingMessage:
+        config.section_content?.closing?.closingMessage ||
+        config.closingMessage ||
+        config.message ||
+        "Thank you for taking the time to be part of this special moment in our lives. Your presence, love, and blessings mean so much to our family as we celebrate this beautiful milestone.",
+      parentNames:
+        config.section_content?.closing?.parentNames ||
+        config.parentsNames ||
+        config.hostNames ||
+        (Array.isArray(config?.participants)
+          ? [config.participants[1]?.name, config.participants[2]?.name]
+              .filter(Boolean)
+              .join(' & ')
+          : (config.customerName || '')),
+      finalLine:
+        config.section_content?.closing?.finalLine ||
+        (config.childName
+          ? `See you on ${config.childName}'s special day ✨`
+          : "We can’t wait to share this joyful day with you 💖"),
+      celebrant:
+        config.childName || config.customerName || (Array.isArray(config?.participants) ? config.participants[0]?.name : ''),
     }),
   },
   couple_message: {

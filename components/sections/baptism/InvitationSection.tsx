@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import type { ThemeKey } from "@/config/themeConfig";
+import type { SectionAsset } from "@/lib/types";
 import { useThemeUtils } from "../../builder/ThemeWrapper";
 import ScrollReveal from "../../ui/ScrollReveal";
 
@@ -20,6 +21,7 @@ interface InvitationSectionProps {
     signedBy?: string;
     godparentMessage?: string;
   };
+  assets?: SectionAsset;
 }
 
 const fadeUp = {
@@ -33,13 +35,14 @@ export default function InvitationSection({
   invitationMessage,
   godparentMessage,
   invitation,
+  assets,
 }: InvitationSectionProps) {
   const { colors } = useThemeUtils(theme);
 
   const safeGuestName = guestName?.trim();
 
   const greeting = safeGuestName
-    ? `Hi ${safeGuestName
+    ? `Dear ${safeGuestName
         .toLowerCase()
         .replace(/\b\w/g, (c) => c.toUpperCase())},`
     : invitation?.greeting || "Dear Family,";
@@ -64,7 +67,7 @@ export default function InvitationSection({
     "We sincerely hope you can be part of this blessed and meaningful occasion.";
 
   const signoff = invitation?.signoff || "With love and blessings,";
-  const signedBy = invitation?.signedBy || "Adrian & Jenica";
+  const signedBy = invitation?.signedBy || "Jen & Adrian";
 
   const textColor = colors?.text || "#6a2f39";
   const accentColor = "#c98a96";
@@ -72,29 +75,33 @@ export default function InvitationSection({
 
   return (
     <section className="relative overflow-hidden px-4 py-20 md:px-6 md:py-24 lg:py-28">
-      <div className="pointer-events-none absolute inset-0">
+      {/* Decorative background image (behind content) */}
+      {assets?.backgroundImage && (
         <div
-          className="absolute left-[-4rem] top-10 h-44 w-44 rounded-full blur-3xl"
-          style={{ backgroundColor: `${accentColor}10` }}
+          aria-hidden="true"
+          className="absolute inset-0 bg-cover bg-center opacity-30 pointer-events-none -z-10"
+          style={{ backgroundImage: `url(${assets.backgroundImage})` }}
         />
-        <div
-          className="absolute right-[-3rem] top-24 h-52 w-52 rounded-full blur-3xl"
-          style={{ backgroundColor: `${accentColor}08` }}
-        />
-        <div
-          className="absolute left-1/2 top-0 h-28 w-28 -translate-x-1/2 rounded-full blur-3xl"
-          style={{ backgroundColor: `${goldAccent}10` }}
-        />
-      </div>
+      )}
 
       <div className="relative mx-auto max-w-4xl">
         <ScrollReveal>
           <div className="mb-10 text-center">
+            <p
+              className="text-[11px] uppercase tracking-[0.32em]"
+              style={{
+                color: accentColor,
+                fontFamily: "Inter, system-ui, sans-serif",
+              }}
+            >
+              A HEARTFELT MESSAGE
+            </p>
+
             <h2
-              className="mt-5 text-3xl font-semibold md:text-5xl"
+              className="mt-4 text-3xl font-semibold md:text-5xl"
               style={{
                 color: textColor,
-                fontFamily: '"Georgia", serif',
+                fontFamily: '"Cormorant Garamond", serif',
               }}
             >
               You&apos;re Invited
@@ -104,10 +111,10 @@ export default function InvitationSection({
               className="mt-3 text-sm md:text-base"
               style={{
                 color: accentColor,
-                letterSpacing: "0.04em",
+                fontFamily: "Inter, system-ui, sans-serif",
               }}
             >
-              A heartfelt message from the family
+              A special note from the family
             </p>
 
             <div className="mt-4 flex justify-center">
@@ -123,43 +130,33 @@ export default function InvitationSection({
 
         <ScrollReveal delay={80}>
           <div className="relative mt-10">
-            <div
-              className="absolute inset-0 translate-y-2 scale-[0.99] rounded-[2rem]"
-              style={{
-                background:
-                  "linear-gradient(180deg, rgba(233,220,215,0.78), rgba(226,210,205,0.56))",
-              }}
-            />
+            {/* Glow */}
+            <div className="pointer-events-none absolute -inset-6 rounded-[2.5rem] bg-pink-200/20 blur-3xl" />
 
+            {/* Card */}
             <motion.div
-              whileHover={{ rotate: 0.15, y: -2 }}
-              transition={{ duration: 0.45, ease: "easeOut" }}
-              className="relative rounded-[2rem] border px-7 py-10 md:px-12 md:py-14"
+              whileHover={{ y: -4, scale: 1.01 }}
+              transition={{ duration: 0.4 }}
+              className="relative rounded-[2rem] border px-5 py-9 sm:px-7 sm:py-10 md:px-12 md:py-14"
               style={{
-                borderColor: "#e8dede",
+                borderColor: "#f0d9de",
                 background:
-                  "linear-gradient(180deg, #fffaf8 0%, #f3e8e5 100%)",
+                  "linear-gradient(180deg, rgba(255,250,251,0.98) 0%, rgba(253,239,243,0.94) 100%)",
                 boxShadow:
-                  "0 30px 80px rgba(106,47,57,0.18), 0 10px 25px rgba(106,47,57,0.08)",
+                  "0 40px 90px rgba(106,47,57,0.18), 0 12px 30px rgba(106,47,57,0.08), inset 0 1px 0 rgba(255,255,255,0.6)",
               }}
             >
+              {/* Paper texture */}
               <div
-                className="pointer-events-none absolute inset-0 opacity-[0.035]"
+                className="pointer-events-none absolute inset-0 opacity-[0.025]"
                 style={{
                   backgroundImage:
-                    "radial-gradient(circle at 1px 1px, rgba(0,0,0,0.12) 1px, transparent 0)",
-                  backgroundSize: "22px 22px",
+                    "radial-gradient(circle at 1px 1px, rgba(0,0,0,0.15) 1px, transparent 0)",
+                  backgroundSize: "18px 18px",
                 }}
               />
 
-              <div
-                className="pointer-events-none absolute inset-0 rounded-[2rem] opacity-[0.18]"
-                style={{
-                  background:
-                    "linear-gradient(135deg, rgba(255,255,255,0.55), transparent 35%, transparent 65%, rgba(255,255,255,0.18))",
-                }}
-              />
-
+              {/* Inner border */}
               <div
                 className="pointer-events-none absolute inset-4 rounded-[1.6rem] border"
                 style={{ borderColor: `${accentColor}18` }}
@@ -170,88 +167,89 @@ export default function InvitationSection({
                 whileInView="visible"
                 viewport={{ once: true }}
                 transition={{ staggerChildren: 0.12 }}
-                className="relative mx-auto max-w-[460px] text-left"
+                className="relative mx-auto max-w-[540px]"
               >
-                <motion.div
-                  variants={fadeUp}
-                  className="mb-6 flex justify-start"
-                >
-                  <div
-                    className="h-px w-16"
+                {/* Greeting */}
+                <motion.div variants={fadeUp} className="mb-8">
+                  <span
+                    className="block text-[22px] md:text-[24px]"
                     style={{
-                      background: `linear-gradient(90deg, ${goldAccent}, transparent)`,
+                      color: "#8f4a58" ,
+                      fontFamily: '"Cormorant Garamond", serif',
+                      fontWeight: 700,
+                      letterSpacing: "0.02em",
                     }}
-                  />
+                  >
+                    {greeting}
+                  </span>
+
+                  <span
+                    className="mt-1 block text-[11px] tracking-[0.25em]"
+                    style={{
+                      color: `${textColor}80`,
+                      fontFamily: "Inter, system-ui, sans-serif",
+                    }}
+                  >
+                    YOU ARE WARMLY INVITED 💌
+                  </span>
                 </motion.div>
 
+                {/* Intro */}
                 <motion.p
                   variants={fadeUp}
-                  className="mb-6 text-[15px] italic tracking-wide"
-                  style={{
-                    color: "#b8828d",
-                    fontFamily: '"Georgia", serif',
-                  }}
-                >
-                  {greeting}
-                </motion.p>
-
-                <motion.p
-                  variants={fadeUp}
-                  className="text-[15px] leading-[1.9] md:text-[17px]"
+                  className="text-[15.5px] leading-[2.1]"
                   style={{
                     color: textColor,
-                    fontFamily: '"Georgia", serif',
+                    fontFamily: '"Cormorant Garamond", serif',
                   }}
                 >
                   {intro}
                 </motion.p>
 
+                {/* Body */}
                 <motion.p
                   variants={fadeUp}
-                  className="mt-7 text-[15px] leading-[1.9] md:text-[17px]"
+                  className="mt-7 text-[15.5px] leading-[2.1]"
                   style={{
                     color: textColor,
-                    fontFamily: '"Georgia", serif',
+                    fontFamily: '"Cormorant Garamond", serif',
                   }}
                 >
                   {body}
                 </motion.p>
 
-                <motion.div
-                  variants={fadeUp}
-                  className="my-8 h-px w-12"
-                  style={{
-                    background: `linear-gradient(90deg, ${accentColor}60, transparent)`,
-                  }}
-                />
+                {/* Divider */}
+                <motion.div variants={fadeUp} className="my-10 flex justify-center">
+                  <div className="h-px w-20 bg-gradient-to-r from-transparent via-pink-400 to-transparent opacity-80" />
+                </motion.div>
 
+                {/* Highlight */}
                 <motion.p
                   variants={fadeUp}
-                  className="my-10 text-center text-[18px] italic leading-[1.8] md:text-[22px]"
+                  className="my-12 text-center text-[19px] italic leading-[1.9] md:text-[23px]"
                   style={{
-                    color: `${textColor}CC`,
-                    fontFamily: '"Georgia", serif',
+                    color: "#7a2f3c",
+                    fontFamily: '"Cormorant Garamond", serif',
                     fontWeight: 600,
                   }}
                 >
                   {support}
                 </motion.p>
 
+                {/* Closing */}
                 <motion.p
                   variants={fadeUp}
-                  className="text-[15px] leading-[1.9] md:text-[17px]"
+                  className="text-[15.5px] leading-[2.1]"
                   style={{
                     color: textColor,
-                    fontFamily: '"Georgia", serif',
+                    fontFamily: '"Cormorant Garamond", serif',
                   }}
                 >
                   {closing}
                 </motion.p>
 
-                <motion.div
-                  variants={fadeUp}
-                  className="mt-16 text-center"
-                >
+                {/* Signature */}
+                <motion.div variants={fadeUp} className="mt-20 text-center">
                   <div className="mb-5 flex justify-center">
                     <div
                       className="h-px w-20"
@@ -262,22 +260,21 @@ export default function InvitationSection({
                   </div>
 
                   <p
-                    className="text-[26px] md:text-[32px]"
+                    className="text-[22px] md:text-[26px]"
                     style={{
-                      color: "#b07a86",
-                      fontFamily:
-                        '"Great Vibes", "Snell Roundhand", "Segoe Script", cursive',
+                      color: "#b88992",
+                      fontFamily: '"Allura", cursive',
                     }}
                   >
                     {signoff}
                   </p>
 
                   <p
-                    className="mt-3 text-[17px] md:text-[20px]"
+                    className="mt-2 text-[16px] md:text-[18px]"
                     style={{
                       color: textColor,
                       letterSpacing: "0.03em",
-                      fontFamily: '"Georgia", serif',
+                      fontFamily: '"Cormorant Garamond", serif',
                     }}
                   >
                     {signedBy}
@@ -287,6 +284,25 @@ export default function InvitationSection({
             </motion.div>
           </div>
         </ScrollReveal>
+
+          {/* Decorative left/right images (non-interactive, hidden on small screens) */}
+          {assets?.leftImage && (
+            <img
+              src={assets.leftImage}
+              alt=""
+              aria-hidden="true"
+              className="hidden md:block absolute left-6 bottom-6 w-20 md:w-28 lg:w-32 opacity-90 pointer-events-none select-none"
+            />
+          )}
+
+          {assets?.rightImage && (
+            <img
+              src={assets.rightImage}
+              alt=""
+              aria-hidden="true"
+              className="hidden md:block absolute right-6 bottom-6 w-20 md:w-28 lg:w-32 opacity-90 pointer-events-none select-none"
+            />
+          )}
       </div>
     </section>
   );

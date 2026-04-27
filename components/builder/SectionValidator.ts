@@ -208,6 +208,7 @@ export function getSectionValidationStatus(
     dress_code: 'valid',
     closing: 'valid',
     map_section: 'valid',
+    safety_protocol: 'valid',
   };
   
   // Check gallery

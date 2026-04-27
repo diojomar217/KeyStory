@@ -76,7 +76,7 @@ export default function GiftIdeasSection({
 
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
         <ScrollReveal animation="fade-up">
-          <SectionHeader icon="🎁" title={title} subtitle={subtitle} theme={theme} />
+          <SectionHeader icon="🎁" title={title} subtitle={""} theme={theme} />
         </ScrollReveal>
 
         <ScrollReveal animation="fade-up" delay={80}>
