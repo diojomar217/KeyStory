@@ -34,6 +34,7 @@ import ScheduleSection from '@/components/sections/baptism/ScheduleSection';
 import DressCodeSection from '@/components/sections/baptism/DressCodeSection';
 import RSVPSection from '@/components/sections/baptism/RSVPSection';
 import MapSection from '@/components/sections/baptism/MapSection';
+import ClosingSection from '@/components/sections/baptism/ClosingSection';
 import EventDetailsSection from '@/components/sections/baptism/EventDetailsSection';
 import GiftIdeasSection from '@/components/sections/shared/GiftIdeasSection';
 import SafetyProtocolSection from '@/components/sections/shared/SafetyProtocolSection';
@@ -121,7 +122,6 @@ const RENDERER_COMPONENTS: Record<Section, React.ComponentType<any>> = {
   party_details: OurStorySection,
   gift_wishlist: GiftSection,
   gift_ideas: GiftIdeasSection,
-  gift_ideas: GiftIdeasSection,
   wedding_countdown: AnniversaryCountdownSection,
   event_details: OurStorySection,
   wedding_timeline: TimelineSection,
@@ -132,7 +132,7 @@ const RENDERER_COMPONENTS: Record<Section, React.ComponentType<any>> = {
   dress_code: DressCodeSection,
   map_section: MapSection,
   safety_protocol: SafetyProtocolSection,
-  closing: LoveLetterSection,
+  closing: ClosingSection,
   couple_message: LoveLetterSection,
   graduation_message: LoveLetterSection,
   countdown: AnniversaryCountdownSection,
@@ -432,10 +432,23 @@ const buildProps = (section: Section, props: DynamicSectionRendererProps): Recor
       };
 
     case 'closing':
+      // Build thoughtful defaults and fallbacks for baptism sites
+      const closingTitle = (sectionContent.closing && sectionContent.closing.title) || (mergedConfig.section_content && (mergedConfig.section_content as any).closing?.title) || 'Thank You';
+      const closingMsg = sectionContent.closing?.closingMessage || mergedConfig.message || "Thank you for taking the time to be part of this special moment in our lives. Your presence, love, and blessings mean so much to our family as we celebrate this beautiful milestone.";
+      const parentsFromParticipants = Array.isArray(config?.participants)
+        ? [config.participants[1]?.name, config.participants[2]?.name].filter(Boolean).join(' & ')
+        : '';
+      const parentNamesVal = sectionContent.closing?.parentNames || (config as any)?.parentsNames || (config as any)?.hostNames || parentsFromParticipants || [mergedConfig.customerName, mergedConfig.partnerName].filter(Boolean).join(' & ');
+      const finalLineVal = sectionContent.closing?.finalLine || (mergedConfig.customerName ? `See you on ${mergedConfig.customerName}'s special day ✨` : "We can’t wait to share this joyful day with you 💖");
+
       return {
         theme: mergedConfig.theme,
         siteType: mergedConfig.siteType,
-        message: sectionContent.closing?.closingMessage || mergedConfig.message,
+        title: closingTitle,
+        closingMessage: closingMsg,
+        parentNames: parentNamesVal,
+        finalLine: finalLineVal,
+        celebrant: mergedConfig.customerName || (config as any)?.childName || '',
       };
 
     // Sections with no special props
@@ -476,8 +489,8 @@ export default function DynamicSectionRenderer({ section, ...props }: DynamicSec
     return null;
   }
 
-  // Render the section
-  return <Renderer {...sectionProps} />;
+  // Render the section (inject section assets when available)
+  return <Renderer {...sectionProps} assets={(props.config as any)?.section_assets?.[section] || {}} />;
 }
 
 // ============================================

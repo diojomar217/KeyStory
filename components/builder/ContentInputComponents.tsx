@@ -10,6 +10,7 @@ import {
   Milestone,
   LoveQuote,
   GiftItem,
+  SectionAsset,
   MemoryMapLocation,
 } from "@/lib/types";
 import {
@@ -1197,47 +1198,83 @@ export function EventLocationsInput({
 }: EventLocationsInputProps) {
   const locations = value?.locations || [];
 
-  return (
-    <RepeaterInput
-      label="Event Locations"
-      items={locations}
-      onChange={(items) =>
-        onChange({ locations: items as MemoryMapLocation[] })
-      }
-      required={false}
-      addButtonText="Add Location"
-      emptyText="Add ceremony / reception locations"
-      renderItem={(item, _, onUpdate) => (
-        <div className="space-y-3 pr-6">
-          <MemoryMapLocationCard
-            item={item as MemoryMapLocation}
-            onUpdate={onUpdate as (updates: Partial<MemoryMapLocation>) => void}
-          />
+  const update = (patch: Record<string, any>) => {
+    onChange({ ...(value || {}), ...patch });
+  };
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">
-                Time (optional)
-              </label>
-              <input
-                type="time"
-                value={item.time || ""}
-                onChange={(e) => onUpdate({ time: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 text-sm"
-              />
-            </div>
-            <div>
-              <EventLocationImageUploader
-                item={item as MemoryMapLocation}
-                onUpdate={
-                  onUpdate as (updates: Partial<MemoryMapLocation>) => void
-                }
-              />
+  return (
+    <div className="space-y-4">
+      <RepeaterInput
+        label="Event Locations"
+        items={locations}
+        onChange={(items) => update({ locations: items as MemoryMapLocation[] })}
+        required={false}
+        addButtonText="Add Location"
+        emptyText="Add ceremony / reception locations"
+        renderItem={(item, _, onUpdate) => (
+          <div className="space-y-3 pr-6">
+            <MemoryMapLocationCard
+              item={item as MemoryMapLocation}
+              onUpdate={onUpdate as (updates: Partial<MemoryMapLocation>) => void}
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">Time (optional)</label>
+                <input
+                  type="time"
+                  value={item.time || ""}
+                  onChange={(e) => onUpdate({ time: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 text-sm"
+                />
+              </div>
+              <div>
+                <EventLocationImageUploader
+                  item={item as MemoryMapLocation}
+                  onUpdate={
+                    onUpdate as (updates: Partial<MemoryMapLocation>) => void
+                  }
+                />
+              </div>
             </div>
           </div>
+        )}
+      />
+
+      {/* Attire / Dress Code inputs - merge with existing event_details without overwriting locations */}
+      <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3">
+        <h4 className="text-sm font-semibold text-slate-700">Attire Guide / Dress Code</h4>
+        <TextContentInput
+          label="Dress Code / Attire"
+          value={(value as any)?.dressCode || ""}
+          onChange={(v) => update({ dressCode: v })}
+          placeholder="e.g., Casual clothes in neutral or pastel colors"
+        />
+
+        <TextContentInput
+          label="Godparent Attire (optional)"
+          value={(value as any)?.godparentAttire || ""}
+          onChange={(v) => update({ godparentAttire: v })}
+          placeholder="e.g., Godparents are encouraged to wear white or cream"
+        />
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Theme Colors (optional)</label>
+          <input
+            type="text"
+            value={Array.isArray((value as any)?.themeColors) ? (value as any).themeColors.join(', ') : ((value as any)?.themeColors || '')}
+            onChange={(e) => {
+              const raw = e.target.value || '';
+              const arr = raw.split(',').map(s => s.trim()).filter(Boolean);
+              update({ themeColors: arr });
+            }}
+            placeholder="e.g., White, Cream, Blush Pink"
+            className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 text-sm"
+          />
+          <p className="text-xs text-slate-400 mt-1">Optional comma-separated color names for suggestion chips on the site.</p>
         </div>
-      )}
-    />
+      </div>
+    </div>
   );
 }
 
@@ -1631,6 +1668,140 @@ function SafetyItemImageUploader({
   );
 }
 
+// Section assets input - reusable per-section asset uploader
+export function SectionAssetsInput({
+  sectionKey,
+  value,
+  onChange,
+}: {
+  sectionKey: string;
+  value?: SectionAsset;
+  onChange: (assets: Partial<SectionAsset>) => void;
+}) {
+  const [preview, setPreview] = useState<Record<string, string | undefined>>((value as any) || {});
+  const [uploading, setUploading] = useState<Record<string, boolean>>({});
+  const [errors, setErrors] = useState<Record<string, string | undefined>>({});
+  const [enabled, setEnabled] = useState<boolean>(Boolean((value as any)?.enabled));
+
+  useEffect(() => {
+    setPreview((value as any) || {});
+    setEnabled(Boolean((value as any)?.enabled));
+  }, [value]);
+
+  const uploadField = async (field: keyof SectionAsset, file?: File | null) => {
+    if (!file) return;
+    setErrors((p) => ({ ...p, [field]: undefined }));
+    const objectUrl = URL.createObjectURL(file);
+    setPreview((p) => ({ ...p, [field]: objectUrl }));
+    setUploading((p) => ({ ...p, [field]: true }));
+    try {
+      const form = new FormData();
+      form.append('file', file);
+
+      const res = await fetch('/api/uploads/cloudinary', { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok || !data?.success) throw new Error(data?.message || 'Upload failed');
+
+      setPreview((p) => ({ ...p, [field]: data.url }));
+      onChange({ [field]: data.url } as Partial<SectionAsset>);
+    } catch (err: any) {
+      console.error('Upload error', err);
+      setErrors((p) => ({ ...p, [field]: err?.message || 'Upload failed' }));
+    } finally {
+      setUploading((p) => ({ ...p, [field]: false }));
+      setTimeout(() => {
+        try {
+          if (objectUrl && objectUrl.startsWith('blob:')) URL.revokeObjectURL(objectUrl);
+        } catch (e) {
+          /* ignore */
+        }
+      }, 2000);
+    }
+  };
+
+  const onFileChange = (field: keyof SectionAsset, e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] || null;
+    uploadField(field, f);
+  };
+
+  const handleRemove = (field: keyof SectionAsset) => {
+    onChange({ [field]: '' } as Partial<SectionAsset>);
+    setPreview((p) => ({ ...p, [field]: undefined }));
+  };
+
+  const fields: Array<keyof SectionAsset> = ['backgroundImage', 'leftImage', 'rightImage', 'topImage', 'bottomImage'];
+
+  const labelFor = (f: keyof SectionAsset) => {
+    switch (f) {
+      case 'backgroundImage':
+        return 'Background Image';
+      case 'leftImage':
+        return 'Left Image';
+      case 'rightImage':
+        return 'Right Image';
+      case 'topImage':
+        return 'Top Image';
+      case 'bottomImage':
+        return 'Bottom Image';
+      default:
+        return String(f);
+    }
+  };
+
+  return (
+    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-semibold text-slate-700">Section Assets</h4>
+        <label className="inline-flex items-center gap-3 text-sm">
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={(e) => {
+              const val = e.target.checked;
+              setEnabled(val);
+              onChange({ ...(value || {}), enabled: val } as Partial<SectionAsset>);
+            }}
+          />
+          <span className="text-xs">Enable Section Decorations</span>
+        </label>
+      </div>
+
+      {!enabled ? (
+        <div className="mt-3 text-xs text-slate-500">Decorations are disabled. Existing images are preserved but hidden on the public site.</div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+          {fields.map((field) => (
+            <div key={String(field)}>
+              <label className="block text-xs text-slate-500 mb-1">{labelFor(field)}</label>
+              {preview[field] ? (
+                <div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={preview[field]} alt={String(field)} className="w-full h-28 object-cover rounded-lg" />
+                  <div className="flex gap-2 mt-2">
+                    <label className="inline-flex items-center px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 cursor-pointer">
+                      Replace
+                      <input type="file" accept="image/*" onChange={(e) => onFileChange(field, e)} className="sr-only" />
+                    </label>
+                    <button type="button" onClick={() => handleRemove(field)} className="px-3 py-2 bg-rose-50 text-rose-600 border border-rose-100 rounded-lg text-sm">Remove</button>
+                    {uploading[field] && <span className="text-xs text-slate-500">Uploading…</span>}
+                  </div>
+                  {errors[field] && <p className="text-xs text-rose-500 mt-1">{errors[field]}</p>}
+                </div>
+              ) : (
+                <div>
+                  <input type="file" accept="image/*" onChange={(e) => onFileChange(field, e)} className="w-full" />
+                  {uploading[field] && <p className="text-xs text-slate-500">Uploading…</p>}
+                  {errors[field] && <p className="text-xs text-rose-500 mt-1">{errors[field]}</p>}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Closing Input for Baptism
 interface ClosingInputProps {
   value?: SectionContentMap["closing"];
@@ -1638,29 +1809,52 @@ interface ClosingInputProps {
 }
 
 export function ClosingInput({ value, onChange }: ClosingInputProps) {
+  const title = value?.title ?? "Thank You";
   const closingMessage = value?.closingMessage || "";
   const parentNames = value?.parentNames || "";
+  const finalLine = value?.finalLine || "";
 
   return (
     <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">Title</label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => onChange({ ...(value || {}), title: e.target.value })}
+          placeholder="Thank You"
+          className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 text-sm"
+        />
+      </div>
+
       <TextContentInput
         label="Closing Message"
         value={closingMessage}
         onChange={(v) => onChange({ ...(value || {}), closingMessage: v })}
         rows={4}
       />
+
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">
-          Parent(s) Names
-        </label>
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">Parent(s) Names</label>
         <input
           type="text"
           value={parentNames}
-          onChange={(e) =>
-            onChange({ ...(value || {}), parentNames: e.target.value })
-          }
+          onChange={(e) => onChange({ ...(value || {}), parentNames: e.target.value })}
+          placeholder="Jen & Adrian"
           className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 text-sm"
         />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">Final Line (optional)</label>
+        <input
+          type="text"
+          value={finalLine}
+          onChange={(e) => onChange({ ...(value || {}), finalLine: e.target.value })}
+          placeholder="See you on Anya’s special day ✨"
+          className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 text-sm"
+        />
+        <p className="mt-1 text-xs text-slate-400">Optional short closing line shown below the signature.</p>
       </div>
     </div>
   );

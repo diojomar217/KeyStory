@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion, useAnimation, useInView } from "framer-motion";
-import type { OccasionType, HomeTemplate } from "@/lib/types";
+import type { OccasionType, HomeTemplate, SectionAsset } from "@/lib/types";
 import { getOccasionHeroSpec } from "../../config/occasionHeroConfig";
 import type { ThemeKey } from "@/config/themeConfig";
 import { isDarkTheme as checkIsDarkTheme } from "@/lib/theme-color-helpers";
@@ -31,6 +31,7 @@ interface HomeSectionProps {
   coverPhotoIndex?: number;
   songLink?: string;
   heroCoverPhotoUrl?: string | null;
+  assets?: SectionAsset;
 }
 
 function FloatingHearts() {
@@ -313,7 +314,7 @@ export default function HomeSection({
           if (Number.isNaN(birth.getTime())) return null;
 
           const now = new Date();
-          let nextBirth = new Date(birth);
+          const nextBirth = new Date(birth);
           nextBirth.setFullYear(now.getFullYear());
           if (nextBirth < now) {
             nextBirth.setFullYear(now.getFullYear() + 1);

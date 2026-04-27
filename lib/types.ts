@@ -166,6 +166,17 @@ export interface Participant {
   role?: string; // 'primary', 'partner', 'bride', 'groom', etc.
 }
 
+export type SectionAsset = {
+  enabled?: boolean;
+  backgroundImage?: string;
+  leftImage?: string;
+  rightImage?: string;
+  topImage?: string;
+  bottomImage?: string;
+};
+
+export type SectionAssetMap = Partial<Record<Section, SectionAsset>>;
+
 export interface SiteConfig {
   occasion: OccasionType;
   theme: string;
@@ -193,6 +204,7 @@ export interface SiteConfig {
   };
   password_input?: string;
   section_content?: SectionContentMap;
+  section_assets?: SectionAssetMap;
   // Legacy template fields (use section_templates instead)
   home_template?: string;
   gallery_template?: string;
@@ -594,9 +606,10 @@ export interface SectionContentMap {
   event_details?: {
     // Support multiple event locations (e.g., ceremony, reception)
     locations?: MemoryMapLocation[];
-    // Support multiple event locations (e.g., ceremony, reception)
-    locations?: MemoryMapLocation[];
     dressCode?: string;
+    attireGuide?: string;
+    godparentAttire?: string;
+    themeColors?: string[];
   };
   invitation?: {
     invitationMessage?: string;
@@ -625,16 +638,13 @@ export interface SectionContentMap {
     locations?: MemoryMapLocation[];
   };
   closing?: {
+    title?: string;
     closingMessage?: string;
     parentNames?: string;
+    finalLine?: string;
   };
   gift_wishlist?: {
     items: string[];
-  };
-  gift_ideas?: {
-    title?: string;
-    subtitle?: string;
-    items?: string[];
   };
   gift_ideas?: {
     title?: string;

@@ -2,7 +2,7 @@
 
 import type { ThemeKey } from '@/config/themeConfig';
 import { getSectionCopy } from '@/lib/section-copy';
-import type { SiteAnalyticsEventType } from '@/lib/types';
+import type { SiteAnalyticsEventType, SectionAsset } from '@/lib/types';
 import PlaylistSection from './PlaylistSection';
 
 interface SongSectionProps {
@@ -10,6 +10,7 @@ interface SongSectionProps {
   songLink?: string;
   autoplay?: boolean;
   onTrackEvent?: (eventType: SiteAnalyticsEventType, source: string, dedupeKey?: string) => void;
+  assets?: SectionAsset;
 }
 
 const SongSection = ({ theme, songLink, autoplay }: SongSectionProps) => {

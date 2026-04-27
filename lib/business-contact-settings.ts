@@ -38,7 +38,7 @@ let inMemoryFallback: BusinessContactSettings | null = null;
 
 export async function getBusinessContactSettings(): Promise<BusinessContactSettings> {
   // Prefer database-backed setting when available.
-  let fallback = { ...envSettings, ...(inMemoryFallback || {}) };
+  const fallback = { ...envSettings, ...(inMemoryFallback || {}) };
 
   try {
     const { data, error } = await supabase

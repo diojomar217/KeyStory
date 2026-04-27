@@ -124,6 +124,7 @@ function getInitialDraft(): { form: LocalForm; config: SiteConfig; currentStep: 
         timeline_events: [],
         cover_photo_index: undefined,
         section_content: {},
+        section_assets: {},
       },
       currentStep: 1,
       completedSteps: [],
@@ -160,6 +161,7 @@ function getInitialDraft(): { form: LocalForm; config: SiteConfig; currentStep: 
     timeline_events: [],
     cover_photo_index: undefined,
     section_content: {},
+    section_assets: {},
   };
   let initialStep = 1;
   let initialCompleted: number[] = [];
@@ -181,6 +183,7 @@ function getInitialDraft(): { form: LocalForm; config: SiteConfig; currentStep: 
           // timeline_events removed, use section_content.timeline
           cover_photo_index: parsed.config.cover_photo_index,
           section_content: parsed.config.section_content || {},
+          section_assets: parsed.config.section_assets || {},
         };
         initialConfig = parsedConfig;
       }
@@ -1549,6 +1552,18 @@ export default function CreateWebsitePage() {
                         setForm((fPrev) => ({ ...fPrev, photos: (fPrev.photos || []).filter((_, i) => i !== index) }));
                         return next;
                       });
+                    }}
+                    onSectionAssetsChange={(sectionKey: string, assets: any) => {
+                      setConfig((prev) => ({
+                        ...prev,
+                        section_assets: {
+                          ...(prev.section_assets || {}),
+                          [sectionKey]: {
+                            ...(prev.section_assets?.[sectionKey as Section] || {}),
+                            ...assets,
+                          },
+                        },
+                      }));
                     }}
                   validationErrors={(() => {
                     const errors: Record<string, boolean> = {};

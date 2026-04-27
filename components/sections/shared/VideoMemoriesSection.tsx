@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { ThemeKey } from '@/config/themeConfig';
-import type { OccasionType } from '@/lib/types';
+import type { OccasionType, SectionAsset } from '@/lib/types';
 import SectionHeader from '../../page/SectionHeader';
 import { useThemeUtils } from '../../builder/ThemeWrapper';
 import { getCardStyleClasses, getShadowClass, getSectionSpacingClass } from '@/lib/theme-color-helpers';
@@ -20,6 +20,7 @@ interface VideoMemoriesSectionProps {
   theme: ThemeKey;
   siteType?: OccasionType;
   videos?: VideoMemory[];
+  assets?: SectionAsset;
 }
 
 export default function VideoMemoriesSection({ theme, siteType, videos = [] }: VideoMemoriesSectionProps) {

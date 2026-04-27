@@ -10,12 +10,14 @@ type SectionContentInputsProps = {
   config: {
     sections?: string[];
     section_content?: Record<string, any>;
+    section_assets?: Record<string, any>;
     tagline?: string;
     hero?: any;
     timeline_events?: any[];
     occasion?: string;
   };
   onSectionContentChange: (sectionKey: string, content: any) => void;
+  onSectionAssetsChange?: (sectionKey: string, assets: any) => void;
   validationErrors?: Record<string, string | boolean | undefined>;
   // Hero photo props
   heroPhotoPreview?: string | null;
@@ -57,10 +59,12 @@ import {
 } from "./ContentInputComponents";
 
 import React, { useState } from "react";
+import { SectionAssetsInput } from "./ContentInputComponents";
 
 export default function SectionContentInputs({
   config,
   onSectionContentChange,
+  onSectionAssetsChange,
   validationErrors = {},
   heroPhotoPreview,
   crop,
@@ -1453,7 +1457,25 @@ export default function SectionContentInputs({
               aria-hidden={openSectionKey !== section.key}
               style={{ overflow: "hidden" }}
             >
-              {openSectionKey === section.key && <div>{content}</div>}
+              {openSectionKey === section.key && (
+                <div>
+                  {content}
+                  {onSectionAssetsChange && (
+                    <div className="mt-4">
+                      {(
+                        (config.section_assets && config.section_assets[section.key]) ||
+                        new Set(['home','event_details','invitation','closing','memory_map','gift_section','love_letter']).has(section.key)
+                      ) && (
+                        <SectionAssetsInput
+                          sectionKey={section.key}
+                          value={config.section_assets?.[section.key]}
+                          onChange={(assets) => onSectionAssetsChange(section.key, assets)}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         );

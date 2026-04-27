@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import type { ThemeKey } from "@/config/themeConfig";
+import type { SectionAsset } from '@/lib/types';
 import { useThemeUtils } from "../../builder/ThemeWrapper";
 import ScrollReveal from "../../ui/ScrollReveal";
 
@@ -9,6 +10,7 @@ interface RSVPProps {
   theme: ThemeKey;
   rsvpEnabled?: boolean;
   siteId?: string;
+  assets?: SectionAsset;
 }
 
 function MailIcon({ color }: { color: string }) {

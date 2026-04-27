@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import QRCodeStyling from 'qr-code-styling';
 import { toPng } from 'html-to-image';
 import type { ThemeKey } from '@/config/themeConfig';
-import type { OccasionType, SiteAnalyticsEventType } from '@/lib/types';
+import type { OccasionType, SiteAnalyticsEventType, SectionAsset } from '@/lib/types';
 import type { QrCardStyle } from '@/components/qr/QrKeepsakeCard';
 import { useTheme, useThemeUtils } from '../../builder/ThemeWrapper';
 import { getCardStyleClasses, getShadowClass } from '@/lib/theme-color-helpers';
@@ -35,6 +35,7 @@ interface Props {
     subtitle?: string;
     showNames?: boolean;
   };
+  assets?: SectionAsset;
 }
 
 export default function MemoryCardSection({

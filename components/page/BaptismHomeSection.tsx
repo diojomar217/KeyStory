@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import type { OccasionType, HomeTemplate } from "@/lib/types";
+import type { OccasionType, HomeTemplate, SectionAsset } from "@/lib/types";
 import type { ThemeKey } from "@/config/themeConfig";
 import { useTheme } from "../builder/ThemeWrapper";
 import { resolveParticipantNames } from "@/lib/site-type-utils";
@@ -20,6 +20,7 @@ interface Props {
   photos: string[];
   coverPhotoIndex?: number;
   heroCoverPhotoUrl?: string | null;
+  assets?: SectionAsset;
 }
 
 function formatDisplayDate(dateStr?: string, timeStr?: string) {
@@ -293,7 +294,7 @@ export default function BaptismHomeSection({
     parentsFromParticipants ||
     [customerName, partnerName].filter(Boolean).join(" & ");
 
-  const formattedDateTime = formatDisplayDate(eventDate, eventDetails.locations[0].time || eventTime);
+  const formattedDateTime = formatDisplayDate(eventDate, "");
 
   const showShortMessage =
     !!shortMessage &&

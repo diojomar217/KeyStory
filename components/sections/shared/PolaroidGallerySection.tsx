@@ -1,6 +1,7 @@
 'use client';
 
 import type { ThemeKey } from '@/config/themeConfig';
+import type { SectionAsset } from '@/lib/types';
 import { useThemeUtils } from '../../builder/ThemeWrapper';
 import { getHeadingFontClass, getSectionSpacingClass } from '@/lib/theme-color-helpers';
 import ScrollReveal from '../../ui/ScrollReveal';
@@ -9,6 +10,7 @@ import { optimizeCloudinaryDeliveryUrl } from '@/lib/cloudinary-url';
 interface PolaroidGallerySectionProps {
   theme: ThemeKey;
   photos: string[];
+  assets?: SectionAsset;
 }
 
 export default function PolaroidGallerySection({ theme, photos }: PolaroidGallerySectionProps) {

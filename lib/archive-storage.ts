@@ -13,10 +13,16 @@ type S3Config = {
   client: S3Client;
 };
 
-const streamToBuffer = async (stream: any): Promise<Buffer> => {
+const streamToBuffer = async (stream: AsyncIterable<Buffer | Uint8Array | string>): Promise<Buffer> => {
   const chunks: Buffer[] = [];
   for await (const chunk of stream) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    if (typeof chunk === 'string') {
+      chunks.push(Buffer.from(chunk));
+    } else if (Buffer.isBuffer(chunk)) {
+      chunks.push(chunk);
+    } else {
+      chunks.push(Buffer.from(chunk));
+    }
   }
   return Buffer.concat(chunks);
 };

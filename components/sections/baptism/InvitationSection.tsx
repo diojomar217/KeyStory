@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import type { ThemeKey } from "@/config/themeConfig";
+import type { SectionAsset } from "@/lib/types";
 import { useThemeUtils } from "../../builder/ThemeWrapper";
 import ScrollReveal from "../../ui/ScrollReveal";
 
@@ -20,6 +21,7 @@ interface InvitationSectionProps {
     signedBy?: string;
     godparentMessage?: string;
   };
+  assets?: SectionAsset;
 }
 
 const fadeUp = {
@@ -33,6 +35,7 @@ export default function InvitationSection({
   invitationMessage,
   godparentMessage,
   invitation,
+  assets,
 }: InvitationSectionProps) {
   const { colors } = useThemeUtils(theme);
 
@@ -72,6 +75,15 @@ export default function InvitationSection({
 
   return (
     <section className="relative overflow-hidden px-4 py-20 md:px-6 md:py-24 lg:py-28">
+      {/* Decorative background image (behind content) */}
+      {assets?.backgroundImage && (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-cover bg-center opacity-30 pointer-events-none -z-10"
+          style={{ backgroundImage: `url(${assets.backgroundImage})` }}
+        />
+      )}
+
       <div className="relative mx-auto max-w-4xl">
         <ScrollReveal>
           <div className="mb-10 text-center">
@@ -272,6 +284,25 @@ export default function InvitationSection({
             </motion.div>
           </div>
         </ScrollReveal>
+
+          {/* Decorative left/right images (non-interactive, hidden on small screens) */}
+          {assets?.leftImage && (
+            <img
+              src={assets.leftImage}
+              alt=""
+              aria-hidden="true"
+              className="hidden md:block absolute left-6 bottom-6 w-20 md:w-28 lg:w-32 opacity-90 pointer-events-none select-none"
+            />
+          )}
+
+          {assets?.rightImage && (
+            <img
+              src={assets.rightImage}
+              alt=""
+              aria-hidden="true"
+              className="hidden md:block absolute right-6 bottom-6 w-20 md:w-28 lg:w-32 opacity-90 pointer-events-none select-none"
+            />
+          )}
       </div>
     </section>
   );

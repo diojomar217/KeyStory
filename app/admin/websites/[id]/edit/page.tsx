@@ -134,6 +134,7 @@ export default function EditWebsitePage() {
       timeline_events: [],
       cover_photo_index: undefined,
       section_content: {},
+      section_assets: {},
     });
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [heroPhotoPreview, setHeroPhotoPreview] = useState<string | null>(null);
@@ -453,6 +454,7 @@ export default function EditWebsitePage() {
           section_divider_style: site.config?.section_divider_style,
           layout_preset: site.config?.layout_preset,
           preset: site.config?.preset,
+          section_assets: site.config?.section_assets || {},
           hero: {
             ...(site.config?.hero || {}),
             coverPhotoUrl: site.config?.hero?.coverPhotoUrl,
@@ -853,6 +855,19 @@ export default function EditWebsitePage() {
       section_content: {
         ...prev.section_content,
         [section]: content,
+      },
+    }));
+  };
+
+  const handleSectionAssetsChange = (sectionKey: string, assets: Record<string, any>) => {
+    setConfig((prev) => ({
+      ...prev,
+      section_assets: {
+        ...(prev.section_assets || {}),
+        [sectionKey]: {
+          ...(prev.section_assets?.[sectionKey as Section] || {}),
+          ...assets,
+        },
       },
     }));
   };
@@ -1650,6 +1665,7 @@ export default function EditWebsitePage() {
                 <SectionContentInputs
                   config={config}
                   onSectionContentChange={(sectionKey: string, content: any) => handleSectionContentChange(sectionKey as keyof SectionContentMap, content)}
+                  onSectionAssetsChange={handleSectionAssetsChange}
                   onRemovePhoto={handleRemovePhoto}
                   validationErrors={(() => {
                     const errors: Record<string, boolean> = {};

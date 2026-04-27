@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 
 export interface StorySection {
   key: string;
@@ -57,14 +57,14 @@ interface UseStoryProgressOptions {
 export function useStoryProgress({ sectionIds, enabledSections }: UseStoryProgressOptions) {
   const [currentSection, setCurrentSection] = useState<string>('');
   const [progress, setProgress] = useState(0);
-  const [chapters, setChapters] = useState<StorySection[]>([]);
-  
+  // chapters are derived from enabledSections/sectionIds
   const observerRef = useRef<IntersectionObserver | null>(null);
   const sectionRefs = useRef<Map<string, HTMLElement>>(new Map());
+  // sectionsArrayRef previously unused — keep ref for potential future use
   const sectionsArrayRef = useRef<HTMLElement[]>([]);
 
-  // Build chapter list from enabled sections
-  useEffect(() => {
+  // Compute chapter list in a memo to avoid calling setState synchronously in effects
+  const chapters = useMemo(() => {
     const chapterList: StorySection[] = [];
     let chapterNum = 1;
 
@@ -80,7 +80,8 @@ export function useStoryProgress({ sectionIds, enabledSections }: UseStoryProgre
       }
     }
 
-    setChapters(chapterList);
+
+    return chapterList;
   }, [enabledSections, sectionIds]);
 
   // Register a section element

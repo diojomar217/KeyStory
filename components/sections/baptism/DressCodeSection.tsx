@@ -1,6 +1,7 @@
 "use client";
 
 import type { ThemeKey } from '@/config/themeConfig';
+import type { SectionAsset } from '@/lib/types';
 import { useThemeUtils } from '../../builder/ThemeWrapper';
 import SectionHeader from '../../page/SectionHeader';
 import ScrollReveal from '../../ui/ScrollReveal';
@@ -10,6 +11,7 @@ interface DressCodeProps {
   dressCode?: string;
   themeColor?: string;
 }
+
 
 export default function DressCodeSection({ theme, dressCode, themeColor }: DressCodeProps) {
   const themeUtils = useThemeUtils(theme);
