@@ -256,7 +256,7 @@ export async function POST(req: NextRequest) {
       song: rawConfig.song_template,
     };
     // Remove config.participants if present
-    let { participants, ...configWithoutParticipants } = rawConfig;
+    const { participants, ...configWithoutParticipants } = rawConfig;
     const resolvedTimeline = Array.isArray(rawConfig.section_content?.timeline)
       ? rawConfig.section_content.timeline
       : Array.isArray(rawConfig.timeline)

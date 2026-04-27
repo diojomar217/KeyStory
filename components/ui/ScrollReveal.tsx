@@ -39,7 +39,7 @@ export default function ScrollReveal({
     const element = elementRef.current;
     if (!element) return;
 
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let timeoutId: number | null = null;
 
     if (prefersReducedMotion) {
       element.style.transitionDelay = '0ms';

@@ -461,7 +461,7 @@ function CreatePageContent() {
     if (finalizeHandledRef.current) return;
     finalizeHandledRef.current = true;
 
-    let pendingOrderId = window.localStorage.getItem('pendingOrderId') || orderIdFromQuery || '';
+    const pendingOrderId = window.localStorage.getItem('pendingOrderId') || orderIdFromQuery || '';
     let checkoutSessionId = window.localStorage.getItem('pendingCheckoutSessionId') || '';
 
     if (pendingOrderId && !checkoutSessionId) {

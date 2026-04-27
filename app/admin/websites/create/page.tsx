@@ -20,7 +20,7 @@ import {
   getStepConfig 
 } from '@/lib/builder-steps-config';
 import { getTemplateSections, getSectionMetadata, getSectionTemplates } from '@/lib/section-registry';
-import { getDefaultSelections } from '@/lib/config-helpers';
+import { getDefaultSelections, getTemplatesForSection } from '@/lib/config-helpers';
 import { getPresetsForOccasion, getPresetById } from '@/lib/preset-registry';
 import { applyLayoutPresetToConfig } from '@/lib/layout-preset';
 import { SITE_TYPES } from '@/config/siteTypeConfig';
@@ -1455,7 +1455,6 @@ export default function CreateWebsitePage() {
             ) : (
               <div className="space-y-6">
                 {config.sections.map((sectionKey) => {
-                  const { getTemplatesForSection } = require('@/lib/config-helpers');
                   const templates = getTemplatesForSection(sectionKey);
                   if (!templates.length) return null;
                   return (
