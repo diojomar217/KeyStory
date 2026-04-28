@@ -1,0 +1,10 @@
+User-Agent: *
+Allow: /
+
+User-Agent: facebookexternalhit
+Allow: /
+
+User-Agent: Facebot
+Allow: /
+
+Sitemap: https://key-story.vercel.app/sitemap.xml
