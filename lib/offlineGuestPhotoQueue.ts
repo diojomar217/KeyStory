@@ -75,10 +75,13 @@ export async function removeOfflinePhoto(id: number) {
 }
 
 export async function uploadPendingPhotos() {
-  if (!isBrowser()) return;
-  if (!navigator.onLine) return;
+  if (!isBrowser()) return { uploaded: 0, failed: 0, skipped: 0 };
+  if (!navigator.onLine) return { uploaded: 0, failed: 0, skipped: 0 };
 
   const items = await getOfflinePhotos();
+  let uploaded = 0;
+  let failed = 0;
+  let skipped = 0;
   for (const item of items) {
     try {
       const usePresign = typeof process !== 'undefined' && (((process.env as any).NEXT_PUBLIC_USE_PRESIGNED_UPLOAD === 'true') || ((process.env as any).NEXT_PUBLIC_USE_PRESIGNED_UPLOAD === '1'));
@@ -92,12 +95,14 @@ export async function uploadPendingPhotos() {
           });
           if (!presignRes.ok) {
             console.warn('Presign failed for pending photo', await presignRes.text());
+            failed += 1;
             continue;
           }
           const presignData = await presignRes.json();
           const putRes = await fetch(presignData.url, { method: 'PUT', body: item.blob, headers: { 'content-type': item.blob.type || 'image/jpeg' } });
           if (!putRes.ok) {
             console.warn('PUT to presigned URL failed', putRes.statusText);
+            failed += 1;
             continue;
           }
 
@@ -109,8 +114,10 @@ export async function uploadPendingPhotos() {
           });
           if (commitRes.ok) {
             if (item.id) await removeOfflinePhoto(item.id);
+            uploaded += 1;
           } else {
             console.warn('Commit failed for pending photo', await commitRes.text());
+            failed += 1;
           }
         } catch (e) {
           console.warn('Presign upload failed, will retry later', e);
@@ -126,12 +133,16 @@ export async function uploadPendingPhotos() {
         if (res.ok) {
           // remove from queue
           if (item.id) await removeOfflinePhoto(item.id);
+          uploaded += 1;
         } else {
           console.warn('Failed to upload pending photo', await res.text());
+          failed += 1;
         }
       }
     } catch (e) {
       console.warn('Upload failed, will retry later', e);
+      failed += 1;
     }
   }
+  return { uploaded, failed, skipped };
 }

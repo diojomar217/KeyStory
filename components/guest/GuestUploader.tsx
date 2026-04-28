@@ -397,14 +397,22 @@ export default function GuestUploader({ slug }: Props) {
     }
 
     try {
-      await uploadPendingPhotos();
+      const result = await uploadPendingPhotos();
       await refreshQueue();
 
-      notifyGalleryRefresh({
-        source: "offline-queue",
-      });
+      if (result.uploaded > 0) {
+        notifyGalleryRefresh({
+          source: "offline-queue",
+        });
+      }
 
-      setStatusMessage("Retry complete. Uploaded photos will appear in the gallery.", "success");
+      if (result.failed > 0) {
+        setStatusMessage(`Retry completed. ${result.uploaded} uploaded, ${result.failed} failed.`, "error");
+      } else if (result.uploaded > 0) {
+        setStatusMessage("Retry complete. Uploaded photos will appear in the gallery.", "success");
+      } else {
+        setStatusMessage("No pending photos were uploaded. They will retry automatically when you have a connection.", "info");
+      }
     } catch (error) {
       console.error(error);
       setStatusMessage("Some photos could not be uploaded yet.", "error");

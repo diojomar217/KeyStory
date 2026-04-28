@@ -14,6 +14,7 @@ import {
   buildSocialImageUrl,
   getBaseUrl,
   humanizeSlug,
+  toAbsoluteUrl,
 } from '@/lib/public-site-metadata';
 
 export const revalidate = 60;
@@ -49,7 +50,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         siteName: 'KeyStory',
         images: [
           {
-            url: fallbackImage,
+            url: toAbsoluteUrl(fallbackImage),
             width: 1200,
             height: 630,
             alt: fallbackTitle,
@@ -61,7 +62,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         card: 'summary_large_image',
         title: fallbackTitle,
         description: fallbackDescription,
-        images: [fallbackImage],
+        images: [toAbsoluteUrl(fallbackImage)],
       },
     };
   }
@@ -121,7 +122,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       siteName: 'KeyStory',
       images: [
         {
-          url: image,
+          url: toAbsoluteUrl(image),
           width: 1200,
           height: 630,
           alt: title,
@@ -133,7 +134,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       card: 'summary_large_image',
       title,
       description,
-      images: [image],
+      images: [toAbsoluteUrl(image)],
     },
     robots: unavailable
       ? {
