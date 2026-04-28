@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Force Next to render metadata inside <head> for bots (facebookexternalhit, Facebot, etc.)
+  // This prevents metadata streaming from placing meta tags outside of <head> where crawlers may miss them.
+  htmlLimitedBots: /.*/,
   // Silence the multiple-lockfile workspace root warning
   turbopack: {
     root: __dirname,

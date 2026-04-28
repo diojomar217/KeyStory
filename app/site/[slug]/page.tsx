@@ -35,12 +35,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     : getBaseUrl();
 
   const siteUrl = `${baseUrl.replace(/\/$/, '')}/site/${slug}`;
+  const apiOgUrl = `${baseUrl.replace(/\/$/, '')}/api/og/site?slug=${encodeURIComponent(slug)}`;
 
   // If no site data found, return a compact fallback metadata set
   if (!data) {
     const fallbackTitle = 'KeyStory Invitation';
     const fallbackDescription = 'View this beautiful digital invitation and shared memories on KeyStory.';
-    const fallbackImage = `${baseUrl.replace(/\/$/, '')}/default-og`;
+    const fallbackImage = apiOgUrl;
 
     return {
       title: fallbackTitle,
@@ -95,9 +96,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     else if (p && typeof p.secure_url === 'string') firstMediaPhoto = p.secure_url;
   }
 
-  const apiOgUrl = `${baseUrl.replace(/\/$/, '')}/api/og/site?slug=${encodeURIComponent(slug)}`;
-
-  // Resolve selected image and make absolute
+  // Resolve selected image and make absolute. Prefer API PNG if the chosen image is a webp.
   let selectedImage = ogImage || firstMediaPhoto || apiOgUrl;
   if (selectedImage && typeof selectedImage === 'string') {
     // ensure absolute URL
@@ -105,6 +104,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       ? selectedImage
       : toAbsoluteUrl(selectedImage);
   } else {
+    selectedImage = apiOgUrl;
+  }
+
+  // Avoid serving webp to Facebook/Messenger crawlers — prefer our PNG OG API
+  const looksLikeWebp = (u?: string | null) => !!(u && /\.webp(\?|$)/i.test(u) || (u && u.includes('f_webp')) || (u && u.includes('format=webp')));
+  if (looksLikeWebp(selectedImage)) {
     selectedImage = apiOgUrl;
   }
 
