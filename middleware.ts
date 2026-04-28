@@ -1,40 +1,58 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// List of user agents to allow even if site might be restricted
-const allowedUserAgents = [
+// Allowed social crawler user agents (lowercase for comparison)
+const ALLOWED_BOTS = [
   'facebookexternalhit',
-  'Facebot',
-  'Twitterbot',
-  'LinkedInBot',
-  'WhatsApp',
+  'facebot',
+  'twitterbot',
+  'linkedinbot',
+  'whatsapp',
 ];
 
-// Paths that should always be publicly accessible
-const publicPaths = [
+// Public path prefixes that should never be blocked
+const PUBLIC_PATH_PREFIXES = [
   '/site',
   '/robots.txt',
   '/sitemap.xml',
-  '/opengraph-image',
-  '/api/og',
+  '/default-og.png',
   '/_next',
   '/favicon.ico',
+  '/api/og',
 ];
 
+function isImagePath(pathname: string) {
+  return /\.(png|jpe?g|webp|avif|gif|svg|ico)(?:$|\?)/i.test(pathname);
+}
+
 export function middleware(req: NextRequest) {
-  const userAgent = req.headers.get('user-agent') || '';
-  const pathname = req.nextUrl.pathname;
+  const ua = (req.headers.get('user-agent') || '').toLowerCase();
+  const pathname = req.nextUrl.pathname || '/';
 
-  // Allow crawlers and public paths
-  const isAllowedUserAgent = allowedUserAgents.some(ua => userAgent.includes(ua));
-  const isPublicPath = publicPaths.some(path => pathname.startsWith(path));
+  // 1) Immediately allow known social crawlers
+  for (const bot of ALLOWED_BOTS) {
+    if (ua.includes(bot)) {
+      return NextResponse.next();
+    }
+  }
 
-  if (isAllowedUserAgent || isPublicPath) {
-    // For crawlers and public paths, allow with normal caching
+  // 2) Allow public path prefixes (startsWith)
+  for (const prefix of PUBLIC_PATH_PREFIXES) {
+    if (pathname.startsWith(prefix)) {
+      return NextResponse.next();
+    }
+  }
+
+  // 3) Allow any image/asset requests (so OG assets and images are reachable)
+  if (isImagePath(pathname) || pathname.includes('/opengraph-image')) {
     return NextResponse.next();
   }
 
-  // Disable browser caching for the host index page (e.g. /host/anyas-baptism)
+  // If request reaches here, it's not a social crawler nor a public asset.
+  // Keep existing behavior but add debug logging when blocked to assist troubleshooting.
+  // NOTE: This log is temporary for debugging and can be removed later.
+  console.log('UA:', req.headers.get('user-agent'));
+
   const res = NextResponse.next();
   res.headers.set(
     'Cache-Control',
