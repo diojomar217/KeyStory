@@ -28,17 +28,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   const data = await getPublicSiteBySlug(slug);
   const humanizedSiteTitle = slug ? humanizeSlug(slug) : 'Story';
+
   // Build a safe base URL preferring the public env var
   const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL && process.env.NEXT_PUBLIC_SITE_URL.trim())
     ? process.env.NEXT_PUBLIC_SITE_URL.trim()
     : getBaseUrl();
 
-  // Fallback metadata if site not found
+  const siteUrl = `${baseUrl.replace(/\/$/, '')}/site/${slug}`;
+
+  // If no site data found, return a compact fallback metadata set
   if (!data) {
-    const siteUrl = `${baseUrl.replace(/\/$/, '')}/site/${slug}`;
     const fallbackTitle = 'KeyStory Invitation';
     const fallbackDescription = 'View this beautiful digital invitation and shared memories on KeyStory.';
-    const fallbackImage = 'https://key-story.vercel.app/default-og.png';
+    const fallbackImage = `${baseUrl.replace(/\/$/, '')}/default-og.png`;
 
     return {
       title: fallbackTitle,
@@ -68,43 +70,43 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const config = data.config || {};
-  const sectionContent = (config.section_content as Record<string, unknown>) || {};
-  const home = (sectionContent?.home as Record<string, unknown>) || {};
 
-  // Derive title
+  // Title fallbacks per spec
   const title =
     (config as any)?.eventTitle ||
     (config as any)?.title ||
+    ((config as any)?.childName ? `${(config as any).childName}'s Celebration` : null) ||
     data.website_name ||
-    `${humanizedSiteTitle}'s Celebration`;
+    'KeyStory Invitation';
 
-  // Derive description
+  // Description fallbacks per spec
   const description =
     (config as any)?.description ||
     (config as any)?.message ||
     'View this beautiful digital invitation and shared memories on KeyStory.';
 
-  // Image preference: config.ogImage -> home.heroImage -> config.hero.coverPhotoUrl -> first media photo -> default
-  const ogImage = (config as any)?.ogImage;
-  const extractHomeHero = (): string | null => {
-    const h = home as any;
-    if (!h) return null;
-    if (typeof h.heroImage === 'string' && h.heroImage.trim()) return h.heroImage.trim();
-    if (h.heroImage && typeof h.heroImage.url === 'string' && h.heroImage.url.trim()) return h.heroImage.url.trim();
-    return null;
-  };
+  // Image preference: config.ogImage -> config.media.photos[0].url -> config.media.photos[0].secure_url -> API OG endpoint
+  const ogImage = (config as any)?.ogImage || null;
+  let firstMediaPhoto: string | null = null;
+  if (Array.isArray((config as any)?.media?.photos) && (config as any).media.photos.length > 0) {
+    const p = (config as any).media.photos[0];
+    if (typeof p === 'string') firstMediaPhoto = p;
+    else if (p && typeof p.url === 'string') firstMediaPhoto = p.url;
+    else if (p && typeof p.secure_url === 'string') firstMediaPhoto = p.secure_url;
+  }
 
-  const homeHero = extractHomeHero();
-  const heroCoverPhotoUrl = typeof (config as any)?.hero?.coverPhotoUrl === 'string' && (config as any).hero.coverPhotoUrl.trim()
-    ? (config as any).hero.coverPhotoUrl.trim()
-    : null;
-  const firstMediaPhoto = Array.isArray((config as any)?.media?.photos) && (config as any).media.photos.length > 0
-    ? ((config as any).media.photos[0]?.url || (config as any).media.photos[0]?.secure_url || (config as any).media.photos[0])
-    : null;
+  const apiOgUrl = `${baseUrl.replace(/\/$/, '')}/api/og/site?slug=${encodeURIComponent(slug)}`;
 
-  const image = ogImage || homeHero || heroCoverPhotoUrl || firstMediaPhoto || 'https://key-story.vercel.app/default-og.png';
-
-  const siteUrl = `https://key-story.vercel.app/site/${slug}`;
+  // Resolve selected image and make absolute
+  let selectedImage = ogImage || firstMediaPhoto || apiOgUrl;
+  if (selectedImage && typeof selectedImage === 'string') {
+    // ensure absolute URL
+    selectedImage = /^https?:\/\//i.test(selectedImage)
+      ? selectedImage
+      : toAbsoluteUrl(selectedImage);
+  } else {
+    selectedImage = apiOgUrl;
+  }
 
   const unavailable = isArchived(data) || isExpired(data);
 
@@ -118,7 +120,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       siteName: 'KeyStory',
       images: [
         {
-          url: image,
+          url: selectedImage,
           width: 1200,
           height: 630,
           alt: title,
@@ -130,7 +132,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       card: 'summary_large_image',
       title,
       description,
-      images: [image],
+      images: [selectedImage],
     },
     robots: unavailable
       ? {
