@@ -172,7 +172,7 @@ export default function InvitationSection({
                 {/* Greeting */}
                 <motion.div variants={fadeUp} className="mb-8">
                   <span
-                    className="block text-[22px] md:text-[24px]"
+                    className="block text-[20px] md:text-[24px]"
                     style={{
                       color: "#8f4a58" ,
                       fontFamily: '"Cormorant Garamond", serif',
@@ -208,7 +208,7 @@ export default function InvitationSection({
                 {/* Body */}
                 <motion.p
                   variants={fadeUp}
-                  className="mt-7 text-[22px] leading-[2.1]"
+                  className="mt-7 text-[20px] leading-[2.1]"
                   style={{
                     color: textColor,
                     fontFamily: '"Cormorant Garamond", serif',
@@ -225,7 +225,7 @@ export default function InvitationSection({
                 {/* Highlight */}
                 <motion.p
                   variants={fadeUp}
-                  className="my-12 text-center text-[22px] italic leading-[1.9] md:text-[24px]"
+                  className="my-12 text-center text-[20px] italic leading-[1.9] md:text-[24px]"
                   style={{
                     color: "#7a2f3c",
                     fontFamily: '"Cormorant Garamond", serif',
@@ -259,7 +259,7 @@ export default function InvitationSection({
                   </div>
 
                   <p
-                    className="text-[22px] md:text-[26px]"
+                    className="text-[20px] md:text-[26px]"
                     style={{
                       color: "#b88992",
                       fontFamily: '"Allura", cursive',
@@ -269,7 +269,7 @@ export default function InvitationSection({
                   </p>
 
                   <p
-                    className="mt-2 text-[18px] md:text-[20px]"
+                    className="mt-2 text-[16px] md:text-[20px]"
                     style={{
                       color: textColor,
                       letterSpacing: "0.03em",

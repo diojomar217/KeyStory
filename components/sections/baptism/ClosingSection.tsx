@@ -123,7 +123,7 @@ export default function ClosingSection({
 
               <div className="relative mx-auto max-w-[540px]">
                 <p
-                  className="text-left font-serif text-[1.05rem] leading-[2.05] md:text-[1.18rem]"
+                  className="text-center font-serif text-[1.05rem] leading-[2.05] md:text-[1.18rem]"
                   style={{
                     color: textColor,
                     fontFamily: '"Cormorant Garamond", "Georgia", serif',
