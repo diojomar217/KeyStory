@@ -309,18 +309,20 @@ export default function BaptismHomeSection({
   const ctaSecondaryLabel = home.ctaSecondaryLabel || "View Details";
   const ctaSecondaryLink = home.ctaSecondaryLink || "#details";
 
+  const firstLocation =
+    Array.isArray(eventDetails?.locations) && eventDetails.locations.length > 0
+      ? eventDetails.locations[0]
+      : null;
+
   const eventDate =
     eventDetails?.eventDate || eventDetails?.date || specialDate || "";
+
   const eventTime =
-    eventDetails.locations[0].time ||
+    firstLocation?.time ||
     eventDetails?.eventTime ||
     eventDetails?.time ||
     config?.eventTime ||
     "";
-
-  const firstLocation = Array.isArray(eventDetails?.locations)
-    ? eventDetails.locations[0]
-    : null;
 
   const venue =
     eventDetails?.location ||
@@ -484,11 +486,7 @@ export default function BaptismHomeSection({
               ) : null}
             </motion.div>
 
-            <CountdownTimer
-              eventDate={eventDate}
-              eventTime={eventDetails.locations[0].time || eventTime}
-              celebrant={celebrant}
-            />
+            <CountdownTimer eventDate={eventDate} eventTime={eventTime} celebrant={celebrant} />
 
             <motion.div
               {...fadeUp}
