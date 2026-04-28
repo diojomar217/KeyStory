@@ -1,8 +1,8 @@
 import GuestUploader from '@/components/guest/GuestUploader';
 
-type Props = { params: { slug: string } };
+type Props = { params: Promise<{ slug: string }> };
 
-export default function Page({ params }: Props) {
-  const { slug } = params;
+export default async function Page({ params }: Props) {
+  const { slug } = await params;
   return <GuestUploader slug={slug} />;
 }

@@ -1,11 +1,13 @@
 import { supabase } from '@/lib/supabase';
+import supabaseAdmin from '@/lib/supabaseAdmin';
 import PhotoAdminList from '@/components/admin/PhotoAdminList';
 
-type Props = { params: { id: string } };
+type Props = { params: Promise<{ id: string }> };
 
 export default async function Page({ params }: Props) {
-  const { id } = params;
-  const { data: photos, error } = await supabase
+  const { id } = await params;
+  const client = supabaseAdmin ?? supabase;
+  const { data: photos, error } = await client
     .from('guest_photos')
     .select('*')
     .eq('site_id', id)

@@ -1,7 +1,9 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { randomUUID } from 'crypto';
 import { supabase } from '@/lib/supabase';
+import supabaseAdmin from '@/lib/supabaseAdmin';
 
+const client = supabaseAdmin ?? supabase;
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
 const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
@@ -60,7 +62,7 @@ export async function POST(req: Request) {
       }
     }
 
-    const { error } = await supabase.from('guest_photos').insert([{
+    const { error } = await client.from('guest_photos').insert([{
       site_id: siteId,
       slug,
       image_url: imageUrl,

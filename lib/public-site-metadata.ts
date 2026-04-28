@@ -9,8 +9,7 @@ export function getBaseUrl(): string {
   return process.env.NEXT_PUBLIC_BASE_URL || 'https://your-domain.vercel.app';
 }
 
-export function toAbsoluteUrl(url: string | null | undefined): string | undefined {
-  if (!url) return undefined;
+export function toAbsoluteUrl(url: string): string {
   if (/^https?:\/\//i.test(url)) return url;
   return `${getBaseUrl()}${url.startsWith('/') ? url : `/${url}`}`;
 }

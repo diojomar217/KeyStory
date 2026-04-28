@@ -214,6 +214,10 @@ export default function WebsiteActionsDropdown({ order, onDelete, onRefresh, pen
             📊
             Analytics
             </a>
+            <a href={`/admin/websites/${id}/photos`} className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors" title="Photo Approval" onClick={() => setOpen(false)}>
+            📸
+            Photo Approval
+            </a>
             <a href={`/admin/websites/${id}/guest-messages`} className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors" title="Guest Messages" onClick={() => setOpen(false)}>
             <span className="flex items-center gap-2">
               <span aria-hidden="true">💬</span>
