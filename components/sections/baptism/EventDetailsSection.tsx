@@ -53,7 +53,8 @@ function formatDisplayTime(time?: string) {
 }
 
 function getEventLabel(location: MemoryMapLocation, index: number) {
-  const haystack = `${location.name ?? ""} ${location.description ?? ""}`.toLowerCase();
+  const haystack =
+    `${location.name ?? ""} ${location.description ?? ""}`.toLowerCase();
 
   if (
     haystack.includes("church") ||
@@ -97,7 +98,9 @@ function getMapsLink(location: MemoryMapLocation) {
   }
 
   const query = encodeURIComponent(location.address || location.name || "");
-  return query ? `https://www.google.com/maps/search/?api=1&query=${query}` : "";
+  return query
+    ? `https://www.google.com/maps/search/?api=1&query=${query}`
+    : "";
 }
 
 function colorNameToValue(color: string) {
@@ -131,7 +134,8 @@ function AttireGuideCard({
   colors: any;
 }) {
   const themeColors =
-    Array.isArray(eventDetails.themeColors) && eventDetails.themeColors.length > 0
+    Array.isArray(eventDetails.themeColors) &&
+    eventDetails.themeColors.length > 0
       ? eventDetails.themeColors
       : ["White", "Cream", "Blush Pink", "Baby Pink"];
 
@@ -167,8 +171,8 @@ function AttireGuideCard({
           />
 
           <div className="relative">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border bg-white/70 shadow-sm">
-              <span className="text-2xl">🎀</span>
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border bg-white/75 shadow-[0_10px_24px_rgba(106,47,57,0.08)]">
+              <span className="text-2xl">✨</span>
             </div>
 
             <p
@@ -182,24 +186,42 @@ function AttireGuideCard({
               className="mt-2 font-serif text-2xl font-semibold sm:text-3xl"
               style={{ color: colors.text }}
             >
-              Soft, Light & Elegant
+              Soft & Light
             </h3>
+
+            <p
+              className="mx-auto mt-3 max-w-xl text-sm leading-6"
+              style={{ color: `${colors.text}b8` }}
+            >
+              A gentle guide to help everyone look coordinated while staying
+              comfortable.
+            </p>
 
             <div className="mt-4 flex justify-center">
               <div className="h-px w-20 bg-gradient-to-r from-transparent via-[#d8b16c] to-transparent opacity-90" />
             </div>
 
-            <div className="mx-auto mt-8 grid max-w-5xl gap-5 md:grid-cols-3">
+            <div className="mx-auto mt-8 grid max-w-4xl gap-5 md:grid-cols-2">
               <motion.div
                 whileHover={{ y: -4 }}
-                className="rounded-[24px] border bg-white/55 px-4 py-5 shadow-sm"
+                className="rounded-[24px] border bg-white/60 px-5 py-6 text-center shadow-[0_14px_35px_rgba(106,47,57,0.06)]"
                 style={{ borderColor: `${colors.border}99` }}
               >
-                <div className="text-3xl">👗</div>
-                <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: colors.primary }}>
+                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white/80 shadow-sm">
+                  <span className="text-2xl">🧥</span>
+                </div>
+
+                <p
+                  className="mt-4 text-[10px] font-semibold uppercase tracking-[0.22em]"
+                  style={{ color: colors.primary }}
+                >
                   Guests
                 </p>
-                <p className="mt-2 text-sm leading-6" style={{ color: `${colors.text}d6` }}>
+
+                <p
+                  className="mx-auto mt-2 max-w-sm text-sm leading-6"
+                  style={{ color: `${colors.text}d6` }}
+                >
                   {eventDetails.dressCode ||
                     "Guests are encouraged to wear light, comfortable attire in soft pastel or neutral tones."}
                 </p>
@@ -207,89 +229,28 @@ function AttireGuideCard({
 
               <motion.div
                 whileHover={{ y: -4 }}
-                className="rounded-[24px] border bg-white/55 px-4 py-5 shadow-sm"
+                className="rounded-[24px] border bg-white/60 px-5 py-6 text-center shadow-[0_14px_35px_rgba(106,47,57,0.06)]"
                 style={{ borderColor: `${colors.border}99` }}
               >
-                <div className="text-3xl">🤵</div>
-                <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: colors.primary }}>
-                  Gentlemen
-                </p>
-                <p className="mt-2 text-sm leading-6" style={{ color: `${colors.text}d6` }}>
-                  Polo, long sleeves, or smart casual pieces in neutral colors are recommended.
-                </p>
-              </motion.div>
+                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white/80 shadow-sm">
+                  <span className="text-2xl">🕊️</span>
+                </div>
 
-              <motion.div
-                whileHover={{ y: -4 }}
-                className="rounded-[24px] border bg-white/55 px-4 py-5 shadow-sm"
-                style={{ borderColor: `${colors.border}99` }}
-              >
-                <div className="text-3xl">🕊️</div>
-                <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: colors.primary }}>
+                <p
+                  className="mt-4 text-[10px] font-semibold uppercase tracking-[0.22em]"
+                  style={{ color: colors.primary }}
+                >
                   Godparents
                 </p>
-                <p className="mt-2 text-sm leading-6" style={{ color: `${colors.text}d6` }}>
+
+                <p
+                  className="mx-auto mt-2 max-w-sm text-sm leading-6"
+                  style={{ color: `${colors.text}d6` }}
+                >
                   {eventDetails.godparentAttire ||
                     "Godparents are encouraged to wear white or cream for a coordinated and elegant look."}
                 </p>
               </motion.div>
-            </div>
-
-            <div className="mx-auto mt-8 max-w-4xl rounded-[26px] border bg-white/45 px-5 py-5" style={{ borderColor: `${colors.border}99` }}>
-              <p
-                className="text-[10px] font-semibold uppercase tracking-[0.26em]"
-                style={{ color: colors.primary }}
-              >
-                Suggested Palette
-              </p>
-
-              <div className="mt-4 flex flex-wrap justify-center gap-3">
-                {themeColors.map((c: string, i: number) => {
-                  const colorValue = colorNameToValue(c);
-
-                  return (
-                    <motion.div
-                      key={`${c}-${i}`}
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                      whileHover={{ y: -3, scale: 1.04 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.35, delay: i * 0.06 }}
-                      className="flex items-center gap-2 rounded-full border bg-white/80 px-3 py-2 text-xs shadow-[0_8px_20px_rgba(106,47,57,0.06)]"
-                      style={{ borderColor: `${colors.border}aa` }}
-                    >
-                      <span
-                        className="h-4 w-4 rounded-full border shadow-inner"
-                        style={{
-                          backgroundColor: colorValue,
-                          borderColor: "rgba(106,47,57,0.18)",
-                        }}
-                      />
-                      <span style={{ color: `${colors.text}cc` }}>{c}</span>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="mx-auto mt-6 grid max-w-4xl grid-cols-2 gap-3 sm:grid-cols-4">
-              {themeColors.slice(0, 4).map((c: string, i: number) => (
-                <motion.div
-                  key={`mood-${c}-${i}`}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  whileHover={{ scale: 1.04 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.35, delay: i * 0.08 }}
-                  className="h-16 rounded-2xl border shadow-sm sm:h-20"
-                  style={{
-                    background: `linear-gradient(135deg, ${colorNameToValue(c)}, rgba(255,255,255,0.75))`,
-                    borderColor: `${colors.border}aa`,
-                  }}
-                  aria-label={c}
-                  title={c}
-                />
-              ))}
             </div>
           </div>
         </div>
@@ -322,14 +283,17 @@ export default function EventDetailsSection({
 
   const showAttire = Boolean(
     eventDetails &&
-      (eventDetails.dressCode ||
-        eventDetails.godparentAttire ||
-        (Array.isArray(eventDetails.themeColors) &&
-          eventDetails.themeColors.length > 0)),
+    (eventDetails.dressCode ||
+      eventDetails.godparentAttire ||
+      (Array.isArray(eventDetails.themeColors) &&
+        eventDetails.themeColors.length > 0)),
   );
 
   return (
-    <section id="event-details" className="relative overflow-hidden py-16 md:py-24">
+    <section
+      id="event-details"
+      className="relative overflow-hidden py-16 md:py-24"
+    >
       <div
         aria-hidden
         className="absolute inset-0 -z-20 opacity-75"
@@ -352,7 +316,11 @@ export default function EventDetailsSection({
 
       {assets?.enabled && assets.backgroundImage && (
         <div className="absolute inset-0 -z-30 opacity-40">
-          <img src={assets.backgroundImage} alt="" className="h-full w-full object-cover" />
+          <img
+            src={assets.backgroundImage}
+            alt=""
+            className="h-full w-full object-cover"
+          />
         </div>
       )}
 
@@ -541,9 +509,7 @@ export default function EventDetailsSection({
                                 backgroundColor: `${colors.secondary}10`,
                                 color: `${colors.text}cc`,
                               }}
-                            >
-                             
-                            </div>
+                            ></div>
                           </div>
 
                           <h3
@@ -557,7 +523,9 @@ export default function EventDetailsSection({
                             className="mt-3 text-sm leading-relaxed sm:text-base"
                             style={{ color: `${colors.text}d6` }}
                           >
-                            {loc.address || loc.description || "To be announced"}
+                            {loc.address ||
+                              loc.description ||
+                              "To be announced"}
                           </p>
 
                           {(loc.date || loc.time) && (
@@ -579,7 +547,9 @@ export default function EventDetailsSection({
                                 style={{ color: colors.text }}
                               >
                                 {formatDisplayDate(loc.date)}
-                                {loc.time ? ` • ${formatDisplayTime(loc.time)}` : ""}
+                                {loc.time
+                                  ? ` • ${formatDisplayTime(loc.time)}`
+                                  : ""}
                               </p>
                             </div>
                           )}
@@ -607,7 +577,6 @@ export default function EventDetailsSection({
                 );
               })}
             </div>
-
 
             {hasMapLocations && (
               <ScrollReveal animation="fade-up" delay={100}>
@@ -640,7 +609,8 @@ export default function EventDetailsSection({
                           className="max-w-md text-sm leading-relaxed"
                           style={{ color: `${colors.text}c8` }}
                         >
-                          Explore the map below for the ceremony and reception venues.
+                          Explore the map below for the ceremony and reception
+                          venues.
                         </p>
                       </div>
                     </div>
@@ -655,7 +625,8 @@ export default function EventDetailsSection({
                           name: loc.name || "",
                           lat: loc.lat || 0,
                           lng: loc.lng || 0,
-                          description: loc.description || getEventLabel(loc, index),
+                          description:
+                            loc.description || getEventLabel(loc, index),
                           date: loc.date,
                           address: loc.address,
                         }))}
@@ -667,7 +638,6 @@ export default function EventDetailsSection({
               </ScrollReveal>
             )}
 
-            
             {showAttire && (
               <AttireGuideCard eventDetails={eventDetails} colors={colors} />
             )}

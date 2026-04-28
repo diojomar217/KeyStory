@@ -88,7 +88,16 @@ const fadeUp = {
 
 function CalendarIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4 text-[#bb7d88]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4 text-[#bb7d88]"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <rect x="3" y="5" width="18" height="16" rx="3" />
       <path d="M16 3v4" />
       <path d="M8 3v4" />
@@ -99,7 +108,16 @@ function CalendarIcon() {
 
 function PinIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4 text-[#bb7d88]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4 text-[#bb7d88]"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M12 21s6-5.8 6-11a6 6 0 1 0-12 0c0 5.2 6 11 6 11Z" />
       <circle cx="12" cy="10" r="2.5" />
     </svg>
@@ -108,10 +126,30 @@ function PinIcon() {
 
 function SparkleAccent() {
   return (
-    <svg viewBox="0 0 120 120" className="h-full w-full" fill="none" aria-hidden="true">
-      <path d="M60 8c3 22 7 26 29 29-22 3-26 7-29 29-3-22-7-26-29-29 22-3 26-7 29-29Z" stroke="currentColor" strokeWidth="1.4" opacity="0.45" />
-      <path d="M90 58c1.8 13 4.2 15.4 17 17-12.8 1.6-15.2 4-17 17-1.8-13-4.2-15.4-17-17 12.8-1.6 15.2-4 17-17Z" stroke="currentColor" strokeWidth="1.2" opacity="0.35" />
-      <path d="M26 66c1.5 11 3.8 13.3 14.8 14.8-11 1.5-13.3 3.8-14.8 14.8-1.5-11-3.8-13.3-14.8-14.8 11-1.5 13.3-3.8 14.8-14.8Z" stroke="currentColor" strokeWidth="1.1" opacity="0.28" />
+    <svg
+      viewBox="0 0 120 120"
+      className="h-full w-full"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M60 8c3 22 7 26 29 29-22 3-26 7-29 29-3-22-7-26-29-29 22-3 26-7 29-29Z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        opacity="0.45"
+      />
+      <path
+        d="M90 58c1.8 13 4.2 15.4 17 17-12.8 1.6-15.2 4-17 17-1.8-13-4.2-15.4-17-17 12.8-1.6 15.2-4 17-17Z"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        opacity="0.35"
+      />
+      <path
+        d="M26 66c1.5 11 3.8 13.3 14.8 14.8-11 1.5-13.3 3.8-14.8 14.8-1.5-11-3.8-13.3-14.8-14.8 11-1.5 13.3-3.8 14.8-14.8Z"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        opacity="0.28"
+      />
     </svg>
   );
 }
@@ -191,23 +229,30 @@ function HeroPhoto({
   mobile?: boolean;
 }) {
   return (
-    <div className={`relative mx-auto ${mobile ? "max-w-[285px]" : "max-w-[320px] sm:max-w-sm lg:max-w-[448px]"}`}>
+    <div
+      className={`relative mx-auto ${mobile ? "max-w-[285px]" : "max-w-[320px] sm:max-w-sm lg:max-w-[448px]"}`}
+    >
       <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-rose-200/30 via-pink-100/14 to-orange-100/18 blur-2xl" />
       <div className="absolute -left-6 -top-6 h-24 w-24 rounded-full bg-white/25 blur-2xl" />
       <div className="absolute -right-4 bottom-8 h-16 w-16 rounded-full bg-rose-100/30 blur-xl" />
 
-      <div className="relative overflow-hidden rounded-[2rem] border border-white/75 bg-white/58 p-3 shadow-[0_26px_70px_rgba(124,79,87,0.15)] backdrop-blur-xl">
-        <div className="relative overflow-hidden rounded-[1.55rem]">
-          <img
-            src={heroImg || bgImg || "/vercel.svg"}
-            alt={celebrant}
-            className={`w-full object-cover transition duration-700 hover:scale-[1.02] ${
-              mobile ? "h-[260px]" : "h-[250px] sm:h-[300px] md:h-[360px] lg:h-[430px]"
-            }`}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#6a2f39]/12 via-transparent to-white/6" />
-          <div className="absolute inset-0 ring-1 ring-inset ring-white/20" />
-        </div>
+      <div className="relative overflow-hidden rounded-[1.55rem] bg-[#fdf7f8] flex items-center justify-center">
+        <img
+          src={heroImg || bgImg || "/vercel.svg"}
+          alt={celebrant}
+          className={`
+      w-full h-full
+      object-contain
+      scale-[1.15] sm:scale-[1.2]
+      transition duration-700 hover:scale-[1.22]
+    `}
+        />
+
+        {/* soft overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#6a2f39]/10 via-transparent to-white/10" />
+
+        {/* border highlight */}
+        <div className="absolute inset-0 ring-1 ring-inset ring-white/30 rounded-[1.55rem]" />
       </div>
     </div>
   );
@@ -267,7 +312,11 @@ export default function BaptismHomeSection({
   const eventDate =
     eventDetails?.eventDate || eventDetails?.date || specialDate || "";
   const eventTime =
-    eventDetails.locations[0].time || eventDetails?.eventTime || eventDetails?.time || config?.eventTime || "";
+    eventDetails.locations[0].time ||
+    eventDetails?.eventTime ||
+    eventDetails?.time ||
+    config?.eventTime ||
+    "";
 
   const firstLocation = Array.isArray(eventDetails?.locations)
     ? eventDetails.locations[0]
@@ -301,7 +350,9 @@ export default function BaptismHomeSection({
     shortMessage.trim().toLowerCase() !== subtitle.trim().toLowerCase();
 
   return (
-    <section className={`relative isolate overflow-hidden ${styles.bg} ${styles.text}`}>
+    <section
+      className={`relative isolate overflow-hidden ${styles.bg} ${styles.text}`}
+    >
       {bgImg ? (
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-[1.02]"
@@ -381,7 +432,12 @@ export default function BaptismHomeSection({
               transition={{ duration: 0.75, delay: 0.24, ease: "easeOut" }}
               className="my-6 block lg:hidden"
             >
-              <HeroPhoto heroImg={heroImg} bgImg={bgImg} celebrant={celebrant} mobile />
+              <HeroPhoto
+                heroImg={heroImg}
+                bgImg={bgImg}
+                celebrant={celebrant}
+                mobile
+              />
             </motion.div>
 
             {subtitle ? (

@@ -17,7 +17,7 @@ export default function GiftIdeasSection({
   theme,
   giftIdeas = [],
   title = 'Gift Ideas',
-  subtitle = 'Your presence and prayers are all that we request, but if you desire to give nonetheless, these are the things that we would appreciate.',
+  subtitle = 'Your presence is the greatest gift we could ask for - especially knowing many of you are traveling from afar to celebrate with us. If you wish to bless Anya with something and are unsure what to choose, we\'ve shared a few thoughtful ideas below',
 }: Props) {
   const themeUtils = useThemeUtils(theme);
 
@@ -133,7 +133,7 @@ export default function GiftIdeasSection({
                     className="mx-auto mt-3 max-w-xl text-sm leading-relaxed sm:text-[15px]"
                     style={{ color: `${themeUtils.colors.text}cc` }}
                   >
-                    Your prayers, love, and presence mean the most to us. Should you wish to bless our little one with a gift, these are a few thoughtful ideas we would truly appreciate.
+                    Your presence is the greatest gift we could ask for—especially knowing many of you are traveling from afar to celebrate with us. If you wish to bless Anya with something and are unsure what to choose, we've shared a few thoughtful ideas below.
                   </p>
                 </div>
 

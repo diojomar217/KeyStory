@@ -223,7 +223,7 @@ export default function GallerySection({
             )}
 
             <span className="text-xs" style={{ color: themeUtils.colors.text }}>
-              Tap any photo to view full-screen
+              Tap any photo to view it in full
             </span>
           </div>
         </ScrollReveal>
