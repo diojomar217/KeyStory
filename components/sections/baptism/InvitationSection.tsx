@@ -196,7 +196,7 @@ export default function InvitationSection({
                 {/* Intro */}
                 <motion.p
                   variants={fadeUp}
-                  className="text-[22px] leading-[2.1]"
+                  className="text-[20px] leading-[2.1]"
                   style={{
                     color: textColor,
                     fontFamily: '"Cormorant Garamond", serif',
