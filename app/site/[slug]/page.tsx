@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!data) {
     const fallbackTitle = 'KeyStory Invitation';
     const fallbackDescription = 'View this beautiful digital invitation and shared memories on KeyStory.';
-    const fallbackImage = `${baseUrl.replace(/\/$/, '')}/default-og.png`;
+    const fallbackImage = `${baseUrl.replace(/\/$/, '')}/default-og`;
 
     return {
       title: fallbackTitle,
