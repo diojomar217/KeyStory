@@ -36,9 +36,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   // Fallback metadata if site not found
   if (!data) {
     const siteUrl = `${baseUrl.replace(/\/$/, '')}/site/${slug}`;
-    const fallbackTitle = 'KeyStory';
-    const fallbackDescription = 'Share and celebrate special moments.';
-    const fallbackImage = '/default-og-image.png';
+    const fallbackTitle = 'KeyStory Invitation';
+    const fallbackDescription = 'View this beautiful digital invitation and shared memories on KeyStory.';
+    const fallbackImage = 'https://key-story.vercel.app/default-og.png';
 
     return {
       title: fallbackTitle,
@@ -50,7 +50,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         siteName: 'KeyStory',
         images: [
           {
-            url: toAbsoluteUrl(fallbackImage),
+            url: fallbackImage,
             width: 1200,
             height: 630,
             alt: fallbackTitle,
@@ -62,7 +62,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         card: 'summary_large_image',
         title: fallbackTitle,
         description: fallbackDescription,
-        images: [toAbsoluteUrl(fallbackImage)],
+        images: [fallbackImage],
       },
     };
   }
@@ -71,25 +71,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const sectionContent = (config.section_content as Record<string, unknown>) || {};
   const home = (sectionContent?.home as Record<string, unknown>) || {};
 
-  // Derive celebrant / display name
-  const celebrantName =
-    (config as any)?.people?.primary || data.customer_name || (config as any)?.customer_name || '';
+  // Derive title
+  const title =
+    (config as any)?.eventTitle ||
+    (config as any)?.title ||
+    data.website_name ||
+    `${humanizedSiteTitle}'s Celebration`;
 
-  const homeEventTitle =
-    typeof (home as any).eventTitle === 'string' && (home as any).eventTitle.trim().length > 0
-      ? (home as any).eventTitle.trim()
-      : undefined;
-
-  const title = homeEventTitle || `${celebrantName ? celebrantName : humanizedSiteTitle}'s Celebration`;
-
+  // Derive description
   const description =
-    typeof (home as any).shortMessage === 'string' && (home as any).shortMessage.trim().length > 0
-      ? (home as any).shortMessage.trim()
-      : typeof (home as any).subtitle === 'string' && (home as any).subtitle.trim().length > 0
-      ? (home as any).subtitle.trim()
-      : 'You are warmly invited to celebrate this special day with us.';
+    (config as any)?.description ||
+    (config as any)?.message ||
+    'View this beautiful digital invitation and shared memories on KeyStory.';
 
-  // Image preference: home.heroImage -> config.hero.coverPhotoUrl -> first media photo -> default
+  // Image preference: config.ogImage -> home.heroImage -> config.hero.coverPhotoUrl -> first media photo -> default
+  const ogImage = (config as any)?.ogImage;
   const extractHomeHero = (): string | null => {
     const h = home as any;
     if (!h) return null;
@@ -102,13 +98,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const heroCoverPhotoUrl = typeof (config as any)?.hero?.coverPhotoUrl === 'string' && (config as any).hero.coverPhotoUrl.trim()
     ? (config as any).hero.coverPhotoUrl.trim()
     : null;
-  const firstMediaPhoto = Array.isArray((config as any)?.media?.photos) && (config as any).media.photos.length > 0 && typeof (config as any).media.photos[0] === 'string'
-    ? (config as any).media.photos[0]
+  const firstMediaPhoto = Array.isArray((config as any)?.media?.photos) && (config as any).media.photos.length > 0
+    ? ((config as any).media.photos[0]?.url || (config as any).media.photos[0]?.secure_url || (config as any).media.photos[0])
     : null;
 
-  const image = homeHero || heroCoverPhotoUrl || firstMediaPhoto || buildSocialImageUrl(slug) || '/default-og-image.png';
+  const image = ogImage || homeHero || heroCoverPhotoUrl || firstMediaPhoto || 'https://key-story.vercel.app/default-og.png';
 
-  const siteUrl = `${baseUrl.replace(/\/$/, '')}/site/${slug}`;
+  const siteUrl = `https://key-story.vercel.app/site/${slug}`;
 
   const unavailable = isArchived(data) || isExpired(data);
 
@@ -122,7 +118,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       siteName: 'KeyStory',
       images: [
         {
-          url: toAbsoluteUrl(image),
+          url: image,
           width: 1200,
           height: 630,
           alt: title,
@@ -134,7 +130,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       card: 'summary_large_image',
       title,
       description,
-      images: [toAbsoluteUrl(image)],
+      images: [image],
     },
     robots: unavailable
       ? {
