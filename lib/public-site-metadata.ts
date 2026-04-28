@@ -6,7 +6,7 @@ export function humanizeSlug(slug: string): string {
 }
 
 export function getBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_BASE_URL || 'https://your-domain.vercel.app';
+  return process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://key-story.vercel.app');
 }
 
 export function toAbsoluteUrl(url: string): string {
