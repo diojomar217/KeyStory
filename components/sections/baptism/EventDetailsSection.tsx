@@ -347,7 +347,7 @@ export default function EventDetailsSection({
           <SectionHeader
             icon="⛪"
             title="Event Details"
-            subtitle="Ceremony and reception information"
+            subtitle="Ceremony and Reception information"
             theme={theme}
           />
         </ScrollReveal>

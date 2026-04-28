@@ -31,8 +31,8 @@ function splitClosingMessage(message: string) {
   if (sentences.length <= 1) return { main: message, highlight: "" };
 
   return {
-    main: sentences.slice(0, -1).join(" "),
-    highlight: sentences[sentences.length - 1],
+    main: DEFAULT_CLOSING,
+    highlight: DEFAULT_FINAL,
   };
 }
 
@@ -47,7 +47,7 @@ export default function ClosingSection({
 }: ClosingSectionProps) {
   const { colors } = useThemeUtils(theme);
 
-  const body = closingMessage || DEFAULT_CLOSING;
+  const body = DEFAULT_CLOSING || closingMessage  ;
   const endLine =
     finalLine ||
     (celebrant ? `See you on ${celebrant}'s special day ✨` : DEFAULT_FINAL);
@@ -108,7 +108,7 @@ export default function ClosingSection({
                   inset 0 1px 0 rgba(255,255,255,0.68),
                   inset 0 -8px 22px rgba(106,47,57,0.03)
                 `,
-              }}
+              }}  
             >
               <div
                 className="pointer-events-none absolute inset-0 opacity-[0.025]"
@@ -165,7 +165,7 @@ export default function ClosingSection({
                         '"Allura", "Great Vibes", "Snell Roundhand", cursive',
                     }}
                   >
-                    With love and gratitude,
+                    With love,
                   </p>
 
                   {parentNames ? (

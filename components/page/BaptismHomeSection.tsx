@@ -345,7 +345,7 @@ export default function BaptismHomeSection({
     parentsFromParticipants ||
     [customerName, partnerName].filter(Boolean).join(" & ");
 
-  const formattedDateTime = formatDisplayDate(eventDate, eventTime);
+  const formattedDateTime = formatDisplayDate(eventDate, "");
 
   const showShortMessage =
     !!shortMessage &&
