@@ -180,11 +180,6 @@ export default function ClosingSection({
                     </p>
                   ) : null}
 
-                  {endLine ? (
-                    <p className="mt-4 text-sm leading-6 text-[#8b6c72]">
-                      {endLine}
-                    </p>
-                  ) : null}
                 </div>
               </div>
             </div>
