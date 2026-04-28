@@ -43,8 +43,8 @@ export default function SafetyProtocolSection({
         <ScrollReveal animation="fade-up">
           <SectionHeader
             icon="🦺"
-            title="Safety Protocol"
-            subtitle="Important safety guidelines for attendees"
+            title="Gentle Reminders"
+            subtitle="A few gentle reminders to keep everyone safe and comfortable."
             theme={theme}
           />
         </ScrollReveal>

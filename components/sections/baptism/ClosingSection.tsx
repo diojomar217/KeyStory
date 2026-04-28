@@ -165,7 +165,7 @@ export default function ClosingSection({
                         '"Allura", "Great Vibes", "Snell Roundhand", cursive',
                     }}
                   >
-                    With love and blessings,
+                    With love and gratitude,
                   </p>
 
                   {parentNames ? (

@@ -162,7 +162,7 @@ export const SECTION_COPY_CONFIG = {
   gallery: {
     default: {
       title: 'Captured with Love',
-      subtitle: 'A few cherished moments from our little one’s',
+      subtitle: 'A few beautifully captured moments of our little one’s',
       icon: '📸',
       formTitle: 'Upload Photos',
       emptyState: 'No photos added yet.',

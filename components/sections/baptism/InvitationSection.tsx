@@ -60,7 +60,7 @@ export default function InvitationSection({
     invitation?.supportMessage ||
     invitation?.godparentMessage ||
     godparentMessage ||
-    "Your faith, guidance, and love would mean so much as she grows and learns in her journey.";
+    "";
 
   const closing =
     invitation?.closingText ||
@@ -190,14 +190,13 @@ export default function InvitationSection({
                       fontFamily: "Inter, system-ui, sans-serif",
                     }}
                   >
-                    YOU ARE WARMLY INVITED 💌
                   </span>
                 </motion.div>
 
                 {/* Intro */}
                 <motion.p
                   variants={fadeUp}
-                  className="text-[15.5px] leading-[2.1]"
+                  className="text-[22px] leading-[2.1]"
                   style={{
                     color: textColor,
                     fontFamily: '"Cormorant Garamond", serif',
@@ -209,7 +208,7 @@ export default function InvitationSection({
                 {/* Body */}
                 <motion.p
                   variants={fadeUp}
-                  className="mt-7 text-[15.5px] leading-[2.1]"
+                  className="mt-7 text-[22px] leading-[2.1]"
                   style={{
                     color: textColor,
                     fontFamily: '"Cormorant Garamond", serif',
@@ -219,14 +218,14 @@ export default function InvitationSection({
                 </motion.p>
 
                 {/* Divider */}
-                <motion.div variants={fadeUp} className="my-10 flex justify-center">
+                <motion.div variants={fadeUp} className="my-2 flex justify-center">
                   <div className="h-px w-20 bg-gradient-to-r from-transparent via-pink-400 to-transparent opacity-80" />
                 </motion.div>
 
                 {/* Highlight */}
                 <motion.p
                   variants={fadeUp}
-                  className="my-12 text-center text-[19px] italic leading-[1.9] md:text-[23px]"
+                  className="my-12 text-center text-[22px] italic leading-[1.9] md:text-[24px]"
                   style={{
                     color: "#7a2f3c",
                     fontFamily: '"Cormorant Garamond", serif',
@@ -237,7 +236,7 @@ export default function InvitationSection({
                 </motion.p>
 
                 {/* Closing */}
-                <motion.p
+                {/* <motion.p
                   variants={fadeUp}
                   className="text-[15.5px] leading-[2.1]"
                   style={{
@@ -246,7 +245,7 @@ export default function InvitationSection({
                   }}
                 >
                   {closing}
-                </motion.p>
+                </motion.p> */}
 
                 {/* Signature */}
                 <motion.div variants={fadeUp} className="mt-20 text-center">
@@ -270,7 +269,7 @@ export default function InvitationSection({
                   </p>
 
                   <p
-                    className="mt-2 text-[16px] md:text-[18px]"
+                    className="mt-2 text-[18px] md:text-[20px]"
                     style={{
                       color: textColor,
                       letterSpacing: "0.03em",
