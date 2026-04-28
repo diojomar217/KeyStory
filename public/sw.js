@@ -1,5 +1,5 @@
-const CACHE_NAME = 'keystory-static-v1';
-const CORE_ASSETS = ['/', '/heart-icon.svg'];
+const CACHE_NAME = 'keystory-static-v2';
+const CORE_ASSETS = ['/', '/heart-icon.svg', '/offline.html'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -22,6 +22,21 @@ self.addEventListener('fetch', (event) => {
 
   if (request.method !== 'GET') return;
 
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request).then((cached) => cached || caches.match('/offline.html')))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
@@ -36,7 +51,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
           return response;
         })
-        .catch(() => caches.match('/'));
+        .catch(() => caches.match('/offline.html'));
     })
   );
 });
