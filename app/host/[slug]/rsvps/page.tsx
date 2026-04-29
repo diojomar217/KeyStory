@@ -4,7 +4,8 @@ import { getRsvpsBySiteId } from '@/lib/db/rsvps';
 import HostHeader from '@/components/host/HostHeader';
 import HostDashboardClient from '@/components/host/HostDashboardClient';
 
-export const revalidate = 20;
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
