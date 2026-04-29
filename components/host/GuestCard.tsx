@@ -26,7 +26,11 @@ export default function GuestCard({ rsvp }: { rsvp: RsvpRecord }) {
           {isRecent && <div className="text-xs text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full">New</div>}
         </div>
         <div className="mt-2 text-xs text-slate-500">
-          {rsvp.message ? <span className="block truncate">{rsvp.message}</span> : <span className="text-xs text-slate-400">No message</span>}
+          {rsvp.message ? (
+            <span className="block break-words whitespace-pre-wrap">{rsvp.message}</span>
+          ) : (
+            <span className="text-xs text-slate-400">No message</span>
+          )}
         </div>
       </div>
 
