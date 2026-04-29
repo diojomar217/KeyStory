@@ -16,12 +16,23 @@ type Totals = {
   no: number;
   maybe: number;
   companions: number;
+  totalAttendees?: number;
 };
 
 const statItems = (totals: Totals) => [
   {
+    key: "attendees",
+    label: "Total Attendees",
+    value: totals.totalAttendees ?? totals.yes,
+    icon: Users,
+    iconWrap:
+      "bg-gradient-to-br from-emerald-100 via-white to-emerald-50 text-emerald-600",
+    valueText: "text-slate-900",
+    border: "border-emerald-100/80",
+  },
+  {
     key: "total",
-    label: "Total Guests",
+    label: "Total RSVPs",
     value: totals.total,
     icon: Users,
     iconWrap:

@@ -91,8 +91,13 @@ export default function HostDashboardClient({
     const no = rsvps.filter((r) => r.attendance === "no").length;
     const maybe = rsvps.filter((r) => r.attendance === "maybe").length;
     const companions = rsvps.reduce((acc, r) => acc + (r.companions || 0), 0);
+    const companionsForYes = rsvps.reduce(
+      (acc, r) => acc + ((r.attendance === "yes") ? (r.companions || 0) : 0),
+      0
+    );
+    const totalAttendees = yes + companionsForYes;
 
-    return { total, yes, no, maybe, companions };
+    return { total, yes, no, maybe, companions, totalAttendees };
   }, [rsvps]);
 
   const processed = useMemo(() => {
