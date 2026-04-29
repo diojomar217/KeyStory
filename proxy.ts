@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import type { NextRequest, NextFetchEvent } from 'next/server';
 
 // Allowed social crawler user agents (lowercase for comparison)
 const ALLOWED_BOTS = [
@@ -25,7 +25,10 @@ function isImagePath(pathname: string) {
   return /\.(png|jpe?g|webp|avif|gif|svg|ico)(?:$|\?)/i.test(pathname);
 }
 
-export function middleware(req: NextRequest) {
+// Proxy replaces the previous middleware convention. It runs before routes
+// and can rewrite/modify responses. Keep the original logic but use the
+// new `proxy` export name to silence the deprecation warning.
+export function proxy(req: NextRequest, _event?: NextFetchEvent) {
   const ua = (req.headers.get('user-agent') || '').toLowerCase();
   const pathname = req.nextUrl.pathname || '/';
 
@@ -50,7 +53,6 @@ export function middleware(req: NextRequest) {
 
   // If request reaches here, it's not a social crawler nor a public asset.
   // Keep existing behavior but add debug logging when blocked to assist troubleshooting.
-  // NOTE: This log is temporary for debugging and can be removed later.
   console.log('UA:', req.headers.get('user-agent'));
 
   const res = NextResponse.next();
